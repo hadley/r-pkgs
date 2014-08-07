@@ -1,27 +1,32 @@
 ---
 title: Namespaces
 layout: default
+output: bookdown::html_chapter
 ---
 
 # Namespaces
+
+The package `NAMESPACE` is one of the most confusing parts of building a package. Roxygen2 aims to make it as easy as possible to build a package that is a well-behaved member of the R ecosystem. This is a little frustrating at first, but soon becomes second-nature.
 
 As the name suggest, namespaces provide "spaces" for "names", providing a context for evaluating which object is found when you look for it.  When developing code, they allow you to specify which package to look for a function when there are multiple packages it could come from, and when developing packages they ensure that your functions always call functions in the same place.
 
 Namespaces make it possible for packages to refer to specific functions in other packages, not the functions that you have defined in the global workspace.
 
-For example, take the simple `nrow` function:
+For example, take the simple `nrow()` function:
 
-    nrow
-    # function (x) 
-    # dim(x)[1L]
+```{r}
+nrow
+```
 
-What happens if we create our own dim method? Does `nrow` break?
+What happens if we override `dim()` with our own definition --- does `nrow()` break?
 
-    dim <- function(x) c(1, 1)
-    dim(mtcars)
-    nrow(mtcars)
+```{r}
+dim <- function(x) c(1, 1)
+dim(mtcars)
+nrow(mtcars)
+```
 
-Suprisingly, it does not! That's because when `nrow` looks for an object called `dim`, it finds the function in the base package, not our function.
+Suprisingly, it does not! That's because when `nrow()` looks for an object called `dim()`, it finds the function in the base package, not our function.
 
 Namespaces also provide an extension to the standard way of looking up the value of an object: instead of just typing `objectname`, you type `package::objectname`.  
 
@@ -29,88 +34,84 @@ Namespaces also control the functions and methods that your package makes availa
 
 The easiest way to use namespaces is with roxygen2, because it keeps the namespace definitions next to the function that it concerns. The translation between roxygen2 tags and `NAMESPACE` directives is usually straightforward: the tag becomes a function name and its space-separated arguments become comma separated arguments to the function.  For example `@import plyr` becomes `import(plyr)` and `@importFrom plyr ddply` becomes `importFrom(plyr, ddply)`.  The chief exception is `@export` which will automatically figure out the function name to export. 
 
-## How do namespaces work
+## Exports
 
-## Exporting 
+For a function to be usable outside of your package, you must __export__ it. By default roxygen2 doesn't export anything from your package. If you want an object to be publically available, you must explicitly tag it with `@export`.
 
-For every function in your package, you need to decide whether it is external and available to all users of the package, or internal and only available to other functions within the package. It's not always easy to tell whether or not a function is internal or external. A few rules of thumb:
+Use the following guidelines to decide what to export:
 
-* Is the purpose of the function the same as the purpose of the package? If
-  not, make it internal. (A package should provide a set of closely related
-  functions for a well-defined problem domain - someone should be able to look
-  at all the functions in your package and say this is a package about X - if
-  not, you should consider splitting it up into two packages)
+* Functions: export functions that you want to make available. Exported
+  functions must be documented, and you must be cautious when changing their
+  interface.
 
-* Does the function have a clear purpose and can you easily explain it? Every
-  external function needs to be documented, and there's an implicit contract
-  that that function will continue to exist in the future. If that's not the
-  case, don't export it.
+* Datasets: all datasets are publicly available. They exist outside of the
+  package namespace and should not be exported.
 
-If a function isn't exported, you don't need to document it. This doesn't mean you shouldn't document it, but you only need to if it's complicated enough that you think you won't remember what it does. Generally, you want to export as few functions as possible: this makes it easier to change the package in the future.  
+* S3 classes: if you want others to be able to create instances of the class
+  `@export` the constructor function.
 
-As described below, the `@export` tag is all that you need.  There are only a few exceptions:
+* S3 generics: the generic is a function so `@export` if you want it to
+  be usable outside the package
 
-* __Functions__: use the `@export` tag.
+* S3 methods: every S3 method _must_ be exported, even if the generic is not.
+  Otherwise the S3 method table will not be generated correctly and internal
+  generics will not find the correct method.
 
-* __S3 methods__: There are two ways to export a method for an S3 method depending on whether it's documented or not:
+* S4 classes: if you want others to be able to extend your class, `@export` it.
+  If you want others to create instances of your class, but not extend it,
+  `@export` the constructor function, but not the class.
 
-    * If it's documented, you'll already be using the `@method` tag to state that it's an S3 method and you only need the `@export` to generate the correct export flag in the `NAMESPACE`
+    ```{r, eval = FALSE}
+    # Can extend and create
+    #' @export
+    setClass("A")
 
-    * If it's not documented, use the `S3method` tag: `@S3method function class`
+    # Can extend, but constructor not exported
+    #' @export
+    B <- setClass("B")
 
-* __S4 classes__: Use `@export`
+    # Can create, but not extend
+    #' @export C
+    C <- setClass("C")
 
-* __S4 methods__: If the methods are for classes that you have defined and exported, you don't need to do anything. If they are for classes defined in other packages, you need to use `@export`.
+    # Can create and extend
+    #' @export D
+    #' @exportClass D
+    D <- setClass("D")
+    ```
 
-* __Other objects__: For any other types of object that you want to make available to the user, use `@export`.
+* S4 generics: `@export` if you want the generic to be publicly usable.
 
-You may also want to make the distinction between functions for users and functions for other developers.  Functions that might be useful for developers or power users should be exported, but tagged with `@keywords internal` so they don't show up in routine lists of function documentation.
+* S4 methods: you only need to `@export` methods for generics that you
+  did not define. But `@export`ing every method is a good idea as it
+  will not cause problems and prevents you from forgetting to export an
+  important method.
 
-## Importing 
+* RC classes: the same principles apply as for S4 classes. `@export`
+  will only export the class.
 
-In your package `DESCRIPTION` there are two ways to indicate that your package requires another package to work: by listing it in either `Depends` or `Imports`. `Depends` works just like using library to load a package, but `Imports` is a little more subtle: the dependency doesn't get loaded in a way the user can see. This is good practice because it reduces the chances of conflict, and it makes the code clearer by requiring that every package used be explicitly loaded.  Since R 2.14 there is no reason to use `Depends` because all packages have a namespace.
+## Imports
 
-There are two places you need to record your package's dependency:
+The `NAMESPACE` also controls which functions from other packages are made available to your package. Only unique directives are saved to the `NAMESPACE` file, so you can repeat them as needed to maintain a close link between the functions where they are needed and the namespace file.
 
-* In the `Imports` field in the `DESCRIPTION` file, used by
- `install.packages` to download package dependencies automatically.
+If you are using just a few functions from another package, the recommended option is to note the package name in the `Imports:` field of the `DESCRIPTION` file and call the function(s) explicitly using `::`, e.g., `pkg::fun()`.  Alternatively, though no longer recommended due to its poorer readability, use `@importFrom`, e.g., `@importFrom pgk fun`, and call the function(s) without `::`.
 
-* In the `NAMESPACE` file, to make all the functions in the dependency
-  available to your code. The easiest way to do this is to add `@import
-  package-name` to your [package documentation](Documenting-packages.html):
+If you are using many functions from another package, use `@import package` to import them all and make available without using `::`.
 
-        #' @docType package
-        #' ...
-        #' @import stringr MASS
+If you want to add a new method to an S3 generic, import it with `@importFrom pkg generic`.
 
-  and have `roxygen2` generate the `NAMESPACE` file from that.
+If you are using S4 you may also need:
 
-There are two alternatives to using `@import`:
+* `@importClassesFrom package classa classb ...` to import selected S4 classes.
 
-* Use `@importFrom package fun1 fun2 ...` to only import selected functions
-  from another package. This is important if you are importing two packages
-  share functions with the same name. You can also use it to produce a very
-  specific `NAMESPACE`, but at the cost of having to use `@importFrom` for
-  every function that uses a function from another package.
+* `@importMethodsFrom package methoda methodb ...` to import methods for selected S4 generics.
 
-* `::` refers to a function within a package directly. I don't recommend this
-  method because it doesn't work well during package development -- it will
-  use the installed version of the package, rather than the development
-  version.
+To import compiled code from another package, use `@useDynLib`
 
+* `@useDynLib package` imports all compiled functions.
 
+* `@useDynLib package routinea routineb` imports selected compiled functions.
 
-* S4 methods: See the [R extensions][S4] manual
-
-You should very very very rarely use `:::`. This is a sign that you're using an internal function from someone else - and there is no guarantee that that function won't change from version to version. It would be better to encourage the author to make it an external, exported function, or ask if you could include a copy of it in your package.
-
-## Compiled code
-
-If you have C or Fortran code in your package, you'll need to add `@useDynLib mypackage` to your package documentation to ensure your functions can access it. This means you don't need to specify `PACKAGE` in `.Call`.
-
-## How do they work
-
-New set of rules on top of ordinary [[scoping]] rules, which deal with lists of environments - each environment belongs to a package. Search path. Variable look up differs depending on whether you're inside or outside a package. If a package has a namespace, then R looks first inside the package namespace, then the imports, then the base namespace and then the normal search path.
-
-
-[S4]: http://cran.r-project.org/doc/manuals/R-exts.html#Name-spaces-with-S4-classes-and-methods
+* Any `@useDynLib` specification containing a comma, e.g.
+  `@useDynLib mypackage, .registration = TRUE` will be inserted as is
+  into the the `NAMESPACE`, e.g. `useDynLib(mypackage, .registration = TRUE)`
