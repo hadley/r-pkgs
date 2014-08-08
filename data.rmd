@@ -4,8 +4,72 @@ title: Data
 output: bookdown::html_chapter
 ---
 
-* `data/`
+# External data
 
-* `R/sysdata.rda`
+There are three ways to include data in your package, depending on whether you want to store raw or parsed data, or whether it's for your user or should be made available to the user.
 
-* `inst/extdata`
+* If you want to store parsed data, and make it available to the user, put it
+  in `data/`.
+  
+* If you want to store parsed data, but not make it available to the user,
+  put it all `R/sysdata.rda`.
+
+* For raw data, you can put it anywhere inside `inst/`, but the convention
+  is to use `inst/extdata`.
+
+Each place is described in more detail below.
+
+## `data/`
+
+The data directory is the best place to put example datasets.
+
+The data directory must contain `.rda` files created by `save()`. Each file should contain a single object with the same name as the file. For example:
+
+```{r, eval = FALSE}
+save(mtcars, file = "data/mtcars.rda")
+```
+
+Objects in the data directory and automatically exported, and hence must be documented. See [documenting data](#documenting-data) for details. 
+
+If `LazyData` is `true` in the `DESCRIPTION` datasets will be lazily loaded. This means that they don't occupy any memory until you load them. The following example shows the memory usage before and after loading the nycflights package. The memory usage doesn't change until you inspect the flights dataset stored inside the package. 
+
+```{r}
+pryr::mem_used()
+library(nycflights)
+pryr::mem_used()
+
+invisible(flights)
+pryr::mem_used()
+```
+
+For this reason, I recommend that you always include `LazyData: true` in your `DESCRIPTION`, and devtools always does so. If you are submitting your package to CRAN, you will need to make sure that the data has been optimally compressed (and it's useful to do so even if you're not submitting). Run `tools::checkRdaFiles()` to determine the best compression for each file. If you've lost the code for recreating the files, you can use `tools::resaveRdaFiles()` to save as best format, but it's better to modify the original `save()` code.
+
+Typically you'll create the data files in `data/` from raw data gathered from somewhere else. I recommend ensure that this code is fully reproducible and stored in `data-raw/` (make sure you add this to `.Rbuildignore` so it doesn't inflated packages for distribution.) See [babynames](https://github.com/hadley/babynames), [fueleconomy](https://github.com/hadley/fueleconomy), [nasaweather](https://github.com/hadley/nasaweather) and [nycflights13](https://github.com/hadley/nycflights13) for examples of this technique.
+
+If you have large example datasets that rarely change, it's better to put them in a separate package. That means that when you code changes, users don't need to download a large dataset that they already have.
+
+## `R/sysdata.rda`
+
+Sometimes functions need pre-computed data tables. If you put these in `data/` they'll also be available to package users, which is not appropriate.  Instead, you can save them in `R/sysdata.rda`.  For example, the [munsell package](https://github.com/cwickham/munsell), stores a pre-defined mapping between munsell colours and their rgb values. 
+
+You can store any number of objects in this file - just supply them all as argument to a single `save()` call:
+
+```{r, eval = FALSE}
+save(x, y, z, file = "R/sysdata.rda")
+```
+
+Objects in `R/sysdata.rda` are not exported (and shouldn't be), so don't need to be documented. They're only available to your functions.
+
+## `inst/`
+
+If you want to show examples of loading/parsing raw data, put the original files in `inst/`. You can put them in any directory, but the convention is to use `inst/extdata`. When the package is installed, all files in `inst/` are moved into the top-level directory (so they can't have names like `R/` or `DESCRIPTION`). To refer to files in `inst/exdata` (whether installed or not), use `system.file()`:
+
+```{r}
+system.file("include", "Rcpp.h", package = "Rcpp")
+```
+
+Beware: if the file does not exist, `system.file()` does not return an error - it just returns the empty string:
+
+```{r}
+system.file("include", "Rcp.h", package = "Rcpp")
+```
