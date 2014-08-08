@@ -28,7 +28,7 @@ These conventions are helpful because:
 
 As Hilary Parker puts it in her [introduction to packages](http://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/): "Seriously, it doesn't have to be about sharing your code (although that is an added benefit!). It is about saving yourself time."
 
-A package doesn't need to be complicated. You can start with a minimal subset of useful features and slowly build up over time. While there are strict requirements if you want to publish a package to the world on CRAN (and many of those requirements are useful even for your own packages), most packages won't end up on CRAN. Packages are really easy to create and use once you have the right set of tools.
+A package doesn't need to be complicated. You can start with a minimal subset of useful features and slowly build up over time. While there are strict requirements if you want to publish a package to the world on CRAN (and many of those requirements are useful even for your own packages), most packages won't end up on CRAN. You can even use packages to structure your data analyses, as Robert M Flight discusses in a [series of blog posts](http://rmflight.github.io/posts/2014/07/analyses_as_packages.html). Packages are really easy to create and use once you have the right set of tools.
 
 Anytime you create some reusable set of functions you should put it in a package. It's the easiest path because packages come with conventions: you don't need to figure them out for yourself. You'll start with just your R code in the `R/` directory, and over time you can flesh it out with documentation (in `man/`), vignettes (in `vignettes/`), compiled code (in `src/`), data sets (in `data/`), and tests (in `inst/tests`).
 
