@@ -8,55 +8,47 @@ output: bookdown::html_chapter
 
 ## Why build a package?
 
-> Seriously, it doesn’t have to be about sharing your code (although that 
-> is an added benefit!). It is about saving yourself time. (n.b. this is 
-> my attitude about all reproducibility.)
->
-> --- Hilary Parker
+In R, the fundamental unit of shareable code is the package. A package bundles together code, data, documentation and tests, and it's easy to share with others. Packages actually make your life easier because they're a set of conventions for how to structure your code. The first convention is a no-brainer:
 
-In R, the fundamental unit of shareable code is the package. A package bundles together code, data, documentation and tests. It's easy to share with others.
+* Put your R code in a directory called `R/`.
 
-At their heart, packages are quite simple and only have two essential components: 
+The second is a little bit more work:
 
-* a `DESCRIPTION` file that describes the package, what it does, who's allowed
-  to use it (the license) and who to contact if you need help
+* Describe what your package needs to work in a `DESCRIPTION` file
+  If the package is to share, also describe what it does, who can use it 
+  (the license) and who to contact if things go wrong.
 
-* an `R/` directory that contains your R code.
+These conventions are helpful because:
 
-If you want to distribute R code to someone else, there's no excuse not to use a simple package: it's a standard structure, and you can easily expand on it by adding documentation, data and tests.
+* They save you time --- you don't need to think about the best way to organise
+  a project, you can just follow a template.
 
-The most accurate resource for up-to-date details on package development is always the official [writing R extensions][r-ext] guide. However, it's rather hard to read and follow if you're not already familiar with the basics of packages. It's also exhaustive, covering every possible package component, rather than focussing on the most common and useful components as this package does. Once you are familiar with the content here, you should find R extensions a little easier to read.
+* Standardised conventions lead to standardised tools --- if you buy into
+  the R's package conventions, you get many tools for free.
 
-## Philosophy
-
-This book espouses a particular philosophy of package development - it is not shared by all R developers, but it is one connected to a specific set of tools that makes package development as easy as possible. Central to my philosophy is that anything that can be automated, should be automated. 
-
-There are three packages we will use extensively:
-
-* `devtools`, which provides a set of R functions that makes package
-  development as easy as possible.
-
-* `roxygen2`, which translates source code comments into R's official
-  documentation format (with contributions from Peter Danenburg and 
-  Manuel Eugster).
-
-* `testthat`, which provides a friendly unit testing framework for R.
-
-Other styles of package development don't use these packages, but in my experience they provide a useful trade off between speed and rigour. That's a theme that you'll see a lot in this book: base R provides rigorous tools that guarantee correctness, but tend to be slow. Sometimes you want to be able to iterate more rapidly.
-
-The goal of the devtools package is to make package development as painless as possible by encoding package building best practices in functions (so you don't have to remember, or even know about them), and by minimising the iteration time when you're developing a package.
-
-These tools should be more reliable than running the equivalent commands in the terminal (and much easier to use if you're not familiar with the terminal). They do more to ensure that command-line R is running in exactly the same way as your R GUI. They check that you're running the same version of R, with the same library paths, and with a standard collation order. These are things you don't need to worry about most of the time, but if they ever trip you up, it can take hours to figure out the source of the problem. `check()` and `install()` also run build first, which is recommended best practice.
+As Hillary Parker puts it in her [introduction to packages](): "Seriously, it doesn't have to be about sharing your code (although that is an added benefit!). It is about saving yourself time."
 
 A package doesn't need to be complicated. You can start with a minimal subset of useful features and slowly build up over time. While there are strict requirements if you want to publish a package to the world on CRAN (and many of those requirements are useful even for your own packages), most packages won't end up on CRAN. Packages are really easy to create and use once you have the right set of tools.
 
-Anytime you create some reusable set of functions you should put it in a package. It's the easiest path because packages come with conventions: you don't need to figure them out for yourself. You'll start with just your R code in the `R/` directory, and over time you can flesh it out with documentation (in `man/`), compiled code (in `src/`), data sets (in `data/`), and tests (in `inst/tests`).
+Anytime you create some reusable set of functions you should put it in a package. It's the easiest path because packages come with conventions: you don't need to figure them out for yourself. You'll start with just your R code in the `R/` directory, and over time you can flesh it out with documentation (in `man/`), vignettes (in `vignettes/`), compiled code (in `src/`), data sets (in `data/`), and tests (in `inst/tests`).
+
+The most accurate resource for up-to-date details on package development is always the official [writing R extensions][r-ext] guide. However, it's rather hard to understand if you're not already familiar with the basics of packages. It's also exhaustive, covering every possible package component, rather than focussing on the most common and useful components as this package does. It's a useful resource once you've mastered the basics and need to check on more esoteric facts.
+
+## Philosophy
+
+This book espouses my philosophy of package development: is anything that can be automated, should be automated. You will do as little as possible by hand, instead relying on R functions to do as much work as possible. You should spend your time worrying about the specific details of your code, not fighting to get it in the right form.
+
+This philosophy is realised primarily in the devtools package, which provides a suite of R functions to automate common development tasks. The goal of the devtools package is to make package development as painless as possible by encoding package building best practices in functions (so you don't have to remember, or even know about them), and by minimising the iteration time when you're developing a package. As I discover better ways of doing things, all you need to do to reap the benefits is to upgrade your devtools install.
+
+If you've developed packages in the past without these tools, they may take a bit of getting used to. However, I strongly believe that mastering them will save you much much more time than it will take. There's no way I could have authored so many packages without devtools to help automate the humdrum task.
+
+## RStudio
+
+Devtools works particularly well in conjunction with RStudio projects.
 
 ## Getting started
 
-To get started, make sure you have the latest version of R: if you want to submit your work to CRAN, you'll need to make sure you're running all checks with the latest R.
-
-You can install the packages you need for this book with:
+To get started, make sure you have the latest version of R, then run the following code to get the packages you'll use in this book:
 
 ```{r, eval = FALSE}
 install.packages(c("devtools", "roxygen2", "testthat", "knitr"))
@@ -86,32 +78,32 @@ It will print out some compilation code (this is needed to help diagnose problem
 
 This book is arranged according to the structure of an R package. It starts with the most commonly used components, and then gets more esoteric.
 
-* the `R/` directory where your R code lives (in `.R` or `.r` files).
+* `R/`: where your R code lives in `.R` files.
 
-* the `DESCRIPTION` file, which provides metadata about the package, and is
-  described in the following section.
+* `DESCRIPTION`: metadata about the package
 
-* the `man/` directory where your [[function documentation|documenting-functions]]. In
-  the style of package development described in this book, you'll never
-  personally touch the files in this directory. Instead, they will be
-  automatically generated from comments in your source code using the
-  `roxygen2` package
+* `man/`: function documentation
 
-* the `vignettes/` directory is used for larger scale documentation, like
-  vignettes, long-form documents which show how to combine multiple parts
-  of your package to solve problems.
+* `vignettes/`: long-form documentation which show how to combine multiple 
+  parts of your package to solve real problems.
 
-* a `NAMESPACE` file describes which functions are part of the formal API of
-  the package and are available for others to use. See [[namespaces]] for more
-  details.
+* `NAMESPACE`: ensures that your package plays nicely with others.
 
-* `tests/` contains [[unit tests|testing]] which ensure that
-  your package is operating as designed. In this book, we'll focus on the
-  `testthat` package for writing tests.
+* `tests/`: stores unit tests that ensure that your package is operating as
+  designed.
 
-* the `data/` directory contains `.rdata` files, used to include sample
-  datasets (or other R objects) with your package.
+* `data/`: sample datasets (or other R objects)
 
-* `src/`: C, C++ and fortran source code
+* `src/`: compiled C, C++ and fortran source code
+
+## Conventions
+
+Throughout this book I use `f()` to refer to functions, `g` to refer to variables and function parameters, and `h/` to paths. 
+
+Larger code blocks intermingle input and output. Output is commented so that you if you have an electronic version of the book, e.g., <http://r-pkgs.had.co.nz>, you can easily copy and paste examples into R. Output comments look like `#>` to distinguish them from regular comments.
+
+## Colophon
+
+This book was written in [Rmarkdown](http://rmarkdown.rstudio.com/) inside [Rstudio](http://www.rstudio.com/ide/). [knitr](http://yihui.name/knitr/) and [pandoc](http://johnmacfarlane.net/pandoc/) converted the raw Rmarkdown to html and pdf. The [website](http://adv-r.had.co.nz) was made with [jekyll](http://jekyllrb.com/), styled with [bootstrap](http://getbootstrap.com/), and automatically published to Amazon's [S3](http://aws.amazon.com/s3/) by [travis-ci](https://travis-ci.org/). The complete source is available from [github](https://github.com/hadley/r-pkgs).
 
 [r-ext]:http://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages
