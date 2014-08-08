@@ -4,9 +4,11 @@ layout: default
 output: bookdown::html_chapter
 ---
 
-# Testing
+# Testing {#tests}
 
 To make sure that your package behaves as you'd expect, testing is vital. While you probably test your code already, you may not have taken the next step: automation. This chapter describes how to use the `testthat` package to create automated tests of your code.
+
+
 
 ## Motivation
 
@@ -324,3 +326,45 @@ Now, recommended practice is to put your tests in `tests/testthat`, and ensure R
     test_check("yourpackage")
     
 The advantage of this new structure is that the user has control over whether or not tests are installed using the --install-tests parameter to R CMD install, or INSTALL_opts = c("--install-tests") argument to install.packages(). I'm not sure why you wouldn't want to install the tests, but now you have the flexibility as requested by CRAN maintainers.
+
+## Development cycles
+
+It's useful to distinguish between exploratory programming and confirmatory programming (in the same sense as exploratory and confirmatory data analysis), because the development cycle differs in several important ways.
+
+### Confirmatory programming
+
+Confirmatory programming happens when you know what you need to do and what the results of your changes will be (new feature X appears or known bug Y disappears); you just need to figure out the way to do it. Confirmatory programming is also known as [test driven development][tdd] (TDD), a development style that grew out of [extreme programming](extreme-programming). The basic idea is that, before you implement any new feature or fix a known bug, you should:
+
+1. Write an automated test and run `test()` to make sure the test fails (so you know
+   you've captured the bug correctly).
+
+2. Modify code to fix the bug or implement the new feature.
+
+3. Run `test(pkg)` to reload the package and re-run the tests.
+
+4. Repeat 2--3 until all tests pass.
+
+5. Update documentation comments, run `document()`, and update `NEWS`.
+
+For this paradigm, you might also want to use `testthat::auto_test()`, which will watch your tests and code and will automatically rerun your tests when either changes. This allows you to skip step three: you just modify your code and watch to see if the tests pass or fail.
+
+### Exploratory programming
+
+Exploratory programming is the complement of confirmatory programming, when you have some idea of what you want to achieve, but you're not sure about the details. You're not sure what the functions should look like, what arguments they should have and what they should return. You may not even be sure how you are going to break down the problem into pieces. In exploratory programming, you're exploring the solution space by writing functions and you need the freedom to rewrite large chunks of the code as you understand the problem domain better.
+
+The exploratory programming cycle is similar to confirmatory, but it's not usually worth writing the tests before writing the code, because the interface will change so much:
+
+1. Edit code and reload with `load_all()`.
+
+2. Test interactively.
+
+3. Repeat 1--2 until code works.
+
+4. Write automated tests and `test()`.
+
+5. Update documentation comments, run `document()`, and update `NEWS`
+
+The automated tests are still vitally important because they are what will prevent your code from failing silently in the future.
+
+[tdd]:http://en.wikipedia.org/wiki/Test-driven_development
+[extreme-programming]:http://en.wikipedia.org/wiki/Extreme_programming

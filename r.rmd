@@ -6,9 +6,7 @@ output: bookdown::html_chapter
 
 # R code
 
-## The `R/` directory
-
-The `R/` directory contains all your R code, so copy in any existing code.
+The `R/` directory contains all your R code, so copy in any existing code.  Files containing R code should always have the extension `.R` (you can also use `.r`, but I recommend sticking to `.R` for consistency).
 
 It's up to you how you arrange your functions into files. There are two
 possible extremes: all functions in one file, and each function in its own
@@ -21,102 +19,82 @@ you'll see in the next chapter, often the code for the function is small
 compared to its documentation (it's much easier to do something than it is to
 explain to someone else how to do it.)
 
-* `load_all()`: simulates package installation and loading by `source()`ing
-  all files in the `R/` directory, compiling and linking C, C++ and Fortran
-  files in the `src/` and `load()`ing data files in the `data/` directory.
-  More on that in [[package development |development]]
+## Starting a package
 
-* `install()` is equivalent to `R CMD INSTALL` and installs a package into a
-  local library. Learn more about the installation process in
-  [[package-basics]].
-  
-* Build & reload in Rstudio.
+There are two ways to get started with a new package:
 
-The next step is to create a `DESCRIPTION` file that defines package metadata.
+* Firstly, you can just create an R directory and move in your R code.
 
-# The package development cycle
+* Alternatively, use `devtools::create("pkgname")`: this will create a
+  directory called `pkgname`, containing an empty `R/` directory and 
+  some useful files that you'll learn about in the course of this book.
 
-The package development cycle describes the sequence of operations that you use when developing a package. You probably already have a sequence of operations that you're comfortable with when developing a single file of R code. It might be:
+__Never__ use `package.skeleton()`: it's designed for a bygone era of package development, and mostly serves to make your life harder, not easier.
 
-* Try something out on the command line.
+## Rstudio projects
 
-* Modify it until it works and then copy and paste the command into an R file.
+If you use RStudio, I highly recommend using an RStudio project for your package:
 
-* Every now and then restart R and source in the R file to make sure you
-  haven't missed anything.
+* Projects isolate state so that unrelated things stay unrelated.
 
-Or:
+* You get handy code navigation tools like `F2` to jump to a function
+  definition and `Ctrl + .` to look up functions by name.
 
-* Write all your functions in an R file.
+* You get useful keyboard shortcuts for common package development tasks.
+  See Help | Keyboard shortcuts, or press Alt + Shift + K to see them all.
 
-* `source()` the file into your current session.
+* Projects are a light weight text file, and devtools makes sure that 
+  it's not included in binary packages that you share with others 
+  (by including in `.Rbuildignore`).
 
-* Interactively try out the functions and see if they return the correct
-  results.
+`create()` will automatically create a `.Rproj` file for you. To create one after the fact, run `devtools::use_rstudio()` in the package directory.
 
-* Repeat the above steps until the functions work the way you expect.
+## Loading code
 
-Things get a bit harder when you're working on a package, because you have multiple R files. You might also be a little bit more worried about checking that your functions work, not only now, on your computer, but also in the future and on other computers.
+The first advantage of using a package is that it's now easier to reload all of your code. There are two options: 
 
-The sections below describe useful practices for developing packages, where you might have many R files, and you are also thinking about documentation and testing. 
+* `load_all()`, Cmd + Shift + L, reloads all code in the package. It's 
+  fast but takes some shortcuts that occassionally backfire. In Rstudio,
+  this also saves all open files, saving you a key press.
 
-## Key functions
+* Build & reload, Cmd + Shift + B. This is only available in Rstudio, because
+  it installs the package, then restarts R, then loads the package with 
+  `library()` (If you don't use Rstudio, you'll have to do this by hand;
+  that's a bit painful.)
 
-The three functions that you'll use most often are:
-
-* `load_all("pkg")`, which loads code, data, and C files. These are loaded into
-  a non-global environment to avoid conflicts and so all functions can easily
-  be removed. By default `load_all` will only load changed files to save time:
-  if you want to reload everything from scratch, run `load_all("pkg", T)`
-
-* `test("pkg")` runs all tests in `inst/tests/` and reports the results.
-
-* `document("pkg")` runs `roxygen` on the package to update all documentation.
-
-This makes the development process very easy. After you've modified the code, you run `load_all("pkg")` to load it in to R. You can explore it interactively from the command line, or type `test("pkg")` to run all your automated tests.
-
-Some GUIs have integrated support for these functions. RStudio provides the build menu, which allows you to easily run `load_all` with a single key press (Cmd + Shift + L). ESS? 
-
-The following sections describe how you might combine these functions into a process.
+These commands make it very easy to iterate between writing code in your editor and trying it out in the R console.
 
 ## Development cycles
 
-It's useful to distinguish between exploratory programming and confirmatory programming (in the same sense as exploratory and confirmatory data analysis), because the development cycle differs in several important ways.
+The package development cycle describes the sequence of operations that you use when developing a package. You probably already have a sequence of operations that you're comfortable with when developing a single file of R code. It might be:
 
-### Confirmatory programming
+1. Try something out on the command line.
 
-Confirmatory programming happens when you know what you need to do and what the results of your changes will be (new feature X appears or known bug Y disappears); you just need to figure out the way to do it. Confirmatory programming is also known as [test driven development][tdd] (TDD), a development style that grew out of [extreme programming](extreme-programming). The basic idea is that, before you implement any new feature or fix a known bug, you should:
+1. Modify it until it works and then copy and paste the command into an R file.
 
-1. Write an automated test and run `test()` to make sure the test fails (so you know
-   you've captured the bug correctly).
+1. Every now and then restart R and reload the complete file to make sure
+   you've ordered all the code correctly.
 
-2. Modify code to fix the bug or implement the new feature.
+Or maybe you:
 
-3. Run `test(pkg)` to reload the package and re-run the tests.
+1. Write all your functions in an R file and save it.
 
-4. Repeat 2--3 until all tests pass.
+1. `source()` the file into your current session.
 
-5. Update documentation comments, run `document()`, and update `NEWS`.
+1. Interactively try out the functions and see if they return the correct
+  results.
 
-For this paradigm, you might also want to use `testthat::auto_test()`, which will watch your tests and code and will automatically rerun your tests when either changes. This allows you to skip step three: you just modify your code and watch to see if the tests pass or fail.
+1. Repeat the above steps until the functions work the way you expect.
 
-### Exploratory programming
+With devtools and Rstudio, you can:
 
-Exploratory programming is the complement of confirmatory programming, when you have some idea of what you want to achieve, but you're not sure about the details. You're not sure what the functions should look like, what arguments they should have and what they should return. You may not even be sure how you are going to break down the problem into pieces. In exploratory programming, you're exploring the solution space by writing functions and you need the freedom to rewrite large chunks of the code as you understand the problem domain better.
+1. Edit R files in the editor.
 
-The exploratory programming cycle is similar to confirmatory, but it's not usually worth writing the tests before writing the code, because the interface will change so much:
+1. Press Cmd + Shift + L
 
-1. Edit code and reload with `load_all()`.
+1. Explore the code in the console
 
-2. Test interactively.
+1. Rinse and repeat.
 
-3. Repeat 1--2 until code works.
+You might also be a little bit more worried about checking that your functions work, not only now, on your computer, but also in the future and on other computers. You'll learn more about more sophisticated workflows that prevent that from happening in [testing](#tests).
 
-4. Write automated tests and `test()`.
-
-5. Update documentation comments, run `document()`, and update `NEWS`
-
-The automated tests are still vitally important because they are what will prevent your code from failing silently in the future.
-
-[tdd]:http://en.wikipedia.org/wiki/Test-driven_development
-[extreme-programming]:http://en.wikipedia.org/wiki/Extreme_programming
