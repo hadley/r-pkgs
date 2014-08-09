@@ -8,7 +8,59 @@ output: bookdown::html_chapter
 
 Vignettes exists to help the user understand how to use the package as a whole. Function level documentation is useful once you know exactly what you want to do, and you've discovered the appropriate function: once you've done all that, function-level documentation helps you use the function appropriately. Vignettes get you to point where you can do that: they explain what the package does as a whole, breaks the functions down into useful categories, and shows you how to combine the functions (and maybe functions from other packages) to solve problems.
 
-Vignettes are long-form pdf guides to your package. There are many types of vignettes, but here I'll only discuss the most useful: Rmarkdown.
+You can see all the vignettes in installed packages with `browseVignettes()`, or for a specific package with `browseVignettes("packagename")`. For each vignette you get three things: the original input file, the rendered html or pdf, and a file of R code.
+
+Vignettes are long-form pdf guides to your package. There are many types of vignettes, but here I'll only discuss the most useful: Rmarkdown. You can get your package ready to add an vignette by running:
+
+```{r}
+devtools::use_knitr()
+```
+
+This will:
+
+1. Create a `vignettes/` directory
+1. Add the necessary dependencies to `DESCRIPTION` (i.e. knitr in suggest and 
+   vignette builder)
+1. Remind you how to create individual vignettes.
+
+You can then write using Rmarkdown and knitr, which are briefly described below.
+
+(If you're familiar with latex and Sweave, you can also write vignettes in latex. However, I've found that since I've switched to Rmarkdown I write vignettes far more often. The restrictions of markdown make it easier to focus on the text. It also doesn't hurt that you don't need the massive latex toolchain to build rmarkdown vignettes.)
+
+## Organisation
+
+You can have as many vignettes as you like. I tend to think of them like chapters of a book - they should be self-contained, but may link together into a cohesive whole.
+
+You can link between various vignettes, although it's a slight hack because it takes advantage of the exactly how files are stored on disk. If you want to link to a vignette `abc.Rmd`, just make a link to `abc.html`.
+
+## Development cycle
+
+Run code a chunk at a time using Cmd + Alt + C. Re-run the entire document in a fresh R session using Knit (Cmd + Shift + K). You can build all vignettes from the console with `devtools::build_vignettes()`, but this is rarely useful. Instead rely on `build()` to create a package bundle with the vignettes included.
+
+Note that RStudio's "Build & reload" does not build vignettes (in the interest of saving time). All install functions (like `install_github()`) will ensure vignettes are built by default, most have an argument to turn off if it's time consuming.
+
+## CRAN notes
+
+If you're submitting your package to CRAN, you'll also need to watch the file size. If you include a lot of graphics, it's easy to create a very large file.
+
+Note that you do vignette building locally, so that CRAN recieves the html/pdf and the source code. CRAN checks that the code is runnable (by running it), but does not re-build the vignette. This means that any packages used by the vignette must be declared in the `DESCRIPTION`. This means that you can use Rmarkdown (which uses pandoc) even though CRAN doesn't have pandoc installed.
+
+Common problems:
+
+* The vignette builds interactively, but when checking, fails with an error 
+  about a missing package that you know is installed. This means that you've
+  forgotten to declare that dependency in the `DESCRIPTION` (usually it should
+  go in suggests).
+
+## Rmarkdown
+
+(Take highlights from cheatsheet)
+
+## Knitr
+
+(Take highlights from cheatsheet)
+
+## Where next
 
 If you write a nice vignette, you might want to consider submitting it to the Journal of Statistical Software or the R Journal. Both are electronic only journals and peer-reviewing can be very helpful for improving the quality of your vignette and the related software.
 
