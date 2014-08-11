@@ -4,11 +4,50 @@ title: Compiled code
 output: bookdown::html_chapter
 ---
 
+# Compiled code {#src}
 
-* C++
-* C
-* Fortran
+* Make files beyond the scope of this book. 
+
+* Bundling external libraries beyond the scope of this book (but I wish it 
+  wasn't).
+
+* Assumes that you know how to use C or C++ already. If you don't, see the 
+  "Advanced R book" (online, amazon).
+
+## C++
+
+Easiest way to access compiled language from R is to use C++.
+
+## C
+
+Sometimes needed if you're wrapping old code, or you really need to eke out performance by avoiding C++ wrappers (this is rare). Mostly important for understand older packages.
+
+*   `.c` files in `src/`, need:
+
+    ```c
+    #include <R.h>
+    #include <Rdefines.h>
+    ```
+
+*  Need wrapper functions like this:
+
+    ```{r, eval = FALSE}
+    #' @useDynLib qstack car
+    car_ <- function(x) .Call(car, x)
+    ```
 
 Speed considerations: <http://cran.r-project.org/doc/manuals/R-exts.html#Speed-considerations>
 
-* Java?
+* Slowest: use `.Call("car")`
+* Faster: use `.Call(car)`
+* Fastest: don't write wrapper function
+
+This makes microseconds of difference, so normally not important. Only matters if you have tight loop calling millions of times - and you can normally move that loop into C.
+
+## Fortran
+
+Also possible, but beyond the scope of this book.
+
+## Java
+
+See rJava.  Unlike C and C++ wrappers, must always copy. This usually makes it unacceptably slow when working with larger data (which much of the time is why you're using an other language).
