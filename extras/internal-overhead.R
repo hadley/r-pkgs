@@ -25,7 +25,10 @@ tabulate2 <- cfunction(c(bin = "SEXP", nbins = "SEXP"), '
 
 x <- sample(100, 3, rep = TRUE)
 
+tabulate3 <- tabulate2@.Data
+
 microbenchmark(
   .Internal(tabulate(x, 3)),
-  tabulate2(x, 3)
+  tabulate2(x, 3),
+  tabulate3(x, 3)
 )
