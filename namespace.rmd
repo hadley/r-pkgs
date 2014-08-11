@@ -115,3 +115,30 @@ To import compiled code from another package, use `@useDynLib`
 * Any `@useDynLib` specification containing a comma, e.g.
   `@useDynLib mypackage, .registration = TRUE` will be inserted as is
   into the the `NAMESPACE`, e.g. `useDynLib(mypackage, .registration = TRUE)`
+
+# S3 
+
+One complexity arises when you want to register S3 methods for a generic that's defined in a suggested package. You can't use `S3method()` because the generic is not available at package load time. Instead, you can use the following code to set up hooks that load automatically.
+
+From htmltools:
+
+```{r}
+# COPYRIGHT RStudio, GPL >= 2
+registerMethods <- function(methods) {
+  lapply(methods, function(method) {
+    pkg <- method[[1]]
+    generic <- method[[2]]
+    class <- method[[3]]
+    func <- get(paste(generic, class, sep="."))
+    if (pkg %in% loadedNamespaces()) {
+      registerS3method(generic, class, func, envir = asNamespace(pkg))
+    }
+    setHook(
+      packageEvent(pkg, "onLoad"),
+      function(...) {
+        registerS3method(generic, class, func, envir = asNamespace(pkg))
+      }
+    )
+  })
+}
+```

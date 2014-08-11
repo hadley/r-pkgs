@@ -6,13 +6,22 @@ output: bookdown::html_chapter
 
 # R code
 
-The `R/` directory contains all your R code, so copy in any existing code.  Files containing R code should always have the extension `.R` (you can also use `.r`, but I recommend sticking to `.R` for consistency).
+The most important part of most packages is the `R/` directory because it contains all of your R code. We'll start with `R/`, because even if you do nothing else, putting your R files in this directory gives you some useful tools.
+
+In this chapter you'll learn:
+
+* How to organise the R code in your package.
+* Your first package development workflow.
+* What happens when you install a package.
+* The difference between a library and package.
 
 ## Starting a package
 
 There are two ways to get started with a new package:
 
 * Firstly, you can just create an R directory and move in your R code.
+  Files containing R code should always have the extension `.R` (you can also 
+  use `.r`, but I recommend sticking to `.R` for consistency).
 
 * Alternatively, use `devtools::create("pkgname")`: this will create a
   directory called `pkgname`, containing an empty `R/` directory and 
@@ -47,6 +56,10 @@ particularly if the functions are large or have a lot of documentation. As
 you'll see in the next chapter, often the code for the function is small
 compared to its documentation (it's much easier to do something than it is to
 explain to someone else how to do it.)
+
+You can not use subdirectories. If you have many files with related purposes, I recommend using a common prefix: `abc-*.R`.
+
+Learning how to use F2 (jump to defintion) and Ctrl + . (jump to function) in RStudio considerably weakens the need to have a very organised directory.
 
 ## Working directories & Rstudio projects
 
@@ -173,16 +186,28 @@ If you want to distribute your package to another R user (i.e. someone who doesn
 * If you had any code in the `src/` directory there will now be a `libs/`
   directory that contains the results of compiling that code for 32 bit
   (`i386/`) and 64 bit (`x64/`)
+  
+* The contents of `inst/` have been moved into the top-level directory.
 
 Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. You can use `devtools::build(binary = TRUE)` to make a binary package.  Mac binary packages end in `.tgz` and Windows binary packages end in `.zip`.
-
-An __installed__ package is just a binary package that's been uncompressed into a package library, described next.
 
 The following table summarises the files present in the root directory for the source, built and binary versions of devtools.
 
 ```{r, results = "asis", echo = FALSE}
 knitr::kable(readRDS("extras/pkg-paths.rds"))
 ```
+
+(Needs diagram instead of table?)
+
+* `cran-comments.md` and `devtools.Rproj` are included in `src` but nothing 
+  else. That's because they're only need for development, and are listed in
+  `.Rbuildignore`.
+  
+* `inst/` goes away and `templates/` appears - that's because building a 
+  binary copies the contents of `inst/` into the root directory. You'll learn
+  more about that in XXX.
+
+An __installed__ package is just a binary package that's been uncompressed into a package library, described next.
 
 ### Libraries
 
@@ -200,6 +225,26 @@ lapply(.libPaths(), dir)
 When you use `library(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists. 
 
 Packrat, which we'll learn about in Chapter XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it means you can play around with cutting-edge packages in one place, but all your other projects continue to use the old reliable packages. This is also useful when you're both developing and using a package. 
+
+### Side effects
+
+You should not call functions that cause side-effects at the top-level of the package:
+
+* `library()`, `require()`
+* `options()`, `par()`
+* `write()`, `write.csv()`, `saveRDS()`, etc. which save output to disk.
+
+When you're developing a package with `load_all()` they will appear to work. When you turn your code into a package (e.g. with "build and reload") they will not work, because they will be run only once when the package is built (affecting your R session), not every time it is loaded. 
+
+It is almost always best to make changes to the users environment explicit. They shouldn't happen automatically, but instead should be requested by executing a function. 
+
+Occassionally, there are important side-effects that you a package does need. This might be create an temporary file somewhere or similar. To run that code every time the package is loaded, use the special functions `.onLoad()` and `onAttach()`. These are called when the package is loaded or attached. You'll learn about the distinction between the two in [Namespaces](#namespace). Unless you know otherwise use `.onAttach()`. NEVER use `library()` or `require()` in these functions.
+
+Whenever you use `.onLoad()` or `.onAttach()`, make sure to define `.onUnload()` or `.onDetach()` to clean up when the package is unload/detached. A common use of `.onLoad()` is to dynamically load a DLL file. This is old-fashioned practice and there are better alternatives available. You'll learn about these in [Namespaces](#namespace).  Can still be necessary if you're connecting to external C/C++ libraries that need set up and tear down. For example, devtools uses `.onAttach()` to run some code that locates Rtools on windows; shiny uses it to set up PRNG correctly.
+
+One type of side-effect that's not so harmful is displaying a message when the package is loaded. This might make clear licensing conditions, or important usage tips. Startup messages should go in `.onAttach()`. To display startup messages, always use `packageStartupMessage()`, and not `message()`. (This allows `suppressPackageStartupMessages()` to selectively suppress package startup messages).
+
+Can also use to set up hooks that run when other packages are loaded. This can be useful if you want to warn when packages are loaded in sub-optimal manner (e.g. dplyr before plyr), or when you need to add S3 methods to a suggested package. That's discussed in more detail in [namespaces](#namespace).
 
 ### What happens when you install a package?
 
@@ -220,9 +265,6 @@ Package installation is the process whereby a source package gets converted into
   locations: `install_url()`, `install_gitorious()`, `install_bitbucket()`, 
   and so on. You'll learn more about these in [release](release.html).
   
-## What happens when you load a package?
-
-`.onLoad()`, `onAttach()`.
 
 ## Exercises
 
@@ -235,3 +277,15 @@ Package installation is the process whereby a source package gets converted into
 * Where is your default library? What happens if you install a new package
   from CRAN?
 
+## CRAN notes
+
+If you're planning on submitting your package to CRAN, it's best to use only ASCII characters. If you need unicode characters in strings, use `"\u1234" format:
+
+```{r}
+# TODO figure out how to display x as y
+x <- "•"
+y <- "\u2022"
+identical(x, y)
+```
+
+Your R directory should not include any other files. Subdirectories will be ignored.
