@@ -15,147 +15,124 @@ In this chapter you'll learn:
 * What happens when you install a package.
 * The difference between a library and package.
 
-## Starting a package
+## Getting started {#getting-started}
 
-There are two ways to get started with a new package:
+The easiest way to get started with a package is to run `devtools::create("path/to/package/pkgname")`. This makes the package directory, `path/to/package/pkgname/`, then adds four things to make the smallest usable package:
 
-* Firstly, you can just create an R directory and move in your R code.
-  Files containing R code should always have the extension `.R` (you can also 
-  use `.r`, but I recommend sticking to `.R` for consistency).
+1. An RStudio project file, `pkgname.Rproj`.
+1. An `R/` directory.
+1. A basic `DESCRIPTION` file.
+1. A basic `NAMESPACE` file.
 
-* Alternatively, use `devtools::create("pkgname")`: this will create a
-  directory called `pkgname`, containing an empty `R/` directory and 
-  some useful files that you'll learn about in the course of this book.
+In this chapter, you'll learn about the `R/` directory and the RStudio project file. Ignore the other files for now. You'll learn about  the `DESCRIPTION` in [package metadata](#description) and the `NAMESPACE` in [namespaces](#namespace).
 
-__Never__ use `package.skeleton()`: it's designed for a bygone era of package development, and mostly serves to make your life harder, not easier.
+__Never__ use `package.skeleton()` to create a package. It's designed for an older era of package development, and mostly serves to make your life harder, not easier. Currently I don't recommend using RStudio's "create a new package" tool because it uses `package.skeleton()`. That will be fixed by the time the book is published.
 
-## Loading code
+The first principle of using a package is that all R code goes in `R/`. If you have existing code for your new package, now's a good time to copy it into `R/`.
 
-The first advantage of using a package is that it's now easier to reload all of your code. There are two options: 
+### Naming tips {#naming}
 
-* `load_all()`, Cmd + Shift + L, reloads all code in the package. It's 
-  fast but takes some shortcuts that occassionally backfire. In RStudio,
-  this also saves all open files, saving you a key press.
+The hardest thing about creating a new package is coming up with a good name. There's only one formal requirement:
 
-* Build & reload, Cmd + Shift + B. This is only available in RStudio, because
-  it installs the package, then restarts R, then loads the package with 
-  `library()` (If you don't use RStudio, you'll have to do this by hand;
-  that's a bit painful.)
+* The package name can only consist of letters and numbers, and must start
+  with a letter.
 
-These commands make it very easy to iterate between writing code in your editor and trying it out in the R console.
+But if you're planning on releasing your package to the wild, I think it's worth a few minutes brainstorming names. I have two recommendations:
 
-## Organisation
+* Pick a unique name so you can easily google it. This makes it easy for 
+  potential users to find your package, and it makes it easier for you to
+  see who's using your package.
 
-It's up to you how you arrange your functions into files. There are two
-possible extremes: all functions in one file, and each function in its own
-file. I think these are both too extreme, and I suggest grouping related
-functions into a single file. My rule of thumb is that if I can't remember
-which file a function lives in, I probably need to split them up into more
-files: having only one function in a file is perfectly reasonable,
-particularly if the functions are large or have a lot of documentation. As
-you'll see in the next chapter, often the code for the function is small
-compared to its documentation (it's much easier to do something than it is to
-explain to someone else how to do it.)
+* Avoid using both upper and lower case letters: they make the package name
+  hard to type and hard to remember. For example, I can never remember if it's
+  `Rgtk2` or `RGTK2` or `RGtk2`.
 
-You can not use subdirectories. If you have many files with related purposes, I recommend using a common prefix: `abc-*.R`.
+Some strategies I've used in the past to create packages names:
 
-Learning how to use F2 (jump to defintion) and Ctrl + . (jump to function) in RStudio considerably weakens the need to have a very organised directory.
+* Find a name evocative of the problem and modify it so that it's unique:
+  `plyr` (generalisation of apply tools), `lubridate` (makes dates and times
+  easier), `mutatr` (mutable objects), `classifly` (high-dimensional views of
+  classification).
 
-## Working directories & RStudio projects
+* Use abbreviations: `lvplot` (letter value plots), `meifly` (models explored
+  interactively).
 
-All devtools functions assume that your current working directory is the package. If you need to override that, you can supply the full path in the first argument, but you're better off learning how to use working directories or RStudio projects effectively.
+* Add an extra R: `stringr` (string processing), `tourr` (grand tours), `httr`
+  (HTTP requests).
 
-Every R session has a "working directory" associated with. Whenever you use a relative path, it's relative to this directory. It's a good practice to get into.
+## RStudio projects {#projects}
 
-You can see the current working directory with `getwd()`. You can also change it with `setwd()`, but seeing this in a script is a bad sign. An explicit `setwd()` makes code fragile because it will now only work on a computer set up exactly the same way as yours. Instead, you should assume that when someone uses your code, they're already set up the working directory correctly. The easiest way to do that is to use RStudio projects.
+To get started with your new package in RStudio, double-click the `package.Rproj` file that `create()` just made. This will open a new RStudio project for your package. Projects are a great way to develop packages because:
 
-### RStudio projects
-
-If you use RStudio, I highly recommend using an RStudio project for your package. Projects are a very thin wrapper around working directories - they remember what working directory you are in and what files you have open.
-
-* Projects isolate state so that unrelated things stay unrelated.
+* Each project is isolated; they keep unrelated things unrelated.
 
 * You get handy code navigation tools like `F2` to jump to a function
   definition and `Ctrl + .` to look up functions by name.
 
 * You get useful keyboard shortcuts for common package development tasks.
-  See Help | Keyboard shortcuts, or press Alt + Shift + K to see them all.
+  You'll learn these throughout the book, but to see them all press 
+  Alt + Shift + K or use the Help | Keyboard shortcuts menu.
 
-* Projects are a light weight text file, and devtools makes sure that 
-  this file is not included in binary packages that you share with others 
-  (by including in `.Rbuildignore`).
+`create()` makes an `.Rproj` file for you. If you want to add one to an existing package, use `devtools::use_rstudio("path/to/package")`. If you don't use RStudio, you can get many of the benefits by starting a new R session and ensuring the working directory is set to the project directory. 
 
-* Package development projects have a number of very useful keyboard 
-  shortcuts that we'll use throughout the book.
-
-`create()` will automatically create a `.Rproj` file for you. To create one after the fact, run `devtools::use_rstudio()` in the package directory, or use the "New Project..." command in the project menu.
-
-```{r, echo = FALSE}
-bookdown::embed_png("screenshots/new-project.png", dpi = 220)
-```
-
-`.Rproj` files are just text files. For example, if you looked at the project file associated with this book, you'd see:
+`.Rproj` files are just text files. The project file created by devtools looks like this:
 
 ```
 Version: 1.0
 
-RestoreWorkspace: Default
-SaveWorkspace: Default
+RestoreWorkspace: No
+SaveWorkspace: No
 AlwaysSaveHistory: Default
 
 EnableCodeIndexing: Yes
-UseSpacesForTab: Yes
-NumSpacesForTab: 2
 Encoding: UTF-8
-
-RnwWeave: Sweave
-LaTeX: XeLaTeX
 
 AutoAppendNewline: Yes
 StripTrailingWhitespace: Yes
+
+BuildType: Package
+PackageUseDevtools: Yes
+PackageInstallArgs: --no-multiarch --with-keep.source
+PackageRoxygenize: rd,collate,namespace
 ```
 
-Never modify this file by hand. Instead, use the friendly project options dialog, accessible from the projects menu in the top-right corner.
+Never modify this file by hand. Instead, use the friendly project options dialog, accessible from the projects menu in the top-right corner of RStudio.
 
 ```{r, echo = FALSE}
 bookdown::embed_png("screenshots/project-options-1.png", dpi = 220)
 bookdown::embed_png("screenshots/project-options-2.png", dpi = 220)
 ```
 
-## Development cycles
+## Organising and running code {#r-code}
 
-The package development cycle describes the sequence of operations that you use when developing a package. You probably already have a sequence of operations that you're comfortable with when developing a single file of R code. It might be:
+The first advantage of using a package is that it's easy to load all of the code in your package. There are two main options: 
 
-1. Try something out on the command line.
+* `devtools::load_all()`, __Cmd + Shift + L__, reloads all code in the package. 
+  In RStudio, this also saves all open files, saving you a key press.
 
-1. Modify it until it works and then copy and paste the command into an R file.
+* Build & reload, __Cmd + Shift + B__. This is only available in RStudio, because
+  it installs the package, then restarts R, then loads the package with 
+  `library()` (doing this by hand is painful).
 
-1. Every now and then restart R and reload the complete file to make sure
-   you've ordered all the code correctly.
-
-Or maybe you:
-
-1. Write all your functions in an R file and save it.
-
-1. `source()` the file into your current session.
-
-1. Interactively try out the functions and see if they return the correct
-  results.
-
-1. Repeat the above steps until the functions work the way you expect.
-
-With devtools and RStudio, you can:
+These commands support a fluid development workflow:
 
 1. Edit R files in the editor.
 
-1. Press Cmd + Shift + L
+1. Press Cmd + Shift + L (or Cmd + Shift + B).
 
-1. Explore the code in the console
+1. Explore the code in the console.
 
 1. Rinse and repeat.
 
-You might also be a little bit more worried about checking that your functions work, not only now, on your computer, but also in the future and on other computers. You'll learn more about more sophisticated workflows that prevent that from happening in [testing](#tests).
+You're free to arrange functions into files however you wish. It's clear that the two extremes are bad: don't put all functions in one file, or every function in its own file. My rule of thumb is that if I can't remember which file a function lives in, I probably need to split them up into more files, or give them better names. It's ok if some files only contain one function, particularly if the function is large or has a lot of documentation. Unfortunately you can't use subdirectories inside in `R/`. The next best thing is to use a common prefix, e.g., `abc-*.R`.
 
+There are two keyboard shortcuts that let you jump to the definition of a function:
+
+* Click a function name in code and press __F2__.
+
+* Press __Ctrl + .__ then start typing the name.
+
+Congratulations, you've now understand the basics of using a package! In the rest of this chapter, you'll learn more about the various forms of a package, and exactly what happens when you run `install.packages()` or `install_github()`.
 
 ## What is a package?
 
