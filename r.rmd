@@ -126,7 +126,7 @@ These commands support a fluid development workflow:
 
 You're free to arrange functions into files however you wish. It's clear that the two extremes are bad: don't put all functions in one file, or every function in its own file. My rule of thumb is that if I can't remember which file a function lives in, I probably need to split them up into more files, or give them better names. It's ok if some files only contain one function, particularly if the function is large or has a lot of documentation. Unfortunately you can't use subdirectories inside in `R/`. The next best thing is to use a common prefix, e.g., `abc-*.R`.
 
-There are two keyboard shortcuts that let you jump to the definition of a function:
+The exact placement of functions within files is less important if you master two important keyboard shortcuts that let you jump to the definition of a function:
 
 * Click a function name in code and press __F2__.
 
@@ -134,74 +134,6 @@ There are two keyboard shortcuts that let you jump to the definition of a functi
 
 Congratulations, you've now understand the basics of using a package! In the rest of this chapter, you'll learn more about the various forms of a package, and exactly what happens when you run `install.packages()` or `install_github()`.
 
-## What is a package?
-
-To develop packages, it's good to have a good understand of what a package is, and the various forms that it comes in.
-
-### Source, binary and bundled packages
-
-So far we've just worked with a __source__ package: the development version of a package that lives on your computer. There are also three other types of package: bundled, binary and installed.
-
-A package __bundle__ is a compressed version of a package in a single file. By convention, package bundles in R use the extension `.tar.gz`. This is Linux convention indicating multiple files have been collapsed into a single file (`.tar`) and then compressed using gzip (`.gz`). The package bundle is useful if you want to manually distribute your package to another R package developer. It is not OS specific. You can use `devtools::build()` to make a package bundle. If you decompress a package bundle, you'll see it looks almost the same as your source package. (The only difference is that it excludes files listed in `.Rbuildignore`).
-
-If you want to distribute your package to another R user (i.e. someone who doesn't necessarily have the development tools installed) you need to make a __binary__ package. Like a package bundle, a binary package is a single file, but if you uncompress it, you'll see that the internal structure is a little different to a source package: 
-
-* a `Meta/` directory contains a number of `Rds` files. These contain cached
-  metadata about the package, like what topics the help files cover and
-  parsed versions of the `DESCRIPTION` files. (If you want to look at what's
-  in these files you can use `readRDS()`). The goal of these files is to make
-  packages load as quickly as possible.
-
-* a `html/` directory contains some files needed for the HTML help.
-
-* there are no `.R` files in the `R/` directory - instead there are three
-  files that store the parsed functions in an efficient format. This is
-  basically the result of loading all the R code and then saving the
-  functions with `save()`, but with a little extra metadata to make things as
-  fast as possible.
-
-* If you had any code in the `src/` directory there will now be a `libs/`
-  directory that contains the results of compiling that code for 32 bit
-  (`i386/`) and 64 bit (`x64/`)
-  
-* The contents of `inst/` have been moved into the top-level directory.
-
-Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. You can use `devtools::build(binary = TRUE)` to make a binary package.  Mac binary packages end in `.tgz` and Windows binary packages end in `.zip`.
-
-The following table summarises the files present in the root directory for the source, built and binary versions of devtools.
-
-```{r, results = "asis", echo = FALSE}
-knitr::kable(readRDS("extras/pkg-paths.rds"))
-```
-
-(Needs diagram instead of table?)
-
-* `cran-comments.md` and `devtools.Rproj` are included in `src` but nothing 
-  else. That's because they're only needed for development, and are listed in
-  `.Rbuildignore`.
-  
-* `inst/` goes away and `templates/` appears - that's because building a 
-  binary copies the contents of `inst/` into the root directory. You'll learn
-  more about that in XXX.
-
-An __installed__ package is just a binary package that's been uncompressed into a package library, described next.
-
-### Libraries
-
-In R, to load a package, you use the `library()` function. That's confusing, and some people use the terms library and package interchangeable. But libraries are different to packages, and it's useful to understand the difference.
-
-A library is a collection of installed packages. You can have multiple libraries on your computer and most people have at least two: one for the recommended packages that come with a base R install (like `base`, `stats` etc), and one library where the packages you've installed live. The default is to make that directory dependent on which version of R you have installed - that's why you normally lose all your packages when you reinstall R. If you want to avoid this behaviour, you can manually set the `R_LIBS` environmental variable to point somewhere else. `.libPaths()` tells you where your current libraries live.
-
-My `.libPaths()` has two entries: the first is where packages that I've installed R live, and the second is where packages that come with R live:
-
-```{r}
-.libPaths()
-lapply(.libPaths(), dir)
-```
-
-When you use `library(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists. 
-
-Packrat, which we'll learn about in Chapter XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it means you can play around with cutting-edge packages in one place, but all your other projects continue to use the old reliable packages. This is also useful when you're both developing and using a package. 
 
 ### Side effects
 
@@ -223,46 +155,136 @@ One type of side-effect that's not so harmful is displaying a message when the p
 
 Can also use to set up hooks that run when other packages are loaded. This can be useful if you want to warn when packages are loaded in sub-optimal manner (e.g. dplyr before plyr), or when you need to add S3 methods to a suggested package. That's discussed in more detail in [namespaces](#namespace).
 
-### What happens when you install a package?
+## What is a package? {#package}
 
-Package installation is the process whereby a source package gets converted into a binary package and then installed into a local library.  There are a number of tools that automate this process:
+To develop a packge all you need is the workflow above. But to master package development, particularly distributing your package to others, you need to understand more about the different forms a package can take. This will help you understand exactly what happens when you do `install.packages()`.
 
-* `install.packages()` installs a package from CRAN. Here CRAN takes care of
-  making the binary package and so installation from CRAN basically is
-  equivalent to downloading the binary package value and unzipping it in
-  `.libPaths()[1]`.
+So far we've just worked with a __source__ package: the development version of a package that lives on your computer. A source package is just a directory with components like `R/`, `DESCRIPTION`, and so on. There are three other types of package: bundled, binary and installed.
 
-* `devtools::install()` installs a source package from a directory on your
-  computer. It does this by first `build()`ing a package bundle, and then
-  asking `install.packages()` to install it.
+A package __bundle__ is a compressed version of a package in a single file. By convention, package bundles in R use the extension `.tar.gz`. This is Linux convention indicating multiple files have been collapsed into a single file (`.tar`) and then compressed using gzip (`.gz`). A bundle is not that useful in its own right, but is often used an intermediary in other steps. It's rare that you'll need it, but you can call `devtools::build()` to make a package bundle. If you decompress a bundle, you'll see it looks almost the same as your source package. The main differences between a decompressed bundle and a source package are:
 
-* `devtools::install_github()` installs a package that someone has published
-  to their [github](http://github.com) account. There are a number of similar
-  functions that make it easy to install packages from other internet
-  locations: `install_url()`, `install_gitorious()`, `install_bitbucket()`, 
-  and so on. You'll learn more about these in [release](release.html).
+* Vignettes, package level documentation, are built turning raw files like
+  markdown or latex into output like html and pdf.
+
+* Your source package might contain temporary files used to save time during
+  development, like compilation artefacts in `src/`.
+
+* Any files listed in `.Rbuildignore` are not included in the bundle. You'll
+  learn more about `.Rbuildignore` in XXX.
+
+If you want to distribute your package to another R user (i.e. someone who doesn't necessarily have the development tools installed) you need to make a __binary__ package. Like a package bundle, a binary package is a single file, but if you uncompress it, you'll see that the internal structure is a little different to a source package: 
+
+* There are no `.R` files in the `R/` directory - instead there are three
+  files that store the parsed functions in an efficient format. This is
+  basically the result of loading all the R code and then saving the
+  functions with `save()`, but with a little extra metadata to make things as
+  fast as possible.
+
+* A `Meta/` directory contains a number of `Rds` files. These contain cached
+  metadata about the package, like what topics the help files cover and
+  parsed versions of the `DESCRIPTION` files. (You can use `readRDS()` to see 
+  exactly what's in those files). These files make package loading faster
+  by caching costly computations.
+
+* A `html/` directory contains some files needed for HTML help.
+
+* If you had any code in the `src/` directory there will now be a `libs/`
+  directory that contains the results of compiling that code for 32 bit
+  (`i386/`) and 64 bit (`x64/`).
   
+* The contents of `inst/` have been moved into the top-level directory.
 
-## Exercises
+Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. Mac binary packages end in `.tgz` and Windows binary packages end in `.zip`. You can use `devtools::build(binary = TRUE)` to make a binary package. 
 
-* Go to CRAN and download the source and binary for XXX. Unzip and compare.
-  How do they differ?
+The following table summarises the files present in the root directory for the source, built and binary versions of devtools.
 
-* Download the __source__ packages for XXX, YYY, ZZZ. What directories do they
-  contain?
+```{r, results = "asis", echo = FALSE}
+knitr::kable(readRDS("extras/pkg-paths.rds"))
+```
 
-* Where is your default library? What happens if you install a new package
-  from CRAN?
+(Needs diagram instead of table)
+
+* `cran-comments.md` and `devtools.Rproj` are included in `src` but nothing 
+  else. That's because they're only needed for development, and are listed in
+  `.Rbuildignore`.
+  
+* `inst/` goes away and `templates/` appears - that's because building a 
+  binary copies the contents of `inst/` into the root directory. You'll learn
+  more about that in XXX.
+
+### Exercises
+
+1.  Go to CRAN and download the source and binary for XXX. Unzip and compare.
+    How do they differ?
+
+1.  Download the __source__ packages for XXX, YYY, ZZZ. What directories do they
+    contain?
+
+## Package installation 
+
+An __installed__ package is just a binary package that's been uncompressed into a package library, described next. The following diagram describes the many ways a package can be installed. This diagram is complicated! In an ideal world installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed, installed -> in memory. It's not this simple in the real world because doing each step in sequence is slow, and there are often faster short cuts available.
+
+```{r, echo = FALSE}
+bookdown::embed_png("diagrams/installation.png")
+```
+
+The power house is the command line tool `R CMD install` - it can install a source, bundle or a binary package. When you install a package from CRAN, R basically downloads the file and then runs `R CMD install` on it.
+
+Devtools functions wrap the base R functions so that you can access them from R, rather than the command line. `install()` is effectively just a wrapper for `R CMD install`. `build()` is a wrapper for `R CMD build` that turns source packages into bundles. `install_github()` downloads a source package from github, runs `build()` to make vignettes, then uses `R CMD install` to install. `install_url()`, `install_gitorious()`, `install_bitbucket()` work similarly for packages found elsewhere on the internet.
+
+RStudio's "Build and reload" performs one additional step - it also loads the package into memory. `load_all()` is similar, except that it skips all intermediate steps - it goes directly from a source package to a loaded in-memory package. `library()` is the equivalent for installed packages.
+
+## What is a library? {#library}
+
+A collection of packages is called a library. This is a bit confusing because you use the `library()` function to load a package, but the distinction between libraries and packages is important and useful. A library is just a directory containing installed packages. You can have multiple libraries on your computer and almost everyone has at least two: one for the recommended packages that come with a base R install (like `base`, `stats` etc), and one library where the packages you've installed live. Normally, that second directory varies based on the R version of R that you're using. That's why it seems like your "lose" all your packages when you reinstall R - they're actually still on your hard drive, but R can't find them. 
+
+You can use `.libPaths()` to see which libraries are currently active. Here are mine:
+
+```{r, eval = FALSE}
+.libPaths()
+#> [1] "/Users/hadley/R"                                               
+#> [2] "/Library/Frameworks/R.framework/Versions/3.1/Resources/library"
+lapply(.libPaths(), dir)
+#> [[1]]
+#>   [1] "AnnotationDbi"   "ash"             "assertthat"     
+#>   ...      
+#> [163] "xtable"          "yaml"            "zoo"            
+#> 
+#> [[2]]
+#>  [1] "base"         "boot"         "class"        "cluster"     
+#>  [5] "codetools"    "compiler"     "datasets"     "foreign"     
+#>  [9] "graphics"     "grDevices"    "grid"         "KernSmooth"  
+#> [13] "lattice"      "MASS"         "Matrix"       "methods"     
+#> [17] "mgcv"         "nlme"         "nnet"         "parallel"    
+#> [21] "rpart"        "spatial"      "splines"      "stats"       
+#> [25] "stats4"       "survival"     "tcltk"        "tools"       
+#> [29] "translations" "utils"
+```
+
+My first lib path is where packages that I've installed live (I've installed at lot!), and the second is where packages that come with R live. These are the so called "recommended" packages available with every install of R.
+
+When you use `library(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists.
+
+Packrat, which we'll learn about in Chapter XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it means you can play around with cutting-edge packages in one place, but all your other projects continue to use the old reliable packages. This is also useful when you're both developing and using a package. 
+
+### Exercises
+
+1.  Where is your default library? What happens when to that library when 
+    you install a new package from CRAN?
+
+1.  Can you have multiple version of the same package installed at the same 
+    time?
 
 ## CRAN notes
 
-If you're planning on submitting your package to CRAN, it's best to use only ASCII characters. If you need unicode characters in strings, use `"\u1234"` format:
+If you're planning on submitting your package to CRAN, you must use only ASCII characters in your `.R` files. You can still include unicode characters in strings, but you need to use the special unicode escape `"\u1234"` format:
 
 ```{r}
-# TODO figure out how to display x as y
+# TODO figure out how to display x as y: 
+# http://stackoverflow.com/questions/25308913
 x <- "•"
 y <- "\u2022"
 identical(x, y)
 ```
 
-Your R directory should not include any other files. Subdirectories will be ignored.
+Your R directory should not include any files apart from R code. Subdirectories will be ignored.
