@@ -6,7 +6,36 @@ output: bookdown::html_chapter
 
 # Package metadata {#description}
 
-## Naming your package
+The job of the `DESCRIPTION` file is to store important metadata about your package. In the early stages of package development, the most important thing that the `DESCRIPTION` does is store which other packages your package needs to work. 
+
+When you create a new package with `create()` devtools automatically creates a minimal `DESCRIPTION` that contains everything you need to get started. You don't need to worry about the `DESCRIPTION` until you need to.
+
+The `DESCRIPTION` is particularly important if you plan on releasing your package, because it lays out who can use it (the license), and who to contact (you!) if there are any problems.
+
+## A minimal `DESCRIPTION` file
+
+`devtools::create()` builds a `DESCRIPTION` file that looks like this:
+
+    Package: package-name
+    Title: What the package does (short line)
+    Version: 0.1
+    Authors@R: "First Last <first.last@example.com> [aut, cre]"
+    Description: What the package does (paragraph)
+    Depends: R (>= 3.1.0)
+    License: What license is it under?
+    LazyData: true
+
+This is the critical subset of package metadata: what it's called (`Package`), what it does (`Title`, `Description`), what version it is (`Version`), who's allowed to use and distribute it (`License`), and who wrote it (`Author@R`).
+
+## What does the package do?
+
+* `Package`: name of the package. Should be the same as the directory name.
+
+* `Title`: a one line description of the package.
+
+* `Description`: a more detailed paragraph-length description.
+
+### Naming your package
 
 When creating a package the first thing (and sometimes the most difficult) is to come up with a name for it.  There's only one formal requirement:
 
@@ -39,73 +68,25 @@ Some strategies I've used in the past to create packages names:
 
 Once you have a name, create a directory with that name, and inside that create an `R` subdirectory and a `DESCRIPTION` file (note that there's no extension, and the file name must be all upper case). 
 
-## A minimal `DESCRIPTION` file
+## What does the package need?
 
-A minimal description file (this one is taken from an early version of plyr) looks like this:
+```{r, eval = FALSE}
+# Default to imports
+use_package("Rcpp")
+use_package("Rcpp", "LinkingTo")
+```
 
-    Package: plyr
-    Title: Tools for splitting, applying and combining data
-    Description: 
-    Version: 0.1
-    Author: Hadley Wickham <h.wickham@gmail.com>
-    Maintainer: Hadley Wickham <h.wickham@gmail.com>
-    License: MIT
+http://cran.r-project.org/doc/manuals/R-exts.html#Package-Dependencies
 
-This is the critical subset of package metadata: what it's called (`Package`), what it does (`Title`, `Description`), who's allowed to use and distribute it (`License`), who wrote it (`Author`), and who to contact if you have problems (`Maintainer`). Here I've left the `Description` blank to illustrate that if you haven't decided what the correct value is yet, it's ok to leave it blank. 
+* `Depends`
+* `Suggests`
+* `Imports`
+* `Enhances`
+* `LinkingTo`
 
-Again, the six required elements are:
+You can also list other requirements (outside of R) in `SystemRequirements`. But this is basically only useful as a quick reference - you'll also need to include detailed information in a readme.
 
-* `Package`: name of the package. Should be the same as the directory name.
-
-* `Title`: a one line description of the package.
-
-* `Description`: a more detailed paragraph-length description.
-
-* `Version`: the version number, which should be of the the form
-  `major.minor.patchlevel`. See `?package_version` for more details on the
-  package version formats. I recommended following the principles of [semantic
-  versioning](http://semver.org/).
-
-* `Maintainer`: a single name and email address for the person responsible for
-  package maintenance.
-
-* `License`: a standard abbreviation for an open source license, like `GPL-2`
-  or `BSD`. A complete list of possibilities can be found by running
-  `file.show(file.path(R.home(), "share/licenses/license.db"))`. If you are
-  using a non-standard license, put `file LICENSE` and then include the full
-  text of the license in a `LICENSE`.
-
-## Other `DESCRIPTION` components
-
-A more complete `DESCRIPTION` (this one from a more recent version of `plyr`) looks like this:
-
-    Package: plyr
-    Title: Tools for splitting, applying and combining data
-    Description: plyr is a set of tools that solves a common set of
-        problems: you need to break a big problem down into manageable
-        pieces, operate on each pieces and then put all the pieces back
-        together.  For example, you might want to fit a model to each
-        spatial location or time point in your study, summarise data by
-        panels or collapse high-dimensional arrays to simpler summary
-        statistics. The development of plyr has been generously supported
-        by BD (Becton Dickinson).
-    URL: http://had.co.nz/plyr
-    Version: 1.3
-    Maintainer: Hadley Wickham <h.wickham@gmail.com>
-    Author: Hadley Wickham <h.wickham@gmail.com>
-    Depends: R (>= 2.11.0)
-    Suggests: abind, testthat (>= 0.2), tcltk, foreach
-    Imports: itertools, iterators
-    License: MIT
-
-This `DESCRIPTION` includes other components that are optional, but still
-important:
-
-* `Depends`, `Suggests`, `Imports` and `Enhances` describe which packages
-  this package needs. They are described in more detail in [[namespaces]].
-
-* `URL`: a url to the package website. Multiple urls can be separated with a
-  comma or whitespace.
+## Who wrote the package?
 
 Instead of `Maintainer` and `Author`, you can `Authors@R`, which takes a vector of `person()` elements.  Each person object specifies the name of the person and their role in creating the package:
 
@@ -120,7 +101,34 @@ Other roles are listed in the help for person. Using `Authors@R` is useful when 
 
       Authors@R: person("Hadley", "Wickham", role = c("aut", "cre"))
 
-There are a number of other less commonly used fields like `BugReports`, `KeepSource`, `OS_type` and `Language`. A complete list of the `DESCRIPTION` fields that R understands can be found in the [R extensions manual][description].
+As well as providing your email address, it's also a good idea to list other resources avaialble for help. You can list urls in `URL` Multiple urls can be separated with a comma. `BugReports` takes a url to where bug reports should be submitted.
+
+## Who can use it? (`LICENSE`)
+
+`License`: a standard abbreviation for an open source license, like `GPL-2` or `BSD`.
+
+A complete list of abbreviations (as of `r R.version.string`) is:
+
+```{r, results='asis', echo = FALSE}
+licenses <- read.dcf(file.path(R.home("share"), "licenses", "license.db"))
+licenses <- as.data.frame(licenses, stringsAsFactors = FALSE)
+licenses <- licenses[order(licenses$Name, licenses$Version), ]
+licenses[is.na(licenses)] <- ""
+has_abbrev <- subset(licenses, Abbrev != "")
+knitr::kable(has_abbrev[c("Name", "Version", "Abbrev")], row.names = FALSE)
+```
+
+If you are using a non-standard license, put `file LICENSE` and then include the full text of the license in a `LICENSE`.
+
+## Other components
+
+* `Version`: the version number, which should be of the the form 
+  `major.minor.patchlevel`. This is most important when releasing your package. 
+  See [version numbers](#version) for more deatils.
+
+* `LazyData`. Described in [external data](#data).
+
+There are a number of other less commonly used fields like `KeepSource`, `OS_type` and `Language`. A complete list can be found in the [R extensions manual][description].
 
 ## Collation order {#collate}
 
@@ -134,7 +142,5 @@ setClass("B", contains = "A")
 ```
 
 If any `@include` tags are present in the package, roxygen2 will set the `Collate` field in the `DESCRIPTION`, which ensures that files are always loaded in the same order.
-
-## `LICENSE`
 
 [description]: http://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file
