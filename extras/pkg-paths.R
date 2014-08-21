@@ -23,5 +23,3 @@ type <- rep(c("src", "blt", "bin"), c(length(src), length(blt), length(bin)))
 tbl <- table(paths, factor(type, c("src", "blt", "bin")))
 tbl[] <- ifelse(tbl == 0, "", "x")
 tbl[tbl == 1] <- "x"
-
-saveRDS(tbl, "extras/pkg-paths.rds")
