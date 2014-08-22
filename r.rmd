@@ -30,36 +30,6 @@ __Never__ use `package.skeleton()` to create a package. It's designed for an old
 
 The first principle of using a package is that all R code goes in `R/`. If you have existing code for your new package, now's a good time to copy it into `R/`.
 
-### Naming tips {#naming}
-
-The hardest thing about creating a new package is coming up with a good name. There's only one formal requirement:
-
-* The package name can only consist of letters and numbers, and must start
-  with a letter.
-
-But if you're planning on releasing your package to the wild, I think it's worth a few minutes brainstorming names. I have two recommendations:
-
-* Pick a unique name so you can easily google it. This makes it easy for 
-  potential users to find your package, and it makes it easier for you to
-  see who's using your package.
-
-* Avoid using both upper and lower case letters: they make the package name
-  hard to type and hard to remember. For example, I can never remember if it's
-  `Rgtk2` or `RGTK2` or `RGtk2`.
-
-Some strategies I've used in the past to create packages names:
-
-* Find a name evocative of the problem and modify it so that it's unique:
-  `plyr` (generalisation of apply tools), `lubridate` (makes dates and times
-  easier), `mutatr` (mutable objects), `classifly` (high-dimensional views of
-  classification).
-
-* Use abbreviations: `lvplot` (letter value plots), `meifly` (models explored
-  interactively).
-
-* Add an extra R: `stringr` (string processing), `tourr` (grand tours), `httr`
-  (HTTP requests).
-
 ## RStudio projects {#projects}
 
 To get started with your new package in RStudio, double-click the `package.Rproj` file that `create()` just made. This will open a new RStudio project for your package. Projects are a great way to develop packages because:
@@ -134,34 +104,92 @@ The exact placement of functions within files is less important if you master tw
 
 Congratulations, you now understand the basics of using a package! In the rest of this chapter, you'll learn more about the various forms of a package, and exactly what happens when you run `install.packages()` or `install_github()`.
 
-### Avoid side effects
+### Avoid side effects {#side-effects}
 
-One big difference between a script and R code in a package, is that the code in your package should have no side effects. Code in `R/` should only create objects (mostly functions). Outside of functions, you should not call functions that affect global state:
+One big difference between a script and R code in a package is that the code in a package should not side effects. In other words, your code should only create objects (mostly functions), and outside of functions, you should not call functions that affect global state:
 
 * Don't use `library()` or `require()` - instead use the 
   [DESCRIPTION](description.html) to say what your package depends on.
   
-* Don't modify global `options()` or graphics `par()`. Instead, wrap them
-  in a function that the user can call when needed.
+* Don't modify global `options()` or graphics `par()`. Instead, wrap changes
+  in functions that the user can call when needed.
   
 * Don't save files to disk with `write()`, `write.csv()`, or `saveRDS()`. 
   Instead, use [data/](data.html) to cache important data files.
 
-There are two reasons to avoid side-effects. The first is pragmatic: these funtions will work while you're developing a package locally using `load_all()`, but they won't work once you distribute your package. That's because your R code is run once when the package is built, not everytime `library()` is called. The second is principled: you shouldn't change global state behind your users' backs.
+There are two reasons to avoid side-effects. The first is pragmatic: these funtions will work while you're developing a package locally with `load_all()`, but they won't work once you distribute your package. That's because your R code is run once when the package is built, not every time `library()` is called. The second is principled: you shouldn't change global state behind your users' backs.
 
-Occassionally, packages do need side-effects. This is most common if your package talks to an external system - you might need to do some initial setup when the package loads. To do that, you can use the special functions `.onLoad()` and `.onAttach()`. These are called when the package is loaded or attached. You'll learn about the distinction between the two in [Namespaces](#namespace). Unless you know otherwise use `.onLoad()`. Whenever you use `.onLoad()` or `.onAttach()`, make sure to define `.onUnload()` or `.onDetach()` to clean up when the package is unload/detached. 
+Occassionally, packages do need side-effects. This is most common if your package talks to an external system - you might need to do some initial setup when the package loads. To do that, you can use the special functions `.onLoad()` and `.onAttach()`. These are called when the package is loaded or attached. You'll learn about the distinction between the two in [Namespaces](#namespace), but for now alway use `.onLoad()` unless I explicitly say otherwise. If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects. By convention, `.onLoad()` and friends are usually saved in a file called `zzz.R`.
 
-An older use of `.onAttach()` is to dynamically load a DLL file. This is no longer needed, and should be avoided. See [namespaces](#namespace) for details.  Can still be necessary if you're connecting to external C/C++ libraries that need set up and tear down. 
+Some common use of `.onLoad()` and `.onAttach()` are:
 
-One type of side-effect that's not so harmful is displaying a message when the package is loaded. This might make clear licensing conditions, or important usage tips. Startup messages should go in `.onAttach()`. To display startup messages, always use `packageStartupMessage()`, and not `message()`. (This allows `suppressPackageStartupMessages()` to selectively suppress package startup messages).
+*   To dynamically load a compiled DLL. You no longer need to use `.onLoad()` 
+    for this and can instead use a special namespace construct; see 
+    [namespaces](#namespace) for details. 
+
+*   Display an informative message when the package loads. This might make 
+    usage conditions clear, or display useful tips. Startup messages is one 
+    place where you should use `.onAttach()` instead of `.onLoad()`. To display 
+    startup messages, always use `packageStartupMessage()`, and not `message()`. 
+    (This allows `suppressPackageStartupMessages()` to selectively suppress 
+    package startup messages).
+
+    ```{r, eval = FALSE}
+    .onAttach <- function(libname, pkgname) {
+      packageStartupMessage("Welcome to my package")
+    }
+    ```
+    
+*   Connect R to another programming language. For example, if you use RJava
+    to connect a `.jar` file, you need to call `rJava::.jpackage()`. To
+    make C++ classes available as reference classes in R with RCpp modules,
+    you call `Rcpp::loadRcppModules()`.
+
+*   To register vignette engines with `tools::vignetteEngine()`.
+
+*   Set custom options for your package with `options()`. To avoid conflicts
+    with other packages, ensure that your prefix option names with the name
+    of your package. Also be careful not to override options that the user
+    has already set.
+    
+    I use the following code in devtools to set up useful options:
+    
+    ```{r, eval = FALSE}
+    .onLoad <- function(libname, pkgname) {
+      op <- options()
+      op.devtools <- list(
+        devtools.path = "~/R-dev",
+        devtools.install.args = "",
+        devtools.name = "Your name goes here",
+        devtools.desc.author = '"First Last <first.last@example.com> [aut, cre]"',
+        devtools.desc.license = "What license is it under?",
+        devtools.desc.suggests = NULL,
+        devtools.desc = list()
+      )
+      toset <- !(names(op.devtools) %in% names(op))
+      if(any(toset)) options(op.devtools[toset])
+    
+      invisible()
+    }
+    ```
+    
+You should __never__ use `.onLoad()` or `.onAttach()` to load packages with `require()` or `library()`.
+
+Another type of side-effect is defining S4 classes, methods and generics. R packages capture these side-effect so they can be replayed when the package is loaded, but they need to be called in the right order. For example, before you can define a method, you must have defined both the generic and the classes. This requires that the R files be sourced in a specific order, which controlled by the `Collate` field in the `DESCRIPTION`. This is described in more detail in [collation](#collate).
+
+### CRAN notes {#r-cran}
+
+If you're planning on submitting your package to CRAN, you must use only ASCII characters in your `.R` files. You can still include unicode characters in strings, but you need to use the special unicode escape `"\u1234"` format. The easiest way to do that is to use `stringi::stri_escape_unicode()`
 
 ```{r}
-.onAttach <- function(...) {
-  packageStartupMessage("Welcome to my package")
-}
+x <- "This is a bullet •"
+y <- "This is a bullet \u2022"
+identical(x, y)
+
+cat(stringi::stri_escape_unicode(x))
 ```
 
-Another type of side-effect is S4. See [collation]{#collate} order.
+Your R directory should not include any files other than R code. Subdirectories will be silently ignored.
 
 ## What is a package? {#package}
 
@@ -282,17 +310,3 @@ Packrat, which we'll learn about in Chapter XXX, automates the process of managi
 
 1.  Can you have multiple version of the same package installed at the same 
     time?
-
-## CRAN notes {#r-cran}
-
-If you're planning on submitting your package to CRAN, you must use only ASCII characters in your `.R` files. You can still include unicode characters in strings, but you need to use the special unicode escape `"\u1234"` format. The easiest way to do that is to use `stringi::stri_escape_unicode()`
-
-```{r}
-x <- "This is a bullet •"
-y <- "This is a bullet \u2022"
-identical(x, y)
-
-cat(stringi::stri_escape_unicode(x))
-```
-
-Your R directory should not include any files apart from R code. Subdirectories will be ignored.
