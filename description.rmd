@@ -6,11 +6,13 @@ output: bookdown::html_chapter
 
 # Package metadata {#description}
 
-The job of the `DESCRIPTION` file is to store important metadata about your package. In the early stages of package development, the most important thing that the `DESCRIPTION` does is store which other packages your package needs to work. The `DESCRIPTION` becomes more important if you plan to release your package to others because it also lays out who can use it (the license), and who to contact (you!) if there are any problems.
+The job of the `DESCRIPTION` file is to store important metadata about your package. In the early stages of package development, the most important thing that the `DESCRIPTION` does is record which other packages your package needs. It becomes becomes increasingly important as you get closer to releasing your package to others because it also lays out who can use it (the license), and who to contact (you!) if there are any problems.
 
 ## A minimal `DESCRIPTION` file
 
-When you create a new package with `create()` devtools automatically adds a minimal `DESCRIPTION` that contains everything you need to get started. This means you don't need to worry about the `DESCRIPTION` in the early stages of package development. The minimal description looks something like this:
+Every package must have a `DESCRIPTION`, and in fact it's the distinguishing feature of a package - RStudio and devtools consider any directory containing a `DESCRIPTION` to be a package. To get you started, `devtools::create()` automatically adds a minimal description. This means you don't need to worry about the `DESCRIPTION` in the early stages of package development. 
+
+The minimal description will vary a bit depending on some system settings, but will look something like this:
 
     Package: package-name
     Title: What the package does (short line)
@@ -21,11 +23,19 @@ When you create a new package with `create()` devtools automatically adds a mini
     License: What license is it under?
     LazyData: true
 
-This is the critical subset of package metadata: what it's called (`Package`), what it does (`Title`, `Description`), what version it is (`Version`), who's allowed to use and distribute it (`License`), and who wrote it (`Author@R`).
+The `DESCRIPTION` uses a simple file format called DCF, the Debian control format. You can see most of the structure in this simple example. Each line consists of a __field__ name and a value, separated by a colon. When values span multiple lines, they need to be indented:
 
-## Naming tips {#naming}
+    Description: The description of a package is usually long,
+        spanning multiple lines. The second and subsequent lines
+        should be indented, usually with four spaces.
 
-The `Package` field defines the name of the package. This should be same as the name of directory. Often the hardest thing about creating a new package is coming up with a good name. There's only one formal requirement: the package name can only consist of letters and numbers, and must start with a letter. 
+The minimal `DESCRIPTION`, but provides the bare necessities to be valid. This is the critical subset of package metadata: what it's called (`Package`), what it does (`Title`, `Description`), what version it is (`Version`), who's allowed to use and distribute it (`License`), and who wrote it (`Author@R`).
+
+In the rest of the chapter, you'll learn what these fields do. We'll start with package, title and description, since they're fairly next. Next you'll learn about the two most important fields. They are not included in the minimal description, but are `Imports` and `Suggests`: these are the fields that tell R that you need (for imports) or want (for suggests) additional packages to be available. You'll learn about those fields in the next section, and then we'll go on to describe the other important fields in the rest of the chapter.
+
+## What is your package called? {#naming}
+
+The `Package` field defines the name of the package. This should be same as the name of directory. Often the hardest thing about creating a new package is coming up with a good name. There's only one formal requirement: the package name can only consist of letters, numbers and `.`. It must start with a letter and cannot end with a period. Unfortunately this means you can't use `-` or `_` in your package name. I recommend against using `.` to in package names because the other connotations (i.e. file extension or S3 method) are confusing.
 
 If you're planning on releasing your package to the wild, I think it's worth spending a few minutes to come up with a good name. I have two recommendations:
 
@@ -87,25 +97,87 @@ And these are rendered on the CRAN download page as follows:
 bookdown::embed_png("diagrams/cran-package.png")
 ```
 
+### Exercises
+
+* Read the title and description of the packages that you use most commonly.
+  What do they do well? What could they do better?
+
 ## What does the package need?
 
-It's also the job of the `DESCRIPTION` to list which other packages that your package needs to work. R has a rich set of ways of describing potential dependencies. Each takes a comma separated list of packages with optional version dependencies.
+It's the job of the `DESCRIPTION` to list which other packages that your package needs to work. R has a rich set of ways of describing potential dependencies. The two most important are:
 
-There are two important options:
+*   `Imports`: your package requires these packages to work. This ensures the
+    package is available, but does not automatically load all functions into your
+    workspace. Instead, it's best practice to explicitly refer to external 
+    functions using the syntax `package::function()`. When reading your code in
+    the future, this makes it very easy to identify functions that live outside
+    your package.
+  
+    Adding packages to `Imports` ensures that they are always available. When
+    your package is installed, any packages that are listed in Imports but are
+    not currently installed will be automatically installed.
+  
+    If you use functions from another package extensively, this can be a bit
+    verbose and add unnecessary mental reading weight. There is also a 
+    minor performance penalty (normally only important if you're inside a loop
+    that's being called millions of times). You'll learn about alternatives in
+    [namespace imports](#imports).
 
-* `Imports`: your package requires these packages to work.
+*   `Suggests`: you don't absolutely need these packages but they might be
+    helpful. Maybe they provide datasets for examples, or only used by one
+    function in your package. 
+  
+    Packages listed in `Suggests` are not automatically installed when your 
+    package is installed. This means that you need to check if the package is
+    available before calling any functions in it. Unfortunately base R does 
+    not come with a function to check if a package is installed, so you'll
+    need to add this simple function to your package:
+  
+    ```{r}
+    is_installed <- function(pkg, version = 0) {
+      system.file(package = pkg) != "" && packageVersion(pkg) > version
+    }
+    ```
+    
+    Then your code will look like this:
+    
+    ```{r}
+    my_fun <- function(a, b) {
+      if (!is_installed("pkg")) {
+        stop("Pkg needed for this function to work. Please install it.",
+          call. = FALSE)
+      }
+      x <- pkg::fun1(a, b)
+      pkg::fun2(x, 10)
+    }
+    ```
+    
+    As we'll learn later, any package that you need for testing or vignettes
+    must be listed in (at least) suggests.
 
-* `Suggests`: you don't absolutely need these packages but they might be
-  helpful. Maybe they provide datasets for examples, or only used by one
-  function in your package.
+The easiest way to add dependencies to your package is to use `devtools::use_package()`. This automatically adds them in the right place in your `DESCRIPTION`, and reminds you how to use them.
+
+```{r, eval = FALSE}
+devtools::use_package("Rcpp") # Defaults to imports
+devtools::use_package("Rcpp", "Suggests")
+```
+
+### Versioning
+
+It's also possible to specify version information about the required packages. You can specify a minimal required version like `MASS (>= 7.3.0)`.  You can specify exact version dependency with `MASS (= 7.3.0)`, but this is not recommended - since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions that can't be resolved.
+
+Versioning is particularly important if you want to release your package. Often people will have an older version of a package loaded, and they will get an unhelpful error if you rely on new features without being explicit about the version. Generally, I think it's better to be conservation about version specifications - unless you know otherwise, add the version that you're currently using.
+
+### Other depencies
 
 Three others are useful in more specialised circumstances:
 
 * `Depends`: used to specify version of R needed, and for a few other 
-  special cases. Other mostly historical and should not be used.
+  special cases. Otherwise mostly historical and should not be used.
+  This is discussed in more detail in [namespaces](#namespace).
 
 * `LinkingTo`: needs to link to or compile against the C code included in
-  this package.
+  this package. This is discussed in more detail in [compiled code](#src).
   
 * `Enhances`: these packages are "enhanced" by your package, typically because
   you provide methods for classes defined in the package. It's a sort of reverse
@@ -114,13 +186,13 @@ Three others are useful in more specialised circumstances:
   
 http://cran.r-project.org/doc/manuals/R-exts.html#Package-Dependencies
 
-```{r, eval = FALSE}
-# Default to imports
-use_package("Rcpp")
-use_package("Rcpp", "LinkingTo")
-```
-
 You can also list other requirements (outside of R) in `SystemRequirements`. But this is basically only useful as a quick reference - you'll also need to include detailed information in a readme.
+
+### Exercises
+
+* What are the dependencies of ggplot2?
+
+* What does `devtools::rev_dep()` do? Why might you use it?
 
 ## Who wrote the package?
 
@@ -132,6 +204,8 @@ Instead of `Maintainer` and `Author`, you can `Authors@R`, which takes a vector 
 
 * `cre`: the package creator/maintainer, the person you should bother if you
   have problems
+  
+(The [full list of roles](http://www.loc.gov/marc/relators/relaterm.html) is extremely comprehensive. Should your package have a woodcutter ("wdc"), lyricist ("lyr") or costume designer ("cst"), rest comfortably that you can correctly ascribe their role in your package.)
 
 Other roles are listed in the help for person. Using `Authors@R` is useful when your package gets bigger and you have multiple contributors that you want to acknowledge appropriately. The equivalent `Authors@R` syntax for plyr would be:
 
@@ -143,9 +217,51 @@ As well as providing your email address, it's also a good idea to list other res
 
 `License`: a standard abbreviation for an open source license, like `GPL-2` or `BSD`.
 
-A complete list of abbreviations (as of `r R.version.string`) is:
+The license is only really important if your planning on releasing your package. If you don't, you can ignore this section.
 
-```{r, results='asis', echo = FALSE}
+Open source software licensing is a rich and complex field. There are many many options to choose from. I'm not a lawyer, and if you're really concerned you should consult one. Instead, I'm going to give you some fairly sweeping advice that holds for most cases. In my opinon, there are really only three licenses that you need to worry about for R packages:
+
+* [MIT](https://tldrlegal.com/license/gnu-general-public-license-v2) 
+  (v. similar: to BSD 2 and 3 clause licenses): this is simple and
+  permissive license. The only restriction is that if you distribute software
+  that uses the MIT license, you must also distribute the license.
+  
+  The MIT license is a "template", so if you use it, you need 
+  `License: MIT + file LICENSE`, and `LICENSE` file that looks like this:
+  
+    ```
+    YEAR: 2014
+    COPYRIGHT HOLDER: Hadley Wickham, RStudio
+    ```
+
+* [GPL-2](https://tldrlegal.com/license/gnu-general-public-license-v2) or 
+  [GPL-3](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)): 
+  a "copy-left" licenses. These licenses are stricter
+  and require any who distributes your code, or modified versions of you code
+  (derivative works), to also make the source code avaialble. GPL-3 is a little
+  stricter than GPL-2, attempting to close some loopholes.
+
+* `CC0`: This is most appropriate for data packages. This relinquishes all your
+  rights on the code and data so that it can be freely used by any one for any
+  purpose (this is sometimes called putting it in the public domain, although
+  that term is not well-defined, and not meaningful in all countries). 
+  
+  Data, at least in the US, is not copyrightable anyway, so you're not
+  really giving up much. This license just makes it clear.
+  
+If you'd like to learn more about others, Github's [http://choosealicense.com/licenses/](choosealicense.com) is a good place to start for the most popular licenses. Another good resource is <https://tldrlegal.com/>, which explains the most important parts of each license.
+
+If you are using a non-standard license, put `file LICENSE` and then include the full text of the license in a `LICENSE`.
+
+If you include code written by other people, you need to make sure you're include their license details. Since this occurs most commonly when you're including C source code, it's discussed in more detail there.
+
+### On CRAN
+
+If you want to release your package to CRAN, you need to pick a standard license. Otherwise it's difficult for CRAN to determine whether or not it's legal for them to distribute your package!
+
+A complete list of valid licenses for cran can be found at <https://svn.r-project.org/R/trunk/share/licenses/license.db>.
+
+```{r, results='asis', echo = FALSE, eval = FALSE}
 licenses <- read.dcf(file.path(R.home("share"), "licenses", "license.db"))
 licenses <- as.data.frame(licenses, stringsAsFactors = FALSE)
 licenses <- licenses[order(licenses$Name, licenses$Version), ]
@@ -154,7 +270,6 @@ has_abbrev <- subset(licenses, Abbrev != "")
 knitr::kable(has_abbrev[c("Name", "Version", "Abbrev")], row.names = FALSE)
 ```
 
-If you are using a non-standard license, put `file LICENSE` and then include the full text of the license in a `LICENSE`.
 
 ## Other components
 
