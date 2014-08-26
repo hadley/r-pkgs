@@ -8,7 +8,7 @@ output: bookdown::html_chapter
 
 The job of the `DESCRIPTION` file is to store important metadata about your package. In the early stages of package development, the most important thing that the `DESCRIPTION` does is record which other packages your package needs. It becomes becomes increasingly important as you get closer to releasing your package to others because it also lays out who can use it (the license), and who to contact (you!) if there are any problems.
 
-## A minimal `DESCRIPTION` file
+## A minimal `DESCRIPTION` file {#minimal-description}
 
 Every package must have a `DESCRIPTION`, and in fact it's the distinguishing feature of a package - RStudio and devtools consider any directory containing a `DESCRIPTION` to be a package. To get you started, `devtools::create()` automatically adds a minimal description. This means you don't need to worry about the `DESCRIPTION` in the early stages of package development. 
 
@@ -60,7 +60,7 @@ Some strategies I've used in the past to create packages names:
 * Add an extra R: `stringr` (string processing), `tourr` (grand tours), `httr`
   (HTTP requests).
 
-## What does the package do?
+## What does the package do? {#pkg-description}
 
 There are two fields that describe the package. They differ in length:
 
@@ -102,9 +102,21 @@ bookdown::embed_png("diagrams/cran-package.png")
 * Read the title and description of the packages that you use most commonly.
   What do they do well? What could they do better?
 
-## What does the package need?
+## What does the package need? {#dependencies}
 
-It's the job of the `DESCRIPTION` to list which other packages that your package needs to work. R has a rich set of ways of describing potential dependencies. The two most important are:
+It's the job of the `DESCRIPTION` to list which other packages that your package needs to work. R has a rich set of ways of describing potential dependencies. For example, the following lines indicates that that your package needs both ggvis and dplyr to work:
+
+    Imports:
+        ggvis,
+        dplyr
+
+Whereas these lines means that your package can take advantage of ggvis and dplyr, but they're not crucial:
+
+    Suggests:
+        ggvis,
+        dplyr
+
+The two most important fields are:
 
 *   `Imports`: your package requires these packages to work. This ensures the
     package is available, but does not automatically load all functions into your
@@ -166,16 +178,32 @@ devtools::use_package("Rcpp", "Suggests")
 
 It's also possible to specify version information about the required packages. You can specify a minimal required version like `MASS (>= 7.3.0)`.  You can specify exact version dependency with `MASS (= 7.3.0)`, but this is not recommended - since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions that can't be resolved.
 
+Versioned dependences look like this:
+
+    Imports:
+        ggvis (>= 0.2),
+        dplyr (>= 0.3.0.1)
+
 Versioning is particularly important if you want to release your package. Often people will have an older version of a package loaded, and they will get an unhelpful error if you rely on new features without being explicit about the version. Generally, I think it's better to be conservation about version specifications - unless you know otherwise, add the version that you're currently using.
 
 ### Other depencies
 
 Three others are useful in more specialised circumstances:
 
-* `Depends`: used to specify version of R needed, and for a few other 
-  special cases. Otherwise mostly historical and should not be used.
-  This is discussed in more detail in [namespaces](#namespace).
+* `Depends`: use this if your package requires a specify version of R to work.
+  As with packages, it's a good idea to play it safe and set to the version
+  of R that you're currently using (which is what `devtools::create()`) does
+  for you. For example, `Depends: R (>= 3.0.1)`.
+  
+  The only other time you need to use depends is if you're using S4.
+  For various historical reasons you need to put `methods` in depends, not
+  instead of imports. You'll also need to put `imports(methods)` in your
+  `NAMESPACE`, as discussed in [S4 and namespaces](#namespace-s4).
 
+  Prior to the introduction of namespaces, depends was the only way to state
+  that your package needed another package. Now it's much better to use imports
+  for reasons that we'll discuss in [namespaces](#namespace).
+  
 * `LinkingTo`: needs to link to or compile against the C code included in
   this package. This is discussed in more detail in [compiled code](#src).
   
@@ -184,9 +212,7 @@ Three others are useful in more specialised circumstances:
   suggests. But it's hard to define what that actually means, so I recommend 
   that you don't use it.
   
-http://cran.r-project.org/doc/manuals/R-exts.html#Package-Dependencies
-
-You can also list other requirements (outside of R) in `SystemRequirements`. But this is basically only useful as a quick reference - you'll also need to include detailed information in a readme.
+You can also list other things that your package needs outside of R in the in `SystemRequirements` field. But this is just a plain text field and is not automatically checked. Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
 
 ### Exercises
 
@@ -194,26 +220,60 @@ You can also list other requirements (outside of R) in `SystemRequirements`. But
 
 * What does `devtools::rev_dep()` do? Why might you use it?
 
-## Who wrote the package?
+## Who wrote the package? {#author}
 
-Instead of `Maintainer` and `Author`, you can `Authors@R`, which takes a vector of `person()` elements.  Each person object specifies the name of the person and their role in creating the package:
+To describe who wrote the packaage, and who to contact if something goes wrong, use the `Authors@R` field. This field is unique because it contains executable R code rather than plain text. Here's an example:
 
-* `aut`: full authors who have contributed much to the package
+    Authors@R: person("Hadley", "Wickham", email = "hadley@rstudio.com"
+      role = c("aut", "cre"))
 
-* `ctb`: people who have made smaller contributions, like patches.
+The `person()` function has four main arguments:
 
-* `cre`: the package creator/maintainer, the person you should bother if you
-  have problems
+* The name specified by the first two arguments,  `given` and `family` (these
+  are normally supplied by position, not name). In English cultures given is 
+  the first name and family is the last name, but this convention differs 
+  across cultures.
   
-(The [full list of roles](http://www.loc.gov/marc/relators/relaterm.html) is extremely comprehensive. Should your package have a woodcutter ("wdc"), lyricist ("lyr") or costume designer ("cst"), rest comfortably that you can correctly ascribe their role in your package.)
+* The `email` address.
 
-Other roles are listed in the help for person. Using `Authors@R` is useful when your package gets bigger and you have multiple contributors that you want to acknowledge appropriately. The equivalent `Authors@R` syntax for plyr would be:
+* A three letter code specifying the `role`. There are four important roles:
 
-      Authors@R: person("Hadley", "Wickham", role = c("aut", "cre"))
+    * `cre`: the package creator or maintainer, the person you should bother 
+      if you have problems.
+      
+    * `aut`: full authors who have contributed much to the package.
+    
+    * `ctb`: people who have made smaller contributions, like patches.
+    
+    * `cph`: copyright holder. This is used if copyright is held by someone 
+      other than the author, typically a company (their employer).
+    
+    (The [full list of roles](http://www.loc.gov/marc/relators/relaterm.html) is
+    extremely comprehensive. Should your package have a woodcutter ("wdc"), 
+    lyricist ("lyr") or costume designer ("cst"), rest comfortably that you can 
+    correctly ascribe their role in your package.)
+
+If you need additional clairification, you can also use the `comment` argument to supply additional arbitrary text.
+
+You can list multiple authors with `c()`:
+
+    Authors@R: c(
+        person("Hadley", "Wickham", email = "hadley@rstudio.com", role = "cre"),
+        person("Winston", "Chang", email = "winston@rstudio.com", role = "aut"))
+
+Every package must have at least one author (aut) and one creator (cre) (they might be the same person). The creator must have an email addresses. These fields are used to generate the basic citation for a package (e.g. `citation("pkgname")`). Only people listed as authors will be included in the autogenerated citation.
+
+There are a few extra details if you're including code that other people have written. Since this most commonly occurs when you're wrapping a C library, it's discussed in [compiled code](#src).
 
 As well as providing your email address, it's also a good idea to list other resources avaialble for help. You can list urls in `URL` Multiple urls can be separated with a comma. `BugReports` takes a url to where bug reports should be submitted.
 
-## Who can use it? (`LICENSE`)
+You can also use separate `Maintainer` and `Author` and fields to describe authors and maintainers. I prefer not to use these fields because `Authors@R` offers richer metadata. 
+
+### On CRAN
+
+The most important thing to note is that your email address (i.e. the address of the `cte`) is the address that CRAN will use to contact you about your package. For this reason, make sure you choose an email address that's likely to be around for a while. The CRAN policies require that this be for a single person (not a mailing list), and it can not require any confirmation or filtering to post to it, as it will be used for automated mailings.
+
+## Who can use it? {#license}
 
 `License`: a standard abbreviation for an open source license, like `GPL-2` or `BSD`.
 
@@ -221,18 +281,16 @@ The license is only really important if your planning on releasing your package.
 
 Open source software licensing is a rich and complex field. There are many many options to choose from. I'm not a lawyer, and if you're really concerned you should consult one. Instead, I'm going to give you some fairly sweeping advice that holds for most cases. In my opinon, there are really only three licenses that you need to worry about for R packages:
 
-* [MIT](https://tldrlegal.com/license/gnu-general-public-license-v2) 
-  (v. similar: to BSD 2 and 3 clause licenses): this is simple and
-  permissive license. The only restriction is that if you distribute software
-  that uses the MIT license, you must also distribute the license.
+*   [MIT](https://tldrlegal.com/license/gnu-general-public-license-v2) 
+    (v. similar: to BSD 2 and 3 clause licenses): this is simple and
+    permissive license. The only restriction is that if you distribute software
+    that uses the MIT license, you must also distribute the license.
   
-  The MIT license is a "template", so if you use it, you need 
-  `License: MIT + file LICENSE`, and `LICENSE` file that looks like this:
+    The MIT license is a "template", so if you use it, you need 
+    `License: MIT + file LICENSE`, and `LICENSE` file that looks like this:
   
-    ```
-    YEAR: 2014
-    COPYRIGHT HOLDER: Hadley Wickham, RStudio
-    ```
+        YEAR: 2014
+        COPYRIGHT HOLDER: Hadley Wickham, RStudio
 
 * [GPL-2](https://tldrlegal.com/license/gnu-general-public-license-v2) or 
   [GPL-3](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)): 
@@ -270,8 +328,13 @@ has_abbrev <- subset(licenses, Abbrev != "")
 knitr::kable(has_abbrev[c("Name", "Version", "Abbrev")], row.names = FALSE)
 ```
 
-
 ## Other components
+
+A number of other fields are described elsewhere in the book:
+
+* `Collate`: controls the order in which R files are source. This only
+  matters if your functions have side-effects, most commonly because you're
+  using S4. This is described in more depth in [collation order](#collate).
 
 * `Version`: the version number, which should be of the the form 
   `major.minor.patchlevel`. This is most important when releasing your package. 
@@ -279,19 +342,7 @@ knitr::kable(has_abbrev[c("Name", "Version", "Abbrev")], row.names = FALSE)
 
 * `LazyData`. Described in [external data](#data).
 
-There are a number of other less commonly used fields like `KeepSource`, `OS_type` and `Language`. A complete list can be found in the [R extensions manual][description].
+There are even more fields that are rarely (if ever) used. A complete list can be found in the found in the "The DESCRIPTION file" section of the [R extensions manual][description].
 
-## Collation order {#collate}
+You can also use your own fields to add additional arbitrary metadata. The only restriction is that you shouldn't use existing names, and if you plan to submit to CRAN the names should be valid English words (so a spell-checking NOTE isn't generated).
 
-R loads files in alphabetical order. Unfortunately not every alphabet puts letters in the same order, so you can't rely on alphabetic ordering if you need one file loaded before another. The order in which files are loaded doesn't matter for most packages. But if you're using S4, you'll need to make sure that classes are loaded before subclasses and generics are defined before methods.
-
-Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
-
-```{r, eval = FALSE}
-#' @include class-a.r
-setClass("B", contains = "A")
-```
-
-If any `@include` tags are present in the package, roxygen2 will set the `Collate` field in the `DESCRIPTION`, which ensures that files are always loaded in the same order.
-
-[description]: http://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file
