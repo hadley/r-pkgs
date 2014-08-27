@@ -85,28 +85,25 @@ Imports and suggests differ in the strength of dependency:
   
     Packages listed in `Suggests` are not automatically installed along with
     your package. This means that you need to check if the package is available 
-    before calling any functions in it. Unfortunately base R does not come with 
-    a function to do that, so you'll need to add this simple function to your 
-    package:
-  
-    ```{r}
-    is_installed <- function(pkg, version = 0) {
-      system.file(package = pkg) != "" && packageVersion(pkg) > version
-    }
-    ```
-    
-    (I usually put little snippets like this in `utils.R`.)
-    
-    Then you can use suggested packages as follows:
+    (with `requireNamespace(x, quietly = TRUE))` before using it. There are
+    two basic scenarios:
     
     ```{r}
+    # You need the suggested package for this function    
     my_fun <- function(a, b) {
-      if (!is_installed("pkg")) {
+      if (!requireNamespace("pkg", quietly = TRUE)) {
         stop("Pkg needed for this function to work. Please install it.",
           call. = FALSE)
       }
-      x <- pkg::fun1(a, b)
-      pkg::fun2(x, 10)
+    }
+    
+    # There's a fallback method if the package isn't available
+    my_fun <- function(a, b) {
+      if (requireNamespace("pkg", quietly = TRUE)) {
+        pkg::f()
+      } else {
+        g()
+      }
     }
     ```
 
@@ -120,12 +117,8 @@ devtools::use_package("dplyr") # Defaults to imports
 #> Refer to functions with dplyr::fun()
 devtools::use_package("dplyr", "Suggests")
 #> Adding dplyr to Suggests
-#> Use function below to test if package is installed, then use dplyr::fun() 
-#> to refer to functions.
-#> 
-#> is_installed <- function(pkg, version = 0) {
-#>  system.file(package = pkg) != "" && packageVersion(pkg) > version
-#> }
+#> Use requireNamespace("dplyr", quietly = TRUE) to test if package is 
+#>  installed, then use dplyr::fun() to refer to functions.
 ```
 
 ### Versioning
