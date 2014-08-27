@@ -6,7 +6,7 @@ output: bookdown::html_chapter
 
 # R code
 
-The most important part of most packages is the `R/` directory because it contains all of your R code. We'll start with `R/`, because even if you do nothing else, putting your R files in this directory gives you some useful tools.
+The most important part of a package is the `R/` directory. It contains all of your R code! Even if you do nothing else, putting your R files in this directory gives you some useful tools.
 
 In this chapter you'll learn:
 
@@ -24,7 +24,7 @@ The easiest way to get started with a package is to run `devtools::create("path/
 1. A basic `DESCRIPTION` file.
 1. A basic `NAMESPACE` file.
 
-In this chapter, you'll learn about the `R/` directory and the RStudio project file. Ignore the other files for now. You'll learn about  the `DESCRIPTION` in [package metadata](#description) and the `NAMESPACE` in [namespaces](#namespace).
+In this chapter, you'll learn about the `R/` directory and the RStudio project file. Ignore the other files for now: you'll learn about `DESCRIPTION` in [package metadata](#description) and `NAMESPACE` in [namespaces](#namespace).
 
 __Never__ use `package.skeleton()` to create a package. It's designed for an older era of package development, and mostly serves to make your life harder, not easier. Currently I don't recommend using RStudio's "create a new package" tool because it uses `package.skeleton()`. That will be fixed by the time the book is published.
 
@@ -34,14 +34,20 @@ The first principle of using a package is that all R code goes in `R/`. If you h
 
 To get started with your new package in RStudio, double-click the `package.Rproj` file that `create()` just made. This will open a new RStudio project for your package. Projects are a great way to develop packages because:
 
-* Each project is isolated; they keep unrelated things unrelated.
+*   Each project is isolated; they keep unrelated things unrelated.
 
-* You get handy code navigation tools like `F2` to jump to a function
-  definition and `Ctrl + .` to look up functions by name.
+*   You get handy code navigation tools like `F2` to jump to a function
+    definition and `Ctrl + .` to look up functions by name.
 
-* You get useful keyboard shortcuts for common package development tasks.
-  You'll learn these throughout the book, but to see them all press 
-  Alt + Shift + K or use the Help | Keyboard shortcuts menu.
+*   You get useful keyboard shortcuts for common package development tasks.
+    You'll learn these throughout the book, but to see them all press 
+    Alt + Shift + K or use the Help | Keyboard shortcuts menu.
+    
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/keyboard-shortcuts.png")
+    ```
+   
+(If you want to learn more RStudio tips and tricks, follow @[rstudiotips](https://twitter.com/rstudiotips) on twitter.)
 
 `create()` makes an `.Rproj` file for you. If you want to add one to an existing package, use `devtools::use_rstudio("path/to/package")`. If you don't use RStudio, you can get many of the benefits by starting a new R session and ensuring the working directory is set to the project directory. 
 
@@ -75,7 +81,7 @@ bookdown::embed_png("screenshots/project-options-2.png", dpi = 220)
 
 ## Organising and running code {#r-code}
 
-The first advantage of using a package is that it's easy to load all of the code in your package. There are two main options: 
+The first advantage of using a package is that it's easy to re-load all your code. There are two main options: 
 
 * `devtools::load_all()`, __Cmd + Shift + L__, reloads all code in the package. 
   In RStudio, this also saves all open files, saving you a key press.
@@ -96,36 +102,42 @@ These commands support a fluid development workflow:
 
 You're free to arrange functions into files however you wish. It's clear that the two extremes are bad: don't put all functions in one file, or every function in its own file. My rule of thumb is that if I can't remember which file a function lives in, I probably need to split them up into more files, or give them better names. It's ok if some files only contain one function, particularly if the function is large or has a lot of documentation. Unfortunately you can't use subdirectories inside in `R/`. The next best thing is to use a common prefix, e.g., `abc-*.R`.
 
-The exact placement of functions within files is less important if you master two important keyboard shortcuts that let you jump to the definition of a function:
+The exact placement of functions within files is less important if you master two important RStudio keyboard shortcuts that let you jump to the definition of a function:
 
-* Click a function name in code and press __F2__.
+*   Click a function name in code and press __F2__.
 
-* Press __Ctrl + .__ then start typing the name.
+*   Press __Ctrl + .__ then start typing the name.
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/file-finder.png", dpi = 220)
+    ```
+
+After naviating using one of these tools, you can go back to where you where by clicking the back arrow at the top-left of the editor (`r bookdown::embed_png("screenshots/arrows.png", dpi = 240)`), or by pressing Cmd-F9.
 
 Congratulations, you now understand the basics of using a package! In the rest of this chapter, you'll learn more about the various forms of a package, and exactly what happens when you run `install.packages()` or `install_github()`.
 
 ### Avoid side effects {#side-effects}
 
-One big difference between a script and R code in a package is that the code in a package should not side effects. In other words, your code should only create objects (mostly functions), and outside of functions, you should not call functions that affect global state:
+One big difference between a script and a package is that the code in a package should not have side effects. Your code should only create objects (mostly functions), and outside of functions, you should not call functions that affect global state:
 
-* Don't use `library()` or `require()` - instead use the 
-  [DESCRIPTION](description.html) to say what your package depends on.
+* Don't use `library()` or `require()`. Use the [DESCRIPTION](description.html) 
+  to say what your package needs.
   
-* Don't modify global `options()` or graphics `par()`. Instead, wrap changes
-  in functions that the user can call when needed.
+* Don't modify global `options()` or graphics `par()`. Put state changing 
+  operations in functions that the user can call when they want.
   
 * Don't save files to disk with `write()`, `write.csv()`, or `saveRDS()`. 
-  Instead, use [data/](data.html) to cache important data files.
+  Use [data/](data.html) to cache important data files.
 
-There are two reasons to avoid side-effects. The first is pragmatic: these funtions will work while you're developing a package locally with `load_all()`, but they won't work once you distribute your package. That's because your R code is run once when the package is built, not every time `library()` is called. The second is principled: you shouldn't change global state behind your users' backs.
+There are two reasons to avoid side-effects. The first is pragmatic: these funtions will work while you're developing a package locally with `load_all()`, but they won't work when you release your package. That's because your R code is run once when the package is built, not every time `library()` is called. The second is principled: you shouldn't change global state behind your users' backs.
 
-Occassionally, packages do need side-effects. This is most common if your package talks to an external system - you might need to do some initial setup when the package loads. To do that, you can use the special functions `.onLoad()` and `.onAttach()`. These are called when the package is loaded or attached. You'll learn about the distinction between the two in [Namespaces](#namespace), but for now alway use `.onLoad()` unless I explicitly say otherwise. If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects. By convention, `.onLoad()` and friends are usually saved in a file called `zzz.R`.
+Occassionally, packages do need side-effects. This is most common if your package talks to an external system - you might need to do some initial setup when the package loads. To do that, you can use the special functions `.onLoad()` and `.onAttach()`. These are called when the package is loaded and attached. You'll learn about the distinction between the two in [Namespaces](#namespace), but for now alway use `.onLoad()` unless explicitly directed otherwise.
 
 Some common use of `.onLoad()` and `.onAttach()` are:
 
-*   To dynamically load a compiled DLL. You no longer need to use `.onLoad()` 
-    for this and can instead use a special namespace construct; see 
-    [namespaces](#namespace) for details. 
+*   To dynamically load a compiled DLL. In most cases, you no longer need to 
+    use `.onLoad()` for this and can instead use a special namespace construct; 
+    see [namespaces](#namespace) for details. 
 
 *   Display an informative message when the package loads. This might make 
     usage conditions clear, or display useful tips. Startup messages is one 
@@ -141,7 +153,7 @@ Some common use of `.onLoad()` and `.onAttach()` are:
     ```
     
 *   Connect R to another programming language. For example, if you use RJava
-    to connect a `.jar` file, you need to call `rJava::.jpackage()`. To
+    to talk to a `.jar` file, you need to call `rJava::.jpackage()`. To
     make C++ classes available as reference classes in R with RCpp modules,
     you call `Rcpp::loadRcppModules()`.
 
@@ -173,11 +185,11 @@ Some common use of `.onLoad()` and `.onAttach()` are:
     }
     ```
     
-You should __never__ use `.onLoad()` or `.onAttach()` to load packages with `require()` or `library()`.
+Another type of side-effect is defining S4 classes, methods and generics. R packages capture these side-effects so they can be replayed when the package is loaded, but they need to be called in the right order. For example, before you can define a method, you must have defined both the generic and the classes. This requires that the R files be sourced in a specific order, which controlled by the `Collate` field in the `DESCRIPTION`. This is described in more detail in [collation](#collate).
 
+If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects. By convention, `.onLoad()` and friends are usually saved in a file called `zzz.R`.
+    
 Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should be replaced with the newer system. 
-
-Another type of side-effect is defining S4 classes, methods and generics. R packages capture these side-effect so they can be replayed when the package is loaded, but they need to be called in the right order. For example, before you can define a method, you must have defined both the generic and the classes. This requires that the R files be sourced in a specific order, which controlled by the `Collate` field in the `DESCRIPTION`. This is described in more detail in [collation](#collate).
 
 ### CRAN notes {#r-cran}
 
@@ -195,22 +207,22 @@ Your R directory should not include any files other than R code. Subdirectories 
 
 ## What is a package? {#package}
 
-To develop a packge all you need is the workflow above. But to master package development, particularly distributing your package to others, you need to understand more about the different forms a package can take. This will help you understand exactly what happens when you do `install.packages()`.
+To make your first package, you only need what you've learnt so far. But to master package development, particularly distributing your package to others, you need to understand more about the different forms of a package. This will help you understand exactly what happens when you install a package with `install.packages()` or `devtools::install_github()`.
 
 So far we've just worked with a __source__ package: the development version of a package that lives on your computer. A source package is just a directory with components like `R/`, `DESCRIPTION`, and so on. There are three other types of package: bundled, binary and installed.
 
-A package __bundle__ is a compressed version of a package in a single file. By convention, package bundles in R use the extension `.tar.gz`. This is Linux convention indicating multiple files have been collapsed into a single file (`.tar`) and then compressed using gzip (`.gz`). A bundle is not that useful in its own right, but is often used an intermediary in other steps. It's rare that you'll need it, but you can call `devtools::build()` to make a package bundle. If you decompress a bundle, you'll see it looks almost the same as your source package. The main differences between a decompressed bundle and a source package are:
+A package __bundle__ is a compressed version of a package in a single file. By convention, package bundles in R use the extension `.tar.gz`. This is a Linux convention indicating multiple files have been collapsed into a single file (`.tar`) and then compressed using gzip (`.gz`). A bundle is not that useful in its own right, but is often used an intermediary in other steps. In the rare case that you need it, call `devtools::build()` to make a package bundle. If you decompress a bundle, you'll see it looks almost the same as your source package. The main differences between a decompressed bundle and a source package are:
 
-* Vignettes, package level documentation, are built turning raw files like
-  markdown or latex into output like html and pdf.
+* Vignettes are built so that you get html and pdf output instead of 
+  markdown or latex input.
 
 * Your source package might contain temporary files used to save time during
-  development, like compilation artefacts in `src/`.
+  development, like compilation artefacts in `src/`. These are never found in 
+  the bundle.
+  
+* Any files listed in the file `.Rbuildignore` are not included in the bundle.
 
-* Any files listed in `.Rbuildignore` are not included in the bundle. You'll
-  learn more about `.Rbuildignore` in XXX.
-
-If you want to distribute your package to another R user (i.e. someone who doesn't necessarily have the development tools installed) you need to make a __binary__ package. Like a package bundle, a binary package is a single file, but if you uncompress it, you'll see that the internal structure is a little different than a source package: 
+If you want to distribute your package to another R user (i.e. someone who doesn't have package development tools) you need to make a __binary__ package. Like a package bundle, a binary package is a single file, but if you uncompress it, you'll see that the internal structure is a rather different to a source package: 
 
 * There are no `.R` files in the `R/` directory - instead there are three
   files that store the parsed functions in an efficient format. This is
@@ -240,16 +252,6 @@ The following diagram summarises the files present in the root directory for the
 bookdown::embed_png("diagrams/package-files.png")
 ```
 
-(Needs diagram instead of table)
-
-* `cran-comments.md` and `devtools.Rproj` are included in `src` but nothing 
-  else. That's because they're only needed for development, and are listed in
-  `.Rbuildignore`.
-  
-* `inst/` goes away and `templates/` appears - that's because building a 
-  binary copies the contents of `inst/` into the root directory. You'll learn
-  more about that in XXX.
-
 ### Exercises
 
 1.  Go to CRAN and download the source and binary for XXX. Unzip and compare.
@@ -260,21 +262,27 @@ bookdown::embed_png("diagrams/package-files.png")
 
 ## Package installation {#install}
 
-An __installed__ package is just a binary package that's been uncompressed into a package library, described next. The following diagram describes the many ways a package can be installed. This diagram is complicated! In an ideal world installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed, installed -> in memory. It's not this simple in the real world because doing each step in sequence is slow, and there are often faster short cuts available.
+An __installed__ package is just a binary package that's been uncompressed into a package library, described next. The following diagram describes the many ways a package can be installed. This diagram is complicated! In an ideal world installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed. It's not this simple in the real world because doing each step in sequence is slow, and there are often faster shortcuts available.
 
 ```{r, echo = FALSE}
 bookdown::embed_png("diagrams/installation.png")
 ```
 
-The power house is the command line tool `R CMD install` - it can install a source, bundle or a binary package. When you install a package from CRAN, R basically downloads the file and then runs `R CMD install` on it.
+The tool that powers all package installation is the command line tool `R CMD install` - it can install a source, bundle or a binary package. Devtools functions wrap the base R functions so that you can access them from R, rather than the command line. `install()` is effectively just a wrapper for `R CMD install`. `build()` is a wrapper for `R CMD build` that turns source packages into bundles. `install_github()` downloads a source package from github, runs `build()` to make vignettes, then uses `R CMD install` to install. `install_url()`, `install_gitorious()`, `install_bitbucket()` work similarly for packages found elsewhere on the internet.
 
-Devtools functions wrap the base R functions so that you can access them from R, rather than the command line. `install()` is effectively just a wrapper for `R CMD install`. `build()` is a wrapper for `R CMD build` that turns source packages into bundles. `install_github()` downloads a source package from github, runs `build()` to make vignettes, then uses `R CMD install` to install. `install_url()`, `install_gitorious()`, `install_bitbucket()` work similarly for packages found elsewhere on the internet.
+`install.packages()` and `devtools::install_github()` allow you to install a remote package. They both work by first downloading the package. `install.packages()` normally downloads a binary package built by CRAN. This makes installation very speedy.  `install_github()` has to work a little differently - it first downloads a source package, then builds and installs it.
 
-RStudio's "Build and reload" performs one additional step - it also loads the package into memory. `load_all()` is similar, except that it skips all intermediate steps - it goes directly from a source package to a loaded in-memory package. `library()` is the equivalent for installed packages.
+### Loading into memory
+
+To use a package, you must load it into memory. When you're not developing package, you use `library()` to do this. When developing a package you can either use `load_all()` or "Build and reload". You now know enough about packages to understand the different: `load_all()` skips the installation step and goes directly from on-disk to in-memory:
+
+```{r, echo = FALSE}
+bookdown::embed_png("diagrams/loading.png")
+```
 
 ## What is a library? {#library}
 
-A collection of packages is called a library. This is a bit confusing because you use the `library()` function to load a package, but the distinction between libraries and packages is important and useful. A library is just a directory containing installed packages. You can have multiple libraries on your computer and almost everyone has at least two: one for the recommended packages that come with a base R install (like `base`, `stats` etc), and one library where the packages you've installed live. Normally, that second directory varies based on the version of R that you're using. That's why it seems like you "lose" all your packages when you reinstall R - they're actually still on your hard drive, but R can't find them. 
+A collection of packages is called a library. This is a bit confusing because you use the `library()` function to load a package, but the distinction between libraries and packages is important and useful. A library is just a directory containing installed packages. You can have multiple libraries on your computer and almost everyone has at least two: one for the packages that come with very R install (like `base`, `stats` etc), and one library for the package that you've installed. Normally, that second directory varies based on the version of R that you're using. That's why it seems like you "lose" all your packages when you reinstall R - they're actually still on your hard drive, but R can't find them. 
 
 You can use `.libPaths()` to see which libraries are currently active. Here are mine:
 
@@ -299,11 +307,17 @@ lapply(.libPaths(), dir)
 #> [29] "translations" "utils"
 ```
 
-My first lib path is where packages that I've installed live (I've installed at lot!), and the second is where packages that come with R live. These are the so called "recommended" packages available with every install of R.
+The first lib path is for the packages I've installed (I've installed at lot!), and the second is for the base R packages. These are the so called "recommended" packages available with every install of R.
 
-When you use `library(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists.
+When you use `library(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists. If it doesn't, you'll get an error message:
 
-Packrat, which we'll learn about in Chapter XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it means you can play around with cutting-edge packages in one place, but all your other projects continue to use the old reliable packages. This is also useful when you're both developing and using a package. 
+```{r, error = TRUE}
+library(blah)
+```
+
+The main difference between `library()` and `require()` is what happens if a package isn't found. `library()` throws an error, and `require()` prints a message and returns false. In practice this distinction isn't important when building a package because you should __NEVER__ use either inside a package. See [package dependencies](#dependencies) for what you should do instead.
+
+Packrat, which we'll learn about in XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it means you can play around with cutting-edge packages in one place, but all your other projects continue to use the old reliable packages. This is also useful when you're both developing and using a package. 
 
 ### Exercises
 
