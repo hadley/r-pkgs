@@ -330,23 +330,35 @@ Methods with doc strings will be included in the "Methods" section of the class 
 
 ## Do repeat yourself {#dry2}
 
-There is a tension between the DRY (do not repeat yourself) principle of programming and the need for documentation to be self-contained. It's frustrating to have to navigate through multiple help files in order to pull together all the pieces you need. Roxygen2 provides three ways to avoid repeating yourself in code documentation, while assembling information from multiple places in one documentation file:
+There is a tension between the DRY (do not repeat yourself) principle of programming and the need for documentation to be self-contained. It's frustrating to have to navigate through multiple help files in order to pull together all the pieces you need. Roxygen2 provides two ways to avoid repeating yourself in the source, while still assembling everything into one documentation file:
 
-* create reusable templates with `@template` and `@templateVar`
-* reuse parameter documentation with `@inheritParams`
-* document multiple functions in the same place with `@describeIn` or `@rdname`
-
-### Roxygen templates {#man-templates}
-
-Roxygen templates are R files containing only roxygen comments that live in the `man-roxygen` directory. Use `@template file-name` (without extension) to insert the contents of a template into the current documentation.
-
-You can make templates more flexible by using template variables defined with `@templateVar name value`. Template files are run with brew, so you can retrieve values (or execute any other arbitrary R code) with `<%= name %>`.
-
-Note that templates are parsed a little differently to regular blocks, so you'll need to explicitly set the title, description and details with `@title`, `@description` and `@details`.
+* Reuse parameter documentation with `@inheritParams`.
+* Document multiple functions in the same place with `@describeIn` or `@rdname`
 
 ### Inheriting parameters from other functions
 
-You can inherit parameter descriptions from other functions using `@inheritParams source_function`. This tag will bring in all documentation for parameters that are undocumented in the current function, but documented in the source function. The source can be a function in the current package, `@inheritParams function`, or another package using `@inheritParams package::function`.
+You can inherit parameter descriptions from other functions using `@inheritParams source_function`. This tag will bring in all documentation for parameters that are undocumented in the current function, but documented in the source function. The source can be a function in the current package, `@inheritParams function`, or another package using `@inheritParams package::function`. For example the following documentation:
+
+```{r}
+#' @param a This is the first argument
+foo <- function(a) a + 10
+
+#' @param b This is the second argument
+#' @inheritParams foo
+bar <- function(a, b) {
+  foo(a) * 10
+}
+```
+
+is equivalent to
+
+```{r}
+#' @param a This is the first argument
+#' @param b This is the second argument
+bar <- function(a, b) {
+  foo(a) * 10
+}
+```
 
 Note, however, that inheritance does not chain. In other words, the `source_function` must always be the function that defines the parameter using `@param`.
 
@@ -402,7 +414,6 @@ add <- function(x, y) x + y
 #' @rdname arith
 times <- function(x, y) x * y
 ```
-
 
 ## Text formatting reference sheet {#text-formatting}
 
