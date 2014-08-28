@@ -24,7 +24,7 @@ R provides a standard way of documenting packages: you write `.Rd` files in the 
 
 As well as generating `.Rd` files, roxygen will also create a `NAMESPACE` for you, and will manage the `Collate` field in `DESCRIPTION`. [Managing your `NAMESPACE`](#namespace) describes how to generate a `NAMESPACE` file, how namespacing works in R, and how you can use roxygen2 to be specific about what your package needs and supplies.
 
-## The documentation workflow
+## The documentation workflow {#man-workflow}
 
 I'll first show you a rough outline of the complete documentation workflow, and then we'll dive into the individual steps. The documentation workflow is made up of three basic steps:
 
@@ -41,7 +41,7 @@ The process starts when you add specially formatted roxygen comments to your sou
 
 ```{r}
 #' Add together two numbers
-#'
+#' 
 #' @param x A number
 #' @param y A number
 #' @return The sum of \code{x} and \code{y}
@@ -90,7 +90,7 @@ bookdown::embed_png("screenshots/man-add.png", dpi = 220)
 
 (Note that this works because devtool overrides the usual help functions to teach them how to work with source packages. If the documentation doesn't appear, make sure that you're using devtools and you've loaded the package with `load_all()`.)
 
-## Roxygen comments
+## Roxygen comments {#roxygen-comments}
 
 Roxygen comments start with `#'` and come before a function. All the roxygen lines preceeding a function are called a __block__. Each line should be wrapped in the same way as your code, normally at 80 characters.
 
@@ -110,92 +110,92 @@ Each block include some text before the first tag. This is called the __introduc
   (often long) section that comes after the argument description and should 
   go into detail about how the function works.
 
+All objects must have a title and description. Details are optional.
+
 Here's an example showing what the introduction for `sum()` might look like if it had been written with roxygen:
 
 ```{r}
 #' Sum of vector elements.
-#'
+#' 
 #' \code{sum} returns the sum of all the values present in its arguments.
-#'
-#' This is a generic function: methods can be defined for it directly
-#' or via the \code{\link{Summary}} group generic. For this to work properly,
-#' the arguments \code{...} should be unnamed, and dispatch is on the
-#' first argument.
+#' 
+#' This is a generic function: methods can be defined for it directly or via the
+#' \code{\link{Summary}} group generic. For this to work properly, the arguments
+#' \code{...} should be unnamed, and dispatch is on the first argument.
 sum <- function(..., na.rm = TRUE) {}
 ```
 
-`\code{}` and `\link{}` are formatting commands that you'll learn about in [formatting](#text-formatting). Also note that I've been careful to wrap the roxygen block so that it's less than 80 characters wide. You can do that automatically in Rstudio by pushing Cmd + I (re-indent lines).
+`\code{}` and `\link{}` are formatting commands that you'll learn about in [formatting](#text-formatting). Note that I've been careful to wrap the roxygen block so that it's less than 80 characters wide. You can do that automatically in Rstudio by pushing using Cmd + Shift + / (code | re-flow comment).
 
-The following documentation produces the same help file as above, but uses explicit tags. You only need explicit tags if you want to the title or description to span multiple paragraphs (a bad idea), or want to omit the description (in which case roxygen will use the title for the description, since it's a required documentation component).
+You can add arbitrary sections to the documentation for any object with the `@section` tag. This is a useful way of breaking a long details section into multiple chunks with useful headings. Section titles should be in sentence case and must be followed a colon. Titles may only take one line.
 
 ```{r}
-#' @title Sum of vector elements.
-#'
-#' @description
-#' \code{sum} returns the sum of all the values present in its arguments.
-#'
-#' @details
-#' This is a generic function: methods can be defined for it directly
-#' or via the \code{\link{Summary}} group generic. For this to work properly,
-#' the arguments \code{...} should be unnamed, and dispatch is on the
-#' first argument.
-sum <- function(..., na.rm = TRUE) {}
+#' @section Warning:
+#' Do not operate heavy machinery within 8 hours of using this function.
 ```
 
-All objects must have a title and description. Details are optional.
+There are two tags that make it easier for people to navigate around your documentation:
 
-There are two tags that make it easier for people to navigate around your documentation. `@seealso` allows you to point to other useful resources, either on the web `\url{http://www.r-project.org}`, or to other documentation with `\code{\link{functioname}}`. If you have a family of related functions that all needed to be interlinked, you can use the `@family` tag to automatically add the appropriate links to `@seealso`. The `@family` name should be plural.
+* `@seealso` allows you to point to other useful resources, either on the web, 
+  `\url{http://www.r-project.org}`, or to other documentation in your package 
+  `\code{\link{functioname}}`. 
+   
+* If you have a family of related functions where every function should link
+  to every other function in the family, use `@family`. The value of `@family` 
+  should be plural.
 
 For sum, these components might look like:
 
 ```{r}
 #' @family aggregate functions
-#' @seealso \code{\link{prod}} for products, \code{\link{cumsum}} for
-#'  cumulative sums, and \code{\link{colSums}}/\code{\link{rowSums}}
-#'  marginal sums over high-dimensional arrays.
+#' @seealso \code{\link{prod}} for products, \code{\link{cumsum}} for cumulative
+#'   sums, and \code{\link{colSums}}/\code{\link{rowSums}} marginal sums over
+#'   high-dimensional arrays.
 ```
 
 Three other tags make it easier for the user to find documentation:
 
-* `@aliases space separated aliases` to add additional aliases, through
-  which the user can find the documentation with `?`.
+*   `@aliases space separated aliases` adds additional aliases to the topic.
+    An alias is another name of the topic that can be used with `?`.
 
-* `@concepts` to add extra keywords that will be found with `help.search()`
+*   `@concepts` adds extra keywords that will be found with `help.search()`.
 
-* `@keywords keyword1 keyword2 ...` to add standardised keywords. Keywords are
-  optional, but if present, must be taken from a predefined list. Keywords are 
-  not very useful, except for `@keywords internal`. Using the internal keyword
-  removes all functions in the associated `.Rd` file from the documentation 
-  index and disables some of their automated tests.
+*   `@keywords keyword1 keyword2 ...` adds standardised keywords. Keywords are
+    optional, but if present, must be taken from a predefined list found in 
+    `file.path(R.home("doc"), "KEYWORDS")`. 
   
-  A common use case is to both export a function (using `@export`) and 
-  marking it as internal. That way, advanced users can access a function that
-  new users would be confused about if they were to see it in the index.
+    Generally, keywords are not very useful except for `@keywords internal`. 
+    Using the internal keyword removes all functions in the associated `.Rd` 
+    file from the documentation index and disables some of their automated tests.
+    A common use case is to both export a function (using `@export`) and 
+    mark it as internal. That way, advanced users can access a function that
+    new users would be confused about if they were to see it in the index.
 
-You use other tags based on the type of object that you're documenting. The following sections describe the most commonly used tags for functions, S3, S4 and RC objects and data.
+Other tags are situational: they vary based on the type of object that you're documenting. The following sections describe the most commonly used tags for functions and the various methods, generics and objects used by R's three OO systems. You'll learn how to document datasets in [documenting data](#documenting-data).
 
-## Documenting functions
+## Documenting functions {#man-functions}
 
-Functions are the most commonly documented objects. Most functions use three tags:
+Functions are the most commonly documented objects. As well as the introduction block, most functions have three tags:
 
 *   `@param name description` describes the inputs to the function.
     The description should provide a succinct summary of the type of the
     parameter (e.g. a string, a numeric vector), and if not obvious from
-    the name, what the parameter does. The description should start with a
-    capital letter and end with a full stop. It can span multiple lines (or
-    even paragraphs) if necessary. All parameters must be documented.
+    the name, what the parameter does. 
+    
+    The description should start with a capital letter and end with a full stop. 
+    It can span multiple lines (or even paragraphs) if necessary. All 
+    parameters must be documented.
 
     You can document multiple arguments in one place by separating
     the names with commas (no spaces). For example, to document both
-    `x` and `y`, you can say `@param x,y Numeric vectors`.
+    `x` and `y`, you can say `@param x,y Numeric vectors.`.
 
 *   `@examples` provides executable R code showing how to use the function in
     practice. This is a very important part of the documentation because
-    many people look at the examples before reading anything. Example code
-    must work without errors as it is run automatically as part of `R CMD
-    check`.
+    many people look at the examples first. Example code must work without 
+    errors as it is run automatically as part of `R CMD check`.
 
-    However for the purpose of illustration, it's often useful to include code
+    For the purpose of illustration, it's often useful to include code
     that causes an error. `\dontrun{}` allows you to include code in the
     example that is never used. There are two other special commands.
     `\dontshow{}` is run, but not shown in the help page: this can
@@ -206,9 +206,9 @@ Functions are the most commonly documented objects. Most functions use three tag
 
     Command      | example   | help   | R CMD check
     ------------ | --------- | ------ | -----------
-    `\dontrun{}` |           | x      |
-    `\dontshow{}`| x         |        | x
-    `\donttest{}`| x         | x      |
+    `\dontrun{}` |           | •      | 
+    `\dontshow{}`| •         |        | •
+    `\donttest{}`| •         | •      | 
 
     Instead of including examples directly in the documentation, you can
     put them in separate files and use `@example path/relative/to/packge/root`
@@ -256,23 +256,21 @@ We could use these new tags to improve our documentation of `sum()` as follows:
 sum <- function(..., na.rm = TRUE) {}
 ```
 
-Indent the second and subsequent lines of a tag so that when scanning the documentation so it's easy to see where one tag ends and the next begins. Tags that always span multiple lines (like `@example`) should start on a new line and don't need to be indented.
+Indent the second and subsequent lines of a tag so that when scanning the documentation it's easy to see where one tag ends and the next begins. Tags that always span multiple lines (like `@example`) should start on a new line and don't need to be indented.
 
 ## Documenting classes, generics and methods
 
-Documenting classes, generics and methods are relatively straightforward, but there are some variations based on the object system. The following sections give the details for the S3, S4 and RC object systems.
+Documenting classes, generics and methods are relatively straightforward, but the details vary based on the object system you're using. The following sections give the details for the S3, S4 and RC object systems.
 
-### S3
+### S3 {#man-s3}
 
-S3 __generics__ are regular functions, so document them as such. S3 __classes__ have no formal definition, so document the constructor function. It is your choice whether or not to document S3 __methods__. You don't need to document methods for simple generics like `print()`. If your method is more complicated, you should document it so people know what the parameters do. In base R, you can find documentation for more complex methods like `predict.lm()`, `predict.glm()`, and `anova.glm()`.
+S3 __generics__ are regular functions, so document them as such. S3 __classes__ have no formal definition, so document the constructor function. It is your choice whether or not to document S3 __methods__. You don't need to document methods for simple generics like `print()`. But if your method is more complicated, you should document it so people know what the parameters do. In base R, you can see examples of documentation for more complex methods like `predict.lm()`, `predict.glm()`, and `anova.glm()`.
 
 Older versions of roxygen required explicit `@method generic class` tags for all S3 methods. From 3.0.0 this is no longer needed as and roxygen2 will figure it out automatically. If you are upgrading, make sure to remove these old tags. Automatic method detection will only fail if the generic and class are ambiguous. For example is `all.equal.data.frame()` the `equal.data.frame` method for `all`, or the `data.frame` method for `all.equal`?. If this happens, you can disambiguate with (e.g.) `@method all.equal data.frame`.
 
-### S4
+### S4 {#man-s4}
 
-Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` to correctly document S4 objects, but from version 3.0.0 on roxygen2 generates correct metadata automatically. If you're upgrading from a previous version, make sure to remove these old tags.
-
-S4 __generics__ are also functions, so document them as such. Document __S4 classes__ by adding a roxygen block before `setClass()`. Use `@slot` to document the slots of the class. Here's a simple example:
+Document __S4 classes__ by adding a roxygen block before `setClass()`. Use `@slot` to document the slots of the class in the same way you use `@param` to describe the parameters of a function. Here's a simple example:
 
 ```{r}
 #' An S4 class to represent a bank account.
@@ -283,27 +281,40 @@ Account <- setClass("Account",
 )
 ```
 
-S4 __methods__ are a little more complicated. Unlike S3, all S4 methods must be documented. You can document them in three places:
+S4 __generics__ are also functions, so document them as such. S4 __methods__ are a little more complicated. Unlike S3, all S4 methods must be documented. You document them like a regular function, but you probably don't want each method to have it's own documentation page. Instead, put the method documentation in one of three places:
 
 * In the class. Most appropriate if the corresponding generic uses single
   dispatch and you created the class.
 
 * In the generic. Most appropriate if the generic uses multiple dispatch
-  and you control it.
+  and you have written both the generic and the method.
 
-* In its own file. Most appropriate if the method is complex. or the
-  either two options don't apply.
+* In its own file. Most appropriate if the method is complex, or the
+  you've written the method but not the class or generic.
 
-Use either `@rdname` or `@describeIn` to control where method documentation goes. See the next section for more details.
+Use either `@rdname` or `@describeIn` to control where method documentation goes. See [documenting multiple objects in one file](#multiple-man) for details.
 
-### RC
+A final consideration of S4 is that S4 code needs to run in a certain order. For example, to define the method `setMethod("foo", c("bar", "baz"), ...)` you must already have created the generic and the two classes. R loads files in alphabetical order. Unfortunately not every alphabet puts letters in the same order, so you can't rely on alphabetic ordering if you need one file loaded before another. The order in which files are loaded doesn't matter for most packages. But if you're using S4, you'll need to make sure that classes are loaded before subclasses and generics are defined before methods.
 
-RC is different to S3 and S4 because methods are associated with classes, not generics. RC also has a special convention for documenting methods: the docstring. This makes documenting RC simpler than S4 because you only need one roxygen block per class.
+Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
+
+```{r, eval = FALSE}
+#' @include class-a.r
+setClass("B", contains = "A")
+```
+
+If any `@include` tags are present in the package, roxygen2 will set the `Collate` field in the `DESCRIPTION`, which ensures that files are always loaded in the same order. An simpler alternative to `@include` is to define all classes and methods in `aaa-classes.R` and `aaa-generics.R`, and rely on these coming first in alphabetical order. The main disadvantage is that you can organise components into files as naturally as you might want.
+
+Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` tags to correctly document S4 objects, but as of version 3.0.0 it generates correct metadata automatically. If you're upgrading from a old version of roxygen2, make sure to remove these tags.
+
+### RC {#man-rc}
+
+Reference classes are different to S3 and S4 because methods are associated with classes, not generics. RC also has a special convention for documenting methods: the docstring. This makes documenting RC simpler than S4 because you only need one roxygen block per class. 
 
 ```{r}
 #' A Reference Class to represent a bank account.
 #'
-#' @field balance A length-one numeric vector
+#' @field balance A length-one numeric vector.
 Account <- setRefClass("Account",
   fields = list(balance = "numeric"),
   methods = list(
@@ -315,79 +326,9 @@ Account <- setRefClass("Account",
 )
 ```
 
-Methods with doc strings will be included in the "Methods" section of the class documentation. Each documented method will be listed with an automatically generated usage statement and its doc string.
+Methods with doc strings will be included in the "Methods" section of the class documentation. Each documented method will be listed with an automatically generated usage statement and its doc string. Also note the use of `@field` instead of `@slot`.
 
-## Documenting datasets {#documenting-data}
-
-Datasets are usually stored as `.rdata` files in `data/` and not as regular R objects in the package. This means you need document them slightly differently: instead of documenting the data directly, you document `NULL`, and use `@name` to tell roxygen2 what dataset you're really documenting.
-
-There are two additional tags that are useful for documenting datasets:
-
-* `@format`, which gives an overview of the structure of the dataset.
-  If you omit this, roxygen will automatically add something based on the
-  first line of `str()` output
-
-* `@source` where you got the data form, often a `\url{}`.
-
-To show how everything fits together, the example below is an excerpt from the roxygen block used to document the diamonds dataset in ggplot2.
-
-```{r}
-#' Prices of 50,000 round cut diamonds.
-#'
-#' A dataset containing the prices and other attributes of almost 54,000
-#' diamonds. The variables are as follows:
-#'
-#' \itemize{
-#'   \item price. price in US dollars (\$326--\$18,823)
-#'   \item carat. weight of the diamond (0.2--5.01)
-#'   ...
-#' }
-#'
-#' @format A data frame with 53940 rows and 10 variables
-#' @source \url{http://www.diamondse.info/}
-#' @name diamonds
-NULL
-```
-
-## Documenting packages
-
-As well as documenting every exported object in the package, you should also document the package itself. Relatively few packages provide package documentation, but it's an extremely useful tool for users, because instead of just listing functions like `help(package = pkgname)` it organises them and shows the user where to get started.
-
-Package documentation should describe the overall purpose of the package and point to the most important functions. It should not contain a verbatim list of functions or copy of `DESCRIPTION`. This file is for human reading, so pick the most important elements of your package.
-
-Package documentation should be placed in `pkgname.R`. Here's an example:
-
-```{r}
-#' Generate R documentation from inline comments.
-#'
-#' Roxygen2 allows you to write documentation in comment blocks co-located
-#' with code.
-#'
-#' The only function you're likely to need from \pkg{roxygen2} is
-#' \code{\link{roxygenize}}. Otherwise refer to the vignettes to see
-#' how to format the documentation.
-#'
-#' @docType package
-#' @name roxygen2
-NULL
-```
-
-Some notes:
-
-* Like for datasets, there isn't a object that we can document directly so
-  document `NULL` and use `@name` to say what we're actually documenting
-
-* `@docType package` indicates that the documentation is for the package.
-  This will automatically add the corect aliases so that both `?pkgname`
-  and `package?pkgname` will find the package help. If there's already
-  a function called `pkgname()`, use `@name roxygen2-package`.
-
-* Use `@references` point to published material about the package that
-  users might find helpful.
-
-Package documentation is a good place to list all `options()` that a package understands and to document their behaviour. Put in a section called "Package options", as described below.
-
-## Do repeat yourself
+## Do repeat yourself {#dry2}
 
 There is a tension between the DRY (do not repeat yourself) principle of programming and the need for documentation to be self-contained. It's frustrating to have to navigate through multiple help files in order to pull together all the pieces you need. Roxygen2 provides three ways to avoid repeating yourself in code documentation, while assembling information from multiple places in one documentation file:
 
@@ -395,7 +336,7 @@ There is a tension between the DRY (do not repeat yourself) principle of program
 * reuse parameter documentation with `@inheritParams`
 * document multiple functions in the same place with `@describeIn` or `@rdname`
 
-### Roxygen templates
+### Roxygen templates {#man-templates}
 
 Roxygen templates are R files containing only roxygen comments that live in the `man-roxygen` directory. Use `@template file-name` (without extension) to insert the contents of a template into the current documentation.
 
@@ -409,7 +350,7 @@ You can inherit parameter descriptions from other functions using `@inheritParam
 
 Note, however, that inheritance does not chain. In other words, the `source_function` must always be the function that defines the parameter using `@param`.
 
-### Documenting multiple functions in the same file
+### Documenting multiple functions in the same file {#multiple-man}
 
 You can document multiple functions in the same file by using either `@rdname` or `@describeIn` tag. It's a technique best used with caution: documenting too many functions into one place leads to confusing documentation. It's best used when all functions have the same (or very similar) arguments.
 
@@ -461,41 +402,6 @@ add <- function(x, y) x + y
 #' @rdname arith
 times <- function(x, y) x * y
 ```
-
-## Sections
-
-You can add arbitrary sections to the documentation for any object with the `@section` tag. This is a useful way of breaking a long details section into multiple chunks with useful headings. Section titles should be in sentence case and must be followed a colon. Titles may only take one line.
-
-```{r}
-#' @section Warning:
-#' Do not operate heavy machinery within 8 hours of using this function.
-```
-
-To add a subsection, you must use the `Rd` `\subsection{}` command, as follows:
-
-```{r}
-#' @section Warning:
-#' You must not call this function unless ...
-#'
-#' \subsection{Exceptions}{
-#'    Apart from the following special cases...
-#' }
-```
-
-## Collation order {#collate}
-
-R loads files in alphabetical order. Unfortunately not every alphabet puts letters in the same order, so you can't rely on alphabetic ordering if you need one file loaded before another. The order in which files are loaded doesn't matter for most packages. But if you're using S4, you'll need to make sure that classes are loaded before subclasses and generics are defined before methods.
-
-Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
-
-```{r, eval = FALSE}
-#' @include class-a.r
-setClass("B", contains = "A")
-```
-
-If any `@include` tags are present in the package, roxygen2 will set the `Collate` field in the `DESCRIPTION`, which ensures that files are always loaded in the same order.
-
-[description]: http://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file
 
 
 ## Text formatting reference sheet {#text-formatting}
