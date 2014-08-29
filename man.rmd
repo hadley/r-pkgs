@@ -6,45 +6,44 @@ output: bookdown::html_chapter
 
 # Documentation
 
-Documentation is one of the most important aspects of a good package. Without it, users won't know how to use your package, and are unlikely to do so. Documentation is also useful for you in the future (so you remember what the heck you were thinking!), and for other developers working on your package. 
+Documentation is one of the most important aspects of a good package. Without it, users won't know how to use your package, and are unlikely to do so. Documentation is also useful for future-you (so you remember what your functions were supposed to do), and for developers extending your package. 
 
-Documentation files are what you see when you use `?` or `help()`. They describe the actions of individual (or small groups of) functions. They are useful if you know the name of the function you need. They are a reference, they're not designed to help you learn how to use a package. That's the job of vignettes, which you'll learn about in the next chapter. 
+There are multiple forms of documentation. In this chapter, you'll learn about function documentation, as accessed by `?` or `help()`. Function documentation is a type of reference documentation. It works like a dictionary: a dictionary is helpful if you want to know what a word means, but doesn't help find the right word for a new situation. Similarly, function documentation is helpful if you already know the name of the function, but doesn't help you find the function you need to solve a given problem. That's the job of vignettes, which you'll learn about in the next chapter.
 
-R provides a standard way of documenting packages: you write `.Rd` files in the `man/` directory. These files use a custom syntax, loosely based on latex. Instead of writing these files directly, we're going to use the roxygen2 package, which turns specially formatted comments into `.Rd` files. The goal of roxygen2 is to make documenting your code as easy as possible, and it has a number of advantages over writing `.Rd` files by hand:
+R provides a standard way of documenting packages: you write `.Rd` files in the `man/` directory. These files use a custom syntax that's loosely based on latex. Instead of writing these files directly, we're going to use roxygen2 which turns specially formatted comments into `.Rd` files. The goal of roxygen2 is to make documenting your code as easy as possible, so it has a number of advantages over writing `.Rd` files by hand:
 
-* Code and documentation are adjacent so when you modify your code, you're
-  reminded that you also need to update your documentation.
+* Code and documentation are intermingled so when that you modify your code, 
+  you're reminded to also update your documentation.
 
-* Roxygen2 dynamically inspects the objects that it's documenting, so it
-  can automatically generate some of the boilerplate that you'd need to 
-  write by hand.
+* Roxygen2 dynamically inspects the objects that it documents, so you 
+  can skip some  boilerplate that you'd need to write by hand.
 
-* It abstracts over the differences in documenting S3 and S4 methods,
-  generics and classes so you need to learn fewer details.
+* It abstracts over the differences in documenting different types of objects,
+  so you need to learn fewer details.
 
-As well as generating `.Rd` files, roxygen will also create a `NAMESPACE` for you, and will manage the `Collate` field in `DESCRIPTION`. [Managing your `NAMESPACE`](#namespace) describes how to generate a `NAMESPACE` file, how namespacing works in R, and how you can use roxygen2 to be specific about what your package needs and supplies.
+As well as generating `.Rd` files, roxygen2 can also manage your `NAMESPACE` and the `Collate` field in `DESCRIPTION`. This chapter discusses `.Rd` files and the collate field. [`NAMESPACE`](#namespace) describes how you can use roxygen2 to manage your `NAMESPACE`, and why you should care.
 
 ## The documentation workflow {#man-workflow}
 
 I'll first show you a rough outline of the complete documentation workflow, and then we'll dive into the individual steps. The documentation workflow is made up of three basic steps:
 
-1. You add roxygen comments to your source file.
+1. Add roxygen comments to your `.R` files.
 
-1. You run `devtools::document()` (or press Cmd + Shift + D in rstudio) to 
+1. Run `devtools::document()` (or press Cmd + Shift + D in RStudio) to 
    convert roxygen comments to `.Rd` files.
 
-1. You view the rendered help file with `?`.
+1. Preview documention with `?`.
 
 1. Rinse and repeat until the documentation looks the way you want.
 
-The process starts when you add specially formatted roxygen comments to your source file. Roxygen comments start with `#'` to separate them from regular comments (which you'll want to continue to use to describe important "whys"). Here's some documentation for a simple function:
+The process starts when you add roxygen comments to your source file: roxygen comments start with `#'` to distinguish them from regular comments. Here's some documentation for a simple function:
 
 ```{r}
-#' Add together two numbers
+#' Add together two numbers.
 #' 
-#' @param x A number
-#' @param y A number
-#' @return The sum of \code{x} and \code{y}
+#' @param x A number.
+#' @param y A number.
+#' @return The sum of \code{x} and \code{y}.
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -80,15 +79,15 @@ add(10, 1)
 }
 ```
 
-Rd files are a special file format loosely based on LaTeX. You can read more about the Rd format in the [R extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Rd-format) manual. Note the comment at the top of the file - the `.Rd` file are automatically generated and should not be modified by hand. Indeed, if you use roxygen2, you should rarely have to look at one of these files.
+If you're familiar with latex, this should look familiar, since the `.Rd` format is loosely based on LaTeX. You can read more about the Rd format in the [R extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Rd-format) manual. Note the comment at the top of the file: it was generated by code and shouldn't be modified. Indeed, if you use roxygen2, you will rarely look at these files.
 
-When you use `?add` or `help("add")` or `example("x")` R will look for an `.Rd` file containing `\alias{"add"}`. It then parses the file, converts it into html and displays it. Here's what the result looks like in RStudio:
+When you use `?add`, `help("add")`, or `example("add")`, R looks for an `.Rd` file containing `\alias{"add"}`. It then parses the file, converts it into html and displays it. Here's what the result looks like in RStudio:
 
 ```{r, echo = FALSE}
 bookdown::embed_png("screenshots/man-add.png", dpi = 220)
 ```
 
-(Note that this works because devtool overrides the usual help functions to teach them how to work with source packages. If the documentation doesn't appear, make sure that you're using devtools and you've loaded the package with `load_all()`.)
+(Note that this works because devtools overrides the usual help functions to teach them how to work with source packages. If the documentation doesn't appear, make sure that you're using devtools and you've loaded the package with `load_all()`.)
 
 ## Roxygen comments {#roxygen-comments}
 
