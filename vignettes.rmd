@@ -6,11 +6,17 @@ output: bookdown::html_chapter
 
 # Package documentation {#vignettes}
 
-Function documentation is useful once you know exactly what you want to do, and you've discovered the appropriate function: once you've done all that, you can use `help()` to learn how to use the function appropriately. Vignettes exists to help the user understand how to use the package as a whole. Vignettes get you to point where you can do that: they explain what the package does as a whole, breaks the functions down into useful categories, and shows you how to combine the functions (and maybe functions from other packages) to solve problems.
+Vignettes are long-form pdf guides to your package. Function documentation is useful once you know exactly what you want to do, and you've discovered the appropriate function: once you've done all that, you can use `help()` to learn how to use the function appropriately. Vignettes get you to point where you can do that: they explain what the package does as a whole, breaks the functions down into useful categories, and shows you how to combine the functions (and maybe functions from other packages) to solve problems.
 
-You can see all the vignettes in installed packages with `browseVignettes()`, or for a specific package with `browseVignettes("packagename")`. For each vignette you get three things: the original input file, the rendered html or pdf, and a file of R code.
+You can see all the vignettes in installed packages with `browseVignettes()`, or for a specific package with `browseVignettes("packagename")`. You can open a specific vignette with `vignette(x)`, and see its code with `edit(vignette(x))`. Vignettes are also listed on the CRAN page for the package. For each vignette you get three things: the original input file, the rendered html or pdf, and a file of R code. 
 
-Vignettes are long-form pdf guides to your package. There are many types of vignettes, but here I'll only discuss the most useful: Rmarkdown. You can get your package ready to add a vignette by running:
+There are many types of vignettes, but here I'll only discuss the easiest most useful: Rmarkdown. Rmarkdown vignettes combine markdown, a plain text formatting system, with knitr, a package that allows you to intermingle code and text.  <http://rmarkdown.rstudio.com/>.  Easiest to use with RStudio - all the pieces are bundled. Otherwise you'll need to `devtools::install_github("rstudio/rmarkdown")` and install [pandoc](http://johnmacfarlane.net/pandoc/installing.html).  Rmarkdown comes with a template for vignettes that makes life very easy.
+
+(If you're familiar with latex and Sweave, you can also write vignettes in latex - in fact up until fairly recently you could only write vignettes in Sweave). However, I've found that since I've switched to Rmarkdown I write vignettes far more often. The restrictions of markdown make it easier to focus on the text. It also doesn't hurt that you don't need the massive latex toolchain to build rmarkdown vignettes, and it takes much less time to render. And you get in-pane preview with Rmarkdown.)
+
+## Getting started
+
+You can get your package ready for vignettes by running:
 
 ```{r, eval = FALSE}
 devtools::use_knitr()
@@ -18,24 +24,26 @@ devtools::use_knitr()
 
 This will:
 
-1. Create a `vignettes/` directory.
+1.  Create a `vignettes/` directory.
 
-1. Add the necessary dependencies to `DESCRIPTION` (i.e. knitr in suggest and 
-   vignette builder).
+1.  Add the necessary dependencies to `DESCRIPTION` (i.e. knitr in suggests and 
+    vignette builder).
 
-1. Remind you how to create individual vignettes.  Each vignette must
-   contain the `\VignetteBuilder(knitr::knitr)` and 
-   `\VignetteIndexEntry{Vignette title}`.
+1.  Remind you how to create individual vignettes.  Each vignette must contain:
+
+    ```
+    \VignetteEngine{knitr::knitr}
+    \VignetteIndexEntry{Vignette Title}
+    \usepackage[utf8]{inputenc}
+    ```
 
 You then write vignettes using markdown and knitr (= rmarkdown), which are described below.
 
-(If you're familiar with latex and Sweave, you can also write vignettes in latex. However, I've found that since I've switched to Rmarkdown I write vignettes far more often. The restrictions of markdown make it easier to focus on the text. It also doesn't hurt that you don't need the massive latex toolchain to build rmarkdown vignettes, and it takes much less time to render.)
+You can create a new vignette by copying and pasting an existing vignette, or use the new R markdown menu in RStudio:
 
-## Organisation
-
-For simpler packages, often one vignette is sufficient. But for more complicated packages you may need more than one. You can have as many vignettes as you like. I tend to think of them like chapters of a book - they should be self-contained, but can link together into a cohesive whole. 
-
-You can link between various vignettes, although it's a slight hack because it takes advantage of the exactly how files are stored on disk. If you want to link to a vignette `abc.Rmd`, just make a link to `abc.html`.
+```{r, echo = FALSE}
+bookdown::embed_png("screenshots/rmarkdown.png", dpi = 220)
+```
 
 ## Markdown {#markdown}
 
@@ -43,13 +51,49 @@ You can link between various vignettes, although it's a slight hack because it t
 
 ## Knitr
 
-(Take highlights from cheatsheet)
+A knitr code block looks like this:
+
+Important options:
+
+* `echo`
+* `eval`
+* `results` = "markup", "asis", "hold", "hide"
+* `error`
+* `warning`, `message`
+
+* `collapse`
+* `comment`
+
+* `fig.show`
+* `fig.width`, `fig.height`
+* `fig.cap`
 
 ## Development cycle
 
 Run code a chunk at a time using Cmd + Alt + C. Re-run the entire document in a fresh R session using Knit (Cmd + Shift + K). You can build all vignettes from the console with `devtools::build_vignettes()`, but this is rarely useful. Instead rely on `build()` to create a package bundle with the vignettes included.
 
 Note that RStudio's "Build & reload" does not build vignettes (in the interest of saving time). All install functions (like `install_github()`) will ensure vignettes are built by default, most have an argument to turn off if it's time consuming.
+
+## Advice for writing vignettes
+
+> If you're thinking without writing, you only think you're thinking.
+> --- Leslie Lamport
+
+Literally anything written by Kathy Sierra.
+
+Think of this as a teaching opportunity.  Put yourself in your reader/users shoes.
+
+I find writing vignettes tremendously improves the quality of my code because it forces me to adopt the "beginners mind". It forces you to re-see the initial onboarding process and to appreciate the parts that are hard.  Every time I have written a vignette the process of starting from the beginning and explaining the details has made me realise that I've missed some important functions. Adding those functions not only helps my users, but it often also helps me!  (This is one of the reasons that I like writing books too). 
+
+Can also make a nice break from coding. If you're brain is tired of programming, try working on the vignettes - writing seems to use a rather different part of your brain that might not be tired yet (much like the idea of cross-training). 
+
+I also like the idea of <http://www.structuredprocrastination.com/>.
+
+## Organisation
+
+For simpler packages, often one vignette is sufficient. But for more complicated packages you may need more than one. You can have as many vignettes as you like. I tend to think of them like chapters of a book - they should be self-contained, but can link together into a cohesive whole. 
+
+You can link between various vignettes, although it's a slight hack because it takes advantage of the exactly how files are stored on disk. If you want to link to a vignette `abc.Rmd`, just make a link to `abc.html`.
 
 ## CRAN notes
 
@@ -72,6 +116,8 @@ Common problems:
 
     1. Check that you haven't inadvertently excluded the vignettes with
        `.Rbuildignore`
+       
+    1. Ensure you have the necessary vignette metadata.
 
 ## Where next
 
