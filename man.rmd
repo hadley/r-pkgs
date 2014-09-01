@@ -10,7 +10,7 @@ Documentation is one of the most important aspects of a good package. Without it
 
 There are multiple forms of documentation. In this chapter, you'll learn about function documentation, as accessed by `?` or `help()`. Function documentation is a type of reference documentation. It works like a dictionary: a dictionary is helpful if you want to know what a word means, but doesn't help find the right word for a new situation. Similarly, function documentation is helpful if you already know the name of the function, but doesn't help you find the function you need to solve a given problem. That's the job of vignettes, which you'll learn about in the next chapter.
 
-R provides a standard way of documenting packages: you write `.Rd` files in the `man/` directory. These files use a custom syntax that's loosely based on latex. Instead of writing these files directly, we're going to use roxygen2 which turns specially formatted comments into `.Rd` files. The goal of roxygen2 is to make documenting your code as easy as possible, so it has a number of advantages over writing `.Rd` files by hand:
+R provides a standard way of documenting packages: you write `.Rd` files in the `man/` directory. These files use a custom syntax, loosely based on latex, and are rendered to html for viewing. Instead of writing these files by hand, we're going to use roxygen2 which turns specially formatted comments into `.Rd` files. The goal of roxygen2 is to make documenting your code as easy as possible, so it has a number of advantages over writing `.Rd` files by hand:
 
 * Code and documentation are intermingled so when that you modify your code, 
   you're reminded to also update your documentation.
@@ -25,7 +25,7 @@ As well as generating `.Rd` files, roxygen2 can also manage your `NAMESPACE` and
 
 ## The documentation workflow {#man-workflow}
 
-I'll first show you a rough outline of the complete documentation workflow, and then we'll dive into the individual steps. The documentation workflow is made up of three basic steps:
+I'll first show you a rough outline of the complete documentation workflow, and then we'll dive into the individual steps. The documentation workflow is made up of four basic steps:
 
 1. Add roxygen comments to your `.R` files.
 
@@ -93,7 +93,7 @@ bookdown::embed_png("screenshots/man-add.png", dpi = 220)
 
 Roxygen comments start with `#'` and come before a function. All the roxygen lines preceeding a function are called a __block__. Each line should be wrapped in the same way as your code, normally at 80 characters.
 
-Blocks are broken up into __tags__, which look like `@tag details`. The content of a tag extends from the end of the tag name to the start of the next tag (or the end of the block). Because `@` has a special meaning in roxygen, you need to write `@@` if you want to add a literal `@` to the documentation (this is mostly important for email addresses and for accessing slots of S4 objects).
+Blocks are broken up into __tags__, which look like `@tagName details`. The content of a tag extends from the end of the tag name to the start of the next tag (or the end of the block). Because `@` has a special meaning in roxygen, you need to write `@@` if you want to add a literal `@` to the documentation (this is mostly important for email addresses and for accessing slots of S4 objects).
 
 Each block include some text before the first tag. This is called the __introduction__, and is parsed specially:
 
@@ -106,7 +106,7 @@ Each block include some text before the first tag. This is called the __introduc
   documentation and should briefly describe what the function does. 
   
 * The third and subsequent _paragraphs_ go into the details: this is a 
-  (often long) section that comes after the argument description and should 
+  (often long) section that is shown after the argument description and should 
   go into detail about how the function works.
 
 All objects must have a title and description. Details are optional.
@@ -124,20 +124,20 @@ Here's an example showing what the introduction for `sum()` might look like if i
 sum <- function(..., na.rm = TRUE) {}
 ```
 
-`\code{}` and `\link{}` are formatting commands that you'll learn about in [formatting](#text-formatting). Note that I've been careful to wrap the roxygen block so that it's less than 80 characters wide. You can do that automatically in Rstudio by pushing using Cmd + Shift + / (code | re-flow comment).
+`\code{}` and `\link{}` are formatting commands that you'll learn about in [formatting](#text-formatting). I've been careful to wrap the roxygen block so that it's less than 80 characters wide. You can do that automatically in Rstudio with Cmd + Shift + / (or from the menu, code | re-flow comment).
 
-You can add arbitrary sections to the documentation for any object with the `@section` tag. This is a useful way of breaking a long details section into multiple chunks with useful headings. Section titles should be in sentence case and must be followed a colon. Titles may only take one line.
+You can add arbitrary sections to the documentation with the `@section` tag. This is a useful way of breaking a long details section into multiple chunks with useful headings. Section titles should be in sentence case and must be followed a colon, they can only be one line long.
 
 ```{r}
 #' @section Warning:
 #' Do not operate heavy machinery within 8 hours of using this function.
 ```
 
-There are two tags that make it easier for people to navigate around your documentation:
+There are two tags that make it easier for people to navigate between help files:
 
 * `@seealso` allows you to point to other useful resources, either on the web, 
-  `\url{http://www.r-project.org}`, or to other documentation in your package 
-  `\code{\link{functioname}}`. 
+  `\url{http://www.r-project.org}`, in your package `\code{\link{functioname}}`,
+  or another package `\code{\link[packagename]{functioname}}`. 
    
 * If you have a family of related functions where every function should link
   to every other function in the family, use `@family`. The value of `@family` 
@@ -155,7 +155,7 @@ For sum, these components might look like:
 Three other tags make it easier for the user to find documentation:
 
 *   `@aliases space separated aliases` adds additional aliases to the topic.
-    An alias is another name of the topic that can be used with `?`.
+    An alias is another name for the topic that can be used with `?`.
 
 *   `@concepts` adds extra keywords that will be found with `help.search()`.
 
@@ -163,22 +163,21 @@ Three other tags make it easier for the user to find documentation:
     optional, but if present, must be taken from a predefined list found in 
     `file.path(R.home("doc"), "KEYWORDS")`. 
   
-    Generally, keywords are not very useful except for `@keywords internal`. 
-    Using the internal keyword removes all functions in the associated `.Rd` 
-    file from the documentation index and disables some of their automated tests.
-    A common use case is to both export a function (using `@export`) and 
-    mark it as internal. That way, advanced users can access a function that
-    new users would be confused about if they were to see it in the index.
+    Generally, keywords are not that useful except for `@keywords internal`. 
+    Using the internal keyword removes omits the function from the package 
+    index and disables some of their automated tests. It's common to use
+    `@keywords internal` for functions that are of interest to other
+    developers extending your package, but not most users.
 
 Other tags are situational: they vary based on the type of object that you're documenting. The following sections describe the most commonly used tags for functions and the various methods, generics and objects used by R's three OO systems. You'll learn how to document datasets in [documenting data](#documenting-data).
 
 ## Documenting functions {#man-functions}
 
-Functions are the most commonly documented objects. As well as the introduction block, most functions have three tags:
+Functions are the most commonly documented objects. As well as the introduction block, most functions have three tags: `@param`, `@examples` and `@return`.
 
 *   `@param name description` describes the inputs to the function.
     The description should provide a succinct summary of the type of the
-    parameter (e.g. a string, a numeric vector), and if not obvious from
+    parameter (e.g., a string, a numeric vector), and if not obvious from
     the name, what the parameter does. 
     
     The description should start with a capital letter and end with a full stop. 
@@ -187,7 +186,7 @@ Functions are the most commonly documented objects. As well as the introduction 
 
     You can document multiple arguments in one place by separating
     the names with commas (no spaces). For example, to document both
-    `x` and `y`, you can say `@param x,y Numeric vectors.`.
+    `x` and `y`, you can write `@param x,y Numeric vectors.`.
 
 *   `@examples` provides executable R code showing how to use the function in
     practice. This is a very important part of the documentation because
@@ -214,8 +213,8 @@ Functions are the most commonly documented objects. As well as the introduction 
     to insert them into the documentation.
 
 *   `@return description` describes the output from the function. This is
-    not always necessary, but is a good idea if you return different types
-    of outputs depending on the input, or you're returning an S3, S4 or RC
+    not always necessary, but is a good idea if your function returns different 
+    types of outputs depending on the input, or you're returning an S3, S4 or RC
     object.
 
 We could use these new tags to improve our documentation of `sum()` as follows:
@@ -259,7 +258,7 @@ Indent the second and subsequent lines of a tag so that when scanning the docume
 
 ## Documenting classes, generics and methods
 
-Documenting classes, generics and methods are relatively straightforward, but the details vary based on the object system you're using. The following sections give the details for the S3, S4 and RC object systems.
+It's relatively straightforward to document classes, generics and methods, but the details vary based on the object system you're using. The following sections give the details for the S3, S4 and RC object systems.
 
 ### S3 {#man-s3}
 
@@ -293,16 +292,23 @@ S4 __generics__ are also functions, so document them as such. S4 __methods__ are
 
 Use either `@rdname` or `@describeIn` to control where method documentation goes. See [documenting multiple objects in one file](#multiple-man) for details.
 
-A final consideration of S4 is that S4 code needs to run in a certain order. For example, to define the method `setMethod("foo", c("bar", "baz"), ...)` you must already have created the generic and the two classes. R loads files in alphabetical order. Unfortunately not every alphabet puts letters in the same order, so you can't rely on alphabetic ordering if you need one file loaded before another. The order in which files are loaded doesn't matter for most packages. But if you're using S4, you'll need to make sure that classes are loaded before subclasses and generics are defined before methods.
-
-Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
+Another consideration of S4 is that S4 code often needs to run in a certain order. For example, to define the method `setMethod("foo", c("bar", "baz"), ...)` you must already have created the `foo` generic and the two classes. By default, R code is loaded in alphabetical order, but that doesn't always work. Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
 
 ```{r, eval = FALSE}
-#' @include class-a.r
+#' @include class-a.R
 setClass("B", contains = "A")
 ```
 
-If any `@include` tags are present in the package, roxygen2 will set the `Collate` field in the `DESCRIPTION`, which ensures that files are always loaded in the same order. An simpler alternative to `@include` is to define all classes and methods in `aaa-classes.R` and `aaa-generics.R`, and rely on these coming first in alphabetical order. The main disadvantage is that you can organise components into files as naturally as you might want.
+Often, it's easiest to put this at the top of the file. To make it clear that this tag applies to the whole file, not specific object, document `NULL`.
+
+```{r, eval = FALSE}
+#' @include foo.R bar.R baz.R
+NULL
+
+setMethod("foo", c("bar", "baz"), ...)
+```
+
+Roxygen uses the `@include` tags to compute a topological sort which ensures that dependencies are loaded before they're needed. It then sets the `Collate` field in the `DESCRIPTION`, which overrides the default alphabetic ordering. An simpler alternative to `@include` is to define all classes and methods in `aaa-classes.R` and `aaa-generics.R`, and rely on these coming first in alphabetical order. The main disadvantage is that you can organise components into files as naturally as you might want.
 
 Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` tags to correctly document S4 objects, but as of version 3.0.0 it generates correct metadata automatically. If you're upgrading from a old version of roxygen2, make sure to remove these tags.
 
@@ -332,6 +338,7 @@ Methods with doc strings will be included in the "Methods" section of the class 
 There is a tension between the DRY (do not repeat yourself) principle of programming and the need for documentation to be self-contained. It's frustrating to have to navigate through multiple help files in order to pull together all the pieces you need. Roxygen2 provides two ways to avoid repeating yourself in the source, while still assembling everything into one documentation file:
 
 * Reuse parameter documentation with `@inheritParams`.
+
 * Document multiple functions in the same place with `@describeIn` or `@rdname`
 
 ### Inheriting parameters from other functions
@@ -359,17 +366,17 @@ bar <- function(a, b) {
 }
 ```
 
-Note, however, that inheritance does not chain. In other words, the `source_function` must always be the function that defines the parameter using `@param`.
+Note that inheritance does not chain. In other words, the `source_function` must always be the function that defines the parameter using `@param`.
 
 ### Documenting multiple functions in the same file {#multiple-man}
 
-You can document multiple functions in the same file by using either `@rdname` or `@describeIn` tag. It's a technique best used with caution: documenting too many functions into one place leads to confusing documentation. It's best used when all functions have the same (or very similar) arguments.
+You can document multiple functions in the same file by using either `@rdname` or `@describeIn`. It's a technique best used with caution: documenting too many functions into one place leads to confusing documentation. You it when functions have very similar arguments, or are two sides of the same code (e.g., `open()` and `close()` methods).
 
 `@describeIn` is designed for the most common cases:
 
-* documenting methods in a generic
-* documenting methods in a class
-* documenting functions with the same (or similar arguments)
+* Documenting methods in a generic.
+* Documenting methods in a class.
+* Documenting functions with the same (or similar arguments).
 
 It generates a new section, named either "Methods (by class)", "Methods (by generic)" or "Functions". The section contains a bulleted list describing each function, labelled so that you know what function or method it's talking about. Here's an example, documenting an imaginary new generic:
 
@@ -386,7 +393,9 @@ foobar.numeric <- function(x) abs(mean(x) - median(x))
 foobar.character <- function(x) paste0(x[1], "-", x[length(x)])
 ```
 
-An alternative to `@describeIn` is `@rdname`.  It overrides the default file name generated by roxygen and merges documentation for multiple objects into one file. This gives you complete freedom to combine documentation however you see fit. There are two ways to use `@rdname`. You can add documentation to an existing function:
+An alternative to `@describeIn` is `@rdname`. It overrides the default file name generated by roxygen and merges documentation for multiple objects into one file. This gives you complete freedom to combine documentation however you see fit. 
+
+There are two ways to use `@rdname`. You can add documentation to an existing function:
 
 ```{r}
 #' Basic arithmetic
@@ -418,37 +427,37 @@ times <- function(x, y) x * y
 
 Within roxygen tags, you use `.Rd` syntax to format text. This vignette shows you examples of the most important commands. The full details are described in [R extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Marking-text).
 
-Note that `\` and `%` are special characters. To insert literals, escape with a backslash: `\\`, `\%`.
+Note that `\` and `%` are special characters in the Rd format. To insert a literal `%` or `\`, escape then with a backslash `\\`, `\%`.
 
 ### Character formatting
 
-* `\emph{italics}`
+* `\emph{italics}`.
 
-* `\strong{bold}`
+* `\strong{bold}`.
 
-* `\code{r_function_call(with = "arguments")}`, `\code{NULL}`, `\code{TRUE}`
+* `\code{r_function_call(with = "arguments")}`, `\code{NULL}`, `\code{TRUE}`.
 
-* `\pkg{package_name}`
+* `\pkg{package_name}`.
 
 ### Links
 
 To other documentation:
 
-* `\code{\link{function}}`: function in this package
+* `\code{\link{function}}`: function in this package.
 
-* `\code{\link[MASS]{stats}}`: function in another package
+* `\code{\link[MASS]{stats}}`: function in another package.
 
-* `\link[=dest]{name}`: link to dest, but show name
+* `\link[=dest]{name}`: link to dest, but show name.
 
-* `\linkS4class{abc}`: link to an S4 class
+* `\linkS4class{abc}`: link to an S4 class.
 
 To the web:
 
-* `\url{http://rstudio.com}`
+* `\url{http://rstudio.com}`.
 
-* `\href{http://rstudio.com}{Rstudio}`
+* `\href{http://rstudio.com}{Rstudio}`.
 
-* `\email{hadley@@rstudio.com}` (note the doubled `@`)
+* `\email{hadley@@rstudio.com}` (note the doubled `@`).
 
 ### Lists
 
@@ -461,7 +470,7 @@ To the web:
     #' }
     ```
 
-* Unordered (bulleted) lists
+* Unordered (bulleted) lists:
 
     ```{r}
     #' \itemize{
@@ -470,7 +479,7 @@ To the web:
     #' }
     ```
 
-* Definition (named) lists
+* Definition (named) lists:
 
     ```{r}
     #' \describe{
@@ -481,11 +490,11 @@ To the web:
 
 ### Mathematics
 
-Standard LaTeX (with no extensions):
+You can use standard LaTeX math (with no extensions). Choose between either inline or block display:
 
-* `\eqn{a + b}`: inline equation
+* `\eqn{a + b}`: inline equation.
 
-* `\deqn{a + b}`: display (block) equation
+* `\deqn{a + b}`: display (block) equation.
 
 ### Tables
 
