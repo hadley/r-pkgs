@@ -70,7 +70,9 @@ The first few lines of the vignette contain important metadata. The default temp
       %\usepackage[utf8]{inputenc}
     ---
 
-This is data stored in [yaml](http://www.yaml.org/) format, a format designed to be both human and computer readable. The fields are:
+This metadata is recorded in [yaml](http://www.yaml.org/) format, a format designed to be both human and computer readable. The basics of the syntax is much like the DESCRIPTION, each line consists of a field name, a colon, then the value of the field. The one special YAML feature we're using here is `>`: that indicates the the following lines of text are regular text and shouldn't use any special YAML features.
+
+The fields are:
 
 * Title, author and date: the title of the vignette, author and date.
   You will probably want to fill these in yourself (or you can delete them if 
@@ -79,19 +81,22 @@ This is data stored in [yaml](http://www.yaml.org/) format, a format designed to
   today's date. 
   
 * Output: this tells rmarkdown what output format specification to use. 
-  The `rmarkdown::html_vignette` format is specifically designed to work well 
-  inside packages. See `?rmarkdown::html_vignette` for more details.
+  There are many options that are useful for regular reports (including
+  html, pdf, slideshows, ...) but `rmarkdown::html_vignette` has been 
+  specifically designed to work well inside packages. See 
+  `?rmarkdown::html_vignette` for more details.
   
 * Vignette: this contains a special block of metadata needed by R.
-  You can see the history of vignettes here: originally all vignettes were
-  written in Sweave, so the vignette metadata was also written in Sweave.
-  You need to modifiy the `\VignetteIndexEntry` to provide the title of 
-  your vignette, as it will appear in the vignette index.  Leave the 
-  other two lines as is.
+  You can see some of the history of vignettes here: originally all vignettes 
+  were written in Sweave which uses latex, so the vignette metadata was also 
+  written in Sweave. You need to modifiy the `\VignetteIndexEntry` to provide 
+  the title of your vignette, as it will appear in the vignette index. Leave 
+  the other two lines as is.  They tell R to use `knitr` to process this
+  file, and that it's encoded in UTF-8. (The only valid encoding.)
 
 ## Markdown {#markdown}
 
-John Gruber, the author of markdown, describes the philosophy of markdown:
+Rmarkdown vignettes are written in markdown. John Gruber, the author of markdown, describes does a good job of summarising the goals and philosophy of markdown:
 
 > Markdown is intended to be as easy-to-read and easy-to-write as is feasible.
 
@@ -111,7 +116,7 @@ John Gruber, the author of markdown, describes the philosophy of markdown:
 
 Markdown isn't as powerful as latex or reStructuredText or docbook, but it is simple, easy to write, and easy to read even when not rendered. I find the constraints of markdown actively helpful for writing because it lets me focus on the content, and prevents me from messing around with the styling.
 
-If you've never used markdown before, a good place to start is the [Markdown syntax documentation](http://daringfireball.net/projects/markdown/syntax), written by John Gruber, the author of the original markdown. However, pandoc's implementation of markdown cleans up a number of rough edges and adds considerable new features. Also recommend familiarising yourself with the [pandoc readme](http://johnmacfarlane.net/pandoc/README.html).
+If you've never used markdown before, a good place to start is the [Markdown syntax documentation](http://daringfireball.net/projects/markdown/syntax), written by John Gruber, the author of the original markdown. However, pandoc's implementation of markdown cleans up a number of rough edges and adds considerable new features. Also recommend familiarising yourself with the [pandoc readme](http://johnmacfarlane.net/pandoc/README.html).  The sections below summarise the most important markdown features. You should be up and running very quickly.
 
 ### Sections
 
@@ -135,7 +140,7 @@ Basic unordered lists use `*`:
         * Item 2a (notice 4-space indent)
         * Item 2b    
 
-Whereas ordered lists use: `1.`:
+Ordered lists use: `1.`:
     
     1. Item 1
     1. Item 2
@@ -149,7 +154,7 @@ If you want multiparagh lists, the second and subsequent paragphs need more inde
         indented by four or more spaces. That looks better if the first
         bullet is also indented.
 
-Finally, definition lists are sometimes handy:
+Definition lists use ` : `
 
     Definition
       : a statement of the exact meaning of a word, especially in a dictionary.
@@ -162,12 +167,12 @@ Finally, definition lists are sometimes handy:
 
     _italic_, *italic*
     __bold__, **bold**    
-    super^script^
-    sub~script~
     [link text](destination)
     <http://this-is-a-raw-url.com>
 
-(Take highlights from cheatsheet)
+### Tables
+
+...
 
 ### Code
 
@@ -175,14 +180,14 @@ For code inline use `` `code` ``:
 
     For code inline use `code`
 
-For bigger blocks of use, use ```` ``` ````:
+For bigger blocks of use, use ```` ``` ````. These are known as "fenced" code blocks:
 
     ```
     # A comment
     add <- function(a, b) a + b
     ```
 
-To syntax highlight code, put the language name after the backtick:
+To add syntax highlighting to the code, put the language name after the backtick:
 
     ```c
     int add(int a, int b) {
@@ -190,20 +195,21 @@ To syntax highlight code, put the language name after the backtick:
     }
     ```
 
-Generally, you should never use ```` ```r ```` - instead use knitr, as described next.
+(At time of printing, list of support languages was: actionscript, ada, apache, asn1, asp, awk, bash, bibtex, boo, c, changelog, clojure, cmake, coffee, coldfusion, commonlisp, cpp, cs, css, curry, d, diff, djangotemplate, doxygen, doxygenlua, dtd, eiffel, email, erlang, fortran, fsharp, gnuassembler, go, haskell, haxe, html, ini, java, javadoc, javascript, json, jsp, julia, latex, lex, literatecurry, literatehaskell, lua, makefile, mandoc, matlab, maxima, metafont, mips, modula2, modula3, monobasic, nasm, noweb, objectivec, objectivecpp, ocaml, octave, pascal, perl, php, pike, postscript, prolog, python, r, relaxngcompact, rhtml, ruby, rust, scala, scheme, sci, sed, sgml, sql, sqlmysql, sqlpostgresql, tcl, texinfo, verilog, vhdl, xml, xorg, xslt, xul, yacc, yaml. Syntax highlighting is done by the haskell package [highlighting-kate](http://johnmacfarlane.net/highlighting-kate); see the website for current list.)
 
+When you include R code in your vignette, you usually won't use ```` ```r ````, instead you'll use ```` ```{r} ````, which is specially processed by knitr, as described next.
 
 ## Knitr
 
-Knitr allows you to intermingle results from running code with your text. A knit block looks like this:
+Knitr allows you to intermingle code, results and text. A knitr block looks similar to a fenced code block, but instead of writing `r`, you write `{r}`.
 
     ```{r}
     # Add two numbers together
     add <- function(a, b) a + b
     add(10, 20)
     ```
-    
-Knitr runs that code, and makes output that simulates you running the code on the console. It produces markdown:
+
+Knitr will take that code, and run it. As it runs, it captures the output, then later replays it formatted as markdown. It captures printed output, messsages, warnings, errors (optionally) and plots (basic graphics, lattice & ggplot and more). This example is simple, and will generate the following markdown:
 
     ```r
     # Add two numbers together
@@ -212,7 +218,7 @@ Knitr runs that code, and makes output that simulates you running the code on th
     ## [1] 30
     ```
 
-The markdown is then rendered by pandoc to produce:
+Then when the documented is rendered to HTML, pandoc will display that as:
 
 ```r
 # Add two numbers together
@@ -221,22 +227,58 @@ add(10, 20)
 ## 30
 ```
 
-You can specify additional options like ```` ```{r, opt1 = val1, opt2 = val2} ````.  A complete set of options can be found at <http://yihui.name/knitr/options>. The most important are:
+Once you start using knitr in this way, you'll never look back. You can rest easy knowing that all your code works (because it's run when you build the vignette) and there's no way for input and output to be out of sync.
+
+### Options
+
+You can specify additional options to control the details of the rendering: ```` ```{r, opt1 = val1, opt2 = val2} ````. The most important are listed below:
 
 * `eval = FALSE`. Don't evaluate the code. This is useful if you want
-  to show some code that would take a long time to run.
+  to show some code that would take a long time to run. Be careful when you
+  use this - since the code is no longer run, it's easy to introduce bugs.
+  (Your users will be puzzled when they copy & paste code and it doesn't
+  work.)
 
 * `echo = FALSE`. Turns of the printing of the code _input_ (the output)
   will still be printed.  Generally, you shouldn't use this in vingettes
   because understand what the code is doing is important.
 
-* `results = "hide"`: Don't print code _output_.
+* `results = "hide"`. Don't print code _output_.
 
-* `warning = FALSE`, `message = FALSE` suppress display of warnings
+* `warning = FALSE`, `message = FALSE`. Suppresses display of warnings
   or messages.
 
-* `results = "asis"`: treat the output of your R code as literal markdown.
-  This is useful if you want to generate text from your R code.
+*   `results = "asis"`. Treat the output of your R code as literal markdown.
+    This is useful if you want to generate text from your R code. For example,
+    if you want to generate a table using the pander package, you'd do
+  
+        ```{r, results = "asis"}
+        pander::pandoc.table(iris[1:3, 1:4])
+        ```
+    
+    That generates a markdown table that looks like:
+    
+        --------------------------------------------------------
+         Sepal.Length   Sepal.Width   Petal.Length   Petal.Width 
+        -------------- ------------- -------------- -------------
+             5.1            3.5           1.4            0.2     
+        
+             4.9             3            1.4            0.2     
+        
+             4.7            3.2           1.3            0.2     
+        ---------------------------------------------------------
+        
+    Which makes a table that looks like this:
+    
+    --------------------------------------------------------
+     Sepal.Length   Sepal.Width   Petal.Length   Petal.Width 
+    -------------- ------------- -------------- -------------
+         5.1            3.5           1.4            0.2     
+    
+         4.9             3            1.4            0.2     
+    
+         4.7            3.2           1.3            0.2     
+    ---------------------------------------------------------
 
 * `error = TRUE`: use this if you want knitr to capture any errors in 
   the block and show them inline. This is useful if you want to demonstrate 
@@ -254,6 +296,8 @@ You can specify additional options like ```` ```{r, opt1 = val1, opt2 = val2} ``
 
 * `fig.width = 5`, `fig.height = 5`: set the height and width of figures
   (in inches).
+
+There are many other options. You can find a complete list at <http://yihui.name/knitr/options>. 
 
 ## Development cycle
 
