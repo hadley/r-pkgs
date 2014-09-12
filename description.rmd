@@ -6,9 +6,9 @@ output: bookdown::html_chapter
 
 # Package metadata {#description}
 
-The job of the `DESCRIPTION` file is to store important metadata about your package. When you first start with packages, you'll mostly use this metadata to record what packages are needed to run your package. As time goes by and you start sharing your package with others, the metadata becomes increasingly important because it also lays out who can use it (the license), and who to contact (you!) if there are any problems.
+The job of the `DESCRIPTION` file is to store important metadata about your package. When you first start writing packages, you'll mostly use this metadata to record what packages are needed to run your package. As time goes on and you start sharing your package with others, this metadata becomes increasingly important because it also lays out who can use it (the license) and whom to contact (you!) if there are any problems.
 
-Every package must have a `DESCRIPTION`. In fact, it's the distinguishing feature of a package: RStudio and devtools consider any directory containing `DESCRIPTION` to be a package. To get you started, `devtools::create("mypackage")` automatically adds a minimal description. This allows you to start a package without having to worry about the metadata until you need to. The minimal description will vary a bit depending on your settings, but should look something like this:
+Every package must have a `DESCRIPTION`. In fact, it's the distinguishing feature of a package: RStudio and devtools consider any directory containing `DESCRIPTION` to be a package. To get you started, `devtools::create("mypackage")` automatically adds a minimal description. This allows you to start a package without having to worry about the metadata until you need to. The minimal description will vary a bit depending on your settings, but it should look something like this:
 
     Package: mypackage
     Title: What the package does (one line)
@@ -21,21 +21,21 @@ Every package must have a `DESCRIPTION`. In fact, it's the distinguishing featur
 
 (If you're creating a lot of packages, you can set global options `devtools.desc.author` , `devtools.desc.license`, `devtools.desc.suggests`, and `devtools.desc` to modify the defaults. See `package?devtools` for more details.)
 
-The `DESCRIPTION` uses a simple file format called DCF, the Debian control format. You can see most of the structure in this simple example. Each line consists of a __field__ name and a value, separated by a colon. When values span multiple lines, they need to be indented:
+The `DESCRIPTION` uses a simple file format called DCF, the Debian control format. You can see most of the structure in the simple example below. Each line consists of a __field__ name and a value, separated by a colon. When values span multiple lines, they need to be indented:
 
     Description: The description of a package is usually long,
         spanning multiple lines. The second and subsequent lines
         should be indented, usually with four spaces.
 
 
-The minimal `DESCRIPTION` provides the bare necessities, but doesn't include the two most useful fields:
+The minimal `DESCRIPTION` provides the bare necessities. It doesn't include the two most useful fields:
 
-* `Imports` and `Suggests`: tell R that you need (for imports) or want 
-  (for suggests) additional packages to be available. 
+* `Imports` and `Suggests`: packages you need (for imports) or want 
+  (for suggests) to be available. 
 
 The other fields are described in the remainder of the chapter:
 
-* `Package`: what your package is called.
+* `Package`: name of your package.
 
 * `Title` and `Description`: what your package does.
 
@@ -45,42 +45,42 @@ The other fields are described in the remainder of the chapter:
 
 ## What does the package need? {#dependencies}
 
-It's the job of the `DESCRIPTION` to list which other packages that your package needs to work. R has a rich set of ways of describing potential dependencies. For example, the following lines indicates that that your package needs both ggvis and dplyr to work:
+It's the job of the `DESCRIPTION` to list which other packages your package needs to work. R has a rich set of ways of describing potential dependencies. For example, the following lines indicates that that your package needs both ggvis and dplyr to work:
 
     Imports:
         dplyr,
         ggvis
 
-Whereas these lines means that your package can take advantage of ggvis and dplyr, but they're not required for operation:
+In contrast, the lines below tell us that while your package can take advantage of ggvis and dplyr, they're not required for operation:
 
     Suggests:
         dplyr,
         ggvis,
 
-Both imports and suggests take a comma separate list of package names. I recommend putting one package on each line, and keeping them in alphabetical order. That makes it easy to skim the list.
+Both `Imports` and `Suggests` take a comma separated list of package names. I recommend putting one package on each line, and keeping them in alphabetical order. That makes it easy to skim the list.
 
-Imports and suggests differ in the strength of dependency:
+`Imports` and `Suggests` differ in the strength of dependency:
 
-*   `Imports`: these packages _must_ be installed for your package to work. 
+*   `Imports`: certain packages _must_ be installed for your package to work. 
     Any time your package is installed, these packages will also be installed
     if they're not already present. (`devtools::load_all()` also checks
     that the packages are installed.)
     
-    Note that adding a package dependency makes sure it's installed, but does
-    not automatically load it with `library(x)`. Instead, it's best practice to
-    explicitly refer to external functions using the syntax 
-    `package::function()`. This makes it very easy to identify functions that 
-    live outside your package when reading your code in the future.
+    Note that adding a package dependency ensures that it's installed, but it 
+    does mean that it will be automatically loaded along with `library(x)`. 
+    Instead, the best practice is to explicitly refer to external functions 
+    using the syntax `package::function()`. This makes it very easy to identify 
+    functions that live outside your package just by reading your code.
   
-    If you use a lot functions from other packages this is rather
-    verbose, and there's minor performance penalty associated with `::` 
-    (on the order of 5µs, so it will only matter if you're calling the function
+    If you use a lot functions from other packages this can be rather
+    verbose. There's also a minor performance penalty associated with `::` 
+    (on the order of 5µs, so only matters if you're calling the function
     millions of times). You'll learn about alternatives in 
     [namespace imports](#imports).
 
-*   `Suggests`: your package can take advantage of these packages if they're
-    installed. Maybe they provide datasets for examples, or they're only used 
-    by one function in your package, or only used by tests or to build 
+*   `Suggests`: your package can take advantage of listed packages if 
+    they're installed. For example, they may provide datasets, be used 
+    by one function in your package, be used by tests or be used to build 
     vignettes.
   
     Packages listed in `Suggests` are not automatically installed along with
@@ -107,9 +107,9 @@ Imports and suggests differ in the strength of dependency:
     }
     ```
 
-When developing packages locally, you never need to use suggests. When releasing your package, using suggests is a courtesy to your users. It frees them from downloading rarely needed packages, and lets them get started with your package as quickly as possible.
+When developing packages locally, you never need to use `Suggests`. When releasing your package, using `Suggests` is a courtesy to your users. It frees them from downloading rarely needed packages, and lets them get started with your package as quickly as possible.
 
-The easiest way to add imports and suggests to your package is to use `devtools::use_package()`. This automatically adds them in the right place in your `DESCRIPTION`, and reminds you how to use them.
+The easiest way to add `Imports` and `Suggests` to your package is to use `devtools::use_package()`. This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
 
 ```{r, eval = FALSE}
 devtools::use_package("dplyr") # Defaults to imports
@@ -131,39 +131,39 @@ If you need a specific version of a package, you can specify it in parentheses a
     Suggests:
         MASS (>= 7.3.0)
 
-You almost always want to specify a minimum version rather than an exact version (`MASS (= 7.3.0)`). Since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions that can't be resolved.
+You almost always want to specify a minimum version rather than an exact version (`MASS (= 7.3.0)`). Since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of the unresolvable problem of conflicting versions.
 
-Versioning is mostly important when you release your package. Usually people don't have exactly the same versions of packages installed that you do. If someone has an older package that doesn't have a function you need, they'll get an unhelpful error message. If you supply the version number, they'll get a error message that tells them exactly what the problem is: a package is out of date. 
+Versioning is most important when you release your package. Usually people don't have exactly the same versions of packages installed that you do. If someone has an older package that doesn't have a function you need, they'll get an unhelpful error message. If you supply the version number, they'll get a error message that tells them exactly what the problem is: an out of date package. 
 
-Generally, it's better to be conservation about version specifications, and always supply them. Unless you know otherwise, always require a version greater than or equal to the version you're currently using.
+Generally, it's better to be conservative about version specifications and always supply them. Unless you know otherwise, always require a version greater than or equal to the version you're currently using.
 
 ### Other dependencies
 
 The are three other fields that allow you to express more specialised dependencies:
 
-* `Depends`: use this if your package requires a specify version of R to work.
+* `Depends`: use this if your package requires a specific version of R to work.
   For example, `Depends: R (>= 3.0.1)`. As with packages, it's a good idea to 
-  play it safe and set to the version of R that you're currently using. 
+  play it safe and set the version of R to the one that you're currently using. 
   `devtools::create()` does this for you.
   
-  Prior to the rollout of namespaces in R 2.14.0, depends was the only way to 
+  Prior to the rollout of namespaces in R 2.14.0, `Depends` was the only way to 
   "depend" on another package. Now, despite the name, you should almost always 
-  use imports, not depends. You'll learn why, and when you should still
-  use depends, in [namespaces](#namespace).
+  use `Imports`, not `Depends`. You'll learn why, and when you should still
+  use `Depends, in [namespaces](#namespace).
 
   In R 3.1.1 and earlier you'll also need to use `Depends: methods` if 
-  you use S4. This bug is fixed in R 3.2.0, so methods can go back to
+  you use S4. This bug is fixed in R 3.2.0, so methods can go back to:
   
 * `LinkingTo`: use this if your package needs to link to or compile against 
-  the C code included in another package. You'll learn more about `LinkingTo`
+  C code included in another package. You'll learn more about `LinkingTo`
   in [compiled code](#src).
   
-* `Enhances`: these packages are "enhanced" by your package, typically because
-  you provide methods for classes defined in the package. It's a sort of reverse
-  suggests. But it's hard to define what its means, so I don't recommend using
-  enhances.
+* `Enhances`: use this to list packages that are "enhanced" by your package.
+  This typically occurs because you provide methods for classes defined in those 
+  package. It's a sort of reverse `Suggests`. But it's hard to define what its
+  means, so I don't recommend using it.
   
-You can also list things that your package needs outside of R in the in `SystemRequirements` field. But this is just a plain text field and is not automatically checked. Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
+You can also list things that your package needs outside of R in the `SystemRequirements` field. But this is just a plain text field and is not automatically checked. Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
 
 ### Exercises
 
