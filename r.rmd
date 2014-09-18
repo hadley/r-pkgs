@@ -264,19 +264,19 @@ bookdown::embed_png("diagrams/package-files.png")
 
 ## Package installation {#install}
 
-An __installed__ package is just a binary package that's been uncompressed into a package library, described next. The following diagram describes the many ways a package can be installed. This diagram is complicated! In an ideal world installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed. It's not this simple in the real world because doing each step in sequence is slow, and there are often faster shortcuts available.
+An __installed__ package is just a binary package that's been decompressed into a package library (described next). The following diagram illustrates the many ways a package can be installed. This diagram is complicated! In an ideal world installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed. In the real world it's not this simple: each step in the sequence is slow, and there are often faster shortcuts available.
 
 ```{r, echo = FALSE}
 bookdown::embed_png("diagrams/installation.png")
 ```
 
-The tool that powers all package installation is the command line tool `R CMD install` - it can install a source, bundle or a binary package. Devtools functions wrap the base R functions so that you can access them from R, rather than the command line. `install()` is effectively just a wrapper for `R CMD install`. `build()` is a wrapper for `R CMD build` that turns source packages into bundles. `install_github()` downloads a source package from github, runs `build()` to make vignettes, then uses `R CMD install` to install. `install_url()`, `install_gitorious()`, `install_bitbucket()` work similarly for packages found elsewhere on the internet.
+The tool that powers all package installations is the command line tool `R CMD install` - it can install a source, bundle or a binary package. Devtools functions provide wrappers which allow you to access this tool from R rather than from the command line. `install()` is effectively a wrapper for `R CMD install`. `build()` is a wrapper for `R CMD build` that turns source packages into bundles. `install_github()` downloads a source package from GitHub, runs `build()` to make vignettes, and then uses `R CMD install` to do the install. `install_url()`, `install_gitorious()`, `install_bitbucket()` work similarly for packages found elsewhere on the internet.
 
-`install.packages()` and `devtools::install_github()` allow you to install a remote package. They both work by first downloading the package. `install.packages()` normally downloads a binary package built by CRAN. This makes installation very speedy.  `install_github()` has to work a little differently - it first downloads a source package, then builds and installs it.
+`install.packages()` and `devtools::install_github()` allow you to install a remote package. They both work by first downloading the package. `install.packages()` normally downloads a binary package built by CRAN. This makes installation very speedy. `install_github()` has to work a little differently - it first downloads a source package, builds it and then installs it.
 
 ### Loading into memory
 
-To use a package, you must load it into memory. When you're not developing package, you use `library()` to do this. When developing a package you can either use `load_all()` or "Build and reload". You now know enough about packages to understand the different: `load_all()` skips the installation step and goes directly from on-disk to in-memory:
+To use a package, you must load it into memory. When you're not developing package, you do this using `library()`. When developing a package, you can either use `load_all()` or "Build and reload". You now know enough about packages to understand the difference: `load_all()` skips the installation step and goes directly from on-disk to in-memory:
 
 ```{r, echo = FALSE}
 bookdown::embed_png("diagrams/loading.png")
@@ -284,7 +284,7 @@ bookdown::embed_png("diagrams/loading.png")
 
 ## What is a library? {#library}
 
-A collection of packages is called a library. This is a bit confusing because you use the `library()` function to load a package, but the distinction between libraries and packages is important and useful. A library is just a directory containing installed packages. You can have multiple libraries on your computer and almost everyone has at least two: one for the packages that come with very R install (like `base`, `stats` etc), and one library for the package that you've installed. Normally, that second directory varies based on the version of R that you're using. That's why it seems like you "lose" all your packages when you reinstall R - they're actually still on your hard drive, but R can't find them. 
+A library is a collection of packages. This is a bit confusing because you use the `library()` to load a package. However, the distinction between libraries and packages is important and useful. A library is just a directory containing installed packages. You can have multiple libraries on your computer and almost everyone has at least two: one for the packages that come with every R installation (like `base`, `stats`, etc), and one for packages you've installed. Normally, that second directory varies based on the version of R that you're using. That's why it seems like you "lose" all your packages when you reinstall R - they're actually still on your hard drive, but R can't find them. 
 
 You can use `.libPaths()` to see which libraries are currently active. Here are mine:
 
@@ -309,7 +309,7 @@ lapply(.libPaths(), dir)
 #> [29] "translations" "utils"
 ```
 
-The first lib path is for the packages I've installed (I've installed at lot!), and the second is for the base R packages. These are the so called "recommended" packages available with every install of R.
+The first lib path is for the packages I've installed (I've installed at lot!). The second is for so-called "recommended" packages that come with every installation of R.
 
 When you use `library(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists. If it doesn't, you'll get an error message:
 
@@ -317,13 +317,13 @@ When you use `library(pkg)` to load a package, R looks through each path in `.li
 library(blah)
 ```
 
-The main difference between `library()` and `require()` is what happens if a package isn't found. `library()` throws an error, and `require()` prints a message and returns false. In practice this distinction isn't important when building a package because you should __NEVER__ use either inside a package. See [package dependencies](#dependencies) for what you should do instead.
+The main difference between `library()` and `require()` is what happens when a package isn't found. While `library()` throws an error, `require()` prints a message and returns FALSE. In practice this distinction isn't important because when building a package you should __NEVER__ use either inside a package. See [package dependencies](#dependencies) for what you should do instead.
 
-Packrat, which we'll learn about in XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it means you can play around with cutting-edge packages in one place, but all your other projects continue to use the old reliable packages. This is also useful when you're both developing and using a package. 
+Packrat, which we'll learn about in XXX, automates the process of managing project specific libraries. This means that when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it allows you to play around with cutting-edge packages without affecting other projects' use of older, more reliable packages. This is also useful when you're both developing and using a package. 
 
 ### Exercises
 
-1.  Where is your default library? What happens when to that library when 
+1.  Where is your default library? What happens to that library when 
     you install a new package from CRAN?
 
 1.  Can you have multiple version of the same package installed at the same 
