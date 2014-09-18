@@ -38,9 +38,33 @@ Turning your casual interactive tests into reproducible scripts requires a littl
   task: often my simpler solution is only simpler because I've forgotten an 
   important use case!
 
+## Test workflow {#test-workflow}
+
+To set up your package to use testthat, run:
+
+```{r, eval = FALSE}
+devtools::use_testthat()
+```
+
+This will:
+
+1.  Create a `tests/testthat` directory.
+
+1.  Creates a file `tests/testthat.R` that is used to ensure that your
+    tests are automatically run by `R CMD check`.
+
+1.  Add the necessary dependencies to `DESCRIPTION` (i.e. it adds testthat to 
+    `Suggests` field).
+
+Once you're set up the workflow is simple:
+
+1.  Modify the tests.
+
+2.  Run `devtools::test()` or Press Cmd + Shift + T to run the tests.
+
 ## testthat test structure
 
-`testthat` has a hierarchical structure made up of expectations, tests and contexts. 
+testthat has a hierarchical structure made up of expectations, tests and contexts. 
 
 * An __expectation__ describes the expected result of a computation: Does it
   have the right value and right class? Does it produce error messages when it
@@ -59,7 +83,7 @@ Expectations give you the tools to convert your visual, interactive experiments 
 
 ### Expectations
 
-An expectation is the finest level of testing. It makes a binary assertion about whether or not a value is as you expect. If the expectation isn't true, `testthat` will raise an error.
+An expectation is the finest level of testing. It makes a binary assertion about whether or not a value is as you expect. If the expectation isn't true, testthat will raise an error.
 
 An expectation is easy to read. Its syntax is close to a sentence in English: `expect_equal(a, b)` reads as "I expect that a and b are equal".
 
@@ -153,9 +177,14 @@ There are 11 built in expectations:
     you want - it checks that an expression is true. `expect_false()` is the
     complement of `expect_true()`.
 
+*   `expect_null()`
+
+*   `expect_equal_to_reference()`
+
+
 Running a sequence of expectations is useful because it ensures that your code behaves as expected. You could even use an expectation within a function to check that the inputs are what you expect. However, they're not so useful when something goes wrong: all you know is that something is not as expected. You don't know anything about where the problem is. Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.
 
-### Tests
+## Tests
 
 Each test should test a single item of functionality and have an informative name. The idea is that when a test fails, you should know exactly where to look for the problem in your code. You create a new test with `test_that()`, with parameters name and code block. The test name should complete the sentence "Test that" and the code block should be a collection of expectations. When there's a failure, it's the test name that will help you figure out what's gone wrong.
 
@@ -178,6 +207,16 @@ test_that("floor_date works for different units", {
 })
 ```
 
+Not that this won't produce very useful error messages. Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce more informative output:
+
+```{r, error = TRUE}
+expect_time <- function(x, y) expect_equal(x, as.POSIXct(y, tz = "UTC"))
+expect_time(Sys.time(), "2009-01-01 00:00:00")
+
+expect_time <- function(x, y) eval(substitute(expect_equal(x, as.POSIXct(y, tz = "UTC"))))
+expect_time(Sys.time(), "2014-01-01 00:00:00")
+```
+
 Each test is run in its own environment so it is self-contained. The exceptions are actions which have effects outside the local environment. These include things that affect:
 
 * The filesystem: creating and deleting files, changing the working directory,
@@ -187,15 +226,18 @@ Each test is run in its own environment so it is self-contained. The exceptions 
 
 * Global options, like `options()` and `par()`.
 
-When you use these actions in tests, you'll need to clean up after yourself. Many other testing packages have set-up and teardown methods that are run automatically before and after each test. These are not so important with `testthat` because you can create objects outside of the tests and rely on R's copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.
+When you use these actions in tests, you'll need to clean up after yourself. Many other testing packages have set-up and teardown methods that are run automatically before and after each test. These are not so important with testthat because you can create objects outside of the tests and rely on R's copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.
+
+### Skipping a test
 
 ## Contexts
 
 Contexts group tests together into blocks that test related functionality, and are established with the code `context("My context")`. Normally there is one context per file, but you can have more if you want, or you can use the same context in multiple files.
 
-The following code shows the context that tests the operation of the `str_length()` function in `stringr`. The tests are very simple. They cover two situations where `nchar()` from base R gives surprising results.
+The following code shows the context that tests the operation of the `stringr::str_length()`. The tests are very simple. They cover two situations where `nchar()` from base R gives surprising results.
 
-```{r, eval = FALSE}
+```{r}
+library(stringr)
 context("String length")
 
 test_that("str_length is number of characters", {
