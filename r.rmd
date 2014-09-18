@@ -209,44 +209,44 @@ Your R directory should not include any files other than R code. Subdirectories 
 
 ## What is a package? {#package}
 
-To make your first package, you only need what you've learnt so far. But to master package development, particularly distributing your package to others, you need to understand more about the different forms of a package. This will help you understand exactly what happens when you install a package with `install.packages()` or `devtools::install_github()`.
+To make your first package, all you need to know is what you've learnt above. But to master package development, particularly when you're distributing a package to others, you'll need to understand the differences between the four types of packages. Doing so will help you understand exactly what happens when you install a package with `install.packages()` or with `devtools::install_github()`.
 
-So far we've just worked with a __source__ package: the development version of a package that lives on your computer. A source package is just a directory with components like `R/`, `DESCRIPTION`, and so on. There are three other types of package: bundled, binary and installed.
+So far we've just worked with a __source__ package: the development version of a package that lives on your computer. A source package is just a directory with components like `R/`, `DESCRIPTION`, and so on. There are three other types: bundled, binary and installed.
 
-A package __bundle__ is a compressed version of a package in a single file. By convention, package bundles in R use the extension `.tar.gz`. This is a Linux convention indicating multiple files have been collapsed into a single file (`.tar`) and then compressed using gzip (`.gz`). A bundle is not that useful in its own right, but is often used an intermediary in other steps. In the rare case that you need it, call `devtools::build()` to make a package bundle. If you decompress a bundle, you'll see it looks almost the same as your source package. The main differences between a decompressed bundle and a source package are:
+A package __bundle__ is a package compressed into a single file. By convention, package bundles in R use the extension `.tar.gz`. This convention comes from Linux: it means that multiple files have been collapsed into a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it is often plays an intermediary between other steps. In the rare case that you do need one, call `devtools::build()` to make a package bundle. If you decompress a bundle, you'll see it looks almost the same as your source package. The main differences between a decompressed bundle and a source package are:
 
 * Vignettes are built so that you get html and pdf output instead of 
   markdown or latex input.
 
 * Your source package might contain temporary files used to save time during
   development, like compilation artefacts in `src/`. These are never found in 
-  the bundle.
+  a bundle.
   
-* Any files listed in the file `.Rbuildignore` are not included in the bundle.
+* Any files listed in the `.Rbuildignore` file are not included in the bundle.
 
-If you want to distribute your package to another R user (i.e. someone who doesn't have package development tools) you need to make a __binary__ package. Like a package bundle, a binary package is a single file, but if you uncompress it, you'll see that the internal structure is a rather different to a source package: 
+If you want to distribute your package to an R user who doesn't have package development tools, you'll need to make a __binary__ package. Like a package bundle, a binary package is a single file. But if you uncompress it, you'll see that the internal structure is a rather different from a source package: 
 
 * There are no `.R` files in the `R/` directory - instead there are three
   files that store the parsed functions in an efficient format. This is
   basically the result of loading all the R code and then saving the
-  functions with `save()`, but with a little extra metadata to make things as
-  fast as possible.
+  functions with `save()` (In the process, this adds a little extra metadata to 
+  make things as fast as possible).
 
-* A `Meta/` directory contains a number of `Rds` files. These contain cached
-  metadata about the package, like what topics the help files cover and
-  parsed versions of the `DESCRIPTION` files. (You can use `readRDS()` to see 
+* A `Meta/` directory that contains a number of `Rds` files. These files contain 
+  cached metadata about the package, like what topics the help files cover and
+  parsed versions of the `DESCRIPTION` files (You can use `readRDS()` to see 
   exactly what's in those files). These files make package loading faster
   by caching costly computations.
 
-* A `html/` directory contains some files needed for HTML help.
+* An `html/` directory that contains files needed for HTML help.
 
 * If you had any code in the `src/` directory there will now be a `libs/`
-  directory that contains the results of compiling that code for 32 bit
+  directory that contains the results of compiling code for 32 bit
   (`i386/`) and 64 bit (`x64/`).
   
-* The contents of `inst/` have been moved into the top-level directory.
+* The contents of `inst/` are moved to the top-level directory.
 
-Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. Mac binary packages end in `.tgz` and Windows binary packages end in `.zip`. You can use `devtools::build(binary = TRUE)` to make a binary package. 
+Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. Also, Mac binary packages end in `.tgz` and Windows binary packages end in `.zip`. You can use `devtools::build(binary = TRUE)` to make a binary package. 
 
 The following diagram summarises the files present in the root directory for the source, bundled and binary versions of devtools.
 
