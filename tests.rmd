@@ -10,11 +10,18 @@ library(testthat)
 
 # Testing {#tests}
 
-To make sure that your package behaves as you'd expect, testing is vital. While you probably test your code already, you may not have taken the next step: automation. This chapter describes how to use testthat to create automated tests of your code.
+Testing is a vital part of package development because it ensures that your code does what you think it does. So far your code development process looks something like this:
+
+1. Write a function.
+1. Load it with `devtools::load_all()` or Cmd + Shift + L.
+1. Experiment with it in the console to see if it works.
+1. Rinse and repeat.
+
+You are testing you code to see if it works, but you're doing it in a very informal way. The problem with this informal approach is that when you come back to this code in 3 months time to add a new feature, you've forgotten some of the informal tests you ran the first time. That makes it very easy to break code that used to work. 
 
 I started automating my tests because I discovered I was spending too much time recreating bugs that I had previously fixed. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those test so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that we don't test our code, it's that we don't have a way to make it easy to re-run tests, let alone to do so automatically.
 
-Turning your casual interactive tests into reproducible scripts requires a little more work up front. Since you can no longer visually inspect the output, you have to write code that does the inspection for you. However, this is an investment in the future of your code. It pays off in four ways:
+The goal of this chapter is to help you graduate from informal tests at the command line to formal automated tests using the testthat package. Turning your casual interactive tests into reproducible scripts requires a little more work up front. Since you can no longer visually inspect the output, you have to write code that does the inspection for you. However, this is an investment in the future of your code. It pays off in four ways:
 
 * Decreased frustration. Whenever I'm on a strict deadline I always seem to 
   discover a bug in old code. Having to stop what I'm doing to fix it is a real 
@@ -24,7 +31,7 @@ Turning your casual interactive tests into reproducible scripts requires a littl
 * Better code structure. Code that's easy to test is usually better designed. I 
   have found writing tests makes me break up complicated parts of my code into 
   separate functions that can work in isolation. These functions have less 
-  duplication, and are easier to test, understand and re-combine.
+  duplication, and are easier to test, understand and re-combine in new ways.
 
 * Easier to pick up where you left off. If you always finish a coding session by 
   creating a failing test (e.g. for the feature you want to implement next), 
@@ -62,32 +69,62 @@ Once you're set up the workflow is simple:
 
 2.  Run `devtools::test()` or Press Cmd + Shift + T to run the tests.
 
-## testthat test structure
+## Test structure
 
-testthat has a hierarchical structure made up of expectations, tests and contexts. 
+A test file looks like this: (this is a real example from the stringr package)
 
-* An __expectation__ describes the expected result of a computation: Does it
-  have the right value and right class? Does it produce error messages when it
-  should? There are 11 types of built in expectations.
+```{r}
+library(stringr)
+context("String length")
 
-* A __test__ groups together multiple expectations to test one function, or
-  tightly related functionality across multiple functions. A test is created
-  with the `test_that()` function.
+test_that("str_length is number of characters", {
+  expect_equal(str_length("a"), 1)
+  expect_equal(str_length("ab"), 2)
+  expect_equal(str_length("abc"), 3)
+})
+
+test_that("str_length of factor is length of level", {
+  expect_equal(str_length(factor("a")), 1)
+  expect_equal(str_length(factor("ab")), 2)
+  expect_equal(str_length(factor("abc")), 3)
+})
+
+test_that("str_length of missing is missing", {
+  expect_equal(str_length(NA), NA_integer_)
+  expect_equal(str_length(c(NA, 1)), c(NA, 1))
+  expect_equal(str_length("NA"), 2)
+})
+```
+
+Test files are made up of three components: expectations, tests and contexts. Expectations give you the tools to convert your visual, interactive experiments into reproducible scripts. Tests and contexts are ways of organising your expectations so that when something goes wrong you can easily track down the source of the problem.
+
+* An __expectation__ is the atom of testing. It describes the expected result 
+  of a computation: Does it have the right value and right class? Does it 
+  produce error messages when it should? An expectation automates visual
+  checking of results in the console.
+
+* A __test__ groups together multiple expectations to fully test the output
+  of one simple function, or the range of possibilities from one parameter
+  of a more complicated function, or tightly related functionality across 
+  multiple functions. A test is created with the `test_that()` function.
 
 * A __context__ groups together multiple tests that test related
   functionality.  Contexts are defined with the `context()` function.
 
 These are described in detail below. 
 
-Expectations give you the tools to convert your visual, interactive experiments into reproducible scripts. Tests and contexts are ways of organising your expectations so that when something goes wrong you can easily track down the source of the problem.
-
 ### Expectations
 
-An expectation is the finest level of testing. It makes a binary assertion about whether or not a value is as you expect. If the expectation isn't true, testthat will raise an error.
+An expectation is the finest level of testing. It makes a binary assertion about whether or not a value is as you expect. All expectations have a similar structure:
 
-An expectation is easy to read. Its syntax is close to a sentence in English: `expect_equal(a, b)` reads as "I expect that a and b are equal".
+* They start with `expect_`.
 
-There are 11 built in expectations:
+* They have two arguments: the first argument is the actual result, the 
+  second argument is what you expect.
+  
+* If the actual and expected results don't agree, testthat throws an error.
+
+While you'll normally put expectations inside tests inside texts, you can run them directly. This makes them easy to explore interactively. There are almost 20 expectations in the testthat package. The most important are discussed below.
 
 *   `expect_equal()` uses `all.equal()` to check for equality within some 
     numerical tolerance:
@@ -95,31 +132,24 @@ There are 11 built in expectations:
     ```{r, error = TRUE}
     expect_equal(10, 10)
     expect_equal(10, 10 + 1e-7)
-    expect_equal(10, 10 + 1e-6)
     expect_equal(10, 11) 
     ```
   
-*   `expect_identical()` uses `identical()` to check for exact equality.
+    If you want to test for exact equivalence, or need to compare a more
+    exotic object like an environment, use `expect_identical()`. It uses 
+    `identical()` internally.
 
     ```{r, error = TRUE}
-    expect_identical(10, 10) 
+    expect_equal(10, 10 + 1e-7)
     expect_identical(10, 10 + 1e-7)
     ```
 
-*   `is_equivalent_to()` is a more relaxed version of `equals()` that ignores
-    attributes:
+    On the other hand, `is_equivalent_to()` is a more relaxed version of 
+    `equals()` that ignores attributes:
 
     ```{r, error = TRUE}
     expect_equal(c("one" = 1, "two" = 2), 1:2)
     expect_equivalent(c("one" = 1, "two" = 2), 1:2)
-    ```
-
-*   `expect_is()` checks that an object `inherit()`s from a specified class.
-
-    ```{r, error = TRUE}
-    model <- lm(mpg ~ wt, data = mtcars)
-    expect_is(model, "lm")
-    expect_is(model, "glm")
     ```
 
 *   `expect_match()` matches a character vector against a regular expression. The 
@@ -137,50 +167,55 @@ There are 11 built in expectations:
     expect_match(string, "testing", ignore.case = TRUE)
     ```
 
-*   `expect_output()` matches the printed output from an expression against a
-    regular expression.
-
+*   `expect_match()` is used by three expectations that check for various 
+    types of output: `expect_output()`, for printed output; `expect_message()`
+    for messages; `expect_warning()` for warnings; and `expect_error()` for
+    errors.
+    
     ```{r, error = TRUE}
     a <- list(1:10, letters)
 
     expect_output(str(a), "List of 2")
     expect_output(str(a), "int [1:10]", fixed = TRUE)
-    ```
 
-*   `expect_message()` checks that an expression shows a message:
-
-    ```{r, error = TRUE}
     expect_message(library(mgcv), "This is mgcv")
     ```
-
-*   `expect_warning()` expects that you get a warning.
-
-    ```{r, error = TRUE}
+    
+    With `expect_message()`, `expect_warning()`, `expect_error()` you can
+    live the second argument blank if you just want to see if a message,
+    warning or error is throw. However, it's normally better to be explicit.
+    
+    ```{r, error = TRUE}  
     expect_warning(log(-1))
+    expect_error(1 / "a") 
+
     # But always better to be explicit
     expect_warning(log(-1), "NaNs produced")
+    expect_error(1 / "a", "non-numeric argument")
 
+    # Failure to produce a warning or error when expected is an error
     expect_warning(log(0))
+    expect_error(1 / 2) 
     ```
 
-*   `expect_error()` verifies that the expression throws an error. You can also
-    supply a regular expression which is applied to the text of the error.
+*   `expect_is()` checks that an object `inherit()`s from a specified class.
 
     ```{r, error = TRUE}
-    expect_error(1 / 2) 
-    expect_error(1 / "a") 
-    # Better to be explicit
-    expect_error(1 / "a", "non-numeric argument")
+    model <- lm(mpg ~ wt, data = mtcars)
+    expect_is(model, "lm")
+    expect_is(model, "glm")
     ```
 
 *   `expect_true()` is a useful catchall if none of the other expectations do what
     you want - it checks that an expression is true. `expect_false()` is the
     complement of `expect_true()`.
 
-*   `expect_null()`
-
-*   `expect_equal_to_reference()`
-
+*   Sometimes you don't know exactly what the result should be, or it's too 
+    complicated to easily recreate. In that case the best you can do is check
+    that the result is the same as last time. `expect_equal_to_reference()` 
+    caches the result of the first test, and then compares subsequent runs to
+    that. If for some reason the result does change, just delete the cache
+    file and re-test.
 
 Running a sequence of expectations is useful because it ensures that your code behaves as expected. You could even use an expectation within a function to check that the inputs are what you expect. However, they're not so useful when something goes wrong: all you know is that something is not as expected. You don't know anything about where the problem is. Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.
 
@@ -189,6 +224,8 @@ Running a sequence of expectations is useful because it ensures that your code b
 Each test should test a single item of functionality and have an informative name. The idea is that when a test fails, you should know exactly where to look for the problem in your code. You create a new test with `test_that()`, with parameters name and code block. The test name should complete the sentence "Test that" and the code block should be a collection of expectations. When there's a failure, it's the test name that will help you figure out what's gone wrong.
 
 The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. Note how we've defined a couple of helper functions to make the test more concise so you can easily see what changes in each expectation.
+
+### Refactoring common behaviour
 
 ```{r, eval = FALSE}
 test_that("floor_date works for different units", {
@@ -236,47 +273,8 @@ Contexts group tests together into blocks that test related functionality, and a
 
 The following code shows the context that tests the operation of the `stringr::str_length()`. The tests are very simple. They cover two situations where `nchar()` from base R gives surprising results.
 
-```{r}
-library(stringr)
-context("String length")
 
-test_that("str_length is number of characters", {
-  expect_equal(str_length("a"), 1)
-  expect_equal(str_length("ab"), 2)
-  expect_equal(str_length("abc"), 3)
-})
-
-test_that("str_length of factor is length of level", {
-  expect_equal(str_length(factor("a")), 1)
-  expect_equal(str_length(factor("ab")), 2)
-  expect_equal(str_length(factor("abc")), 3)
-})
-
-test_that("str_length of missing is missing", {
-  expect_equal(str_length(NA), NA_integer_)
-  expect_equal(str_length(c(NA, 1)), c(NA, 1))
-  expect_equal(str_length("NA"), 2)
-})
-```
-
-## R CMD check
-
-If you need to do two things to make sure `R CMD check` will run your tests:
-
-1.  Add testthat to `Suggests` field in `DESCRIPTION`.
-
-1.  Create `tests/testthat.R` that contains:
-
-    ```{r, eval = FALSE}
-    library(testthat)
-    test_check("yourpackage")
-    ```
-
-## Development cycles
-
-It's useful to distinguish between exploratory programming and confirmatory programming (in the same sense as exploratory and confirmatory data analysis), because the development cycle differs in several important ways.
-
-### Confirmatory programming
+## Confirmatory programming
 
 Confirmatory programming happens when you know what you need to do and what the results of your changes will be (new feature X appears or known bug Y disappears); you just need to figure out the way to do it. Confirmatory programming is also known as [test driven development][tdd] (TDD), a development style that grew out of [extreme programming](extreme-programming). The basic idea is that, before you implement any new feature or fix a known bug, you should:
 
@@ -293,23 +291,6 @@ Confirmatory programming happens when you know what you need to do and what the 
 
 For this paradigm, you might also want to use `testthat::auto_test()`, which will watch your tests and code and will automatically rerun your tests when either changes. This allows you to skip step three: you just modify your code and watch to see if the tests pass or fail.
 
-### Exploratory programming
-
-Exploratory programming is the complement of confirmatory programming, when you have some idea of what you want to achieve, but you're not sure about the details. You're not sure what the functions should look like, what arguments they should have and what they should return. You may not even be sure how you are going to break down the problem into pieces. In exploratory programming, you're exploring the solution space by writing functions and you need the freedom to rewrite large chunks of the code as you understand the problem domain better.
-
-The exploratory programming cycle is similar to confirmatory, but it's not usually worth writing the tests before writing the code, because the interface will change so much:
-
-1. Edit code and reload with `load_all()`.
-
-2. Test interactively.
-
-3. Repeat 1--2 until code works.
-
-4. Write automated tests and `test()`.
-
-5. Update documentation comments, run `document()`, and update `NEWS`
-
-The automated tests are still vitally important because they are what will prevent your code from failing silently in the future.
 
 [tdd]:http://en.wikipedia.org/wiki/Test-driven_development
 [extreme-programming]:http://en.wikipedia.org/wiki/Extreme_programming
