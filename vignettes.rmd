@@ -4,29 +4,35 @@ layout: default
 output: bookdown::html_chapter
 ---
 
-# Package documentation {#vignettes}
+# Package documentation {#vignette}
 
-Vignettes are long-form pdf guides to your package. Function documentation is useful once you know exactly what you want to do, and you've discovered the appropriate function: once you've done all that, you can use `help()` to learn how to use the function appropriately. Vignettes get you to point where you can do that: they explain what the package does as a whole, breaks the functions down into useful categories, and shows you how to combine the functions (and maybe functions from other packages) to solve problems.
+Vignettes are long-form guides to your package. The goal of vignettes is to get you to point where function documentation is useful. Function documentation helps you if you know the name of the function you need, but is otherwise useless. A vignettes is like a book chapter or an academic paper: it should describe the problem that you package is designed to solve, and then show the reader how to solve it. Vignettes should divide functions into useful categories, and demonstrate how to coordinate multiple functions to solve problems.
 
-You can see all the vignettes in installed packages with `browseVignettes()`, or for a specific package with `browseVignettes("packagename")`. You can open a specific vignette with `vignette(x)`, and see its code with `edit(vignette(x))`. Vignettes are also listed on the CRAN page for the package. For each vignette you get three things: the original input file, the rendered html or pdf, and a file of R code. 
+Many existing packages have vignettes. You can see all the vignettes you have installed with `browseVignettes()`. To see the vignettes for a specific package, use the first argument:  `browseVignettes("packagename")`. Each vignette provides three things: the original source file, a readable html page or a pdf, and a file of R code. You can read a specific vignette with `vignette(x)`, and see its code with `edit(vignette(x))`. To see vignettes for a package you haven't installed, look at it's CRAN page, e.g., <http://cran.r-project.org/web/packages/dplyr>.
 
-Before R 3.0.0, only way to create vignetes was with Sweave and Latex. This was hard, because it required you to both understand latex. Additionally the latex toolchain is large, and building a pdf with latex takes some time. Together, these things made it unusual for me to write a vignette. Now, any package can provide a vignette __engine__, a standard interface for turning input files into html or pdf vignettes. In this chapter, we're going to use the rmarkdown vignette engine provided by the knitr package. I recommend this engine because:
+Before R 3.0.0, only way to create vignetes was with Sweave. This was painful because Sweave only worked with LaTeX, and LaTeX is both hard to learn and slow to compile. Now, any package can provide a vignette __engine__, a standard interface for turning input files into html or pdf vignettes. In this chapter, we're going to use the R markdown vignette engine provided by knitr. I recommend this engine because:
 
 * You write in markdown, a plain text formatting system. Markdown is limited
-  compared to latex, but this limitation is good because it forces you to
+  compared to LaTeX, but this limitation is good because it forces you to
   focus on content, rather than appearance.
   
-* It uses knitr to allow you to intermingle code and text.
+* You use [knitr](http://yihui.name/knitr/) to intermingle text, code and 
+  results (both textual and visual).
 
-* Markdown and knitr are coordinated using the 
-  [rmarkdown package](http://rmarkdown.rstudio.com/). It uses the powerful
-  [pandoc](http://johnmacfarlane.net/pandoc) to convert markdown to html.
+* Your life is made easy by the  [rmarkdown package](http://rmarkdown.rstudio.com/) 
+  which coordinates markdown and knitr. It uses 
+  [pandoc](http://johnmacfarlane.net/pandoc) to convert markdown to html, and 
+  provides many useful templates.
 
-Once I switched to using rmarkdown for vignettes I found that my productivity increase, I and enjoyed writing them more, so I've written far more vignettes in rmarkdown than I ever did in Sweave.
+Switching from Sweave to R Markdown had a profound impact on my use of vignettes. Previously, making a vignette was painful and slow and I rarely did it. Now, vignettes are an essential part of my packages, and I'll use them whenever I need to explain a complex topic, or show how to solve a problem with multiple steps.
 
-Currently, the easiest way to get Rmarkdown is to use [RStudio](http://www.rstudio.com/products/rstudio/download/preview/). Otherwise, you'll need to `devtools::install_github("rstudio/rmarkdown")` and [install pandoc](http://johnmacfarlane.net/pandoc/installing.html).  
+Currently, the easiest way to get R Markdown is to use [RStudio](http://www.rstudio.com/products/rstudio/download/preview/). RStudio will automatically install all of the needed prerequisites. If you don't use RStudio, you'll need to:
 
-## Vignette workflow
+1. Install the rmarkdown package with `install.packages("rmarkdown")`.
+
+1. [Install pandoc](http://johnmacfarlane.net/pandoc/installing.html).  
+
+## Vignette workflow {#vignette-workflow}
 
 To create your first vignette, run:
 
@@ -38,12 +44,12 @@ This will:
 
 1.  Create a `vignettes/` directory.
 
-1.  Add the necessary dependencies to `DESCRIPTION` (i.e. knitr in suggests and 
-    vignette builder).
+1.  Add the necessary dependencies to `DESCRIPTION` (i.e. add knitr to 
+    `Suggests` and `VignetteBuilder` fields).
 
-1.  Creates a draft vignette, `my-vignette.Rmd`.
+1.  Drafts a vignette, `vignettes/my-vignette.Rmd`.
 
-The draft vignette has been designed to remind of the important parts of an rmarkdown file, so it should be a useful reference when you're creating a new vignette.
+The draft vignette has been designed to remind of the important parts of an R Markdown file, so it should be a useful reference when you're creating a new vignette.
 
 Once you have this file, the workflow is simple:
 
@@ -53,9 +59,15 @@ Once you have this file, the workflow is simple:
     `r bookdown::embed_png("screenshots/knit.png", dpi = 220)`) to knit the 
     vignette and preview the output.
 
-You then write vignettes using markdown and knitr (= rmarkdown), which are described below.
+There are three important components to an R Markdown vignette:
 
-## Metadata
+* The initial metadata block.
+* Markdown for formatting text.
+* Knitr for intermingling text, code and results.
+
+These are described in the following sections.
+
+## Metadata {#vignette-metadata}
 
 The first few lines of the vignette contain important metadata. The default template contains the following information:
 
@@ -70,12 +82,12 @@ The first few lines of the vignette contain important metadata. The default temp
       %\usepackage[utf8]{inputenc}
     ---
 
-This metadata is recorded in [yaml](http://www.yaml.org/) format, a format designed to be both human and computer readable. The basics of the syntax is much like the DESCRIPTION, each line consists of a field name, a colon, then the value of the field. The one special YAML feature we're using here is `>`: that indicates the the following lines of text are regular text and shouldn't use any special YAML features.
+This metadata is written in [yaml](http://www.yaml.org/), a format designed to be both human and computer readable. The basics of the syntax is much like the DESCRIPTION, each line consists of a field name, a colon, then the value of the field. The one special YAML feature we're using here is `>`: that indicates the the following lines of text are plain text and shouldn't use any special YAML features.
 
 The fields are:
 
 * Title, author and date: the title of the vignette, author and date.
-  You will probably want to fill these in yourself (or you can delete them if 
+  You will want to fill these in yourself (or you can delete them if 
   you don't want the title block at the top of the page). The date is filled 
   in by default: it uses a special knitr syntax (explained below) to insert 
   today's date. 
@@ -88,18 +100,19 @@ The fields are:
   
 * Vignette: this contains a special block of metadata needed by R.
   You can see some of the history of vignettes here: originally all vignettes 
-  were written in Sweave which uses latex, so the vignette metadata was also 
-  written in Sweave. You need to modifiy the `\VignetteIndexEntry` to provide 
-  the title of your vignette, as it will appear in the vignette index. Leave 
-  the other two lines as is.  They tell R to use `knitr` to process this
-  file, and that it's encoded in UTF-8. (The only valid encoding.)
+  were written in LaTeX, so the metadata looks like LaTeX commands. 
+  You need to modifiy the `\VignetteIndexEntry` to provide the title of your 
+  vignette, as it will appear in the vignette index. Leave the other two lines 
+  as is. They tell R to use `knitr` to process this file, and that it's
+  encoded in UTF-8. (This is the only encoding you should ever write vingettes 
+  in.)
 
 ## Markdown {#markdown}
 
-Rmarkdown vignettes are written in markdown. John Gruber, the author of markdown, describes does a good job of summarising the goals and philosophy of markdown:
+R Markdown vignettes are written in Markdown. John Gruber, the author of Markdown, summarises the goals and philosophy of markdown:
 
 > Markdown is intended to be as easy-to-read and easy-to-write as is feasible.
-
+>
 > Readability, however, is emphasized above all else. A Markdown-formatted 
 > document should be publishable as-is, as plain text, without looking like 
 > it’s been marked up with tags or formatting instructions. While Markdown’s 
@@ -107,16 +120,18 @@ Rmarkdown vignettes are written in markdown. John Gruber, the author of markdown
 > including Setext, atx, Textile, reStructuredText, Grutatext, and EtText — 
 > the single biggest source of inspiration for Markdown’s syntax is the format 
 > of plain text email.
-
+>
 > To this end, Markdown’s syntax is comprised entirely of punctuation 
 > characters, which punctuation characters have been carefully chosen so as 
 > to look like what they mean. E.g., asterisks around a word actually look 
 > like *emphasis*. Markdown lists look like, well, lists. Even blockquotes 
 > look like quoted passages of text, assuming you’ve ever used email.
 
-Markdown isn't as powerful as latex or reStructuredText or docbook, but it is simple, easy to write, and easy to read even when not rendered. I find the constraints of markdown actively helpful for writing because it lets me focus on the content, and prevents me from messing around with the styling.
+Markdown isn't as powerful as LaTeX or reStructuredText or docbook, but it is simple, easy to write, and easy to read even when not rendered. I find the constraints of markdown actively helpful for writing because it lets me focus on the content, and prevents me from messing around with the styling.
 
-If you've never used markdown before, a good place to start is the [Markdown syntax documentation](http://daringfireball.net/projects/markdown/syntax), written by John Gruber, the author of the original markdown. However, pandoc's implementation of markdown cleans up a number of rough edges and adds considerable new features. Also recommend familiarising yourself with the [pandoc readme](http://johnmacfarlane.net/pandoc/README.html).  The sections below summarise the most important markdown features. You should be up and running very quickly.
+If you've never used markdown before, a good place to start is the [Markdown syntax documentation](http://daringfireball.net/projects/markdown/syntax), written by John Gruber, the author of the original markdown. Pandoc's implementation of markdown cleans up a number of rough edges and adds a number of new features, so I also recommend familiarising yourself with the [pandoc readme](http://johnmacfarlane.net/pandoc/README.html).
+
+The sections below show you what I think are the most important features of pandoc's Markdown dialect. You should be able to learn the basics in under 15 minutes.
 
 ### Sections
 
@@ -137,14 +152,8 @@ Basic unordered lists use `*`:
 
     * Bulleted list
     * Item 2
-        * Item 2a (notice 4-space indent)
-        * Item 2b    
-
-Ordered lists use: `1.`:
-    
-    1. Item 1
-    1. Item 2
-    1. Items numbered automatically, even though they all start with 1.
+        * Nested bullets need a 4-space indent.
+        * Item 2b
 
 If you want multiparagh lists, the second and subsequent paragphs need more indenting:
 
@@ -153,6 +162,19 @@ If you want multiparagh lists, the second and subsequent paragphs need more inde
         But to do that, the second and subsequent paragraphs must be
         indented by four or more spaces. That looks better if the first
         bullet is also indented.
+
+Ordered lists use: `1.`:
+    
+    1. Item 1
+    1. Item 2
+    1. Items are umbered automatically, even though they all start with 1.
+
+You can intermingle ordered and bulleted lists, as long as you adhere to the four space rule:
+
+    1.  Item 1.
+        *  Item a
+        *  Item b
+    2.  Item 2.
 
 Definition lists use ` : `
 
@@ -165,20 +187,31 @@ Definition lists use ` : `
 
 ### Inline formatting
 
-    _italic_, *italic*
-    __bold__, **bold**    
+Inline format is similarly simple:
+
+    _italic_ or *italic*
+    __bold__ or **bold**    
     [link text](destination)
     <http://this-is-a-raw-url.com>
 
 ### Tables
 
-...
+There are [four types of table](http://johnmacfarlane.net/pandoc/README.html#tables). I recommend using the pipe table which looks like this:
+
+    | Right | Left | Default | Center |
+    |------:|:-----|---------|:------:|
+    |   12  |  12  |    12   |    12  |
+    |  123  |  123 |   123   |   123  |
+    |    1  |    1 |     1   |     1  |
+
+Notice the use of the `:` in the spacer under the heading. This determines the alignment of the column. 
+If the data underlying your table exists in R, don't lay it out by hand. Instead use `knitr::kable()` or look at [printr](https://github.com/yihui/printr) or [pander](http://rapporter.github.io/pander/).
 
 ### Code
 
-For code inline use `` `code` ``:
+For inline code use `` `code` ``:
 
-    For code inline use `code`
+    For code inline use `code`.
 
 For bigger blocks of use, use ```` ``` ````. These are known as "fenced" code blocks:
 
@@ -195,13 +228,13 @@ To add syntax highlighting to the code, put the language name after the backtick
     }
     ```
 
-(At time of printing, list of support languages was: actionscript, ada, apache, asn1, asp, awk, bash, bibtex, boo, c, changelog, clojure, cmake, coffee, coldfusion, commonlisp, cpp, cs, css, curry, d, diff, djangotemplate, doxygen, doxygenlua, dtd, eiffel, email, erlang, fortran, fsharp, gnuassembler, go, haskell, haxe, html, ini, java, javadoc, javascript, json, jsp, julia, latex, lex, literatecurry, literatehaskell, lua, makefile, mandoc, matlab, maxima, metafont, mips, modula2, modula3, monobasic, nasm, noweb, objectivec, objectivecpp, ocaml, octave, pascal, perl, php, pike, postscript, prolog, python, r, relaxngcompact, rhtml, ruby, rust, scala, scheme, sci, sed, sgml, sql, sqlmysql, sqlpostgresql, tcl, texinfo, verilog, vhdl, xml, xorg, xslt, xul, yacc, yaml. Syntax highlighting is done by the haskell package [highlighting-kate](http://johnmacfarlane.net/highlighting-kate); see the website for current list.)
+(At time of printing, languages supported by pandoc were: actionscript, ada, apache, asn1, asp, awk, bash, bibtex, boo, c, changelog, clojure, cmake, coffee, coldfusion, commonlisp, cpp, cs, css, curry, d, diff, djangotemplate, doxygen, doxygenlua, dtd, eiffel, email, erlang, fortran, fsharp, gnuassembler, go, haskell, haxe, html, ini, java, javadoc, javascript, json, jsp, julia, latex, lex, literatecurry, literatehaskell, lua, makefile, mandoc, matlab, maxima, metafont, mips, modula2, modula3, monobasic, nasm, noweb, objectivec, objectivecpp, ocaml, octave, pascal, perl, php, pike, postscript, prolog, python, r, relaxngcompact, rhtml, ruby, rust, scala, scheme, sci, sed, sgml, sql, sqlmysql, sqlpostgresql, tcl, texinfo, verilog, vhdl, xml, xorg, xslt, xul, yacc, yaml. Syntax highlighting is done by the haskell package [highlighting-kate](http://johnmacfarlane.net/highlighting-kate); see the website for current list.)
 
-When you include R code in your vignette, you usually won't use ```` ```r ````, instead you'll use ```` ```{r} ````, which is specially processed by knitr, as described next.
+When you include R code in your vignette, you usually won't use ```` ```r ````. Instead, you'll use ```` ```{r} ````, which is specially processed by knitr, as described next.
 
 ## Knitr
 
-Knitr allows you to intermingle code, results and text. A knitr block looks similar to a fenced code block, but instead of writing `r`, you write `{r}`.
+Knitr allows you to intermingle code, results and text. A knitr block looks similar to a fenced code block, but instead of using `r`, you using `{r}`.
 
     ```{r}
     # Add two numbers together
@@ -218,7 +251,7 @@ Knitr will take that code, and run it. As it runs, it captures the output, then 
     ## [1] 30
     ```
 
-Then when the documented is rendered to HTML, pandoc will display that as:
+Which will be rendered as:
 
 ```r
 # Add two numbers together
@@ -227,7 +260,7 @@ add(10, 20)
 ## 30
 ```
 
-Once you start using knitr in this way, you'll never look back. You can rest easy knowing that all your code works (because it's run when you build the vignette) and there's no way for input and output to be out of sync.
+Once you start using knitr in this way, you'll never look back. You can rest easy knowing that all your code works (because it's always run when you build the vignette) and there's no way for input and output to be out of sync.
 
 ### Options
 
@@ -239,18 +272,35 @@ You can specify additional options to control the details of the rendering: ````
   (Your users will be puzzled when they copy & paste code and it doesn't
   work.)
 
-* `echo = FALSE`. Turns of the printing of the code _input_ (the output)
-  will still be printed.  Generally, you shouldn't use this in vingettes
-  because understand what the code is doing is important.
+* `echo = FALSE`. Turns of the printing of the code _input_. The output
+  will still be printed. Generally, you shouldn't use this in vignettes
+  because understand what the code is doing is important (it's more useful
+  when writing reports since the code is typically less important than the
+  output).
 
 * `results = "hide"`. Don't print code _output_.
 
-* `warning = FALSE`, `message = FALSE`. Suppresses display of warnings
+* `warning = FALSE`, `message = FALSE`. Suppress display of warnings
   or messages.
+
+* `error = TRUE`: use this if you want knitr to capture any errors in 
+  the block and show them inline. This is useful if you want to demonstrate 
+  what happens if code throws an error. Whenever you use `error = TRUE`,
+  you also need to use `purl = FALSE`: this prevents the code from being 
+  included in the summary R document and is important because that file
+  must be able to be sourced without error.
+
+* `collapse = TRUE`, `comment = "#>"`: use my preferred way of displaying
+  code output.  I usually set these globally by putting the following knitr
+  block at the start of my document.
+
+        ```{r, echo = FALSE}
+        knitr::opts_chunk$set(collapse = TRUE, comment = "#">)
+        ```
 
 *   `results = "asis"`. Treat the output of your R code as literal markdown.
     This is useful if you want to generate text from your R code. For example,
-    if you want to generate a table using the pander package, you'd do
+    if you want to generate a table using the pander package, you'd do:
   
         ```{r, results = "asis"}
         pander::pandoc.table(iris[1:3, 1:4])
@@ -268,7 +318,7 @@ You can specify additional options to control the details of the rendering: ````
              4.7            3.2           1.3            0.2     
         ---------------------------------------------------------
         
-    Which makes a table that looks like this:
+    Which makes a table that looks like:
     
     --------------------------------------------------------
      Sepal.Length   Sepal.Width   Petal.Length   Petal.Width 
@@ -280,32 +330,20 @@ You can specify additional options to control the details of the rendering: ````
          4.7            3.2           1.3            0.2     
     ---------------------------------------------------------
 
-* `error = TRUE`: use this if you want knitr to capture any errors in 
-  the block and show them inline. This is useful if you want to demonstrate 
-  what happens if code throws an error.
-
-* `collapse = TRUE`, `comment = "#>"`: use my preferred way of displaying
-  code output.  I usually set these globally by putting the following knitr
-  block at the start of my document.
-
-        ```{r, echo = FALSE}
-        knitr::opts_chunk$set(collapse = TRUE, comment = "#">)
-        ```
-
 * `fig.show = "hold"`: hold all figures until the end of the code block.
 
 * `fig.width = 5`, `fig.height = 5`: set the height and width of figures
   (in inches).
 
-There are many other options. You can find a complete list at <http://yihui.name/knitr/options>. 
+The many other options are described at <http://yihui.name/knitr/options>. 
 
-## Development cycle
+## Development cycle {#vignette-workflow-2}
 
-Run code a chunk at a time using Cmd + Alt + C. Re-run the entire document in a fresh R session using Knit (Cmd + Shift + K). You can build all vignettes from the console with `devtools::build_vignettes()`, but this is rarely useful. Instead rely on `build()` to create a package bundle with the vignettes included.
+Run code a chunk at a time using Cmd + Alt + C. Re-run the entire document in a fresh R session using Knit (Cmd + Shift + K). 
 
-Note that RStudio's "Build & reload" does not build vignettes (in the interest of saving time). All install functions (like `install_github()`) will ensure vignettes are built by default, most have an argument to turn off if it's time consuming.
+You can build all vignettes from the console with `devtools::build_vignettes()`, but this is rarely useful. Instead us `devtools::build()` to create a package bundle with the vignettes included.  RStudio's "Build & reload" does not build vignettes to save time. Similarly, `devtools:install_github()` (and friends) will not build vignettes by default because they're time consuming and may requre additional packages. You can force building with `devtools:install_github(build_vignettes = TRUE)`. This will also install all suggested packages.
 
-## Advice for writing vignettes
+## Advice for writing vignettes {#vignette-advice}
 
 > If you're thinking without writing, you only think you're thinking.
 > --- Leslie Lamport
@@ -320,15 +358,13 @@ Can also make a nice break from coding. If you're brain is tired of programming,
 
 I also like the idea of <http://www.structuredprocrastination.com/>.
 
-## Organisation
+### Organisation
 
 For simpler packages, often one vignette is sufficient. But for more complicated packages you may need more than one. You can have as many vignettes as you like. I tend to think of them like chapters of a book - they should be self-contained, but can link together into a cohesive whole. 
 
 You can link between various vignettes, although it's a slight hack because it takes advantage of the exactly how files are stored on disk. If you want to link to a vignette `abc.Rmd`, just make a link to `abc.html`.
 
 ## CRAN notes
-
-If you're submitting your package to CRAN, you'll also need to watch the file size. If you include a lot of graphics, it's easy to create a very large file.
 
 Note that you do vignette building locally, so that CRAN recieves the html/pdf and the source code. CRAN checks that the code is runnable (by running it), but does not re-build the vignette. This means that any packages used by the vignette must be declared in the `DESCRIPTION`. This means that you can use Rmarkdown (which uses pandoc) even though CRAN doesn't have pandoc installed.
 
@@ -350,7 +386,9 @@ Common problems:
        
     1. Ensure you have the necessary vignette metadata.
 
-*   `error = TRUE`
+*   If you use `error = TRUE`, you must use `purl = FALSE`.
+
+You'll need to watch the file size. If you include a lot of graphics, it's easy to create a very large file. There are no hard and fast rules, but if you have a very large vignette be prepared to either justify the file size, or to make it smaller.
 
 ## Where next
 
