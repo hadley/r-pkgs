@@ -21,12 +21,13 @@ You are testing you code to see if it works, but you're doing it in a very infor
 
 I started automating my tests because I discovered I was spending too much time recreating bugs that I had previously fixed. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those test so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that we don't test our code, it's that we don't have a way to make it easy to re-run tests, let alone to do so automatically.
 
-The goal of this chapter is to help you graduate from informal tests at the command line to formal automated tests using the testthat package. Turning your casual interactive tests into reproducible scripts requires a little more work up front. Since you can no longer visually inspect the output, you have to write code that does the inspection for you. However, this is an investment in the future of your code. It pays off in four ways:
+The goal of this chapter is to help you graduate from informal tests at the command line to formal automated tests using the testthat package. Turning your casual interactive tests into reproducible scripts requires a little more work up front, but it pays off in four ways:
 
-* Decreased frustration. Whenever I'm on a strict deadline I always seem to 
-  discover a bug in old code. Having to stop what I'm doing to fix it is a real 
-  pain. The more I test, the less this happens. Also, based on how well they 
-  test, I can easily see which parts of my code I can be confident about.
+* Fewer bugs. Because you're explicit about how your code should be behave
+  you will have fewer bugs, and bugs that you've fixed in the past will
+  never come back to haunt you. Testing is a bit like double entry book-keeping:
+  because you've described the behaviour of your code in two ways (in the code
+  and in the tests), you can check them against each other.
 
 * Better code structure. Code that's easy to test is usually better designed. I 
   have found writing tests makes me break up complicated parts of my code into 
@@ -71,7 +72,7 @@ Once you're set up the workflow is simple:
 
 ## Test structure
 
-A test file looks like this: (this is a real example from the stringr package)
+A test file lives in `tests/testthat/` and its name must start with `test`. Here's an example of a test file from the stringr package:
 
 ```{r}
 library(stringr)
@@ -124,37 +125,31 @@ An expectation is the finest level of testing. It makes a binary assertion about
   
 * If the actual and expected results don't agree, testthat throws an error.
 
-While you'll normally put expectations inside tests inside texts, you can run them directly. This makes them easy to explore interactively. There are almost 20 expectations in the testthat package. The most important are discussed below.
+While you'll normally put expectations inside tests inside contexts, you can run them directly. This makes them easy to explore interactively. There are almost 20 expectations in the testthat package. The most important are discussed below.
 
-*   `expect_equal()` uses `all.equal()` to check for equality within some 
-    numerical tolerance:
+*   There are two basic ways to test for equality: `expect_equal()`, 
+    and `expect_identical()`. `expect_equal()` is most common: it uses 
+    `all.equal()` to check for equality within a numerical tolerance:
 
     ```{r, error = TRUE}
     expect_equal(10, 10)
     expect_equal(10, 10 + 1e-7)
-    expect_equal(10, 11) 
+    expect_equal(10, 11)
     ```
   
     If you want to test for exact equivalence, or need to compare a more
-    exotic object like an environment, use `expect_identical()`. It uses 
-    `identical()` internally.
+    exotic object like an environment, use `expect_identical()`. It's built
+    on top of `identical()`:
 
     ```{r, error = TRUE}
     expect_equal(10, 10 + 1e-7)
     expect_identical(10, 10 + 1e-7)
     ```
 
-    On the other hand, `is_equivalent_to()` is a more relaxed version of 
-    `equals()` that ignores attributes:
-
-    ```{r, error = TRUE}
-    expect_equal(c("one" = 1, "two" = 2), 1:2)
-    expect_equivalent(c("one" = 1, "two" = 2), 1:2)
-    ```
-
 *   `expect_match()` matches a character vector against a regular expression. The 
     optional `all` argument controls whether all elements or just one element 
-    needs to match. This is powered by `grepl()`.
+    needs to match. This is powered by `grepl()`, and additional arguments, 
+    like `ignore.case = FALSE` or `fixed = TRUE`, are passed on down.
 
     ```{r, error = TRUE}
     string <- "Testing is fun!"
@@ -182,8 +177,9 @@ While you'll normally put expectations inside tests inside texts, you can run th
     ```
     
     With `expect_message()`, `expect_warning()`, `expect_error()` you can
-    live the second argument blank if you just want to see if a message,
-    warning or error is throw. However, it's normally better to be explicit.
+    leave the second argument blank if you just want to see if a message,
+    warning or error is created. However, it's normally better to be explicit, 
+    and provide some text from the message.
     
     ```{r, error = TRUE}  
     expect_warning(log(-1))
@@ -206,13 +202,12 @@ While you'll normally put expectations inside tests inside texts, you can run th
     expect_is(model, "glm")
     ```
 
-*   `expect_true()` is a useful catchall if none of the other expectations do what
-    you want - it checks that an expression is true. `expect_false()` is the
-    complement of `expect_true()`.
+*   `expect_true()` and `expect_false()` are useful catchalls if none of the 
+    other expectations do what need.
 
 *   Sometimes you don't know exactly what the result should be, or it's too 
-    complicated to easily recreate. In that case the best you can do is check
-    that the result is the same as last time. `expect_equal_to_reference()` 
+    complicated to easily recreate in code. In that case the best you can do is 
+    check that the result is the same as last time. `expect_equal_to_reference()` 
     caches the result of the first test, and then compares subsequent runs to
     that. If for some reason the result does change, just delete the cache
     file and re-test.
@@ -223,36 +218,7 @@ Running a sequence of expectations is useful because it ensures that your code b
 
 Each test should test a single item of functionality and have an informative name. The idea is that when a test fails, you should know exactly where to look for the problem in your code. You create a new test with `test_that()`, with parameters name and code block. The test name should complete the sentence "Test that" and the code block should be a collection of expectations. When there's a failure, it's the test name that will help you figure out what's gone wrong.
 
-The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. Note how we've defined a couple of helper functions to make the test more concise so you can easily see what changes in each expectation.
-
-### Refactoring common behaviour
-
-```{r, eval = FALSE}
-test_that("floor_date works for different units", {
-  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
-
-  expect_time <- function(x, y) expect_equal(x, as.POSIXct(y, tz = "UTC"))
-  floor_base <- function(unit) floor_date(base, unit)
-
-  expect_time(floor_base("second"), "2009-08-03 12:01:59")
-  expect_time(floor_base("minute"), "2009-08-03 12:01:00")
-  expect_time(floor_base("hour"),   "2009-08-03 12:00:00")
-  expect_time(floor_base("day"),    "2009-08-03 00:00:00")
-  expect_time(floor_base("week"),   "2009-08-02 00:00:00")
-  expect_time(floor_base("month"),  "2009-08-01 00:00:00")
-  expect_time(floor_base("year"),   "2009-01-01 00:00:00")
-})
-```
-
-Not that this won't produce very useful error messages. Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce more informative output:
-
-```{r, error = TRUE}
-expect_time <- function(x, y) expect_equal(x, as.POSIXct(y, tz = "UTC"))
-expect_time(Sys.time(), "2009-01-01 00:00:00")
-
-expect_time <- function(x, y) eval(substitute(expect_equal(x, as.POSIXct(y, tz = "UTC"))))
-expect_time(Sys.time(), "2014-01-01 00:00:00")
-```
+It's up to you how to organise your expectations into tests. The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem. Try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer big tests.
 
 Each test is run in its own environment so it is self-contained. The exceptions are actions which have effects outside the local environment. These include things that affect:
 
@@ -265,7 +231,100 @@ Each test is run in its own environment so it is self-contained. The exceptions 
 
 When you use these actions in tests, you'll need to clean up after yourself. Many other testing packages have set-up and teardown methods that are run automatically before and after each test. These are not so important with testthat because you can create objects outside of the tests and rely on R's copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.
 
+### Refactoring common behaviour
+
+The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.  There's a lot of duplication in these tests, so we might want to extract common behaviour into a new function.
+
+```{r}
+library(lubridate)
+test_that("floor_date works for different units", {
+  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
+
+  expect_equal(floor_date(base, "second"), 
+    as.POSIXct("2009-08-03 12:01:59", tz = "UTC"))
+  expect_equal(floor_date(base, "minute"), 
+    as.POSIXct("2009-08-03 12:01:00", tz = "UTC"))
+  expect_equal(floor_date(base, "hour"),   
+    as.POSIXct("2009-08-03 12:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "day"),    
+    as.POSIXct("2009-08-03 00:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "week"),   
+    as.POSIXct("2009-08-02 00:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "month"),  
+    as.POSIXct("2009-08-01 00:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "year"),   
+    as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
+})
+```
+
+Note how we've defined a couple of helper functions to make the test more concise so you can easily see what changes in each expectation.
+
+```{r}
+test_that("floor_date works for different units", {
+  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
+  floor_base <- function(unit) floor_date(base, unit)
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+
+  expect_equal(floor_base("second"), as_time("2009-08-03 12:01:59"))
+  expect_equal(floor_base("minute"), as_time("2009-08-03 12:01:00"))
+  expect_equal(floor_base("hour"),   as_time("2009-08-03 12:00:00"))
+  expect_equal(floor_base("day"),    as_time("2009-08-03 00:00:00"))
+  expect_equal(floor_base("week"),   as_time("2009-08-02 00:00:00"))
+  expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
+  expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
+})
+```
+
+We could go a step further and create a custom expectation function:
+
+```{r}
+base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
+
+expect_floor_equal <- function(unit, time) {
+  expect_equal(floor_date(base, unit), as.POSIXct(time, tz = "UTC"))
+}
+expect_floor_equal("year", "2009-01-01 00:00:00")
+```
+
+However, this doesn't give very informative output if the expectation fails:
+
+```{r, error = TRUE}
+expect_floor_equal("year", "2008-01-01 00:00:00")
+```
+
+Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce more informative output. The key is to use `bquote()` and `eval()`. In the `bquote()` call below, note the use of `.(x)` - the value of anything inside will be inserted into the call.
+
+```{r, error = TRUE}
+expect_floor_equal <- function(unit, time) {
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
+}
+expect_floor_equal("year", "2008-01-01 00:00:00")
+```
+
+This sort of refactoring is often worthwhile because it removing repeated code makes it easier to see what's changing. It's important that your tests be easy to read so that you can be confident they're correct.
+
+```{r}
+test_that("floor_date works for different units", {
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  expect_floor_equal <- function(unit, time) {
+    eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
+  }
+
+  base <- as_time("2009-08-03 12:01:59.23")
+  expect_floor_equal("second", "2009-08-03 12:01:59")
+  expect_floor_equal("minute", "2009-08-03 12:01:00")
+  expect_floor_equal("hour",   "2009-08-03 12:00:00")
+  expect_floor_equal("day",    "2009-08-03 00:00:00")
+  expect_floor_equal("week",   "2009-08-02 00:00:00")
+  expect_floor_equal("month",  "2009-08-01 00:00:00")
+  expect_floor_equal("year",   "2009-01-01 00:00:00")
+})
+```
+
 ### Skipping a test
+
+Sometimes it's impossible to perform a test.
 
 ## Contexts
 
@@ -291,6 +350,10 @@ Confirmatory programming happens when you know what you need to do and what the 
 
 For this paradigm, you might also want to use `testthat::auto_test()`, which will watch your tests and code and will automatically rerun your tests when either changes. This allows you to skip step three: you just modify your code and watch to see if the tests pass or fail.
 
+## CRAN notes
+
+* Tests need to run relatively quickly. Place `skip_on_cran()` at the beginning
+  of long-running tests that shouldn't be run on CRAN.
 
 [tdd]:http://en.wikipedia.org/wiki/Test-driven_development
 [extreme-programming]:http://en.wikipedia.org/wiki/Extreme_programming
