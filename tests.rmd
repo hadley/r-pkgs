@@ -10,16 +10,16 @@ library(testthat)
 
 # Testing {#tests}
 
-Testing is a vital part of package development because it ensures that your code does what you think it does. So far your code development process looks something like this:
+Testing is a vital part of package development because it ensures that your code does what you think it does. Testing adds an additional step to your development workflow. So far your workflow looks like this:
 
 1. Write a function.
-1. Load it with `devtools::load_all()` or Cmd + Shift + L.
+1. Load it with Cmd + Shift + L or `devtools::load_all()`.
 1. Experiment with it in the console to see if it works.
 1. Rinse and repeat.
 
-You are testing you code to see if it works, but you're doing it in a very informal way. The problem with this informal approach is that when you come back to this code in 3 months time to add a new feature, you've forgotten some of the informal tests you ran the first time. That makes it very easy to break code that used to work. 
+You _are_ testing your code, but you're doing it informally. The problem with this approach is that when you come back to this code in 3 months time to add a new feature, you've forgotten some of the informal tests you ran the first time. That makes it very easy to break code that used to work. 
 
-I started automating my tests because I discovered I was spending too much time recreating bugs that I had previously fixed. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those test so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that we don't test our code, it's that we don't have a way to make it easy to re-run tests, let alone to do so automatically.
+I started automating my tests because I discovered I was spending too much time recreating bugs that I had previously fixed. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those tests so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that you don't test your code, it's that you don't automate the tests.
 
 The goal of this chapter is to help you graduate from informal tests at the command line to formal automated tests using the testthat package. Turning your casual interactive tests into reproducible scripts requires a little more work up front, but it pays off in four ways:
 
@@ -58,17 +58,37 @@ This will:
 
 1.  Create a `tests/testthat` directory.
 
-1.  Creates a file `tests/testthat.R` that is used to ensure that your
-    tests are automatically run by `R CMD check`.
+1.  Add necessary dependencies to `DESCRIPTION` (i.e., it adds testthat to 
+    the `Suggests` field).
 
-1.  Add the necessary dependencies to `DESCRIPTION` (i.e. it adds testthat to 
-    `Suggests` field).
+1.  Creates a file `tests/testthat.R` that ensures your tests are automatically 
+    run by `R CMD check`.
 
 Once you're set up the workflow is simple:
 
-1.  Modify the tests.
+1.  Modify your code or tests.
 
-2.  Run `devtools::test()` or Press Cmd + Shift + T to run the tests.
+2.  Test your package with Cmd + Shift + T or `devtools::test()`.
+
+3.  Repeat until all tests pass.
+
+The testing output looks like this:
+
+    Expectation : ...........
+    rv : ...
+    Variance : ....123.45.
+
+Each line represents a file of tests. Each `.` represents a passing test. Each number represents a failing test. The numbers index into a list of failures that provides more details:
+
+    1. Failure(@test-variance.R#22): Variance correct for discrete uniform rvs -----
+    VAR(dunif(0, 10)) not equal to var_dunif(0, 10)
+    Mean relative difference: 3
+    
+    2. Failure(@test-variance.R#23): Variance correct for discrete uniform rvs -----
+    VAR(dunif(0, 100)) not equal to var_dunif(0, 100)
+    Mean relative difference: 3.882353
+
+Each failure gives a description of the test (e.g., "Variance correct for discrete uniform rvs"), a location (e.g., "\@test-variance.R#22"), and the reason for the failure (e.g., "VAR(dunif(0, 10)) not equal to var_dunif(0, 10)"). The goal is to get all the tests passing.
 
 ## Test structure
 
