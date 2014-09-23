@@ -46,6 +46,8 @@ The goal of this chapter is to help you graduate from informal tests at the comm
   task: often my simpler solution is only simpler because I've forgotten an 
   important use case!
 
+If you're familiar with unit testing in other languages, note that there are some fundamental differences with testthat because R is, at heart, a functional programming language, not an object oriented programming language.  Additionally because R's main OO systems (S3 and S4) are based on generic functions (i.e. methods belong to functions not classes), testing approach built fundamentally around objects and methods don't make much sense.
+
 ## Test workflow {#test-workflow}
 
 To set up your package to use testthat, run:
@@ -251,6 +253,40 @@ Each test is run in its own environment so it is self-contained. The exceptions 
 
 When you use these actions in tests, you'll need to clean up after yourself. Many other testing packages have set-up and teardown methods that are run automatically before and after each test. These are not so important with testthat because you can create objects outside of the tests and rely on R's copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.
 
+### What to test
+
+> Whenever you are tempted to type something into a print statement or a 
+> debugger expression, write it as a test instead.
+> --- Martin Fowler
+
+There is a fine balance to writing tests. Each test that you write makes your code less likely to change in advertently; but it also can make it harder to change your code on purpose. Focus on testing the external interface to your functions - if you test the internal interface, then it's harder to change the implementation in the future because as well as modifying the code, you'll also need to update all the tests.
+
+Generally, avoid testing simple code that you're confident will work. Instead focus your time on code that you're not sure about, is fragile, or has complicated interdependencies. That said, I often find I make the most mistakes when I falsely assume that the problem is simple and doesn't need any tests.
+
+Always write a test when you discover a bug.
+
+DRY principle - strive to test each behaviour in one and only one test. Then if that behaviour later changes you only need to update a single test.
+
+You may find it helpful to adopt the test first philosphy. There you always start by writing the tests, and then write the code that implements them. This reflects an important way of solving problems: when setting out to solve a problem, you should always first establish how to tell if your solution is correct: "How do you know if you've solved the problem?".
+
+### Skipping a test
+
+Sometimes it's impossible to perform a test - maybe you need an internet connection and it's not present, or there's a missing file. The more systems that you test your code on, the more likely that you won't be able to run all of your tests. Instead of giving a failure, sometimes you just want to skip the test. To do that, you can use the `skip()` function - it will print an `S` in the output, but it won't throw an error.
+
+```{r, eval = FALSE}
+check_api <- function() {
+  if (not_working()) {
+    skip("API not available")
+  }
+}
+
+test_that("foo api returns bar when given baz", {
+  check_api()
+  ...
+})
+```
+
+
 ### Refactoring common behaviour
 
 The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.  There's a lot of duplication in these tests, so we might want to extract common behaviour into a new function.
@@ -342,38 +378,29 @@ test_that("floor_date works for different units", {
 })
 ```
 
-### Skipping a test
+## Files
 
-Sometimes it's impossible to perform a test.
-
-## Contexts
-
-Contexts group tests together into blocks that test related functionality, and are established with the code `context("My context")`. Normally there is one context per file, but you can have more if you want, or you can use the same context in multiple files.
-
-The following code shows the context that tests the operation of the `stringr::str_length()`. The tests are very simple. They cover two situations where `nchar()` from base R gives surprising results.
-
-
-## Confirmatory programming
-
-Confirmatory programming happens when you know what you need to do and what the results of your changes will be (new feature X appears or known bug Y disappears); you just need to figure out the way to do it. Confirmatory programming is also known as [test driven development][tdd] (TDD), a development style that grew out of [extreme programming](extreme-programming). The basic idea is that, before you implement any new feature or fix a known bug, you should:
-
-1. Write an automated test and run `test()` to make sure the test fails (so you know
-   you've captured the bug correctly).
-
-2. Modify code to fix the bug or implement the new feature.
-
-3. Run `test(pkg)` to reload the package and re-run the tests.
-
-4. Repeat 2--3 until all tests pass.
-
-5. Update documentation comments, run `document()`, and update `NEWS`.
-
-For this paradigm, you might also want to use `testthat::auto_test()`, which will watch your tests and code and will automatically rerun your tests when either changes. This allows you to skip step three: you just modify your code and watch to see if the tests pass or fail.
+The highest-level structure of tests is the file. Each file should contain a single `context()` call that provides a brief description of the file contents. The like the files in the `R/` directory, you are free organise your tests any way that you like. Again, the two extremes are clearly bad (all tests in one file, one file per test), but you need to figure out what in the middle works for you. A good starting place is to have one file of tests per complicated functions.
 
 ## CRAN notes
 
-* Tests need to run relatively quickly. Place `skip_on_cran()` at the beginning
-  of long-running tests that shouldn't be run on CRAN.
+CRAN will run your tests all CRAN platforms: Windows, Mac, Linux and Solaris. There are a few things to bear in mind:
+
+* Tests need to run relatively quickly - aim for under a minute. Place 
+  `skip_on_cran()` at the beginning of long-running tests that shouldn't be run 
+  on CRAN - they'll still be run locally, but not on CRAN.
+
+* Note that tests are always run in the English langauge (`LANGUAGE=EN`) and
+  with C sort order (`LC_COLLATE=C`). This minimises spurious differences
+  between platforms.
+
+* Be careful about testing things that are likely to be different on CRAN 
+  machines. It's risky to test how long something takes (because CRAN machines
+  are often heavily loaded) or parallel code (because CRAN runs multiple package
+  tests in parallel so multiple cores are not always available). Numerical 
+  precision can vary across platforms - and is often less precise on 
+  32-bit versions of R. Generally, use `expect_equal()` and not 
+  `expect_identical()`.
 
 [tdd]:http://en.wikipedia.org/wiki/Test-driven_development
 [extreme-programming]:http://en.wikipedia.org/wiki/Extreme_programming
