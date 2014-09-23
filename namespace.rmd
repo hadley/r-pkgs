@@ -8,7 +8,7 @@ output: bookdown::html_chapter
 
 The package `NAMESPACE` is one of the most confusing parts of building a package. Roxygen2 aims to make it as easy as possible to build a package that is a well-behaved member of the R ecosystem. This is a little frustrating at first, but soon becomes second-nature.
 
-As the name suggest, namespaces provide "spaces" for "names", providing a context for evaluating which object is found when you look for it.  When developing code, they allow you to specify which package to look for a function when there are multiple packages it could come from, and when developing packages they ensure that your functions always call functions in the same place.
+As the name suggest, namespaces provide "spaces" for "names", providing a context for evaluating which object is found when you look for it. When writing code, they allow you to specify which package to look for a function when there are multiple packages it could come from, and when developing packages they ensure that your functions always call functions in the same place.
 
 Namespaces make it possible for packages to refer to specific functions in other packages, not the functions that you have defined in the global workspace.
 
@@ -18,7 +18,7 @@ For example, take the simple `nrow()` function:
 nrow
 ```
 
-What happens if we override `dim()` with our own definition --- does `nrow()` break?
+It's defined in terms of `dim()`, so what happens if we override `dim()` with our own definition --- does `nrow()` break?
 
 ```{r}
 dim <- function(x) c(1, 1)
@@ -28,11 +28,24 @@ nrow(mtcars)
 
 Suprisingly, it does not! That's because when `nrow()` looks for an object called `dim()`, it finds the function in the base package, not our function.
 
-Namespaces also provide an extension to the standard way of looking up the value of an object: instead of just typing `objectname`, you type `package::objectname`.  
+Namespaces also provide an extension to the standard way of looking up the value of an object: instead of just typing `objectname`, you type `package::objectname`.  For example, both `plyr` and `Hmisc` provide a `summarise()` function. If you load `plyr`, then `Hmisc`, `summarise` will refer to the HMisc implementation; if you load the packages in the opposite order, then `summarise` will refer to the plyr implementation. This is obviously confusing, so instead, you can be explicit and refer to either `Hmisc::summarise` or `plyr::summarise` - then it doesn't matter in which order the packages are loaded.
 
 Namespaces also control the functions and methods that your package makes available for use by others. Namespaces make it easier to come up with your own function names without worrying about what names other packages have used. A namespace means you can use any name you like for internal functions, and when there is a conflict with an exported function, there is a standard disambiguation procedure.
 
-The easiest way to use namespaces is with roxygen2, because it keeps the namespace definitions next to the function that it concerns. The translation between roxygen2 tags and `NAMESPACE` directives is usually straightforward: the tag becomes a function name and its space-separated arguments become comma separated arguments to the function.  For example `@import plyr` becomes `import(plyr)` and `@importFrom plyr ddply` becomes `importFrom(plyr, ddply)`.  The chief exception is `@export` which will automatically figure out the function name to export. 
+The easiest way to use namespaces is with roxygen2, because it keeps the namespace definitions next to the function that it concerns. The translation between roxygen2 tags and `NAMESPACE` directives is usually straightforward: the tag becomes a function name and its space-separated arguments become comma separated arguments to the function.  For example `@import plyr` becomes `import(plyr)` and `@importFrom plyr ddply` becomes `importFrom(plyr, ddply)`.  The chief exception is `@export` which will automatically figure out the function name to export. Only unique directives are saved to the `NAMESPACE` file, so you can repeat them as needed to maintain a close link between the functions where they are needed and the namespace file.
+
+## Workflow
+
+The workflow is very similar to creating `man/` files:
+
+1. Add roxygen comments to your `.R` files.
+
+1. Run `devtools::document()` (or press Cmd + Shift + D in RStudio) to 
+   convert roxygen comments to `.Rd` files.
+
+1. Look at `NAMESPACE` and run tests.
+
+1. Rinse and repeat until the correct functions are exported.
 
 ## Exports
 
@@ -42,10 +55,12 @@ Use the following guidelines to decide what to export:
 
 * Functions: export functions that you want to make available. Exported
   functions must be documented, and you must be cautious when changing their
-  interface.
+  interface. Note that all functions used in examples must be exported.
 
 * Datasets: all datasets are publicly available. They exist outside of the
   package namespace and should not be exported.
+
+### S3 
 
 * S3 classes: if you want others to be able to create instances of the class
   `@export` the constructor function.
@@ -53,13 +68,43 @@ Use the following guidelines to decide what to export:
 * S3 generics: the generic is a function so `@export` if you want it to
   be usable outside the package
 
-* S3 methods: every S3 method _must_ be exported, even if the generic is not.
-  Otherwise the S3 method table will not be generated correctly and internal
-  generics will not find the correct method.
+* S3 methods: I recommend that you export every S3 method, even if the
+  generic is not exported. Strictly speaking, you don't need to export methods
+  for non-exported generics, but exporting every S3 method is a simpler rule
+  and makes it less likely that you introduce hard to pin-down bugs. 
+  You can use `devtools::missing_s3()` to identify list all S3 methods 
+  that you've forgotten to export.
 
-* S4 classes: if you want others to be able to extend your class, `@export` it.
-  If you want others to create instances of your class, but not extend it,
-  `@export` the constructor function, but not the class.
+Things are a little more complicated if you want to define a method for a generic that you didn't create. If the method is in a required package (i.e., it's listed in Depends or Imports in the DESCRIPTION), then you need to import the generic into your package (see below). If the method is in a suggested package, you need to register S3 methods at run-time, when the other package is loaded.
+
+From htmltools:
+
+```{r}
+# COPYRIGHT RStudio, GPL >= 2
+registerMethods <- function(methods) {
+  lapply(methods, function(method) {
+    pkg <- method[[1]]
+    generic <- method[[2]]
+    class <- method[[3]]
+    func <- get(paste(generic, class, sep="."))
+    if (pkg %in% loadedNamespaces()) {
+      registerS3method(generic, class, func, envir = asNamespace(pkg))
+    }
+    setHook(
+      packageEvent(pkg, "onLoad"),
+      function(...) {
+        registerS3method(generic, class, func, envir = asNamespace(pkg))
+      }
+    )
+  })
+}
+```
+
+### S4 & RC
+
+  * S4 classes: if you want others to be able to extend your class, `@export` it.
+    If you want others to create instances of your class, but not extend it,
+    `@export` the constructor function, but not the class.
 
     ```{r, eval = FALSE}
     # Can extend and create
@@ -87,35 +132,62 @@ Use the following guidelines to decide what to export:
   will not cause problems and prevents you from forgetting to export an
   important method.
 
-* RC classes: the same principles apply as for S4 classes. `@export`
-  will only export the class.
-
-### S4 {#namespace-s4}
-
-To have S4 work consistently you need two things:
-
-* `Depends: methods` in `DESCRIPTION`
-* `imports(methods)` in `NAMESPACE`, typically generated with the 
-  roxygen `#' @imports methods` placed somewhere in your package (it doesn't
-  matter where, but if you have package level docs, that's the best place).
-  
-This unusual combination of depends and imports is necessary because of an oddity of the methods package: it is loaded and attached when you run R interactively, but is not attached when you run R with `Rscript`.
+* RC classes: the same principles apply as for S4 classes. Note that due
+  to the way that RC is implemented, it's typically impossible for your
+  classes to be extended outside of your package.
 
 ## Imports {#imports}
 
-The `NAMESPACE` also controls which functions from other packages are made available to your package. Only unique directives are saved to the `NAMESPACE` file, so you can repeat them as needed to maintain a close link between the functions where they are needed and the namespace file.
+The `NAMESPACE` also controls which functions from other packages are made available to your package. 
+
+### Functions
 
 If you are using just a few functions from another package, the recommended option is to note the package name in the `Imports:` field of the `DESCRIPTION` file and call the function(s) explicitly using `::`, e.g., `pkg::fun()`.  Alternatively, though no longer recommended due to its poorer readability, use `@importFrom`, e.g., `@importFrom pgk fun`, and call the function(s) without `::`.
 
 If you are using many functions from another package, use `@import package` to import them all and make available without using `::`.
 
-If you want to add a new method to an S3 generic, import it with `@importFrom pkg generic`.
+### S3
 
-If you are using S4 you may also need:
+If you want to a method to an S3 defined in another package, import it with `@importFrom pkg generic`.
 
-* `@importClassesFrom package classa classb ...` to import selected S4 classes.
+You don't need to do anything to access S3 methods defined in another package.
 
-* `@importMethodsFrom package methoda methodb ...` to import methods for selected S4 generics.
+### S4 {#namespace-s4}
+
+* To use classes defined in another package: 
+  `@importClassesFrom package ClassA ClassB ...`. Place this next to the 
+  class that inherit from the imported classes, or the methods that implement
+  a generic for the imported classes.
+
+* To use methods defined in another package: 
+  `@importMethodsFrom package GenericA GenericB ...`. Place these next to the
+  methods that use the imported generics.
+
+You also need to make sure that the functions in the `methods` package are available to your code:
+
+  * Pre R 3.2.0: `Depends: methods` in `DESCRIPTION`.  \
+    Post R 3.2.0: `Imports: methods` in `DESCRIPTION`.
+  
+  * Since you'll being using a lot of functions from `methods`, 
+    you'll probably also want to import the complete package with:
+    
+    ```{r}
+    #' @imports methods
+    NULL
+    ```
+    
+    Or you might just wanted import the most commonly used functions:
+    
+    ```{r}
+    #' @importFrom methods setClass setGeneric setMethod setRefClass
+    NULL
+    ```
+  
+    It doesn't matter where these import definitions go, but if you have
+    package level docs, that's a natural place to put them.
+
+
+### Compiled code
 
 To import compiled code from another package, use `@useDynLib`
 
@@ -126,30 +198,3 @@ To import compiled code from another package, use `@useDynLib`
 * Any `@useDynLib` specification containing a comma, e.g.
   `@useDynLib mypackage, .registration = TRUE` will be inserted as is
   into the the `NAMESPACE`, e.g. `useDynLib(mypackage, .registration = TRUE)`
-
-# S3 
-
-One complexity arises when you want to register S3 methods for a generic that's defined in a suggested package. You can't use `S3method()` because the generic is not available at package load time. Instead, you can use the following code to set up hooks that load automatically.
-
-From htmltools:
-
-```{r}
-# COPYRIGHT RStudio, GPL >= 2
-registerMethods <- function(methods) {
-  lapply(methods, function(method) {
-    pkg <- method[[1]]
-    generic <- method[[2]]
-    class <- method[[3]]
-    func <- get(paste(generic, class, sep="."))
-    if (pkg %in% loadedNamespaces()) {
-      registerS3method(generic, class, func, envir = asNamespace(pkg))
-    }
-    setHook(
-      packageEvent(pkg, "onLoad"),
-      function(...) {
-        registerS3method(generic, class, func, envir = asNamespace(pkg))
-      }
-    )
-  })
-}
-```
