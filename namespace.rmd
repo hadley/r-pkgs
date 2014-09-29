@@ -8,18 +8,34 @@ output: bookdown::html_chapter
 
 The package `NAMESPACE` is one of the more confusing parts of building a package. It's a fairly advanced topic, and by-and-large, not that important if you are only developing packages for yourself. However, understanding namespaces is vital if you plan to submit your package to CRAN because they ensure that your package plays well with others.
 
-As the name suggests, namespaces provide "spaces" for "names", providing a context for evaluating which object is found when you look for it. Namespaces solve two problems:
+## Motivation
 
-  * A developer, they ensure that your functions always call the functions you
-    expect, regardless of what other packages the user has loaded. For example, 
-    take the simple `nrow()` function:
+As the name suggests, namespaces provide "spaces" for "names". They provide a context for looking up the value of an object associated with a name. 
+
+Namespaces solve two problems:
+
+  * What do you do if you've loaded two packages that have a function
+    with same name? Namespaces provide an extension to the standard way of 
+    looking up the value of an object: instead of just typing `objectname`, 
+    you can type `package::objectname`.  
+   
+    For example, both plyr and Hmisc provide a `summarize()` function. If 
+    you load plyr, then Hmisc, `summarize()` will refer to the HMisc 
+    version; if you load the packages in the opposite order, then 
+    `summarize()` will refer to the plyr version. This is obviously 
+    confusing, so instead, you can be explicit and refer to 
+    `Hmisc::summarise()` or `plyr::summarise()`. Then it doesn't matter the
+    order in which the packages were loaded.
+
+  * What happens if someone changes the definition of a function that you
+    rely on? For example, take the simple `nrow()` function in base R:
   
     ```{r}
     nrow
     ```
     
-    It's defined in terms of `dim()`, so what happens if we override `dim()` 
-    with our own definition --- does `nrow()` break?
+    It's defined in terms of `dim()`, sohat happens if we override `dim()` 
+    with our own definition? Does `nrow()` break?
     
     ```{r}
     dim <- function(x) c(1, 1)
@@ -28,27 +44,27 @@ As the name suggests, namespaces provide "spaces" for "names", providing a conte
     ```
 
     Suprisingly, it does not! That's because when `nrow()` looks for an object 
-    called `dim()`, it uses the namespace, looking up `dim()` in the base 
-    environment, not our `dim()` in the global environment.
+    called `dim()`, it uses the the package namespace, so it finds `dim()` in 
+    the base environment, not the `dim()` we created in the global environment.
 
-  * As a user, when multiple packages provide functions with the same name, they 
-    allow you to be explicit about which to you use. Namespaces provide an 
-    extension to the standard way of looking up the value of an object: instead 
-    of just typing `objectname`, you type `package::objectname`.  
-   
-    For example, both `plyr` and `Hmisc` provide a `summarise()` function. If 
-    you load `plyr`, then `Hmisc`, `summarise` will refer to the HMisc 
-    implementation; if you load the packages in the opposite order, then 
-    `summarise` will refer to the plyr implementation. This is obviously 
-    confusing, so instead, you can be explicit and refer to either 
-    `Hmisc::summarise` or `plyr::summarise` - then it doesn't matter in which 
-    order the packages are loaded.
+There are two sides to the name space:
 
-Namespaces also reduce the chance of conflicting function names between packages because they split functions into internal and external (or exported). Internal functions are available only within your package - they can't (easily) be used from another package. That means you can name them whatever you want without worry. Then you only export a minimal set of functions to define the external interface to your package; the fewer functions you export, the smaller the chance of a conflict with another package. (Conflicts aren't the end of the world, but they're best avoided where possible because it makes the lives of your users easier.)
+* The __imports__, which defines how a function in a package finds a function
+  in anotherp ackage. 
+  
+* The __exports__, which split functions in packages into two groups: interal 
+  and external (or exported). Internal functions are available only within your 
+  package - they can't (easily) be used from another package. You export a 
+  minimal set of functions to be used by others; the fewer functions you export, 
+  the smaller the chance of a conflict with another package. (Conflicts aren't 
+  the end of the world, but they're best avoided where possible because it
+  makes the lives of your users easier.)
+
+The two sides of the package namespace are both described by the `NAMESPACE`. You'll learn what this file looks like in the next section, and then you'll learn more details about exporting and importing functions (and other objects).
 
 ## The `NAMESPACE`
 
-The following block shows an exercept of the `NAMSPACE` file from the testthat package.
+The following code is an exercept of the `NAMSPACE` file from the testthat package.
 
     # Generated by roxygen2 (4.0.2): do not edit by hand
     S3method(as.character,expectation)
@@ -68,7 +84,7 @@ You can see that the `NAMESPACE` file looks a bit like R code. Each line contain
 In total, there are ten namespace directives. Five describe exports: 
 
 * `export()`: export functions (including S3 and S4 generics).
-* `exportPattern()`: export all functions that match a pattern
+* `exportPattern()`: export all functions that match a pattern.
 * `exportClasses()`, `exportMethods()`: export S4 classes and methods.
 * `S3method()`: export S3 methods.
 
@@ -81,7 +97,7 @@ And five describe imports:
 * `useDynLib()`: import a function from C. This is described in more
    detail in [compiled code](#src).
 
-I don't recommend writing these directives by hand. Instead, generate the `NAMESPACE` file (which defines the namespace), with roxygen2. There are three main advantages to using roxygen2:
+I don't recommend writing these directives by hand. Instead, in this chapter you'll learn how to generate the `NAMESPACE` file with roxygen2. There are three main advantages to using roxygen2:
 
 * Namespace definitions live next to functions, so when you read the code
   it's easy to see what's exported.
@@ -91,7 +107,9 @@ I don't recommend writing these directives by hand. Instead, generate the `NAMES
   right directive for functions, S3 methods, S4 methods and S4 classes.
 
 * Roxygen2 makes a tidy `NAMESPACE` for you - it only unique directives (so you 
-  can repeat them as needed), and it sorts them alphabetically.
+  can repeat them as needed), and it sorts them alphabetically. This is 
+  particularly important if you're using git, as it minimises inconsequential
+  differences.
 
 ## Search path
 
