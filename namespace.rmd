@@ -6,7 +6,9 @@ output: bookdown::html_chapter
 
 # Namespace {#namespace}
 
-The package `NAMESPACE` is one of the more confusing parts of building a package. It's a fairly advanced topic, and by-and-large, not that important if you are only developing packages for yourself. However, understanding namespaces is vital if you plan to submit your package to CRAN because they ensure that your package plays well with others.
+The package namespace (as recorded in the `NAMESPACE` file) is one of the more confusing parts of building a package. It's a fairly advanced topic, and by-and-large, not that important if you are only developing packages for yourself. However, understanding namespaces is vital if you plan to submit your package to CRAN because they ensure that your package plays well with others.
+
+When you first start using namespaces, you'll wonder why you bother. It seems like a lot of extra work for little gain. However, a high quality namespace helps encapsulate your package: it ensures that other packages don't interfere with your code, and your code doesn't interfere with other packages. A namespace is an important part of making sure that your package is self-contained, and works regardless of the environment in which it's run.
 
 ## Motivation
 
@@ -113,7 +115,71 @@ I don't recommend writing these directives by hand. Instead, in this chapter you
 
 ## Search path
 
-* Imports vs. depends
+To understand why namespaces are important, you need a solid understand of the search path. To call a function, R first has to find it. R first looks in the global environment, and if it doesn't find it there, it looks on the search path, the list of all the packages you have __attached__. You can see that list by running `search()`. For example, here's the search path for the code in this book:
+
+```{r}
+search()
+```
+
+When you use `::` it avoids this standard search path. Notice the difference between these two ways of running `expect_that()` from the testthat package. If we use `library()`, testthat is attached to the search path. If we use `::`, testthat it's not.
+
+```{r, error = TRUE}
+old <- search()
+testthat::expect_equal(1, 1)
+setdiff(search(), old)
+expect_true(TRUE)
+    
+library(testthat)
+expect_equal(1, 1)
+setdiff(search(), old)
+expect_true(TRUE)
+```
+
+The it's important to note the distinction between __loading__ a package and attaching it to the search path:
+
+* Loading a package loads the code, data and any DLLs, it registers S3 and S4 
+  methods, and runs the `.onLoad()` function, if present. After loading the 
+  package is in memory, and available, but you can't access its components 
+  without using `::`. Packages are loaded by `::`, or you can load it 
+  explicitly with `requireNamespace()` or `loadNamespace()`.
+  
+* Attaching a package makes it available on the search path. You can attach
+  a package with `library()` or `require()`, which alway first load the 
+  package. Attaching a package adds it to the search path and runs the 
+  `.onAttach()` function, if present.
+
+There are four functions for loading and attaching packages. They differ based on whether they load or attach, and what happens if the package is not found: does it throw an error, or does it return FALSE?
+
+|        | Returns `FALSE`                           | Throws error         |
+|--------|-------------------------------------------|----------------------|
+| Load   | `requireNamespace("x", quietly = TRUE)`   | `loadNamespace("x")` |
+| Attach | `require(x, quietly = TRUE)`              | `library(x)`         |
+
+Two of these are common:
+
+* Use `library(x)` in data analysis scripts. You want to find out if the package
+  is not installed, and you want to attach to package to save typing. Never
+  use it in a package.
+  
+* Use `requireNamespace(x, quietly = FALSE)` inside a package, if you want
+  do something different (e.g. throw an error) depending on whether or not
+  a suggested package is installed.
+  
+Never use you ever need to use `require()` (`requireNamespace()` is almost always better), or `loadNamespace()` (which is only needed for internal R code). You should never use `require()` or `library()` in a package: instead list that package in the `Depends`.
+
+Every package should strive to minimise global impacts. A package should be self-contained, using as little as possible from the global environment and modifying the global environment as little as possible. In `DESCRIPTION`, use `Imports` instead of `Depends` to avoid modifying the search path unless it is absolutely necessary. There are a few exceptions:
+
+* The DBI package provides a common set of S4 classes and generics to be used
+  by any package that talks to a database. A new database backend for DBI 
+  doesn't actually implement any functions, it just creates new classes and
+  provides methods. So if DBI is not attached, the backend is useless. That
+  means packges that implement backends should have DBI in `Depends` and not
+  in `Imports`.
+  
+* Your package is designed to be used in conjunction with another package. For
+  example, the [analogue](https://github.com/gavinsimpson/analogue) package 
+  builds on top of [vegan](https://github.com/vegandevs/vegan). It's not useful
+  without vegan, so it has vegan in `Depends` instead of `Imports`
 
 ## Workflow
 
