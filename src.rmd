@@ -6,21 +6,25 @@ output: bookdown::html_chapter
 
 # Compiled code {#src}
 
-* Makefiles beyond the scope of this book. 
-
 * Bundling external libraries beyond the scope of this book (but I wish it 
   wasn't).
 
-* Assumes that you know how to use C or C++ already. If you don't, see the 
-  "Advanced R book" (online, amazon).
+* Assumes that you know how to use C or C++ already. If you don't, see 
+  [Advanced R](http://adv-r.had.co.nz).
+
+Can mix C and C++, and C and Fortran. Cannot have both C++ and Fortran code.
 
 ## C++
 
 Easiest way to access compiled language from R is to use C++.
 
+```{r}
+use_rcpp()
+```
+
 ## C
 
-Sometimes needed if you're wrapping old code, or you really need to eke out performance by avoiding C++ wrappers (this is rare). Mostly important for understand older packages.
+Sometimes needed if you're wrapping old code, or you really need to eke out performance by avoiding C++ wrappers (this is rare). Mostly important for understanding older packages.
 
 *   `.c` files in `src/`, need:
 
@@ -32,7 +36,7 @@ Sometimes needed if you're wrapping old code, or you really need to eke out perf
 *  Need wrapper functions like this:
 
     ```{r, eval = FALSE}
-    #' @useDynLib qstack car
+    #' @useDynLib packagename car
     car_ <- function(x) .Call(car, x)
     ```
 
@@ -41,6 +45,8 @@ Speed considerations: <http://cran.r-project.org/doc/manuals/R-exts.html#Speed-c
 * Slowest: use `.Call("car")`
 * Faster: use `.Call(car)`
 * Fastest: don't write wrapper function
+
+Registration doesn't seem to be worth the trouble.
 
 This makes microseconds of difference, so normally not important. Only matters if you have tight loop calling millions of times - and you can normally move that loop into C.
 
@@ -54,15 +60,11 @@ If you use `useDynLib`, you also need to add a `.onUnload()` function that clean
 
 ## Fortran
 
-Fortran 77 subroutines are directly callable via `.Fortran()`, though as with `.C()`, this is inefficient.  The best way to use
-Fortran code with R is to write a C wrapper callable by the `.Call()` interface (as described above).  This of course 
-requires that the Fortran code can be called by C.  For portability, this generally means either using a non-module
-subroutine, or using the Fortran 2003 iso_c_binding module and providing an appropriate interface.  
-For more information about Fortran interfaces and mixing C and Fortran, see *Modern Fortran Explained*, by Metcalf, Reid, and Cohen.
+Fortran 77 subroutines are directly callable via `.Fortran()`, though as with `.C()`, this is inefficient.  The best way to use Fortran code with R is to write a C wrapper callable by the `.Call()` interface (as described above).  This of course requires that the Fortran code can be called by C.  For portability, this generally means either using a non-module subroutine, or using the Fortran 2003 `iso_c_binding` module and providing an appropriate interface. For more information about Fortran interfaces and mixing C and Fortran, see *Modern Fortran Explained*, by Metcalf, Reid, and Cohen.
 
 ## Java
 
-See rJava.  Unlike C and C++ wrappers, must always copy. This usually makes it unacceptably slow when working with larger data (which much of the time is why you're using an other language).
+See rJava.  Unlike C and C++ wrappers, must always copy. This usually makes it slow when working with larger data (which much of the time is why you're using an other language).
 
 ## Dynamically loading dll
 
@@ -92,3 +94,19 @@ This ensures that the DLL is unloaded if the package is unloaded.
 If you're including code that someone else has written, you need to...
 
 e.g. http://cran.rstudio.com/web/packages/optparse/COPYRIGHTS
+
+## Makefiles
+
+Makefiles beyond the scope of this book, but see <http://kbroman.org/minimal_make/> to get started with a reproducible research example.
+
+Avoid in R packages. Instead use a Makevars to set options. Sourced in before the standard R makefile.
+
+> The most common use of a Makevars file is to set additional preprocessor options (for example include paths) for C/C++ files via PKG_CPPFLAGS, and additional compiler flags by setting PKG_CFLAGS, PKG_CXXFLAGS, PKG_FFLAGS or PKG_FCFLAGS, for C, C++, FORTRAN or Fortran 9x respectively"
+
+> N.B.: Include paths are preprocessor options, not compiler options, and must be set in PKG_CPPFLAGS as otherwise platform-specific paths (e.g. ‘-I/usr/local/include’) will take precedence.
+
+## CRAN issues
+
+Solaris.
+
+> Package authors should make all reasonable efforts to provide cross-platform portable code. Packages will not normally be accepted that do not run on at least two of the major R platforms. Cases for Windows-only packages will be considered, but CRAN may not be the most appropriate place to host them.
