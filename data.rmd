@@ -23,7 +23,7 @@ There are four ways to include data in your package, depending on what you want 
 
 Each possible location is described in more detail below.
 
-## `data/`
+## Exported data {#data-data}
 
 The most common location for package data is (surprise!) `data/`. Each file in this directory should be a `.rda` file created by `save()` containing a single object (with the same name as the file). (There are other ways to store data, but this is the best - it takes up the least space and is the fastest to load.) The easiest way to adhere to these rules is to use `devtools`::use_data()`:
 
@@ -89,7 +89,7 @@ There are two additional tags that are important for documenting datasets:
 
 Never `@export` a data set.
 
-## `R/sysdata.rda`
+## Internal data {#data-sysdata}
 
 Sometimes functions need pre-computed data tables. If you put these in `data/` they'll also be available to package users, which is not appropriate. Instead, you can save them in `R/sysdata.rda`. For example, two coloured related packages, [munsell](https://github.com/cwickham/munsell) and [dichromat](http://cran.r-project.org/web/packages/dichromat/index.html), use `R/sysdata.rda` to store large tables of colour data.
 
@@ -104,7 +104,7 @@ Again, it's a good idea to make the code used to generate this file reproducible
 
 Objects in `R/sysdata.rda` are not exported (and shouldn't be), so don't need to be documented. They're only available inside your package.
 
-## `inst/`
+## Raw data {#data-extdata}
 
 If you want to show examples of loading/parsing raw data, put the original files in `inst/extdata`. When the package is installed, all files in `inst/` are moved into the top-level directory (so they can't have names like `R/` or `DESCRIPTION`). To refer to files in `inst/extdata` (whether installed or not), use `system.file()`:
 
@@ -118,7 +118,7 @@ Beware: if the file does not exist, `system.file()` does not return an error - i
 system.file("include", "Rcp.h", package = "Rcpp")
 ```
 
-## `vignettes/`
+## Vignette data {#data-vignettes}
 
 If you need data for a vignette, it's fine to just include it in the vignettes directory. Refer to it with a relative path. For example, if you're vignette is `vignette/my-vignette.Rmd` and your data is `vignette/my-data.csv`, then in `my-vignette.Rmd` you'd do `read.csv("my-data.csv")`. (You'll quickly discovered if you did this incorrectly because the vignette will fail to knit.)
 
@@ -130,7 +130,7 @@ devtools::use_vignette_extra("vignettes/mtcars.csv")
 
 ## CRAN notes {#data-cran}
 
-Generally, package data should be smaller than a megabyte - if it's larger you'll need to argue for an exemption. This is usually easier to do if the data is its own package, and it won't be updated frequently. You should also make sure that the data has been optimally compressed:
+Generally, package data should be smaller than a megabyte - if it's larger you'll need to argue for an exemption. This is usually easier to do if the data is its own package, and it won't be updated frequently. You should also make sure that the data has been optimally compressed:  
 
 1. Run `tools::checkRdaFiles()` to determine the best compression for each file.
 
