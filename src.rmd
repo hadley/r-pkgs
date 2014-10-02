@@ -6,63 +6,148 @@ output: bookdown::html_chapter
 
 # Compiled code {#src}
 
-* Bundling external libraries beyond the scope of this book (but I wish it 
-  wasn't).
+It's often useful to include compiled code in an R package. Compiled code, whether it's C, C++ or Fortran, is a powerful complement to R code. R code is high-level and expressive, but that expressivity comes at a cost: speed. Low-level languages like C and C++ often require more typing to solve a problem, they can be multiple orders of magnitude faster than R. 
 
-* Assumes that you know how to use C or C++ already. If you don't, see 
-  [Advanced R](http://adv-r.had.co.nz).
+Teaching you how to write C and C++ code is beyond the scope of the book. If you don't already know a compiled language, I'd recommmend learing C++ and the Rcpp package. The Rcpp package makes it incredibly easy to connect C++ to R, and RStudio has a lot of built in tools to facilitate the process. If you'd like to learn how to write Rcpp code, I'd recommend starting with ["High performance functions with Rcpp"](http://adv-r.had.co.nz/Rcpp.html) a freely available book chapter from [Advanced R](http://amzn.com/1466586966?tag=devtools-20). Once you've done that, check out the [Rcpp book](http://www.rcpp.org/book) and the other resources listed in [learning more](http://adv-r.had.co.nz/Rcpp.html#rcpp-more).
 
-Can mix C and C++, and C and Fortran. Cannot have both C++ and Fortran code.
+The rest of this chapter will assume you know how to write some C or C++ code. If you don't, feel free to skip this chapter; come back to it later when you need to solve a performance problem.
 
 ## C++
 
-Easiest way to access compiled language from R is to use C++.
+Easiest way to access compiled language from R is to use C++. To get started, run:
 
-```{r}
-use_rcpp()
+```{r, eval = FALSE}
+devtools::use_rcpp()
 ```
+
+This will:
+
+* Create a `src/` directory where you'll put your `.cpp` files.
+
+* Adds `Rcpp` to the `LinkingTo` and `Imports` fields in the `DESCRIPTION`.
+
+* Set up a `.gitignore` file to make sure you don't accidentally check in
+  any compiled files (if you're using [git](#git)).
+
+* Tells you about two roxygen tags you need to add to your package:
+
+    ```{r}
+    #' @useDynLib your-package-name
+    #' @importFrom Rcpp sourceCpp
+    ```
+
+### Workflow
+
+Once you've done this, the basic workflow is simple:
+
+1. Create a new C++ file:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/new-cpp.png", dpi = 220)
+    ```
+
+1. Press Cmd + Shift + L (or Cmd + Shift + B).
+
+1. Explore the code in the console.
+
+1. Edit the file and repeat the previous steps.
+
+If you have any compile errors, they will appear in a special pane at the top-left.
 
 ## C
 
-Sometimes needed if you're wrapping old code, or you really need to eke out performance by avoiding C++ wrappers (this is rare). Mostly important for understanding older packages.
+If you're writing new compiled code, it's almost always better to use Rcpp. There are three reasons to understand R's C API:
 
-*   `.c` files in `src/`, need:
+* You're working with a package written before Rcpp that uses the C API.
+* You're binding to another C library.
+* You want to eke out every last drop of performance.
 
-    ```c
-    #include <R.h>
-    #include <Rdefines.h>
-    ```
+There are two sides to accessing a C function in R. First you write the C function. It goes in `.c` file in `src/`. Every C file that interfaces with R must contain two header files:
 
-*  Need wrapper functions like this:
+```c
+#include <R.h>
+#include <Rdefines.h>
+```
 
-    ```{r, eval = FALSE}
-    #' @useDynLib packagename car
-    car_ <- function(x) .Call(car, x)
-    ```
+These allow you to access R's C API. Unfortunately this API is not terribly well documented anywhere. I'd recommend starting with [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that you'll need to read [R extensions](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html) and a lot of [R's source code](https://github.com/wch/r-source).
 
-Speed considerations: <http://cran.r-project.org/doc/manuals/R-exts.html#Speed-considerations>
+The absolute minimum that you need to know is that C functions that talk to R code must use the `SEXP` for both inputs and outputs. At the heart of every C function is a set of conversions between R objects and C objects. For example to convert length one vectors back and forth between C scalars, you use the following functions:
 
-* Slowest: use `.Call("car")`
-* Faster: use `.Call(car)`
-* Fastest: don't write wrapper function
+R type      | C type      | R -> C            |  C -> R 
+------------|-------------|-------------------|-------------------
+integer     | int         | `asInteger(x)`    | `ScalarInteger(x)`
+numeric     | double      | `asReal(x)`       | `ScalarReal(x)`
+logical     | int         | `asLogical(x)`    | `ScalarLogical(x)`
+chararacter | const char* | `CHAR(asChar(x))` | `mkString(x)`
 
-Registration doesn't seem to be worth the trouble.
+A simple C function to add two numbers together would look like this:
 
-This makes microseconds of difference, so normally not important. Only matters if you have tight loop calling millions of times - and you can normally move that loop into C.
+```c
+#include <R.h>
+#include <Rdefines.h>
 
-If you use `useDynLib`, you also need to add a `.onUnload()` function that cleans up after yourself.
-
-```{r}
-.onUnload <- function (libpath) {
-  library.dynam.unload("qstack", libpath)
+SEXP add_(SEXP x_, SEXP y_) {
+  double x = asReal(x_);
+  double y = asReal(y_);
+  
+  double sum = x + y;
+  
+  return ScalarReal(sum);
 }
 ```
 
-## Fortran
+(Working with vectors is considerably more complicated.)
+
+As well as this C function, you also need an R wrapper:
+
+```{r}
+#' @useDynLib mypackage add_
+add <- function(x, y) .Call(add_, x, y)
+```
+
+The `@useDynLib` directive is important - it creates a line in the NAMESPACE that looks like
+
+```
+useDynLib(mypackage, add_)
+```
+
+This will create an object called `add_` in the package environment. This object represents a pointer to the C function in memory.
+
+```{r, eval = FALSE}
+add
+#> $name
+#> [1] "add_"
+#> 
+#> $address
+#> <pointer: 0x107be3f40>
+#> $package
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "NativeSymbolInfo"
+```
+
+`.Call()` takes pointer to a C function and calls it. It does not checking of the arguments (either number of type), so you'll either have to do that checking in your wrapper function or in your C function, or live with R crashing any time you accidentally supply the wrong type of argument.
+
+R also provides tools for C function "registration". But it doesn't seem to be worth bothering - it's a lot double, adds duplication to your code and if anything, is a little slower.
+
+Whenever you use C or C++ code in your package, you should be a good citizen and clean up after yourself if your package is unloaded. This basically means that you should have a `.onUnload()` function that unloads the DLL that `useDynLib` dynmically loaded for you.
+
+```{r}
+.onUnload <- function (libpath) {
+  library.dynam.unload("mypackage", libpath)
+}
+```
+
+## Other languages
+
+### Fortran
 
 Fortran 77 subroutines are directly callable via `.Fortran()`, though as with `.C()`, this is inefficient.  The best way to use Fortran code with R is to write a C wrapper callable by the `.Call()` interface (as described above).  This of course requires that the Fortran code can be called by C.  For portability, this generally means either using a non-module subroutine, or using the Fortran 2003 `iso_c_binding` module and providing an appropriate interface. For more information about Fortran interfaces and mixing C and Fortran, see *Modern Fortran Explained*, by Metcalf, Reid, and Cohen.
 
-## Java
+Note that in one package you can mingle C and C++, and C and Fortran, but not C++ and Fortran.
+
+### Java
 
 See rJava.  Unlike C and C++ wrappers, must always copy. This usually makes it slow when working with larger data (which much of the time is why you're using an other language).
 
