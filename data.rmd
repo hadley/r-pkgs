@@ -8,7 +8,7 @@ output: bookdown::html_chapter
 
 It's often useful to include data in a package. If you're releasing the package to a broad audience, an interesting dataset is useful for building compelling examples. Or you might be interested primarily in the data, and a package is a good way to distribute data and documentation together (as long as your audience is R users)
 
-There are four ways to include data in your package, depending on what you want to do with it and who should be able to use it:
+There are three ways to include data in your package, depending on what you want to do with it and who should be able to use it:
 
 * If you want to store parsed data, and make it available to the user, put it
   in `data/`. This is the best place to put example datasets.
@@ -19,20 +19,18 @@ There are four ways to include data in your package, depending on what you want 
 
 * If you want to store raw data, put it in `inst/extdata`.
 
-* If the data is only used by a vignette, it in the `vignettes/`.
-
 Each possible location is described in more detail below.
 
 ## Exported data {#data-data}
 
-The most common location for package data is (surprise!) `data/`. Each file in this directory should be a `.rda` file created by `save()` containing a single object (with the same name as the file). The easiest way to adhere to these rules is to use `devtools`::use_data()`:
+The most common location for package data is (surprise!) `data/`. Each file in this directory should be a `.rdata` file created by `save()` containing a single object (with the same name as the file). The easiest way to adhere to these rules is to use `devtools`::use_data()`:
 
 ```{r, eval = FALSE}
 x <- sample(1000)
 devtools::use_data(x, mtcars)
 ```
 
-It is possible to use other types of file, but I don't recommend it because `.rda` files are fast, small and explicit. Other options are described in `data()`.
+It is possible to use other types of file, but I don't recommend it because `.rdata` files are fast, small and explicit. Other options are described in `data()`.
 
 If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded. This means that they don't occupy any memory until you use them. The following example shows the memory usage before and after loading the nycflights13 package. The memory usage doesn't change until you inspect the flights dataset stored inside the package. 
 
@@ -120,15 +118,15 @@ Beware: if the file does not exist, `system.file()` does not return an error - i
 system.file("include", "Rcp.h", package = "Rcpp")
 ```
 
-## Vignette data {#data-vignettes}
+## Other data
 
-If you need data for a vignette, it's fine to just include it in the vignettes directory. Refer to it with a relative path. For example, if you're vignette is `vignette/my-vignette.Rmd` and your data is `vignette/my-data.csv`, then in `my-vignette.Rmd` you'd do `read.csv("my-data.csv")`. (You'll quickly discovered if you did this incorrectly because the vignette will fail to knit.)
-
-The data will be included in the package bundle, but not the installed package. This makes it difficult to re-run the code in the vignette. You can force R to include the data file in the installed package by including the path in `vignettes/.install_extras`. Like `.Rbuildignore` this file uses Perl regular expressions, so it's best to use a helper function:
-
-```{r, eval = FALSE}
-devtools::use_vignette_extra("vignettes/mtcars.csv")
-```
+* Data for tests: it's ok to put small files directly in your tests directory.
+  But remember unit tests are for testing correctness, not performance, so keep
+  the size small.
+  
+* Data for vignettes. Data should either go in `data/` if you want to show
+  how to work with an already loaded dataset, or in `inst/extdata` if you want
+  to show how to load raw data.
 
 ## CRAN notes {#data-cran}
 
