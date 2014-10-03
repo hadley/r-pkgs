@@ -173,11 +173,11 @@ Other tags are situational: they vary based on the type of object that you're do
 
 ## Documenting functions {#man-functions}
 
-Functions are the most commonly documented objects. As well as the introduction block, most functions have three tags: `@param`, `@examples` and `@return`.
+Functions are the most commonly documented object. As well as the introduction block, most functions have three tags: `@param`, `@examples` and `@return`.
 
-*   `@param name description` describes the inputs to the function.
+*   `@param name description` describes the function's inputs or parameters.
     The description should provide a succinct summary of the type of the
-    parameter (e.g., a string, a numeric vector), and if not obvious from
+    parameter (e.g., string, numeric vector) and, if not obvious from
     the name, what the parameter does. 
     
     The description should start with a capital letter and end with a full stop. 
@@ -214,8 +214,8 @@ Functions are the most commonly documented objects. As well as the introduction 
 
 *   `@return description` describes the output from the function. This is
     not always necessary, but is a good idea if your function returns different 
-    types of outputs depending on the input, or you're returning an S3, S4 or RC
-    object.
+    types of output depending on the input, or if you're returning an S3, S4 or 
+    RC object.
 
 We could use these new tags to improve our documentation of `sum()` as follows:
 
@@ -262,13 +262,13 @@ See [documenting data](#documenting-data).
 
 ## Documenting classes, generics and methods
 
-It's relatively straightforward to document classes, generics and methods, but the details vary based on the object system you're using. The following sections give the details for the S3, S4 and RC object systems.
+It's relatively straightforward to document classes, generics and methods. The details vary based on the object system you're using. The following sections give the details for the S3, S4 and RC object systems.
 
 ### S3 {#man-s3}
 
 S3 __generics__ are regular functions, so document them as such. S3 __classes__ have no formal definition, so document the constructor function. It is your choice whether or not to document S3 __methods__. You don't need to document methods for simple generics like `print()`. But if your method is more complicated, you should document it so people know what the parameters do. In base R, you can see examples of documentation for more complex methods like `predict.lm()`, `predict.glm()`, and `anova.glm()`.
 
-Older versions of roxygen required explicit `@method generic class` tags for all S3 methods. From 3.0.0 this is no longer needed as and roxygen2 will figure it out automatically. If you are upgrading, make sure to remove these old tags. Automatic method detection will only fail if the generic and class are ambiguous. For example is `all.equal.data.frame()` the `equal.data.frame` method for `all`, or the `data.frame` method for `all.equal`?. If this happens, you can disambiguate with (e.g.) `@method all.equal data.frame`.
+Older versions of roxygen required explicit `@method generic class` tags for all S3 methods. From 3.0.0 onward, this is no longer needed as roxygen2 will figure it out automatically. If you are upgrading, make sure to remove these old tags. Automatic method detection will only fail if the generic and class are ambiguous. For example is `all.equal.data.frame()` the `equal.data.frame` method for `all`, or the `data.frame` method for `all.equal`?. If this happens, you can disambiguate with (e.g.) `@method all.equal data.frame`.
 
 ### S4 {#man-s4}
 
@@ -283,7 +283,7 @@ Account <- setClass("Account",
 )
 ```
 
-S4 __generics__ are also functions, so document them as such. S4 __methods__ are a little more complicated. Unlike S3, all S4 methods must be documented. You document them like a regular function, but you probably don't want each method to have it's own documentation page. Instead, put the method documentation in one of three places:
+S4 __generics__ are also functions, so document them as such. S4 __methods__ are a little more complicated, however. Unlike S3, all S4 methods must be documented. You document them like a regular function, but you probably don't want each method to have its own documentation page. Instead, put the method documentation in one of three places:
 
 * In the class. Most appropriate if the corresponding generic uses single
   dispatch and you created the class.
@@ -291,19 +291,19 @@ S4 __generics__ are also functions, so document them as such. S4 __methods__ are
 * In the generic. Most appropriate if the generic uses multiple dispatch
   and you have written both the generic and the method.
 
-* In its own file. Most appropriate if the method is complex, or the
+* In its own file. Most appropriate if the method is complex, or if
   you've written the method but not the class or generic.
 
 Use either `@rdname` or `@describeIn` to control where method documentation goes. See [documenting multiple objects in one file](#multiple-man) for details.
 
-Another consideration of S4 is that S4 code often needs to run in a certain order. For example, to define the method `setMethod("foo", c("bar", "baz"), ...)` you must already have created the `foo` generic and the two classes. By default, R code is loaded in alphabetical order, but that doesn't always work. Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
+Another consideration is that S4 code often needs to run in a certain order. For example, to define the method `setMethod("foo", c("bar", "baz"), ...)` you must already have created the `foo` generic and the two classes. By default, R code is loaded in alphabetical order, but that won't always work for your situation. Rather than relying on alphabetic ordering, roxygen2 provides an explicit way of saying that one file must be loaded before another: `@include`. The `@include` tag gives a space separated list of file names that should be loaded before the current file:
 
 ```{r, eval = FALSE}
 #' @include class-a.R
 setClass("B", contains = "A")
 ```
 
-Often, it's easiest to put this at the top of the file. To make it clear that this tag applies to the whole file, not specific object, document `NULL`.
+Often, it's easiest to put this at the top of the file. To make it clear that this tag applies to the whole file, and not a specific object, document `NULL`.
 
 ```{r, eval = FALSE}
 #' @include foo.R bar.R baz.R
@@ -312,13 +312,13 @@ NULL
 setMethod("foo", c("bar", "baz"), ...)
 ```
 
-Roxygen uses the `@include` tags to compute a topological sort which ensures that dependencies are loaded before they're needed. It then sets the `Collate` field in the `DESCRIPTION`, which overrides the default alphabetic ordering. An simpler alternative to `@include` is to define all classes and methods in `aaa-classes.R` and `aaa-generics.R`, and rely on these coming first in alphabetical order. The main disadvantage is that you can organise components into files as naturally as you might want.
+Roxygen uses the `@include` tags to compute a topological sort which ensures that dependencies are loaded before they're needed. It then sets the `Collate` field in `DESCRIPTION`, which overrides the default alphabetic ordering. A simpler alternative to `@include` is to define all classes and methods in `aaa-classes.R` and `aaa-generics.R`, and rely on these coming first since they're in alphabetical order. The main disadvantage is that you can't organise components into files as naturally as you might want.
 
-Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` tags to correctly document S4 objects, but as of version 3.0.0 it generates correct metadata automatically. If you're upgrading from a old version of roxygen2, make sure to remove these tags.
+Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` tags to correctly document S4 objects. But as of version 3.0.0, roxyen2 generates correct metadata automatically. If you're upgrading from an old version, make sure to remove these tags.
 
 ### RC {#man-rc}
 
-Reference classes are different to S3 and S4 because methods are associated with classes, not generics. RC also has a special convention for documenting methods: the docstring. This makes documenting RC simpler than S4 because you only need one roxygen block per class. 
+Reference classes are different to S3 and S4 because methods are associated with classes, not generics. RC also has a special convention for documenting methods: the docstring. This makes documenting RC simpler than S4 because you only need one roxygen block per class.
 
 ```{r}
 #' A Reference Class to represent a bank account.
