@@ -6,15 +6,15 @@ output: bookdown::html_chapter
 
 # Compiled code {#src}
 
-It's often useful to include compiled code in an R package. Compiled code, whether it's C, C++ or Fortran, is a powerful complement to R code. R code is high-level and expressive, but that expressivity comes at a cost: speed. Low-level languages like C and C++ often require more typing to solve a problem, they can be multiple orders of magnitude faster than R. 
+It's often useful to include compiled code in an R package. Compiled code, usually  C or C++, is a powerful complement to R code. R code is high-level and expressive, but that expressivity comes at a cost: speed. Low-level compiled languages like C and C++ often require more typing to solve a problem, they can be orders of magnitude faster than R. 
 
-Teaching you how to write C and C++ code is beyond the scope of the book. If you don't already know a compiled language, I'd recommmend learing C++ and the Rcpp package. The Rcpp package makes it incredibly easy to connect C++ to R, and RStudio has a lot of built in tools to facilitate the process. If you'd like to learn how to write Rcpp code, I'd recommend starting with ["High performance functions with Rcpp"](http://adv-r.had.co.nz/Rcpp.html) a freely available book chapter from [Advanced R](http://amzn.com/1466586966?tag=devtools-20). Once you've done that, check out the [Rcpp book](http://www.rcpp.org/book) and the other resources listed in [learning more](http://adv-r.had.co.nz/Rcpp.html#rcpp-more).
+Unfortunately, this book is going to teach you how to write fast C or C++ code. The rest of this chapter will assume you know how to write some C or C++ code. If you don't, feel free to skip this chapter; come back to it later when you need to solve a performance problem.
 
-The rest of this chapter will assume you know how to write some C or C++ code. If you don't, feel free to skip this chapter; come back to it later when you need to solve a performance problem.
+To learn a compiled language, I recommmend starting with C++ and the Rcpp package. Rcpp makes it very easy to connect C++ to R, and RStudio has a lot of built in tools to facilitate the process. Start by reading my ["High performance functions with Rcpp"](http://adv-r.had.co.nz/Rcpp.html) a freely available book chapter from [Advanced R](http://amzn.com/1466586966?tag=devtools-20): it gives a gentle introduction to C++ by translating familiar R code. Next, check out the [Rcpp book](http://www.rcpp.org/book) and the other resources listed in [learning more](http://adv-r.had.co.nz/Rcpp.html#rcpp-more).
 
 ## C++
 
-The easiesy way to use a high-performance langauge from R is to use C++ with Rcpp. To get started, run:
+To get started with Rcpp, run:
 
 ```{r, eval = FALSE}
 devtools::use_rcpp()
@@ -22,14 +22,14 @@ devtools::use_rcpp()
 
 This will:
 
-* Create a `src/` directory where you'll put your `.cpp` files.
+* Create a `src/` directory to hold your `.cpp` files.
 
 * Add `Rcpp` to the `LinkingTo` and `Imports` fields in the `DESCRIPTION`.
 
 * Set up a `.gitignore` file to make sure you don't accidentally check in
-  any compiled files (if you're using [git](#git)).
+  any compiled files (learn more about this in [git](#git)).
 
-* Tells you about two roxygen tags you need to add to your package:
+* Tells you the two roxygen tags you need to add to your package:
 
     ```{r}
     #' @useDynLib your-package-name
@@ -68,30 +68,46 @@ Once you've done this, the basic workflow is simple:
 
 1.  Run `timesTwo(10)` to confirm that the code works.
 
-If you have any compile errors, they will appear in a special pane at the top-left.
+When you re-load or re-build the package, devtools runs `Rcpp::compileAttributes()`. This inspects your `.cpp` functions looking for __attributes__ of the form `// [[Rcpp::export]]`. When it finds one, it generates the code necessary to make the function available in R, and creates `src/RcppExports.cpp` and `R/RcppExports.R`. You should never modify these files by hand.
+
+You can use roxygen2 documentation inside C++ files: 
+
+```cpp
+//' Multiply a number by two
+//' 
+//' @param x A single integer.
+//' @export
+// [[Rcpp::export]]
+int timesTwo(int x) {
+   return x * 2;
+}
+```
+
+The two exports mean slightly different things:
+
+* `[[Rcpp::export]]`: make the C++ function available to R.
+* `@export`: make the R wrapper function available outside your package.
 
 ## C
 
-If you're writing new compiled code, it's almost always better to use Rcpp. There are three reasons to understand R's C API:
+If you're writing new compiled code, it's almost always better to use C++. It's more consistent, better documented, and has better tooling. There are three reasons you might need to use C:
 
-* You're working with a package written before Rcpp that uses the C API.
-* You're binding to another C library.
+* You're working with an older package that uses the C API.
+* You're binding to an existing C library.
 * You want to eke out every last drop of performance.
 
-There are two ways to call C functions from R: `.C()` and `.Call()`. `.C()` is an older interface and should not be used for new code. You'll need to read about it yourself in [Interface .C and .Fortran functions](http://cran.r-project.org/doc/manuals/R-exts.html#Interface-functions-_002eC-and-_002eFortran) in R-exts. All modern code should use `.Call()`.
-
-There are two sides to accessing a C function in R. First you write the C function. It goes in `.c` file in `src/`. Every C file that interfaces with R must contain two header files:
+There are two sides to calling a C function from R. First you write the C function. It goes in `.c` file in `src/`. Every C file that works with R data structures must include two header files:
 
 ```c
 #include <R.h>
 #include <Rinternals.h>
 ```
 
-(Including `<Rinternals.h>` seems like bad form, but it doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you the "external" internal API which both safe and necessary for the majority of C code. Yes, this is confusing.)
+(Including `<Rinternals.h>` seems like bad form, but it doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you the "external" internal API which is both safe and necessary. Yes, this is confusing.)
 
-These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that you'll need to read [R extensions](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html) and a lot of [R's source code](https://github.com/wch/r-source) to figure out what the different functions do.
+These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read [R extensions](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html). Since many of the API functions are not documented, you'll often also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
 
-The absolute minimum that you need to know is that C functions that talk to R code must use the `SEXP` type for both inputs and outputs. At the heart of every C function is a set of conversions between R objects and C objects. For example to convert length one vectors back and forth between C scalars, you use the following functions:
+The absolute minimum that you need to know is that C functions which interface to R code must use the `SEXP` type for both inputs and outputs. `SEXP`, short for s-expression, is the C type used to represent every object in R. Every C function must start with a series of conversions from R types to C types, and often ends by converting C types back to R types. (The R API is designed so that these conversions often don't require allocating new memory.) For example to convert length one R vectors back and forth between C scalars, you use the following functions:
 
 R type      | C type      | R -> C            |  C -> R 
 ------------|-------------|-------------------|-------------------
@@ -100,7 +116,7 @@ numeric     | double      | `asReal(x)`       | `ScalarReal(x)`
 logical     | int         | `asLogical(x)`    | `ScalarLogical(x)`
 chararacter | const char* | `CHAR(asChar(x))` | `mkString(x)`
 
-A simple C function to add two numbers together would look like this:
+We now have enough information to write a simple C function to add two numbers together:
 
 ```c
 #include <R.h>
@@ -116,22 +132,22 @@ SEXP add_(SEXP x_, SEXP y_) {
 }
 ```
 
-(Working with vectors is considerably more complicated.)
-
-As well as this C function, you also need an R wrapper:
+To access this C function from R, we need a wrapper that calls `.Call()`:
 
 ```{r}
 #' @useDynLib mypackage add_
 add <- function(x, y) .Call(add_, x, y)
 ```
 
-The `@useDynLib` directive is important - it creates a line in the NAMESPACE that looks like this:
+There are two ways to call C functions from R: `.C()` and `.Call()`. `.C()` is an older interface and should not be used for new code. You'll need to read about it yourself in [Interface .C and .Fortran functions](http://cran.r-project.org/doc/manuals/R-exts.html#Interface-functions-_002eC-and-_002eFortran) in R-exts. All modern code should use `.Call()`.
+
+Where does the first argument to `.Call()`, `add_` come from? The `@useDynLib` directive is important - it creates a line in the NAMESPACE that looks like this:
 
 ```
 useDynLib(mypackage, add_)
 ```
 
-This will create an object called `add_` in the package environment. This object represents a pointer to the C function in memory.
+This creates an object called `add_` in the package environment. `add_` is a C function pointer with a little additional metadata:
 
 ```{r, eval = FALSE}
 add
@@ -147,19 +163,11 @@ add
 #> [1] "NativeSymbolInfo"
 ```
 
-`.Call()` takes pointer to a C function and calls it. It does not checking of the arguments (either number of type), so you'll either have to do that checking in your wrapper function or in your C function, or live with R crashing any time you accidentally supply the wrong type of argument.
-
-Whenever you use C or C++ code in your package, you should be a good citizen and clean up after yourself if your package is unloaded. This basically means that you should have a `.onUnload()` function that unloads the DLL that `useDynLib` dynmically loaded for you.
-
-```{r}
-.onUnload <- function (libpath) {
-  library.dynam.unload("mypackage", libpath)
-}
-```
+`.Call()` takes pointer to a C function and calls it. It does not check the arguments (either number or type), so you need to do that in your wrapper function, in your C function, or live with R crashing any time you accidentally supply the wrong type of input.
 
 ### Function registration
 
-If you want to make your C functions available to other packages (without going through the R wrapper), you need to "register" the functions. To do this you create an array of functions to register (containing the name, a function pointer, and the number of arguments) and then call `R_registerRoutines()` in the initialisation function. For example, to register the `add_` function defined above, you include C code like:
+If you want to make your C functions available to other packages (without going through the R wrapper), you need to "register" the functions. You do this by creating an array of functions to register (containing the name, a function pointer, and the number of arguments) and then calling `R_registerRoutines()` in the initialisation function (`R_init_mypackage()`, called automatically when the "mypackage" DLL is loaded). For example, to register the `add_` function defined above, you'd write C like:
 
 ```c
 #include "add.h"
@@ -181,13 +189,44 @@ Typically this code is put in a file called `init.c`. The other arguments to `R_
 
 If you choose to use registration, you don't need a `@useDynLib` directive for each C function. Instead you can make all symbols available with a single tag: `@useDynLib mypackage, .registration = TRUE`.
 
+## Unloading code
+
+Whenever you use C or C++ code in your package, you should be a good citizen and clean up after yourself if your package is unloaded. This basically means that you should have a `.onUnload()` function that unloads the DLL that `useDynLib` dynmically loaded for you.
+
+```{r}
+.onUnload <- function (libpath) {
+  library.dynam.unload("mypackage", libpath)
+}
+```
+
 ## Makefiles
 
-Makefiles beyond the scope of this book, but see <http://kbroman.org/minimal_make/> to get started with a reproducible research example. Generally you should avoid using a custom `Makefile` in an R package. Instead use `Makevars`, which allows you to set important compiler variables:
+Makefiles are beyond the scope of this book, but if you're interesting in learning about them, start with the reproducible research motivation at <http://kbroman.org/minimal_make/>. Generally, R packages should avoid a custom `Makefile` in an R package. 
 
-* PKG_CFLAGS: C flags
-* PKG_CXXFLAGS: C++ flags
-* PKG_CPPFLAGS: Pre-processor flags (not C++ flags!), like include directories.
+Instead of a full `Makefile`, you should use `Makevars`. `Makevars` is a makefile, but it's included with the default makefile generated by R. `Makevars` allows you to take advantage of R's default behaviour, while being able to selectively set specific flags for your package:
+
+* `PKG_CFLAGS` & `PKG_CXXFLAGS`: C and C++ flags. Most commonly used to set 
+  define directives with `-D`.
+
+* `PKG_CPPFLAGS`: Pre-processor flags (not C++ flags!). Most commonly used to
+  set include directories with `-I`. Any package listed in the `LinkingTo` field
+  in the `DESCRIPTION` will be automatically included.
+
+* `PKG_LIBS`: Linker flags.
+
+`Makevars` must work across many platforms, so only use portable features:
+
+* Use LF for line breaks, and end with a trailing LF.
+
+* Do not use GNU extensions like conditional inclusions (ifeq), `${shell ...}` 
+  (use backticks instead), `${wildcard ...}`, `+=` or `:=`. 
+
+* Avoid bash extensions in expressions passed to the shell.
+
+* Only set portable flags. In particular, note that `-Wall`, `-pedantic`
+  and `-O0` are not portable.
+
+To set flags only on Windows, use `Makevars.win`. To build a `Makevars` with `configure`, use `Makevars.in`.
 
 ## Other languages
 
@@ -202,26 +241,38 @@ Makefiles beyond the scope of this book, but see <http://kbroman.org/minimal_mak
 
 ## Licensing
 
-If you package code includes code written by someone else you need to:
+If your package includes code written by someone else you must ensure that the package license is compatible with the license for the included code:
 
-* Ensure that the package license is compatible with the included code. License
-  compatibility is a complex issue, and for non-standard cases you will need
-  to consult a lawyer.
-  
-  The simplest situation is to use the same license for your code and the 
-  included code. If you don't want to use the same license, you're best sticking
+* The simplest solution is to use the same license for your code and the 
+  included code. 
+
+* If you don't want to use the same license, you're best sticking
   with common cases where the interactions are well known. For example, 
   [Various Licenses and Comments about Them](https://www.gnu.org/licenses/license-list.html)
-  describes what licenses are compatible with GPL licensed software. In this
-  case your description should contain `License: <main license> + FILE license`
-  where the `license` file describes the licenses of the individual
-  components.
+  describes what licenses are compatible with the GPL license.
+  
+  In this case your description should contain 
+  `License: <main license> + FILE license` where main license is a license valid
+  for the complete bunlde of code, and the `license` file describes the 
+  licenses of the individual components.
+
+* For non-standard cases, you'll need to consult a lawyer.
+
+In all cases, make sure you include copyright and license statements from the original code.
 
 ## CRAN issues
 
-If you're submitting a package containing compiled code, the main thing to be aware of is that you could must work on all major platforms (linux, windows and mac). It is sometimes possible to opt-out, of one platform, if you can providing a compelling reason during package submission (e.g. you're binding to OS specific functionality).
+You may not include an binary executables in your package. Instead, it must compile from source on all major platforms (linux, windows and mac). To opt-out of this requirement, you will need a compelling reason, like you're binding to functionality that's only available on one OS.
 
-The other thing to be aware of is that sometimes (depending on which CRAN maintainer handles your submission), your package may also need to work on Solaris. This is typically considerably more complicated and there are few resources available to help you.
+Compiled code should never terminate the R process within which it is running. Thus C/C++ calls to assert/abort/exit, Fortran calls to STOP and so on must be avoided. 
 
-Sometimes CRAN will require you to list all authors and copyright holders of included code in the DESCRIPTION. This rule is inconsistently applied, but if it's applied to you, it's just best to bite the bullet and make the change rather than trying to argue about it.
+The interface between CRAN's automated and manual checking can be particularly frustrating when your package contains compiled code. Requirements vary from submission to submission, based on which maintainer you get and how much free time they have. The rules are inconsistently applied, but if they happen to you, it's best to bite the bullet and make the change rather than trying to argue about it:
+
+* Sometimes you will need to list all authors and copyright holders of included 
+  code in the DESCRIPTION. 
+
+* Sometimes your package will need to work on Solaris. Fixing Solaris issues 
+  can be hard, due to the difficulty of accessing a computer running Solaris. 
+  You will be in a stronger negotiating position if the package has no problems 
+  on other platforms. 
 
