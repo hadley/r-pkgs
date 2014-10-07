@@ -12,7 +12,16 @@ Unfortunately, this book is going to teach you how to write fast C or C++ code. 
 
 To learn a compiled language, I recommmend starting with C++ and the Rcpp package. Rcpp makes it very easy to connect C++ to R, and RStudio has a lot of built in tools to facilitate the process. Start by reading my ["High performance functions with Rcpp"](http://adv-r.had.co.nz/Rcpp.html) a freely available book chapter from [Advanced R](http://amzn.com/1466586966?tag=devtools-20): it gives a gentle introduction to C++ by translating familiar R code. Next, check out the [Rcpp book](http://www.rcpp.org/book) and the other resources listed in [learning more](http://adv-r.had.co.nz/Rcpp.html#rcpp-more).
 
+I recommend using `clang` rather than `gcc` to compile C and C++ code. It gives much better error messages. You can make this the default by creating `~/.R/Makevars` which contains
+
+```
+CC=clang
+CXX=clang++
+```
+
 ## C++
+
+### Getting started
 
 To get started with Rcpp, run:
 
@@ -70,6 +79,8 @@ Once you've done this, the basic workflow is simple:
 
 When you re-load or re-build the package, devtools runs `Rcpp::compileAttributes()`. This inspects your `.cpp` functions looking for __attributes__ of the form `// [[Rcpp::export]]`. When it finds one, it generates the code necessary to make the function available in R, and creates `src/RcppExports.cpp` and `R/RcppExports.R`. You should never modify these files by hand.
 
+### Documentation
+
 You can use roxygen2 documentation inside C++ files: 
 
 ```cpp
@@ -88,6 +99,31 @@ The two exports mean slightly different things:
 * `[[Rcpp::export]]`: make the C++ function available to R.
 * `@export`: make the R wrapper function available outside your package.
 
+### Sharing with other packages
+
+### Best practices
+
+* To print output use `Rcout << ...` not `cout << ...`. This always prints to 
+  the right place, which might be a GUI console or a file (if `sink()` 
+  is active)
+
+* In long-running loops, reguarly `Rcpp::checkUserInterrupt()`. This checks 
+  for user interrupts, so a long-running process can be gracefully exited.
+
+* Read Martyn Plummer's article on [Portable C++ for R packages](http://journal.r-project.org/archive/2011-2/RJournal_2011-2_Plummer.pdf)
+
+* Whenever you use C++ code in your package, you should be a good citizen 
+  and clean up after yourself if your package is unloaded. This basically 
+  means that you should have a `.onUnload()` function that unloads the DLL 
+  that Rcpp dynmically loaded for you.
+
+    ```{r}
+    .onUnload <- function (libpath) {
+      library.dynam.unload("mypackage", libpath)
+    }
+    ```
+
+
 ## C
 
 If you're writing new compiled code, it's almost always better to use C++. It's more consistent, better documented, and has better tooling. There are three reasons you might need to use C:
@@ -95,6 +131,8 @@ If you're writing new compiled code, it's almost always better to use C++. It's 
 * You're working with an older package that uses the C API.
 * You're binding to an existing C library.
 * You want to eke out every last drop of performance.
+
+### Getting started
 
 There are two sides to calling a C function from R. First you write the C function. It goes in `.c` file in `src/`. Every C file that works with R data structures must include two header files:
 
@@ -165,7 +203,7 @@ add
 
 `.Call()` takes pointer to a C function and calls it. It does not check the arguments (either number or type), so you need to do that in your wrapper function, in your C function, or live with R crashing any time you accidentally supply the wrong type of input.
 
-### Function registration
+### Sharing with other packages
 
 If you want to make your C functions available to other packages (without going through the R wrapper), you need to "register" the functions. You do this by creating an array of functions to register (containing the name, a function pointer, and the number of arguments) and then calling `R_registerRoutines()` in the initialisation function (`R_init_mypackage()`, called automatically when the "mypackage" DLL is loaded). For example, to register the `add_` function defined above, you'd write C like:
 
@@ -189,15 +227,29 @@ Typically this code is put in a file called `init.c`. The other arguments to `R_
 
 If you choose to use registration, you don't need a `@useDynLib` directive for each C function. Instead you can make all symbols available with a single tag: `@useDynLib mypackage, .registration = TRUE`.
 
-## Unloading code
+### Best practices
 
-Whenever you use C or C++ code in your package, you should be a good citizen and clean up after yourself if your package is unloaded. This basically means that you should have a `.onUnload()` function that unloads the DLL that `useDynLib` dynmically loaded for you.
+* Avoid calls to `assert()`, `abort()` and `exit()`: these will kill the 
+  R process, not just your C/C++ code.
 
-```{r}
-.onUnload <- function (libpath) {
-  library.dynam.unload("mypackage", libpath)
-}
-```
+* To print output use `Rprintf()`, not `printf()`. This always prints to 
+  the write place, which might be a GUI console, or a file (if `sink()` 
+  is active)
+
+* In long-running loops, reguarly call `R_CheckUserInterrupt()` to allow
+  the user to interrupt C code.
+
+* Use R's macros `ISNAN` and `R_FINITE` to check for NaNs and infinite
+  values - these work on more platforms than the C99 `isnan` and `isfinite`.
+
+* Like for C++, whenever you use C code in your package, you should unload the 
+  DLL when the package is unloaded:
+
+    ```{r}
+    .onUnload <- function (libpath) {
+      library.dynam.unload("mypackage", libpath)
+    }
+    ```
 
 ## Makefiles
 
@@ -214,7 +266,7 @@ Instead of a full `Makefile`, you should use `Makevars`. `Makevars` is a makefil
 
 * `PKG_LIBS`: Linker flags.
 
-`Makevars` must work across many platforms, so only use portable features:
+`Makevars` must work across many platforms, so don't use gcc extensions. (Or just require GNU make by stating `SystemRequirements: GNU make`)
 
 * Use LF for line breaks, and end with a trailing LF.
 
@@ -262,9 +314,9 @@ In all cases, make sure you include copyright and license statements from the or
 
 ## CRAN issues
 
-You may not include an binary executables in your package. Instead, it must compile from source on all major platforms (linux, windows and mac). To opt-out of this requirement, you will need a compelling reason, like you're binding to functionality that's only available on one OS.
+You can not include any binary executables in your package. Instead, the package must build all binary artefact from source all major platforms (linux, windows and mac). To opt-out of this requirement, you will need a compelling reason, like you're binding to functionality that's only available on one OS.
 
-Compiled code should never terminate the R process within which it is running. Thus C/C++ calls to assert/abort/exit, Fortran calls to STOP and so on must be avoided. 
+R-exts has some advice on [writing portable C and C++ code](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Portable-C-and-C_002b_002b-code).
 
 The interface between CRAN's automated and manual checking can be particularly frustrating when your package contains compiled code. Requirements vary from submission to submission, based on which maintainer you get and how much free time they have. The rules are inconsistently applied, but if they happen to you, it's best to bite the bullet and make the change rather than trying to argue about it:
 
@@ -275,4 +327,5 @@ The interface between CRAN's automated and manual checking can be particularly f
   can be hard, due to the difficulty of accessing a computer running Solaris. 
   You will be in a stronger negotiating position if the package has no problems 
   on other platforms. 
+  
 
