@@ -6,24 +6,16 @@ output: bookdown::html_chapter
 
 # Compiled code {#src}
 
-It's often useful to include compiled code in an R package. Compiled code, usually  C or C++, is a powerful complement to R code. R code is high-level and expressive, but that expressivity comes at a cost: speed. Low-level compiled languages like C and C++ often require more typing to solve a problem, they can be orders of magnitude faster than R. 
+It's often useful to include compiled code in an R package. Compiled code, usually  C or C++, is a powerful complement to R code. R code is high-level and expressive, but that expressivity comes at a cost: speed. Low-level compiled languages like C and C++ often require more typing (and more thinking) to solve a problem, they can be orders of magnitude faster than R. 
 
-Unfortunately, this book is going to teach you how to write fast C or C++ code. The rest of this chapter will assume you know how to write some C or C++ code. If you don't, feel free to skip this chapter; come back to it later when you need to solve a performance problem.
-
-To learn a compiled language, I recommmend starting with C++ and the Rcpp package. Rcpp makes it very easy to connect C++ to R, and RStudio has a lot of built in tools to facilitate the process. Start by reading my ["High performance functions with Rcpp"](http://adv-r.had.co.nz/Rcpp.html) a freely available book chapter from [Advanced R](http://amzn.com/1466586966?tag=devtools-20): it gives a gentle introduction to C++ by translating familiar R code. Next, check out the [Rcpp book](http://www.rcpp.org/book) and the other resources listed in [learning more](http://adv-r.had.co.nz/Rcpp.html#rcpp-more).
-
-I recommend using `clang` rather than `gcc` to compile C and C++ code. It gives much better error messages. You can make this the default by creating `~/.R/Makevars` which contains
-
-```
-CC=clang
-CXX=clang++
-```
+Unfortunately, teaching you how to program in C or C++ is beyond the scope of the book.
+If you'd like to learn, I recommmend starting with C++ and the Rcpp package. Rcpp makes it very easy to connect C++ to R, and RStudio has many tools to facilitate the process. Start by reading my ["High performance functions with Rcpp"](http://adv-r.had.co.nz/Rcpp.html), a freely available book chapter from [Advanced R](http://amzn.com/1466586966?tag=devtools-20): it gently introduces you to C++ by translating familiar R code. Next, check out the [Rcpp book](http://www.rcpp.org/book) and the other resources listed in [learning more](http://adv-r.had.co.nz/Rcpp.html#rcpp-more).
 
 ## C++
 
 ### Getting started
 
-To get started with Rcpp, run:
+To get your package setup to use Rcpp, run:
 
 ```{r, eval = FALSE}
 devtools::use_rcpp()
@@ -43,9 +35,12 @@ This will:
     ```{r}
     #' @useDynLib your-package-name
     #' @importFrom Rcpp sourceCpp
+    NULL
     ```
 
-Once you've done this, the basic workflow is simple:
+### Workflow
+
+Once you're set up, the basic workflow is familiar:
 
 1.  Create a new C++ file:
 
@@ -73,15 +68,38 @@ Once you've done this, the basic workflow is simple:
     
     It includes a basic function and some instructions to get started.
 
-1.  Press Cmd + Shift + L (or Cmd + Shift + B).
+1.  Generate the necessary modifications to your `NAMESPACE`, by documenting
+    with Cmd + Shift + D.
 
-1.  Run `timesTwo(10)` to confirm that the code works.
+1.  Press Cmd + Shift + L to load all code (or Cmd + Shift + B to
+    build and reload).
 
-When you re-load or re-build the package, devtools runs `Rcpp::compileAttributes()`. This inspects your `.cpp` functions looking for __attributes__ of the form `// [[Rcpp::export]]`. When it finds one, it generates the code necessary to make the function available in R, and creates `src/RcppExports.cpp` and `R/RcppExports.R`. You should never modify these files by hand.
+1.  Run `timesTwo(10)` from the console to check that it works.
+
+Behind the scenes, `devtools::load_all()` and RStudio's "Build and reload" do a lot of work for you. They:
+
+* Set up your R environment to compile code and warn you if you're missing 
+  necessary pieces.
+  
+* Call `Rcpp::compileAttributes()`. This inspects your `.cpp` functions 
+  looking for __attributes__ of the form `// [[Rcpp::export]]`. When it finds 
+  one, it generates the code necessary to make the function available in R, 
+  and creates `src/RcppExports.cpp` and `R/RcppExports.R`. You should never 
+  modify these files by hand.
+  
+* Build a DLL (dynamically linked library) and make it available to R.
 
 ### Documentation
 
-You can use roxygen2 documentation inside C++ files: 
+Each C++ function that is exported to R comes with an R wrapper function. For example, the R `timesTwo()` function looks like:
+
+```R
+timesTwo <- function(x) {
+  .Call('timesTwo', PACKAGE = 'mypackage', x)
+}
+```
+
+You can use roxygen2 to document this like a regular R function, but instead of using `#'` you use `\\'` (the C++ commenting convention):
 
 ```cpp
 //' Multiply a number by two
@@ -94,28 +112,55 @@ int timesTwo(int x) {
 }
 ```
 
-The two exports mean slightly different things:
+The distinctions between the two export directives is important:
 
 * `[[Rcpp::export]]`: make the C++ function available to R.
 * `@export`: make the R wrapper function available outside your package.
 
 ### Sharing with other packages
 
+To make you C++ code callable by other packages, add:
+
+```cpp
+// [[Rcpp::interfaces(r, cpp)]]
+```
+
+Rcpp takes care of the details of generating a header file in the right place. See [Rcpp Attributes](http://dirk.eddelbuettel.com/code/rcpp/Rcpp-attributes.pdf) for more details, including how to combine hand written and automatically generated header files.
+
+### Using C++ from other packages
+
+Follow these three steps to use Rcpp C++ code from another package. For example, to use C++ code from otherPackage:
+
+1. Add `LinkingTo: otherPackage` to the `DESCRIPTION`.
+
+1. In the C++ file that uses code from otherPackage add:
+
+    ```cpp
+    // [[Rcpp::depends(otherPackage)]]
+    #include <otherPackage.h>
+    ```
+
+1. Functions from otherPackage will be included in the `otherPackage` C++
+   namespace. Use `otherPackage::foo()` to access functions.
+
 ### Best practices
 
-* To print output use `Rcout << ...` not `cout << ...`. This always prints to 
+* To print output use `Rcout << ...` (not `cout << ...`). This always prints to 
   the right place, which might be a GUI console or a file (if `sink()` 
   is active)
+  
+* Throw errors with `stop()`, not `throw()`.
 
-* In long-running loops, reguarly `Rcpp::checkUserInterrupt()`. This checks 
-  for user interrupts, so a long-running process can be gracefully exited.
+* In long-running loops, regularly run `Rcpp::checkUserInterrupt()`. This 
+  checks for user interrupts, and aborts your C++ if the user has pressed
+  Ctrl + C or Escape in R.
 
-* Read Martyn Plummer's article on [Portable C++ for R packages](http://journal.r-project.org/archive/2011-2/RJournal_2011-2_Plummer.pdf)
+* Follow Martyn Plummer's recommendations on 
+  [Portable C++ for R packages](http://journal.r-project.org/archive/2011-2/RJournal_2011-2_Plummer.pdf).
 
-* Whenever you use C++ code in your package, you should be a good citizen 
-  and clean up after yourself if your package is unloaded. This basically 
-  means that you should have a `.onUnload()` function that unloads the DLL 
-  that Rcpp dynmically loaded for you.
+* Whenever you use C++ code in your package, you need to clean up after 
+  yourself when your package is unloaded. Do this by writing a `.onUnload()` 
+  function that unloads the DLL:
 
     ```{r}
     .onUnload <- function (libpath) {
@@ -123,29 +168,36 @@ The two exports mean slightly different things:
     }
     ```
 
+* Use `clang` instead of `gcc` to compile your C++ code: it gives much 
+  better error messages. You can make `clang` the default by creating a
+  `~/.R/Makevars` that contains:
+
+    ```bash
+    CXX=clang++
+    ```
 
 ## C
 
-If you're writing new compiled code, it's almost always better to use C++. It's more consistent, better documented, and has better tooling. There are three reasons you might need to use C:
+If you're writing new compiled code, it's almost always better to use C++. It's more consistent, better documented, and has better tooling. However, there are some reasons you might choose to use C:
 
-* You're working with an older package that uses the C API.
+* You're working with an older package that already uses the C API.
 * You're binding to an existing C library.
 * You want to eke out every last drop of performance.
 
 ### Getting started
 
-There are two sides to calling a C function from R. First you write the C function. It goes in `.c` file in `src/`. Every C file that works with R data structures must include two header files:
+There are two sides to calling a C function from R. First you write the C function. It goes in a `.c` file in `src/`. Every C file that works with R data structures must include two header files:
 
 ```c
 #include <R.h>
 #include <Rinternals.h>
 ```
 
-(Including `<Rinternals.h>` seems like bad form, but it doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you the "external" internal API which is both safe and necessary. Yes, this is confusing.)
+(Including `<Rinternals.h>` seems like bad form, but it doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you the "public" internal API which is both safe and necessary. Yes, this is confusing.)
 
-These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read [R extensions](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html). Since many of the API functions are not documented, you'll often also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
+These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read [The R API](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#The-R-API) in R-exsts. Since many of the API functions are not documented, you'll often also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
 
-The absolute minimum that you need to know is that C functions which interface to R code must use the `SEXP` type for both inputs and outputs. `SEXP`, short for s-expression, is the C type used to represent every object in R. Every C function must start with a series of conversions from R types to C types, and often ends by converting C types back to R types. (The R API is designed so that these conversions often don't require allocating new memory.) For example to convert length one R vectors back and forth between C scalars, you use the following functions:
+Here's the minimum you need to know: C functions which talk to R must use the `SEXP` type for both inputs and outputs. `SEXP`, short for s-expression, is the C type used to represent every type of object in R. A C function typically starts by converting `SEXP`s to C data types, and ends by converting back to a `SEXP`. (The R API is designed so that these conversions often don't require allocating new memory.) For example, to convert length one R vectors back and forth between C scalars, you use the following functions from the R API:
 
 R type      | C type      | R -> C            |  C -> R 
 ------------|-------------|-------------------|-------------------
@@ -154,7 +206,7 @@ numeric     | double      | `asReal(x)`       | `ScalarReal(x)`
 logical     | int         | `asLogical(x)`    | `ScalarLogical(x)`
 chararacter | const char* | `CHAR(asChar(x))` | `mkString(x)`
 
-We now have enough information to write a simple C function to add two numbers together:
+We now have enough information to write a simple C function that can add two numbers together:
 
 ```c
 #include <R.h>
@@ -205,7 +257,26 @@ add
 
 ### Sharing with other packages
 
-If you want to make your C functions available to other packages (without going through the R wrapper), you need to "register" the functions. You do this by creating an array of functions to register (containing the name, a function pointer, and the number of arguments) and then calling `R_registerRoutines()` in the initialisation function (`R_init_mypackage()`, called automatically when the "mypackage" DLL is loaded). For example, to register the `add_` function defined above, you'd write C like:
+There are two components to making your C code available in other packages: the header file and function registration. 
+
+Start by creating a header file that describes the external interface to your code. It should live in `inst/includes/mypackage.h`. You'll need to add the following environment variables to your `src/Makevars` to make sure that your code can also find those headers:
+
+```{r}
+PKG_CXXFLAGS=-I../inst/include
+```
+
+The DLLs in R packages must be relocatable, because most R users get binaries from CRAN, and they are installed in many different places. To allow you to call a C function in an arbtirary location, R provides a function registration API. To register a function you call `R_RegisterCCallable()` from `R_init_mypackage()` which is called automatically when the "mypackage" DLL is loaded. Typically this code is put in a file called `init.c`. 
+
+```c
+#include "add.h"
+#include <R_ext/Rdynload.h>
+
+void R_init_mypackage(DllInfo *info) {
+  R_RegisterCCallable(info, "add_",  (DL_FUNC) &add_)
+}
+```
+
+Confusingly, there's another type of function registration. Instead of using `@useDynLib pkg fun` you can make functions available to R en masse by calling a C api and then doing `@useDynLib mypackage, .registration = TRUE`. Do so by in C creating an array of functions to register (containing the name, a function pointer, and the number of arguments) and then calling `R_registerRoutines()` in the initialisation function. For example, to register the `add_` function defined above, you'd write C like:
 
 ```c
 #include "add.h"
@@ -221,11 +292,11 @@ void R_init_mypackage(DllInfo *info) {
 }
 ```
 
-Note the use of `#include add.h`: you'll also need to make a header file that defines the external interface to your C files.
+This is only useful if useful if you're using the older `.C` interface, or the more esoteric `.Fortran` and `.External`. The other arguments to `R_registerRoutines` are used for more esoteric interfaces: `.C`, . For more details, see [Registering native extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in R-exts. 
 
-Typically this code is put in a file called `init.c`. The other arguments to `R_registerRoutines` are used for more esoteric interfaces: `.C`, `.Fortran` and `.External`. For more details, see [Registering native extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in R-exts.
+### Using C code from another package
 
-If you choose to use registration, you don't need a `@useDynLib` directive for each C function. Instead you can make all symbols available with a single tag: `@useDynLib mypackage, .registration = TRUE`.
+`R_GetCCallable`
 
 ### Best practices
 
@@ -249,6 +320,14 @@ If you choose to use registration, you don't need a `@useDynLib` directive for e
     .onUnload <- function (libpath) {
       library.dynam.unload("mypackage", libpath)
     }
+    ```
+
+* Use `clang` instead of `gcc` to compile your C code: it gives much 
+  better error messages. You can make `clang` the default by creating a
+  `~/.R/Makevars` that contains:
+
+    ```bash
+    C=clang++
     ```
 
 ## Makefiles
