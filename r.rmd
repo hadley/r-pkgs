@@ -284,6 +284,12 @@ To use a package, you must load it into memory. When you're not developing packa
 bookdown::embed_png("diagrams/loading.png")
 ```
 
+### Controlling inclusion {#rbuildignore}
+
+There are two files that give you extra control over what is included in the package bundle and in the installed package: `.Rbuildignore` and `.Rinstignore`. `.Rbuildignore` prevents files in the source package appearing in the bundled package, and `.Rinstignore` prevents files in the binary package from appearing in the installed package. `.Rinstignore` is rarely needed, but `.Rbuildignore` allows you to have additional directories in your source package that are not included in the package bundle. This is particularly useful when you generate pacakge contents (e.g. data) from other files. Those files should be included in the source package, but only the results need to be distributed. This is particularly important for CRAN packages (where the set of allowed top-level directories is fixed). 
+
+Both files have the same format. Each line gives a Perl-compatible regular expression that is matched case-insensitively against the path to each file (i.e. `dir(full.names = TRUE)` run from the package root directory) - if the regular expression matches, the file is excluded. If you wish to exclude a specific file or directory (which is the most common use case), you __MUST__ escape the regular expression. For example, to exclude a directory called notes, use `$notes^`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. `devtools::use_build_ignore("notes")` will do the escaping for you, and is the safest way of excluding a specific file or directory.
+
 ## What is a library? {#library}
 
 A library is a collection of packages. This is a bit confusing because you use the `library()` to load a package. However, the distinction between libraries and packages is important and useful. A library is just a directory containing installed packages. You can have multiple libraries on your computer and almost everyone has at least two: one for the packages that come with every R installation (like `base`, `stats`, etc), and one for packages you've installed. Normally, that second directory varies based on the version of R that you're using. That's why it seems like you "lose" all your packages when you reinstall R - they're actually still on your hard drive, but R can't find them. 
