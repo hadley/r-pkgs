@@ -4,72 +4,65 @@ title: Installed files
 output: bookdown::html_chapter
 ---
 
-In some sense `inst/` is the opposite of `.Rbuildignore` - where`.Rbuildignore` lets you remove arbitrary files and directories to the top-level, `inst/` lets you add them.
+# Installed files
 
-Never use `inst/build`, `inst/R`, `inst/data`, `inst/demo`, `inst/exec`, `inst/inst`, `inst/man`, `inst/po`, `inst/src`, `inst/tests`, `inst/tools` and `inst/vignettes`.
+When a package is installed, everything in `inst/` is into the installed directory. In some sense `inst/` is the opposite of `.Rbuildignore` - where`.Rbuildignore` lets you remove arbitrary files and directories to the top level, `inst/` lets you add them. You are free to put anything you like in `inst/` with one caution: because `inst/` is copied into the top-level directory, you should never use a subdirectory with the same name as an existing directory. This means that you should avoid `inst/build`, `inst/data`, `inst/demo`, `inst/exec`, `inst/help`, `inst/html`, `inst/inst`, `inst/libs`, `inst/Meta`, `inst/man`, `inst/po`, `inst/R`, `inst/src`, `inst/tests`, `inst/tools` and `inst/vignettes`.
 
-Use `system.file()` to access files in `inst/`.
+This chapter discusses the most common files found in `inst/`:
 
-* `inst/COPYRIGHTS`, `inst/AUTHORS`
+* `inst/AUTHOR` and `inst/COPYRIGHT`. If the copyright and authorship of a 
+  package is particularly complex, you can use plain text files 
+  `inst/COPYRIGHTS` and `inst/AUTHORS` to provide more information.
 
-* `inst/doc`: where vignettes used to live. Modern packages should never have
-  a `inst/doc`.
-  
+* `inst/CITATION`: how to cite the package, see 
+  [package citation](#inst-citation) for details.
+
+* `inst/docs`: This is an older convention for vignettes, and should be avoided 
+   in modern packages.
+
 * `inst/extdata`: additional external data for examples and vignettes. 
   See [external data](#data-extdata) for more detail.
-  
-### Other languages  
 
-* `inst/python`, `inst/perl`, `inst/tcl` etc: scripts written in other
-  programming languages. (Could also go in `exec/`). "If your package requires one of these interpreters or an extension then this should be declared in the ‘SystemRequirements’ field of its DESCRIPTION file"
-  
-* `inst/java`: "Java code is a special case: except for very small programs, .java files should be byte-compiled (to a .class file) and distributed as part of a .jar file: the conventional location for the .jar file(s) is inst/java. It is desirable (and required under an Open Source license) to make the Java source files available: this is best done in a top-level java directory in the package—the source files should not be installed."
+* `inst/java`, `inst/python` etc. See [other languages](#inst-other-langs).
 
-### Package citation
+To find a file in `inst/` in R code, use `system.file()`. For example, to find `inst/extdata/mydata.csv`, you'd call `system.file("extdata", "mydata.csv", package = "mypackage")`. Note that you omit the `inst/` directory from the path. This will work if the package is installed, or if it's been loaded with `devtools::load_all()`.
+
+## Package citation {#inst-citation}
 
 The `CITATION` file lives in the `inst` directory and is intimately connected to the `citation()` function which tells you how to cite R and R packages.  Calling `citation()` without any arguments tells you how to cite base R:
 
-    To cite R in publications use:
+```{r}
+citation()
+```
 
-      R Core Team (2012). R: A language and environment for statistical
-      computing. R Foundation for Statistical Computing, Vienna, Austria.
-      ISBN 3-900051-07-0, URL http://www.R-project.org/.
+Calling it with a package name tells you how to cite that package:
 
-    A BibTeX entry for LaTeX users is
+```{r}
+citation("lubridate")
+```
 
-      @Manual{,
-        title = {R: A Language and Environment for Statistical Computing},
-        author = {{R Core Team}},
-        organization = {R Foundation for Statistical Computing},
-        address = {Vienna, Austria},
-        year = {2012},
-        note = { {ISBN} 3-900051-07-0},
-        url = {http://www.R-project.org/},
-      }
+To customise the citation for your package, add a `inst/CITATION` that looks like this:
 
-    We have invested a lot of time and effort in creating R, please cite it
-    when using it for data analysis. See also ‘citation("pkgname")’ for
-    citing R packages.
+```{r, echo = FALSE, comment = ""}
+citation <- readLines(system.file("CITATION", package = "lubridate"))
+cat(citation, sep = "\n")
+```
 
-This is generated from a `CITATION` file that looks like this:
+You need to create `inst/CITATION`. As you can see, it's pretty simple: you only need to learn one new function, `citEntry()`. The most important arguments are:
 
-    bibentry("Manual",
-       title = "R: A Language and Environment for Statistical Computing",
-       author = person("R Core Team"),
-       organization = "R Foundation for Statistical Computing",
-       address      = "Vienna, Austria",
-       year   = version$year,
-       note   = "{ISBN} 3-900051-07-0",
-       url    = "http://www.R-project.org/",
+* `entry`: the type of citation, "Article", "Book", "PhDThesis" etc.
+
+* The standard bibliographic information like `title`, `author` (which should 
+  be a `personList()`), `year`, `journal`, `volume`, `issue`, `pages`, ...
   
-       mheader = "To cite R in publications use:",
+A complete list of arguments can be found in `?bibentry`.
 
-       mfooter = 
-         paste("We have invested a lot of time and effort in creating R,",
-          "please cite it when using it for data analysis.",
-          "See also", sQuote("citation(\"pkgname\")"),
-          "for citing R packages.", sep = " ")
-    )
+Use `citHeader()` and `citFooter()` to add additional exhortations.
 
-As you can see, it's pretty simple: you only need to learn one new function, `bibentry()`. The most important arguments, are `bibtype` (the first argument, which can "Article", "Book", "PhDThesis" and so on), and then the standard bibliographic information like `title,`, `author`, `year`, `publisher`, `journal`, `volume`, `issue`, `pages` and so on (they are all described in detail in `?bibentry`). The header (`mheader`) and footer (`mfooter`) are optional, and are useful places for additional exhortations.
+## Other languages {#inst-other-langs}
 
+Sometimes a package contains useful supplementary scripts in other programming languages. Generally, you should avoid these, because it adds an additional extra dependency, but it may be useful when wrapping substantial amounts of code from another language. For example, [gdata](http://cran.r-project.org/web/packages/gdata/index.html) provides wraps the Perl module [Spreadsheet::ParseExcel](http://search.cpan.org/~dougw/Spreadsheet-ParseExcel-0.65/) to read excel files into R.
+
+The convention is to put scripts of this nature into a subdirectory of `inst/`, `inst/python`, `inst/perl`, `inst/ruby` etc. If these scripts are essential to your package, make sure you also add the appropriate programming language to the `SystemRequirements` field in the `DESCRIPTION`. (This field is for human reading so don't worry about exactly how you specify it.)
+
+Java is a special case because you need to include both the source code (which should go in `java/` and be listed in `.Rinstignore`), and the compiled jar files (which should go in `inst/java`). Make sure to add `rJava` to `Imports`.
