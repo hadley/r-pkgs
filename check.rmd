@@ -4,42 +4,117 @@ layout: default
 output: bookdown::html_chapter
 ---
 
-## Checking
+# Automated checking {#check}
 
-If you want to submit your package to CRAN, it must pass `R CMD check` without any warnings or errors, and preferably as few notes as possible. Even if you're not planning on submitting to CRAN, running a check is still a good idea because it can detect common problems. Typically errors are severe and should be fixed, warnings are extremely important to consider, and notes are good to look into, but only need to be fixed if you're submitting to CRAN.
+R provides a number of automated checks for the quality of your code. These are known as `R CMD check`. If you're planning on submitting to CRAN, it is essential that you run `R CMD check`, but it's also useful to run even if you're not.
 
-Passing `R CMD check` is the most frustrating part of package development, and it usually takes some time the first time. Hopefully by following the tips elsewhere in this document you'll be in a good place to start – in particular, using roxygen and only exporting the minimal number of functions is likely to save a lot of work.  If you're having a lot of problems with R CMD check, somewhat counterintuitively you should try running it more often. The sooner you find out about a problem after making it, the easier it is to fix.
+`R CMD check` emits three types of message:
+
+* `ERROR`: These are definite problems and you should fix regardless of whether
+  or not you're submitting to CRAN.
+  
+* `WARNING`: These are likely problems. You must fix if you're planning to 
+  submit to CRAN, and it's a good idea to look into them even if you're not.
+  
+* `NOTE`: These are sometimes false positives, so if you're not planning on 
+  submitting to CRAN, you might not need to fix. If you are submitting to
+  CRAN you should work around them. It is possible to argue you way around
+  them, but that requires human intervention. It's almost always better to 
+  fix them so they don't appear. 
+
+`R CMD check` is frustrating the first time you run it - you'll probably discover many problems that you need to fix. The key to making `R CMD check` less frustrating is to run it more often. The sooner you find out about a problem after making it, the easier it is to fix. The limit of this approach is to run `R CMD check` every time you make a change, and in fact you'll learn how to do that with travis, an automated continuous integration tool.
+
+## Workflow
 
 To check your package, run `devtools::check()`, or in RStudio, press Cmd + Shift + E.
 
-## Check components
+I recommend using these tools instead of running `R CMD check` from the console because `devtools::check()`:
 
-As well as checking the whole package, devtools provides a couple of functions for just running specific parts:
+* Documents the package first.
 
-* `devtools::run_examples()`: It also has an optional parameter which tells 
-  it which function to start at - that way once you've discovered an error, 
-  you can rerun from just that file, not all the files that lead up to.
-  
-* `devtools::check_doc()`: documentation problems are one of the most common
-  causes of check failures. This function allows you to skip everything else
-  and focus just on documentation.
+* Checks a built package. This is the recommend check process to avoid 
+  spurious local temporary artefacts (like compilation artefacts).
 
-The checking functions work with `.Rd` files not roxygen comments, so all checking functions call `document()` first to ensure that your `.Rd` files are up-to-date.
+* Sets a consistent locale.
 
-## Common problems
+* Ensures that you're using the same version of R that you're currently running.
 
-* Sometimes `check()`ing will fail because package installation fails. You
-  can get the error messages most easily by trying to build the package
-  yourself.
-  
-* All exported objects must be documented. All paramters of functions must
-  be documented.
+* Provides arguments to make `R CMD check` run as closely as possible to 
+  CRAN.
 
-* S3 methods must have compatible method signatures to their generic. An 
-  S3 method must have all the same arguments as its generic. If the generic 
-  includes `...` you can have additional arguments. A common cause of this
-  error is defining print methods, because the `print()` generic contains
-  `...`.
+* Sets the `NOT_CRAN` environment variable which allows you to selectively
+  skip tests on CRAN.
+
+## Checks
+
+I don't recommend reading the list of checks exhaustively. Instead, if one of the checks fails, come back here for a simple explanation of what the problem is, and how you might go about fixing it. Common problems described in individual chapters. Provide comprehensive listing here with backlinks to individual chapters.
+
+The checks change with each version of R, so you may want to consult the most recent version of this chapter online: <http://r-pkgs.had.co.nz/check.html>
+
+### Check metadata
+
+The first few lines describe the checking environment. I'm running R 3.1.1 on OS X with UTF-8 charset.
+
+* __Using log directory__ ‘/Users/hadley/Documents/web/httr.Rcheck’
+* __Using R version__ 3.1.1 (2014-07-10)
+* __Using platform__: x86_64-apple-darwin13.1.0 (64-bit)
+* __Using session charset__: UTF-8
+
+Next the description is parsed and the package version is printed. Here I'm checking the version 0.5.0.9000 (you'll learn more about that weird version number in XXXX) of the httr package.
+
+* __Checking for file__ ‘httr/DESCRIPTION’
+* __This is package__ ‘httr’ __version__ ‘0.5.0.9000’
+
+### Package structure
+
+* __Checking package namespace information__.
+
+* __Checking package dependencies__.
+
+* __Checking if this is a source package__.
+
+* __Checking if there is a namespace__.
+
+* __Checking for executable files__.
+
+* __Checking for hidden files and directories__.
+
+* __Checking for portable file names__.
+
+* __Checking for sufficient/correct file permissions__.
+
+* __Checking whether package ‘httr’ can be installed__.
+
+* __Checking installed package size__. Data is not adequately compressed. See 
+  [data](#data-cran) for more details.
+
+* __Checking package directory__.
+
+* __Checking ‘build’ directory__.
+
+* __Checking DESCRIPTION meta-information__.
+
+* __Checking top-level files__.
+
+* __Checking for left-over files__.
+
+* __Checking index information__.
+
+* __Checking package subdirectories__.
+
+### R code
+
+* __Checking R files for non-ASCII characters__.
+
+* __Checking R files for syntax errors__.
+
+* __Checking dependencies in R code__.
+
+* __Checking S3 generic/method consistency__. S3 methods must have compatible 
+  method signatures to their generic. This means that the method must have the 
+  same arguments as its generic, with one exception. If the generic  includes 
+  `...` you can have additional arguments. A common cause of this error is 
+  defining print methods, because the `print()` generic contains`...`.
   
     ```{r}
     print
@@ -51,46 +126,143 @@ The checking functions work with `.Rd` files not roxygen comments, so all checki
     print.my_class <- function(x, ...) cat("Hi")
     ```
 
-* You must use `TRUE` and `FALSE` in your code and examples, not `T` and `F`
+* __Checking replacement functions__.
 
-* Data is not adequately compressed. See [data](#data-cran) for more details.
+* __Checking R code for possible problems__.
 
-* Bugs in the examples or vignettes. A common cause of problems is relying on 
-  internal functions - examples and vignettes can only use exported functions.
-  Also make sure that you've included all the needed package dependencies in 
-  the description.
+    You must use `TRUE` and `FALSE` in your code and examples, not `T` and `F`.
 
-* Occassionally you'll get an error when building the PDF manual. This is 
-  usually because the pdf is built by latex and you've forgotten to escape
-  something. Debugging this is painful - your best bet is to look up the
-  latex logs and combined tex file and work back from their to `.Rd` files 
-  and back to a roxygen comment.  You may need to enlist the help of a local
-  latex expert.
+### Package loading and unloading
 
-## Checking on Windows
+* __Checking whether the package can be loaded__.
 
-You can check packages on Windows using `build_win()`. This builds your package and submits it to the CRAN win-builder. 30-60 minutes after submission, you'll recieve and email which will point you to the check results.
+* __Checking whether the package can be loaded with stated dependencies__.
 
-This checks both 32-bit and 64-bit builds. So if you're using C code, you'll need to make sure it works for both.
+* __Checking whether the package can be unloaded cleanly__.
 
-By default `build_win()` checks with both the release and development version of R. You can override this with the version parameter.
+* __Checking whether the namespace can be loaded with stated dependencies__.
 
-## Checking dependencies
+* __Checking whether the namespace can be unloaded cleanly__.
 
+* __Checking loading without being on the library search path__.
 
+### Documentation
 
-## Continuous integration with Travis
+You can run the most common of these outside `R CMD check` with `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`. 
 
-If you use github, I recommend exploring the very useful [Travis CI](https://travis-ci.org/). Travis is a continuous integration service - that means it will run code of your choosing every time you push a commit to github. 
+* __Checking Rd files__. All exported objects must be documented. All paramters 
+  of functions must be documented.
 
-1.  Sign in to https://travis-ci.org/
+* __Checking Rd metadata__.
+
+* __Checking Rd line widths__.  Lines in RD files must be less than 90 
+  characters wide. This is unlikely to occur if you wrap your roxygen 
+  comments to 80 characters wide. For very long urls, use a link-shortening
+  service like [bit.ly](http://bit.ly).
+
+* __Checking Rd cross-references__. These typically represent typos.
+  Also recall the syntax for linking to functions in other packages: 
+  `\link[package]{function}`. Sometimes I accidentally flip `\code{}` and
+  `\link{}`: `\link{\code{function}}` will not work.
+
+* __Checking for missing documentation entries__.
+
+* __Checking for code/documentation mismatches__. This make sure that 
+  documentation matches the code. This should never fail because you're using
+  roxygen2 which automatically keeps them in sync.
+
+* __Checking Rd `\usage` sections__.
+
+* __Checking Rd contents__.
+
+* __Checking for unstated dependencies in examples__.
+
+* __Checking examples__. Every documentation example must run without errors,
+  and must not take too long. Exclude failing or slow tests with `\donttest{}`.
+  See [documenting functions](#man-functions) for more details.
+  
+    A common cause of problems is relying on internal functions - examples can 
+    only use exported functions.
+    
+    Examples are one of the last checks run, so first them can be painful if
+    you have to run `devtools::check()` each time. Instead, use 
+    `devtools::run_examples()`: it only checks the examples, and has an optional 
+    parameter which tells it which function to start at - that way once you've 
+    discovered an error, you can rerun from just that file, not all the 
+    files that lead up to.
+
+## Compiled code
+
+* __Checking foreign function calls__.
+
+* __Checking line endings in C/C++/Fortran sources/headers__.
+
+* __Checking line endings in Makefiles__.
+
+* __Checking for portable use of `$(BLAS_LIBS)` and `$(LAPACK_LIBS)`__.
+
+* __Checking compiled code__.
+
+### Tests
+
+* __Checking for unstated dependencies in tests__. Every package used by tests 
+  must be included in the dependency fields. If the package is only used in the 
+  tests (and not elsewhere in the package), list it in the `Suggests` field.
+
+* __Checking tests__.  Each file in `tests/` is run. If you've followed the 
+  instructions in [testing](#tests) you'll have at least one file: 
+  `testthat.R`. Failing here is an ERROR.
+
+### Vignettes
+
+* __Checking installed files from ‘inst/doc’__.
+
+* __Checking files in ‘vignettes’__.
+
+* __Checking for unstated dependencies in vignettes__. As with tests, every
+  package that you use in a vignette must be listed in the `DESCRIPTION`. 
+  If a package is used only for a vignette, and not elsewhere, make sure 
+  it's listed in `Suggests`.
+
+* __Checking package vignettes in ‘inst/doc’__. This checks that every source
+  vignette (i.e. `.Rmd`) has a built equivalent (i.e. `.html`) in `inst/doc`. 
+  This shouldn't fail if you've used the standard process outlined in 
+  [vignettes](#vignettes). If there is a problem, start by checking your
+  `.Rbuildignore`.
+
+* __Checking running R code from vignettes__. The R code from each vignette 
+  is run. If you want to deliberately execute errors (to show the user what 
+  failure looks like), make sure the chunk has `error = TRUE, purl = FALSE`.
+
+* __Checking re-building of vignette outputs__. Each vignette is re-knit to
+  make sure that the output corresponds to the input. Again, this shouldn't
+  fail in normal circumstances.
+  
+* __Checking PDF version of manual__. Occassionally you'll get an error when 
+  building the PDF manual. This is usually because the pdf is built by latex and 
+  you've forgotten to escape something. Debugging this is painful - your best 
+  bet is to look up the latex logs and combined tex file and work back from 
+  their to `.Rd` files then back to a roxygen comment. I consider any such
+  failure to be a bug in roxygen2, so please let me know.
+
+To run vignettes, the package first must be installed. That means R:
+
+* Installs the package without vignettes.
+* Builds all the vignettes.
+* Re-installs the package with vignettes.
+
+If you have a lot of compiled code, this can be rather slow. You may want to use `--no-build-vignettes`
+
+## Checking after every commit with Travis
+
+If you use [git and github](#git), I recommend exploring the very useful [Travis CI](https://travis-ci.org/). Travis is a continuous integration service which means it will run code of your choosing every time you push a commit to github. 
+
+1.  Run `use_travis()` to set up a basic `.travis.yml` config file. The 
+    defaults are usually adequate for simple packages.
 
 1.  Navigate to your [account](https://travis-ci.org/profile) and enable
     travis for the repo you want to test on.
-   
-1.  Run `use_travis()` to set up a basic `.travis.yml` config file. The 
-    defaults are usually adequate for simple packages.
-    
+
 1.  Commit and push to github.
 
 1.  Wait a few minutes to see the results in your email.
