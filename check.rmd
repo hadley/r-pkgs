@@ -64,23 +64,30 @@ The first few lines describe the checking environment. I'm running R 3.1.1 on OS
 
 Next the description is parsed and the package version is printed. Here I'm checking the version 0.5.0.9000 (you'll learn more about that weird version number in XXXX) of the httr package.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
 * __Checking for file__ ‘httr/DESCRIPTION’
 * __This is package__ ‘httr’ __version__ ‘0.5.0.9000’
 
 ### Package structure
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3620 -->
 * __Checking package namespace information__.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3683 -->
 * __Checking package dependencies__.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3720 -->
 * __Checking if this is a source package__.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L4433 -->
 * __Checking if there is a namespace__. You must have a `NAMESPACE` file.
   Roxygen2 will create this for you as described in [namepsaces](#namespace).
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3015 -->
 * __Checking for executable files__. Packages should not contain any executable
   files.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3103 -->
 * __Checking for hidden files and directories__. Files and directories starting
   with `.` usually represent a mistake - typically you should delete them,
   but if they do belong in the source package, use `.Rbuildignore` to make
@@ -98,12 +105,15 @@ Next the description is parsed and the package version is printed. Here I'm chec
   readable by the current user. If you have a `configure` file, it must be
   executable. Fix these problems.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3141 -->
 * __Checking whether package ‘httr’ can be installed__. `R CMD check` runs
   `R CMD install` to make sure that it's possible to install the package. If 
   this fails, you should run `devtools::install()` or RStudio's Build & Reload
   to see the error messages.
 
-* __Checking installed package size__. Packages should not be "too" big. 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
+* __Checking installed package size__. Packages should not be "too" big (<5 meg).
+  Sub directories should be less than 1 meg.
   One common problem is that you haven't adequately compressed the data; see 
   [data](#data-cran) for more details. Another common problem is large 
   vignettes; see [vignette CRAN notes](#vignette-cran) for more details.
@@ -141,6 +151,11 @@ Next the description is parsed and the package version is printed. Here I'm chec
     * Checks that directories in `inst` don't overwrite existing files.
     * Checks citation is valid and in correct location.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3561 
+tools:::.check_package_CRAN_incoming
+-->
+* __Checking CRAN incoming feasibility__.  
+
 ### R code
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1226 -->
@@ -151,15 +166,18 @@ Next the description is parsed and the package version is printed. Here I'm chec
   for more deatils. This means that it's currently not possible to write 
   packages in languages other than English.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1258 -->
 * __Checking R files for syntax errors__. Obviously your R code must be valid.
   You're unlikely to see this error if you're been regularly using 
   `devtools::load_all()`.
 
+<!--- tools:::.check_packages_used --->
 * __Checking dependencies in R code__. Any errors here indicate that forgotten
   to declare a needed package in the `DESCRIPTION`. Remember that you should
   never use `require()` or `library()` inside a package - see 
   [namespace imports](#imports) for more details on best practices.
 
+<!--- tools::checkS3methods --->
 * __Checking S3 generic/method consistency__. S3 methods must have compatible 
   method signatures to their generic. This means that the method must have the 
   same arguments as its generic, with one exception. If the generic  includes 
@@ -176,9 +194,23 @@ Next the description is parsed and the package version is printed. Here I'm chec
     print.my_class <- function(x, ...) cat("Hi")
     ```
 
+<!-- tools::checkReplaceFuns -->
 * __Checking replacement functions__. Replacement functions (e.g. functions that
   are called like `foo(x) <- value`, must have value as the last argument.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1373
+     tools:::.check_package_code_shlib
+     tools:::.check_package_code_startup_functions
+     tools:::.check_package_code_unload_functions
+     tools:::.check_package_code_tampers
+     tools:::.check_code_usage_in_package
+     tools:::.check_dotInternal
+     tools:::.check_package_code_assign_to_globalenv
+     tools:::.check_package_code_attach
+     tools:::.check_package_code_data_into_globalenv
+     tools:::.check_depdef
+     -->
+     
 * __Checking R code for possible problems__. This is a catch all for
   a wide range of problems:
 
@@ -195,61 +227,95 @@ Next the description is parsed and the package version is printed. Here I'm chec
       
     * You can't refer to internal functions in other packages with `:::`.
 
+### Data
+
+<!-- 
+https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1782 
+tools:::.check_package_datasets
+tools:::.check_package_compact_datasets
+tools:::.check_package_compact_sysdata
+-->
+* __Checking contents of 'data' directory__.  Check valid extension.
+  Check ASCII characters
+
 ### Package loading and unloading
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2209 -->
 * __Checking whether the package can be loaded__. R loads your package with
-  `requireNamespace()`. Failure here typically indicates a problem with 
-  `.onLoad()`.
+  `library()`. Failure here typically indicates a problem with 
+  `.onLoad()` or `.onAttach()`.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2234 -->
 * __Checking whether the package can be loaded with stated dependencies__.
   R loads your package inside a special library that only contains the 
   packages listed in `DESCRIPTION`. Failure here typically indicates that 
   you're missing a dependency.
 
-* __Checking whether the package can be unloaded cleanly__. Check `.onUnload()`.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2247 -->
+* __Checking whether the package can be unloaded cleanly__. Loads with 
+  `library()` and then `detach()`es. Check `.onUnload()`.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2264 -->
 * __Checking whether the namespace can be loaded with stated dependencies__.
+  Checks `loadNamespace()` works.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2279 -->
 * __Checking whether the namespace can be unloaded cleanly__.
+  Checks `loadNamespace(); unloadNamespace()` works.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2300 -->
 * __Checking loading without being on the library search path__.
+  Calls `library(x, lib.loc = ...)`. Failure here probably indicates that you are 
+  making some false assumption in `.onLoad` or `.onAttach`.
 
 ### Documentation
 
 You can run the most common of these outside `R CMD check` with `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`. 
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1527 -->
 * __Checking Rd files__. This checks that all `man/*.Rd` use the correct
   Rd syntax. If this fails for you, it indicates a bug in roxygen2. Please 
   let me know.
 
-* __Checking Rd metadata__.
+<!-- tools:::.check_Rd_metadata -->
+* __Checking Rd metadata__. Checks that names and aliases are unique.
 
+<!-- tools:::.check_Rd_line_widths -->
 * __Checking Rd line widths__.  Lines in RD files must be less than 90 
   characters wide. This is unlikely to occur if you wrap your roxygen 
   comments to 80 characters wide. For very long urls, use a link-shortening
   service like [bit.ly](http://bit.ly).
 
+<!-- tools:::.check_Rd_xrefs -->
 * __Checking Rd cross-references__. These typically represent typos.
   Also recall the syntax for linking to functions in other packages: 
   `\link[package]{function}`. Sometimes I accidentally flip `\code{}` and
   `\link{}`: `\link{\code{function}}` will not work.
 
+<!-- tools::undoc -->
 * __Checking for missing documentation entries__. All exported objects must 
   be documented. All paramters of functions must be documented.
 
+<!-- tools::codoc, tools::codocData, tools::codocClasses -->
 * __Checking for code/documentation mismatches__. This make sure that 
   documentation matches the code. This should never fail because you're using
   roxygen2 which automatically keeps them in sync.
 
-* __Checking Rd `\usage` sections__.
+<!-- tools::checkDocFiles, tools::checkDocStyle -->
+* __Checking Rd `\usage` sections__.  Checks that all arguments in funtions
+  in usage section are documented (and vice versa). Checks that S3 and S4 
+  methods use correct Rd markup
 
+<!-- tools:::.check_Rd_contents -->
 * __Checking Rd contents__.
 
+<!-- tools:::.check_packages_used_in_examples -->
 * __Checking for unstated dependencies in examples__. If you use a package 
   only for an example, make sure it's listed in the `Suggests` field. Before
   running example code that depends on it, test to see if it's available with
   `requireNamespace("pkg", quietly = TRUE)`.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2317 -->
 * __Checking examples__. Every documentation example must run without errors,
   and must not take too long. Exclude failing or slow tests with `\donttest{}`.
   See [documenting functions](#man-functions) for more details.
@@ -263,28 +329,54 @@ You can run the most common of these outside `R CMD check` with `devtools::check
     parameter which tells it which function to start at - that way once you've 
     discovered an error, you can rerun from just that file, not all the 
     files that lead up to.
+    
+    Don't open new graphics devices.
+    
+    Don't use more than two cores.
+    
+    Individual example shouldn't take more than 5s.
+    
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2925 -->
+* __Checking PDF version of manual__. Occassionally you'll get an error when 
+  building the PDF manual. This is usually because the pdf is built by latex and 
+  you've forgotten to escape something. Debugging this is painful - your best 
+  bet is to look up the latex logs and combined tex file and work back from 
+  their to `.Rd` files then back to a roxygen comment. I consider any such
+  failure to be a bug in roxygen2, so please let me know.
+
+
 
 ## Compiled code
 
+<!-- tools::checkFF -->
 * __Checking foreign function calls__. `.Call()`, `.C()`, `.Fortran()`, 
   `.External()` must always be called either with a `NativeSymbolInfo` object
   (as created with `@useDynLib`) or use the `.package` argument.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2065 -->
 * __Checking line endings in C/C++/Fortran sources/headers__. Always
-  use `\n` as a line ending.
+  use LF as a line ending.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2084 -->
 * __Checking line endings in Makefiles__. As above.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2120 -->
 * __Checking for portable use of `$(BLAS_LIBS)` and `$(LAPACK_LIBS)`__.
 
-* __Checking compiled code__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2159 
+ tools:::check_compiled_code
+ -->
+* __Checking compiled code__.  Checks that you're not using any C functions
+  that you shouldn't.
 
 ### Tests
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2514 -->
 * __Checking for unstated dependencies in tests__. Every package used by tests 
   must be included in the dependency fields. If the package is only used in the 
   tests (and not elsewhere in the package), list it in the `Suggests` field.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2526 -->
 * __Checking tests__.  Each file in `tests/` is run. If you've followed the 
   instructions in [testing](#tests) you'll have at least one file: 
   `testthat.R`. Failing here is an ERROR.
@@ -295,36 +387,45 @@ You can run the most common of these outside `R CMD check` with `devtools::check
 * __Checking ‘build’ directory__. Used to track vignette builds. I'm not
   sure how this could fail unless you've accidentally `.Rbuildignore`d a file.
 
-* __Checking installed files from ‘inst/doc’__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1846 -->
+* __Checking installed files from ‘inst/doc’__.  You shouldn't have any files here.
 
-* __Checking files in ‘vignettes’__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1941 -->
+* __Checking files in ‘vignettes’__. 
+  Haven't included files "jss.cls", "jss.bst", "Rd.sty", "Sweave.sty"
+  No leftover latex compilation files.
+  Other stuff that shouldn't occur if you're using `vignettes/`.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2008 -->
+* __Checking for sizes of PDF files under 'inst/doc'__. 
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2619 -->
 * __Checking for unstated dependencies in vignettes__. As with tests, every
   package that you use in a vignette must be listed in the `DESCRIPTION`. 
   If a package is used only for a vignette, and not elsewhere, make sure 
   it's listed in `Suggests`.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2629 -->
 * __Checking package vignettes in ‘inst/doc’__. This checks that every source
   vignette (i.e. `.Rmd`) has a built equivalent (i.e. `.html`) in `inst/doc`. 
   This shouldn't fail if you've used the standard process outlined in 
   [vignettes](#vignettes). If there is a problem, start by checking your
   `.Rbuildignore`.
+  
+  Checks makefile: case, line endings.
+  
+  Check encoding.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2763 -->
 * __Checking running R code from vignettes__. The R code from each vignette 
   is run. If you want to deliberately execute errors (to show the user what 
   failure looks like), make sure the chunk has `error = TRUE, purl = FALSE`.
 
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2856 -->
 * __Checking re-building of vignette outputs__. Each vignette is re-knit to
   make sure that the output corresponds to the input. Again, this shouldn't
   fail in normal circumstances.
   
-* __Checking PDF version of manual__. Occassionally you'll get an error when 
-  building the PDF manual. This is usually because the pdf is built by latex and 
-  you've forgotten to escape something. Debugging this is painful - your best 
-  bet is to look up the latex logs and combined tex file and work back from 
-  their to `.Rd` files then back to a roxygen comment. I consider any such
-  failure to be a bug in roxygen2, so please let me know.
-
 To run vignettes, the package first must be installed. That means R:
 
 * Installs the package without vignettes.
