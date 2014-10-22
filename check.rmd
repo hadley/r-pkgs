@@ -53,6 +53,8 @@ The checks change with each version of R, so you may want to consult the most re
 
 ### Check metadata
 
+<!--
+
 The first few lines describe the checking environment. I'm running R 3.1.1 on OS X with UTF-8 charset.
 
 * __Using log directory__ ‘/Users/hadley/Documents/web/httr.Rcheck’
@@ -73,42 +75,90 @@ Next the description is parsed and the package version is printed. Here I'm chec
 
 * __Checking if this is a source package__.
 
-* __Checking if there is a namespace__.
+* __Checking if there is a namespace__. You must have a `NAMESPACE` file.
+  Roxygen2 will create this for you as described in [namepsaces](#namespace).
 
-* __Checking for executable files__.
+* __Checking for executable files__. Packages should not contain any executable
+  files.
 
-* __Checking for hidden files and directories__.
+* __Checking for hidden files and directories__. Files and directories starting
+  with `.` usually represent a mistake - typically you should delete them,
+  but if they do belong in the source package, use `.Rbuildignore` to make
+  sure they're not in the built package. R automatically removes common source
+  code manager directories like `.git` and `.svn`.
 
-* __Checking for portable file names__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L381 -->
+* __Checking for portable file names__.  Stick to letters, numbers and 
+  underscores and dashes. Avoid non-English letters and spaces. The total length
+  of a path must be less than 100 characters. Don't use any of 
+  aux, com1-com9, con, lpt1-lpt9, nul, prn.
+  
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L541 -->
+* __Checking for sufficient/correct file permissions__. All files should be
+  readable by the current user. If you have a `configure` file, it must be
+  executable. Fix these problems.
 
-* __Checking for sufficient/correct file permissions__.
+* __Checking whether package ‘httr’ can be installed__. `R CMD check` runs
+  `R CMD install` to make sure that it's possible to install the package. If 
+  this fails, you should run `devtools::install()` or RStudio's Build & Reload
+  to see the error messages.
 
-* __Checking whether package ‘httr’ can be installed__.
-
-* __Checking installed package size__. Data is not adequately compressed. See 
-  [data](#data-cran) for more details.
+* __Checking installed package size__. Packages should not be "too" big. 
+  One common problem is that you haven't adequately compressed the data; see 
+  [data](#data-cran) for more details. Another common problem is large 
+  vignettes; see [vignette CRAN notes](#vignette-cran) for more details.
 
 * __Checking package directory__.
 
-* __Checking ‘build’ directory__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L597 -->
+* __Checking DESCRIPTION meta-information__. Checks encoding. Checks license.
+  Checks has maintainer.
 
-* __Checking DESCRIPTION meta-information__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L746 -->
+* __Checking top-level files__. Checks that only standard files and directories
+  are found at the top level of the package. Either move the directory to `inst/`
+  if it should be available in installed package, or remove from built packages 
+  with `devtools::add_build_ignore()` it it shouldn't.
 
-* __Checking top-level files__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L859 -->
+* __Checking for left-over files__. These files are likely to be included
+  in error, so you probably should just delete them. In the unlikely event that 
+  you actually needed them, use `devtools::add_build_ignore()`.
 
-* __Checking for left-over files__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L877 -->
+* __Checking index information__. Usually R automatically generates the 
+  `INDEX` file that's used to generate package help (e.g. 
+  `help(package = base)`). It is possible to generate it by hand, and this 
+  check makes sure you've listed all functions in the package.
 
-* __Checking index information__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L924 -->
+* __Checking package subdirectories__. 
 
-* __Checking package subdirectories__.
+    * Checks that you don't have empty directories
+    * Case of the directories is correct (e.g. uppercase R, lowercase everything 
+      else)
+    * Make sure you haven't accidentally include a check directory. 
+    * Checks that directories in `inst` don't overwrite existing files.
+    * Checks citation is valid and in correct location.
 
 ### R code
 
-* __Checking R files for non-ASCII characters__.
 
-* __Checking R files for syntax errors__.
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1226 -->
+* __Checking R files for non-ASCII characters__. For maximum portability (i.e.
+  so people can use your package on Windows) you should avoid using non-ASCII
+  characters in R files. It's ok to use them in comments, but object names 
+  shouldn't use them, and in strings you should use unicode escapes. See XXX
+  for more deatils.
 
-* __Checking dependencies in R code__.
+* __Checking R files for syntax errors__. Obviously your R code must be valid.
+  You're unlikely to see this error if you're been regularly using 
+  `devtools::load_all()`.
+
+* __Checking dependencies in R code__. Any errors here indicate that forgotten
+  to declare a needed package in the `DESCRIPTION`. Remember that you should
+  never use `require()` or `library()` inside a package - see 
+  [namespace imports](#imports) for more details on best practices.
 
 * __Checking S3 generic/method consistency__. S3 methods must have compatible 
   method signatures to their generic. This means that the method must have the 
@@ -126,19 +176,37 @@ Next the description is parsed and the package version is printed. Here I'm chec
     print.my_class <- function(x, ...) cat("Hi")
     ```
 
-* __Checking replacement functions__.
+* __Checking replacement functions__. Replacement functions (e.g. functions that
+  are called like `foo(x) <- value`, must have value as the last argument.
 
-* __Checking R code for possible problems__.
+* __Checking R code for possible problems__. This is a catch all for
+  a wide range of problems:
 
-    You must use `TRUE` and `FALSE` in your code and examples, not `T` and `F`.
+    * You must use `TRUE` and `FALSE` in your code and examples, not `T` and 
+      `F`.
+    
+    * `R CMD check` uses the codetools package to make sure that your functions
+      don't accidentally use variables that don't exist. This sometimes raises 
+      false positives if you're using non-standard evaluation (NSE) functions 
+      like `subset()` or `with()`. Generally, I think you should avoid NSE in 
+      package functions, and hence avoid this NOTE, but if there is no 
+      standard evaluation version, see `?globalVariables` to suppress the
+      NOTE.
+      
+    * You can't refer to internal functions in other packages with `:::`.
 
 ### Package loading and unloading
 
-* __Checking whether the package can be loaded__.
+* __Checking whether the package can be loaded__. R loads your package with
+  `requireNamespace()`. Failure here typically indicates a problem with 
+  `.onLoad()`.
 
 * __Checking whether the package can be loaded with stated dependencies__.
+  R loads your package inside a special library that only contains the 
+  packages listed in `DESCRIPTION`. Failure here typically indicates that 
+  you're missing a dependency.
 
-* __Checking whether the package can be unloaded cleanly__.
+* __Checking whether the package can be unloaded cleanly__. Check `.onUnload()`.
 
 * __Checking whether the namespace can be loaded with stated dependencies__.
 
@@ -150,8 +218,9 @@ Next the description is parsed and the package version is printed. Here I'm chec
 
 You can run the most common of these outside `R CMD check` with `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`. 
 
-* __Checking Rd files__. All exported objects must be documented. All paramters 
-  of functions must be documented.
+* __Checking Rd files__. This checks that all `man/*.Rd` use the correct
+  Rd syntax. If this fails for you, it indicates a bug in roxygen2. Please 
+  let me know.
 
 * __Checking Rd metadata__.
 
@@ -165,7 +234,8 @@ You can run the most common of these outside `R CMD check` with `devtools::check
   `\link[package]{function}`. Sometimes I accidentally flip `\code{}` and
   `\link{}`: `\link{\code{function}}` will not work.
 
-* __Checking for missing documentation entries__.
+* __Checking for missing documentation entries__. All exported objects must 
+  be documented. All paramters of functions must be documented.
 
 * __Checking for code/documentation mismatches__. This make sure that 
   documentation matches the code. This should never fail because you're using
@@ -175,7 +245,10 @@ You can run the most common of these outside `R CMD check` with `devtools::check
 
 * __Checking Rd contents__.
 
-* __Checking for unstated dependencies in examples__.
+* __Checking for unstated dependencies in examples__. If you use a package 
+  only for an example, make sure it's listed in the `Suggests` field. Before
+  running example code that depends on it, test to see if it's available with
+  `requireNamespace("pkg", quietly = TRUE)`.
 
 * __Checking examples__. Every documentation example must run without errors,
   and must not take too long. Exclude failing or slow tests with `\donttest{}`.
@@ -193,11 +266,14 @@ You can run the most common of these outside `R CMD check` with `devtools::check
 
 ## Compiled code
 
-* __Checking foreign function calls__.
+* __Checking foreign function calls__. `.Call()`, `.C()`, `.Fortran()`, 
+  `.External()` must always be called either with a `NativeSymbolInfo` object
+  (as created with `@useDynLib`) or use the `.package` argument.
 
-* __Checking line endings in C/C++/Fortran sources/headers__.
+* __Checking line endings in C/C++/Fortran sources/headers__. Always
+  use `\n` as a line ending.
 
-* __Checking line endings in Makefiles__.
+* __Checking line endings in Makefiles__. As above.
 
 * __Checking for portable use of `$(BLAS_LIBS)` and `$(LAPACK_LIBS)`__.
 
@@ -214,6 +290,10 @@ You can run the most common of these outside `R CMD check` with `devtools::check
   `testthat.R`. Failing here is an ERROR.
 
 ### Vignettes
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L718 -->
+* __Checking ‘build’ directory__. Used to track vignette builds. I'm not
+  sure how this could fail unless you've accidentally `.Rbuildignore`d a file.
 
 * __Checking installed files from ‘inst/doc’__.
 
