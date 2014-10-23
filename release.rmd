@@ -26,8 +26,6 @@ Important files:
   it's important. This text should be included in any package announcement, to
   help others understand why they might want to use your package.
 
-Where to release?
-
 ## README.md {#readme}
 
 The `README.md` file lives in the package directory. It should be fairly short (3-4 paragraphs) and answer the following questions:
@@ -112,66 +110,102 @@ As your package evolves, the way the version number changes can reflect the type
 
 Remember that these are guidelines. In practice, you might make changes that fall between the cracks. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. If you fix a bug that people are depending on, then it will feel like an API breaking change to them.
 
-## Publishing on Github
-
-Managing releases.
-
 ## Publishing on CRAN
-
-Once you have passed the check process, you need to upload your package to CRAN. This is a relatively complicated multi-step process:
-
-1.  Build a package bundle with `build()`.
-1.  Upload to <http://cran.r-project.org/submit.html>
-1.  Confirm submission email
-1.  Wait for response.
-
-Instead, I recommend using `devtools::release()` which asks a number of questions to make sure that you're ready, then builds, uploads and submits for you.
-
-* Adding extra questions
-* Comments to CRAN
-
-On failure, make the suggested changes, update `cran-comments.md` describing what you did and why, and re-run `release()`. CRAN prefers you to not respond to their emails unless discussion is required.
 
 The most important thing to understand about CRAN is that it's staffed by volunteers and its a lot of work. In a typical week, CRAN recieves around 130 packages, and there are only 3 volunteers. Anything you can do to make their lives easier is appreciated.
 
-Submitting to CRAN is frustrating, but you're not alone. Even R-core members who submit packages to CRAN have to go through the same gruelling process, and CRAN is no friendlier to them. Try not to get upset by the feedback. Ignore any ad hominen attacks, and simply respond to the technical comments. Unfortunately there is no recourse, so you just have to put up with it.
+`cran-comments.md`. Check into source code control, and modify prior to release. It should start by saying how you've tested the package.
 
-Devtools comes with a guarantee: If someone from CRAN is annoyed with you because of something that devtools does wrong, I will send you a hand-written apology card. Please send me an email with your address.
+### Check basics
 
-### Checking on Windows
+You must ensure that `R CMD check` passes with no ERRORs or WARNINGs, and you should strive to minimise the number of NOTEs. If there are notes that you do not believe are important, it is almost always easier to hack around them than to persuade CRAN that they're ok. The release process for a package with no NOTEs is much smoother.
 
-You can check packages on Windows using `build_win()`. This builds your package and submits it to the CRAN win-builder. 30-60 minutes after submission, you'll recieve and email which will point you to the check results.
+In `cran-comments.md` include a bulleted list with one bullet for each note. Copy and paste the message from `R CMD check` and include a brief description of why you believe the NOTE is a false-positive.
 
-This checks both 32-bit and 64-bit builds. So if you're using C code, you'll need to make sure it works for both.
+For example, here's the relevent bit of `cran-comments.md` for a recent version of devtools:
 
-By default `build_win()` checks with both the release and development version of R. You can override this with the version parameter.
+    * checking dependencies in R code ... NOTE
+      Namespace in Imports field not imported from: ‘memoise’
+      All declared Imports should be used.
+      
+      memoise is a build-time dependency.
+    
+    * checking R code for possible problems ... NOTE
+      Found the following calls to attach():
+        File 'devtools/R/package-env.r':
+          attach(NULL, name = pkg_env_name(pkg))
+        File 'devtools/R/shims.r':
+          attach(e, name = "devtools_shims", warn.conflicts = FALSE)
+    
+      These are needed because devtools simulates package loading, and hence
+      needs to attach environments to the search path.
+
+### R-devel
+
+It's a good idea to check your package with the nightly version of R-devel. The checks are constantly changing and you have to keep up. The easiest way to do this is to: XYZ.
+
+### Cross-platform checking
+
+I highly recommend running `R CMD check` on at least two platforms:
+
+* On windows: windows + linux
+* On linux: linux + windows
+* On OS X: os x + linux + windows
+
+You can check packages on Windows using `build_win()`. This builds your package and submits it to the CRAN win-builder. 30-60 minutes after submission, you'll recieve and email which will point you to the check results. By default `build_win()` checks with both the release and development version of R. You can override this with the version parameter.
+
+I hope that in the future we'll see more services like `build_win()` that allow you to check your package on multiple platforms without having to setup all the infrastructure yourself.
 
 ### Checking dependencies
 
+If you are releasing a new version of an existing package, it's your responsibility to ensure that all packages that rely on your package continue to work.  
+
+If any packages fail `R CMD check`, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN.  After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`. Each package should be accompanied  brief explanation - either that it's a false positive in `R CMD check` or a legitimate change in the API. Inform CRAN of your release process: "I advised all downstream packages maintainers of these problems two weeks ago". Here's an example from a recent release of httr:
+
+    I have also run R CMD check on downstream dependencies of httr. Results are 
+    available at R release: https://github.com/wch/checkresults/blob/master/httr/r-release.
+    Potential problems:
+    
+    * Ecoengine: this appears to be a failure related to config on that machine,
+      I couldn't reproduce locally, and it doesn't seem to be related to changes 
+      in httr (the same problem exists with httr 0.4).
+
 ### CRAN policies
 
-[CRAN policies](http://cran.r-project.org/web/packages/policies.html).
+You must be familiar with [CRAN policies](http://cran.r-project.org/web/packages/policies.html). I recommending following the [CRAN Policy Watch](https://twitter.com/CRANPolicyWatch) twitter account which is automatically updated whenever the policies change. Alternatively you can look at the history at <https://github.com/eddelbuettel/crp/commits/master/texi>.
 
 Most important points:
 
-* Must pass `R CMD check` without errors, warnings and ideally notes. If there
-  are notes that you do not believe are important, it is almost always easier 
-  to hack around them than to persuade CRAN that they're ok.
-
-* Must have clearly identified IP holders, have open source license (so CRAN 
-  can distribute it) and not include any binary executables.
+* Must have clearly identified IP holders in `DESCRIPTION`, have open source 
+  license (so CRAN can distribute it) and not include any files that can not
+  be generated from "source".
 
 * Maintainer email address must be correct. CRAN will make no effort
   to contact apart from through this address. Make sure it's something
-  that's likely to be around for a while
-
-* Must not be more than 5 megs.
+  that's likely to be around for a while, and that it's not heavily filtered.
 
 * Packages shouldn't make external changes without explicit user permission.
   Don't write to the file system, change options, install packages, quit R, 
   send information over the internet, open external software, etc.
   
 * You must not use `:::`
+
+### Release
+
+Once you've run the automated checks on you need to upload your package to CRAN.  I recommend using `devtools::release()` which asks a number of questions to make sure that you're ready, then builds, uploads and submits for you.
+
+* Adding extra questions
+* Comments to CRAN
+
+On failure, make the suggested changes, update `cran-comments.md` describing what you did and why, and re-run `release()`. CRAN prefers you to not respond to their emails unless discussion is required.
+
+Failures are frustrating, and the response you receive may be curt or downright insulting. Unfortunately no recourse is available, so you just have to develop a thick skin. You're not alone: even members of R-core have to go through the same gruelling process, and CRAN is no friendlier to them. Try not to get upset by the feedback. Ignore any ad hominen attacks, and simply respond to the technical content. 
+
+Devtools comes with a small guarantee to make life a little more pleasant: If a CRAN maintainer is annoyed with you because devtools did something wrong, I will send you a hand-written apology card. Please send me an email with your address.
+
+### Binary builds
+
+After the package has been accepted by CRAN it will be built for each platform. It's possible this may uncovered further errors.
 
 ## Post-release
 
@@ -184,6 +218,8 @@ Once you've received confirmation that all checks have passed on all platforms, 
 * bump version in `DESCRIPTION` and `NEWS` files. Use `.9000` prefix to 
   indicate that it's a development version.
 
+* Github release.
+
 ## Publicising
 
 Then you need to publicise your package.  This is vitally important - for your hard work to be useful to someone, they need to know that it exists!
@@ -194,15 +230,4 @@ Then you need to publicise your package.  This is vitally important - for your h
   what's new. I usually make these announcements by pasting together the
   package `README` and the appropriate section from the `NEWS`.
 
-* You can also send an email to `r-packages@stat.math.ethz.ch`, but there
-  are a number of rules about how often you're allowed to post, and it's not 
-  that friendly (also not clear how big the reach is.)
-
 * announce on twitter, blog etc.
-
-* Finally, don't forget to update your package webpage. If you don't have a
-  package webpage – create one! There you can announce new versions, point to
-  help resources, videos and talks about the package. If you're using github,
-  I'd recommend using [github pages](http://pages.github.com/) to create the
-  website.
-  
