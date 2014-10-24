@@ -6,22 +6,7 @@ output: bookdown::html_chapter
 
 # Automated checking {#check}
 
-`R CMD check` is a system for automatically checking your code for common problems. It's essential for CRAN submission, but it's also useful if you're not planning on submitting to CRAN: it automatically detects many problems that you'd otherwise discover the hard way.
-
-`R CMD check` emits three types of message:
-
-* `ERROR`: These are definite problems and you should fix regardless of whether
-  or not you're submitting to CRAN.
-  
-* `WARNING`: These are likely problems. You must fix if you're planning to 
-  submit to CRAN, and it's a good idea to look into them even if you're not.
-  
-* `NOTE`: These are probable problems. Notes have some false positives,
-  so if you're not planning on submitting to CRAN, you might not need to fix. 
-  If you are submitting to CRAN you should attempt to remove all NOTEs, even 
-  if they are a false positive. It is possible to argue you way around
-  them, but that requires human intervention. It's almost always better to 
-  fix them so they don't appear. 
+`R CMD check` automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's also useful even if you're not: it automatically detects many problems that you'd otherwise discover the hard way.
 
 `R CMD check` will be frustrating the first time you run it - you'll discover many problems that you need to fix. The key to making `R CMD check` less frustrating is to run it more often. The sooner you find out about a problem, the easier it is to fix. The limit of this approach is to run `R CMD check` every time you make a change, and [Travis-CI](#travis) shows you how to do that if you use github.
 
@@ -47,28 +32,46 @@ Compared to `R CMD check`, `devtools::check()`:
 * Sets the `NOT_CRAN` environment variable which allows you to selectively
   skip tests on CRAN (see `testthat::skip_on_cran()` for more details).
 
+`R CMD check` emits three types of message:
+
+* `ERROR`: These are severe problems and you should fix regardless of whether
+  or not you're submitting to CRAN.
+  
+* `WARNING`: These are likely problems. You must fix if you're planning to 
+  submit to CRAN, and it's a good idea to look into them even if you're not.
+  
+* `NOTE`: Most of these are problems you should fix, but there are some false
+  positives. If you're not submitting to CRAN, carefully consider each NOTE.
+  If you are submitting to CRAN you should try really hard fix all NOTEs, even 
+  if they are a false positive. It is possible to argue you way around
+  them, but that requires human intervention. It's almost always better to 
+  fix them so they don't appear, and no discussion is needed when you submit
+  your package.
+
 The checking workflow is simple, but tedious:
 
-1. Run `R CMD check`.
+1. Run `devtools::check()`, or press Cmd + Shift + E.
 
-2. Fix the first problem, and re-run `R CMD check`.
+2. Fix the first problem.
+
+3. Repeat until there are no more problems.
 
 ## Checks
 
-The following sections describe each of the checks run by `R CMD check`. I describe what the check does, and how to fix the most common problems. I don't recommend studying this list exhaustively. Instead, when you have a problem with `R CMD check` and can't understand how to fix it, come back here and read up on potential solutions. To make it easier to find the check you're interested in, I've organised them into sections roughly corresponding to the chapters in this book. 
+The following sections describe each individual check. I briefly describe what the check does and how to fix the most common problems. Use this list as a reference, when you have a problem with `R CMD check` and can't understand how to fix it. To make it easier to understand how the checks fit together, I've organised them into sections roughly corresponding to the chapters in this book. This means they will be in a somewhat different order to what you'll see when you run `check()`.
 
-I've attempted to be exhaustive, but checks change with each version of R. If you're using a version of R later than 3.1.1, you may want to consult the most recent version of this chapter online: <http://r-pkgs.had.co.nz/check.html>.
+This list included every check run by R 3.1.1. If you're using a more recent version, you may want to consult the most recent version of this chapter online: <http://r-pkgs.had.co.nz/check.html>. If you have an error that this chapter doesn't help you with, please [email me](mailto:hadley@rstudio.com).
 
 ### Check metadata
 
-`R CMD check` always starts by describing the checking environment. I'm running R 3.1.1 on OS X with UTF-8 charset:
+`R CMD check` always starts by describing your current environment. I'm running R 3.1.1 on OS X with a UTF-8 charset:
 
 * __Using log directory__ ‘/Users/hadley/Documents/web/httr.Rcheck’
 * __Using R version__ 3.1.1 (2014-07-10)
 * __Using platform__: x86_64-apple-darwin13.1.0 (64-bit)
 * __Using session charset__: UTF-8
 
-Next the description is parsed and the package version is printed. Here I'm checking the version 0.5.0.9000 (you'll learn more about that weird version number in [versioning](#version)) of the httr package.
+Next the description is parsed and the package version is printed. Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird version number in [versioning](#version)).
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
 * __Checking for file__ ‘httr/DESCRIPTION’
@@ -380,20 +383,20 @@ tools:::.check_package_compact_sysdata
 -->
 * __Checking contents of 'data' directory__.
 
-  * The data directory can only contain file types described in 
-    [exported data](#data-data).
-    
-  * Data files can only contain non-ASCII character if the encoding is 
-    not correctly set. This usually shouldn't be a problem if you're saving
-    `.Rdata` files. If you do see this error, look at the `Encoding()` of
-    each column in the data frame, and ensure none are "unknown" (you'll 
-    typically need to fix this somewhere in the import process).
-    
-  * If you've compressed a data file with `bzip2` or `xz` you need to declare
-    at least `Depends: R (>= 2.10)` in your `DESCRIPTION`.
-    
-  * If you've picked a poor compression for your data, re-run with the 
-    best suggested.
+    * The data directory can only contain file types described in 
+      [exported data](#data-data).
+      
+    * Data files can only contain non-ASCII character if the encoding is 
+      not correctly set. This usually shouldn't be a problem if you're saving
+      `.Rdata` files. If you do see this error, look at the `Encoding()` of
+      each column in the data frame, and ensure none are "unknown" (you'll 
+      typically need to fix this somewhere in the import process).
+      
+    * If you've compressed a data file with `bzip2` or `xz` you need to declare
+      at least `Depends: R (>= 2.10)` in your `DESCRIPTION`.
+      
+    * If you've picked a poor compression for your data, re-run with the 
+      best suggested.
 
 ### Documentation
 
@@ -563,19 +566,26 @@ You can run the most common of these outside `R CMD check` with `devtools::check
   make sure that the output corresponds to the input. Again, this shouldn't
   fail in normal circumstances.
   
-To run vignettes, the package first must be installed. That means R:
+To run vignettes, the package first must be installed. That means `check()`:
 
+* Builds the package.
 * Installs the package without vignettes.
 * Builds all the vignettes.
 * Re-installs the package with vignettes.
 
-If you have a lot of compiled code, this can be rather slow. You may want to use `--no-build-vignettes`
+If you have a lot of compiled code, this can be rather slow. You may want to add `--no-build-vignettes` to the commands list in "Build Source Packages" field in the project options:
+
+```{r, echo = FALSE}
+bookdown::embed_png("screenshots/project-options-build.png", dpi = 220)
+```
 
 ## Checking after every commit with Travis {#travis}
 
-If you use [git and github](#git), I recommend exploring the very useful [Travis CI](https://travis-ci.org/). Travis is a continuous integration service which means it will run code of your choosing every time you push a commit to github. 
+If you use [git and github](#git), I recommend exploring the very useful [Travis](https://travis-ci.org/) continuous integration service. A continuous integration service runs code of your choosing every time you push a commit to github. 
 
-1.  Run `use_travis()` to set up a basic `.travis.yml` config file. The 
+To use travis:
+
+1.  Run `devtools::use_travis()` to set up a basic `.travis.yml` config file. The 
     defaults are usually adequate for simple packages.
 
 1.  Navigate to your [account](https://travis-ci.org/profile) and enable
@@ -586,6 +596,8 @@ If you use [git and github](#git), I recommend exploring the very useful [Travis
 1.  Wait a few minutes to see the results in your email.
 
 Now you're set up so that `R CMD check` will be run every time you push a commit to github, and every time some one does a pull request.  Any time a failure occurs you'll find out about it right away. I find this really useful - it also encourages me to run `R CMD check` more frequently locally, because I know if it fails I'll find out about a few minutes later, often once I've moved on to a new challenge.
+
+### Customising your config
 
 Common configuration:
 
