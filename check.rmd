@@ -329,19 +329,47 @@ tools:::.check_package_CRAN_incoming
 * __Checking R code for possible problems__. This is a catch all for
   a wide range of problems:
 
-    * You must use `TRUE` and `FALSE` in your code and examples, not `T` and 
-      `F`.
-    
-    * `R CMD check` uses the codetools package to make sure that your functions
-      don't accidentally use variables that don't exist. This sometimes raises 
-      false positives if you're using non-standard evaluation (NSE) functions 
+    * Calls to `library.dynam()` (and `library.dynam.unload()`) should look
+      like `library.dynam("name")`, not `library.dynam("name.dll")`. Remove
+      the extension to fix this error.
+      
+    * Put `library.dynam()` in `.onLoad()`, not `.onAttach()`;
+      put `packageStartupMessage()` in `.onAttach()`, not `.onLoad()`.
+      Put `library.dynam.unload()` in `.onUnload()`.
+  
+    * Don't use `unlockBinding()` or `assignInNamespace()` to modify objects
+      that don't belong to you. 
+      
+    * `codetools::checkUsagePackage()` is called to check that your functions
+      don't use variables that don't exist. This sometimes raises false 
+      positives with functions that use non-standard evaluation (NSE),
       like `subset()` or `with()`. Generally, I think you should avoid NSE in 
       package functions, and hence avoid this NOTE, but if there is no 
       standard evaluation version, see `?globalVariables` to suppress the
       NOTE.
       
-    * You can't refer to internal functions in other packages with `:::`.
+    * You are not allowed to use `.Internal()` in a package. Either call 
+      the R wrapper function, or write your own C function. (If you copy and 
+      paste C function from base R, make sure to maintain the copyright notice,
+      and your package will need to use a GPL-2 compatible license.)
 
+    * Don't use `assign()` to modify objects in the global environment. If 
+      you need to maintain state across function calls, create your own
+      environment with `e <- new.env(parent = emptyenv())` and set and 
+      get values in it.
+  
+    * Don't use `attach()` in your code. Instead refer to variables 
+      explicitly.
+  
+    * Don't use `data()` without specifying the `envir` argument. Otherwise
+      the data will be loaded in the global environment.
+      
+    * Don't use deprecated or defunct functions. Update your code to use 
+      the latest versions.
+  
+    * You must use `TRUE` and `FALSE` in your code and examples, not `T` and 
+      `F`.
+    
 ### Data
 
 <!-- 
@@ -350,8 +378,22 @@ tools:::.check_package_datasets
 tools:::.check_package_compact_datasets
 tools:::.check_package_compact_sysdata
 -->
-* __Checking contents of 'data' directory__.  Check valid extension.
-  Check ASCII characters
+* __Checking contents of 'data' directory__.
+
+  * The data directory can only contain file types described in 
+    [exported data](#data-data).
+    
+  * Data files can only contain non-ASCII character if the encoding is 
+    not correctly set. This usually shouldn't be a problem if you're saving
+    `.Rdata` files. If you do see this error, look at the `Encoding()` of
+    each column in the data frame, and ensure none are "unknown" (you'll 
+    typically need to fix this somewhere in the import process).
+    
+  * If you've compressed a data file with `bzip2` or `xz` you need to declare
+    at least `Depends: R (>= 2.10)` in your `DESCRIPTION`.
+    
+  * If you've picked a poor compression for your data, re-run with the 
+    best suggested.
 
 ### Documentation
 
@@ -363,23 +405,26 @@ You can run the most common of these outside `R CMD check` with `devtools::check
   let me know.
 
 <!-- tools:::.check_Rd_metadata -->
-* __Checking Rd metadata__. Checks that names and aliases are unique.
+* __Checking Rd metadata__. Checks that names and aliases are unique. If you
+  encounter this problem you've accidentally used the same `@name` or `@aliases`
+  in multiple places; make sure they're unique.
 
 <!-- tools:::.check_Rd_line_widths -->
-* __Checking Rd line widths__.  Lines in RD files must be less than 90 
-  characters wide. This is unlikely to occur if you wrap your roxygen 
-  comments to 80 characters wide. For very long urls, use a link-shortening
-  service like [bit.ly](http://bit.ly).
+* __Checking Rd line widths__.  Lines in Rd files must be less than 90 
+  characters wide. This is unlikely to occur if you wrap your R code,
+  and hence roxygen comments to 80 characters. For very long urls, use a 
+  link-shortening service like [bit.ly](http://bit.ly).
 
 <!-- tools:::.check_Rd_xrefs -->
-* __Checking Rd cross-references__. These typically represent typos.
+* __Checking Rd cross-references__. Errors here usually represent typos.
   Also recall the syntax for linking to functions in other packages: 
   `\link[package]{function}`. Sometimes I accidentally flip `\code{}` and
   `\link{}`: `\link{\code{function}}` will not work.
 
 <!-- tools::undoc -->
 * __Checking for missing documentation entries__. All exported objects must 
-  be documented. All paramters of functions must be documented.
+  be documented. All paramters of functions must be documented. See 
+  `?tools::undoc` for more details.
 
 <!-- tools::codoc, tools::codocData, tools::codocClasses -->
 * __Checking for code/documentation mismatches__. This make sure that 
@@ -388,11 +433,15 @@ You can run the most common of these outside `R CMD check` with `devtools::check
 
 <!-- tools::checkDocFiles, tools::checkDocStyle -->
 * __Checking Rd `\usage` sections__.  Checks that all arguments in funtions
-  in usage section are documented (and vice versa). Checks that S3 and S4 
-  methods use correct Rd markup
+  in usage section are documented (and all `@params` document an existing
+  argument). S3 and S4 methods need to use special markup ``\S3method{}`,
+  `\S4method{}` in the Rd file - roxygen2 should generate this for you
+  automatically.
 
 <!-- tools:::.check_Rd_contents -->
-* __Checking Rd contents__.
+* __Checking Rd contents__. This checks for autogenerated contect made by
+  `package.skeleton()`. Since you're not using `package.skeleton()` you should
+  never have a problem here.
 
 <!-- tools:::.check_packages_used_in_examples -->
 * __Checking for unstated dependencies in examples__. If you use a package 
@@ -419,7 +468,7 @@ You can run the most common of these outside `R CMD check` with `devtools::check
     
     Don't use more than two cores.
     
-    Individual example shouldn't take more than 5s.
+    Individual examples shouldn't take more than 5s.
     
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2925 -->
 * __Checking PDF version of manual__. Occassionally you'll get an error when 
@@ -463,13 +512,12 @@ You can run the most common of these outside `R CMD check` with `devtools::check
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2514 -->
 * __Checking for unstated dependencies in tests__. Every package used by tests 
-  must be included in the dependency fields. If the package is only used in the 
-  tests (and not elsewhere in the package), list it in the `Suggests` field.
+  must be included in the dependencies.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2526 -->
 * __Checking tests__.  Each file in `tests/` is run. If you've followed the 
   instructions in [testing](#tests) you'll have at least one file: 
-  `testthat.R`. Failing here is an ERROR.
+  `testthat.R`. If your unit tests don't pass fix them!
 
 ### Vignettes
 
@@ -478,16 +526,19 @@ You can run the most common of these outside `R CMD check` with `devtools::check
   sure how this could fail unless you've accidentally `.Rbuildignore`d a file.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1846 -->
-* __Checking installed files from ‘inst/doc’__.  You shouldn't have any files here.
+* __Checking installed files from ‘inst/doc’__.  Don't put files in `inst/doc` -
+  vignettes now live in `vignettes/`.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1941 -->
 * __Checking files in ‘vignettes’__. 
-  Haven't included files "jss.cls", "jss.bst", "Rd.sty", "Sweave.sty"
-  No leftover latex compilation files.
-  Other stuff that shouldn't occur if you're using `vignettes/`.
+  Problems here are usually straightforward - you've included files that are
+  already included in R (like `jss.cls`, `jss.bst`, or `Sweave.sty`), or 
+  you have leftover latex compilation files. Delete these files.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2008 -->
-* __Checking for sizes of PDF files under 'inst/doc'__. 
+* __Checking for sizes of PDF files under 'inst/doc'__. If you're making PDF
+  vignettes, you can make them as small as possible by running 
+  `tools::compactPDF()`.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2619 -->
 * __Checking for unstated dependencies in vignettes__. As with tests, every
@@ -502,10 +553,6 @@ You can run the most common of these outside `R CMD check` with `devtools::check
   [vignettes](#vignettes). If there is a problem, start by checking your
   `.Rbuildignore`.
   
-  Checks makefile: case, line endings.
-  
-  Check encoding.
-
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2763 -->
 * __Checking running R code from vignettes__. The R code from each vignette 
   is run. If you want to deliberately execute errors (to show the user what 
