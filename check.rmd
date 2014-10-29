@@ -638,25 +638,24 @@ bookdown::embed_png("screenshots/project-options-build.png", dpi = 220)
 
 ## Checking after every commit with Travis {#travis}
 
-If you use [git and github](#git), I recommend exploring the very useful [Travis](https://travis-ci.org/) continuous integration service. A continuous integration service runs code of your choosing every time you push a commit to github. For an R package, the most useful code to run is `R CMD check`. For open source projects, travis provides 50 minutes of free computation time on a ubuntu server - you can do anything you want on the server!
+If you use [git and github](#git), I highly recommend learning about [Travis](https://travis-ci.org/). Travis is continuous integration service, which means that it runs automated testing code everytime you push to github. For open source projects, travis provides 50 minutes of free computation on a ubuntu server. For an R package, the most useful code to run is `R CMD check`. 
 
 To use travis:
 
-1.  Run `devtools::use_travis()` to set up a basic `.travis.yml` config file. The 
-    defaults are usually adequate for simple packages.
+1.  Run `devtools::use_travis()` to set up a basic `.travis.yml` config file. 
 
-1.  Navigate to your [account](https://travis-ci.org/profile) and enable
-    travis for the repo you want to test on.
+1.  Navigate to your [travis account](https://travis-ci.org/profile) and enable
+    travis for the repo you want to test.
 
 1.  Commit and push to github.
 
 1.  Wait a few minutes to see the results in your email.
 
-Now you're set up so that `R CMD check` will be run every time you push a commit to github, and every time some one does a pull request. Any time a failure occurs you'll find out about it right away. I find this really useful - it also encourages me to run `R CMD check` more frequently locally, because I know if it fails I'll find out about a few minutes later, often once I've moved on to a new challenge.
+With this setup in place, every time you push to github, and every time someone submits a pull request, `R CMD check` will be automatically run. You'll find out about failures right away, which makes them easier to fix. Using travis also encourages me to run `R CMD check` more often locally, because I know if it fails I'll find out about a few minutes later, often once I've moved on to a new problem.
 
 ### Basic config
 
-The travis config is a yaml file called `.travis.yml` and the default config looks like this:
+The travis config is stored in yaml file called `.travis.yml`. The default config created by devtools looks like this:
 
 ```yaml
 # Sample .travis.yml for R projects from https://github.com/craigcitro/r-travis
@@ -670,13 +669,14 @@ before_install:
 install:
   - ./travis-tool.sh install_deps
 
-script: ./travis-tool.sh run_tests
+script: 
+  - ./travis-tool.sh run_tests
 
 after_failure:
   - ./travis-tool.sh dump_logs
 ```
 
-Travis does not currently support R as a first class language, so we need to install it from scratch. We use the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis). It starts by downloading and running a script from github. This script provides a number of useful tools:
+Travis doesn't currently support R as a top-level language, so we need to install it. We start with an image designed for testing C projects, then download the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis). It starts downloads from github that provides a number of useful tools:
 
 * `./travis-tool.sh bootstrap`: installs R.
 
@@ -689,37 +689,53 @@ Travis does not currently support R as a first class language, so we need to ins
 
 There are two ways to install packages not included in the basic script:
 
-* `./travis-tool.sh install_github rstudio/rmarkdown`: installs a package from
+* `./travis-tool.sh install_github user/repo`: installs a package from
   github. 
 
-* `./travis-tool.sh r_binary_install XML`: installs a ubunutu binary package.
-  You can see if a binary version of your package is available by searching on
-  <http://packages.ubuntu.com> for `r-cran-lowercasename`. For example, searching
-  for `r-cran-xml` reveals that it exists,
-  <http://packages.ubuntu.com/trusty/r-cran-xml>,
+* `./travis-tool.sh r_binary_install package`: installs an precompiled R 
+  package from ubunutu. You can see if a binary version of a package is 
+  available by searching on <http://packages.ubuntu.com> for 
+  `r-cran-lowercasename`. For example, searching for `r-cran-xml` reveals that 
+  you can get a binary version of XML package.
   
-Both of these commands should be run before `install_deps`.
+These commands should be included in the `install` block, before `./travis-tool.sh install_deps`:
+
+```yaml
+install:
+  - ./travis-tool.sh r_binary_install XML`
+  - ./travis-tool.sh install_github hadley/pryr
+  - ./travis-tool.sh install_deps
+```
 
 You can set environment variables using the `env` field. Here are three useful flags:
 
 ```yaml
 env:
-  - WARNINGS_ARE_ERRORS=1
-  - _R_CHECK_FORCE_SUGGESTS_=0
   - BOOTSTRAP_LATEX=1
+  - _R_CHECK_FORCE_SUGGESTS_=0
+  - WARNINGS_ARE_ERRORS=1
 ```
 
-* `WARNINGS_ARE_ERRORS=1`: the travis build should fail if there are any
-  warnings or errors (the default is to fail only on errors). I recommend
-  that you set this if you plan to submit to CRAN.
-
-* `_R_CHECK_FORCE_SUGGESTS_=0`: check even if all suggested packages can't be
-  installed.
-  
 * `BOOTSTRAP_LATEX=1`: also install latex. This is useful if you want to 
-  check the pdf manual or pdf vignettes, but adds substantially to the check
-  time.
+  check the pdf manual or pdf vignettes. It's not the default because it adds 
+  substantially to the check time.
 
+* `WARNINGS_ARE_ERRORS=1`: make the build fail if there are any `ERROR`s or 
+  any `WARNING`s. The default is to fail only on errors. I recommending using
+  this if you plan to submit to CRAN.
+
+* `_R_CHECK_FORCE_SUGGESTS_=0`: run check even if all suggested packages can't 
+  be installed.
+  
 ### Other uses
 
-Since you can use Travis to run arbitrary code you can use it to implement arbitrary push-to-deploy strategies. For example, it's relatively easy to deploy code to S3 - this makes it easy (for example) to update a documentation website. For now, you'll need to figure it out yourself.
+Since travis allows you to run arbitrary code, there are many other things that you can use it for:
+
+* Re-publishing a book website every time you make a change to the source.
+  (Like this book!)
+
+* Building vignettes and publishing them to a website.
+
+* Automatically building a documentation website for your package.
+
+To learn more, read about the many [deployment options](http://docs.travis-ci.com/user/deployment/) provided by travis.
