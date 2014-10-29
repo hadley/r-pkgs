@@ -12,9 +12,6 @@ Once you are confident that your package is reliable and does what it claims, yo
   but is important if you want your package to be used by the widest 
   number of people.
 
-* On github, which is informal and simple. You'll get more out of it by
-  using a standard procedure and taking advantage of github releases.
-
 Important files:
 
 * `NEWS` or `NEWS.md` describes the changes in each version of the package. 
@@ -26,7 +23,29 @@ Important files:
   it's important. This text should be included in any package announcement, to
   help others understand why they might want to use your package.
 
-## README.md {#readme}
+
+## Version numbers {#version}
+
+The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
+
+An R package version can consist of a series of numbers, each separated with "." or "-". For example, a package might have a version 1.9. This version number is considered by R to be the same as 1.9.0, less than version 1.9.2, and all of these are less than version 1.10 (which is version "one point ten", not "one point one zero). R uses version numbers to determine whether package dependencies are satisfied. A package might, for example, import package `devtools (>= 1.9.2)`, in which case version 1.9 or 1.9.0 wouldn't work.
+
+The version numbering advice here is inspired in part by [Semantic Versioning](http://semver.org) and by the [X.Org](http://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
+
+A version number consists of up to three numbers, _<major>_._<minor>_._<patch>_. For version number 1.9.2, 1 is the major number, 9 is the minor number, and 2 is the patch number. If your version number is 2.0, then implicit patch number is 0.
+
+As your package evolves, the way the version number changes can reflect the type of changes in the code:
+
+* The major number changes when there are incompatible API changes.
+* The minor number changes when there are backward-compatible API changes.
+* The patch number changes with backwards-compatible fixes.
+* Additionally, during development between released versions, the package has a sub-patch version number of 9xxx, as in 1.9.0.9000, 1.9.0.9001, and so on. Whenever an important feature is added or a bug is fixed, increment the number. This makes it clear for users that they're using a development version of the package, as opposed to a formally released version, and it also makes it easy for people to see when their development version is out of date.
+
+Remember that these are guidelines. In practice, you might make changes that fall between the cracks. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. If you fix a bug that people are depending on, then it will feel like an API breaking change to them.
+
+## Important files
+
+### README.md {#readme}
 
 The `README.md` file lives in the package directory. It should be fairly short (3-4 paragraphs) and answer the following questions:
 
@@ -38,9 +57,15 @@ If you're using github, this will appear on the package home page. I also recomm
 
 See [markdown](#markdown) for more details on markdown.
 
-## `NEWS`
+### NEWS.md {#news}
 
 The `NEWS` file should list all changes that have occurred since the last release of the package.
+
+Three ways to write NEWS:
+
+* Plain text (with special formatting)
+* Markdown
+* `Rd`.
 
 The following sample shows the `NEWS` file from the `stringr` package.
 
@@ -82,7 +107,7 @@ The following sample shows the `NEWS` file from the `stringr` package.
   formatting in R, but is useful if you want to publish the `NEWS` file
   elsewhere.
 
-You can use `devtools::show_news()` to display the `NEWS` using R's built-in parser and check that it appears correctly. `show_news()` defaults to showing just the news for the most recent version of the package.  You can override this by using argument `latest = FALSE`.
+You can use `devtools::show_news()` to display the `NEWS` using R's built-in parser and check that it appears correctly. `show_news()` defaults to showing just the news for the most recent version of the package.
 
 Another option is to write `NEWS.md`.  
 
@@ -91,54 +116,39 @@ Another option is to write `NEWS.md`.
 * Easier to read on github
 * Easier to copy-and-paste into github releases.
 
-## Version numbers {#version}
+## The check process {#release-check}
 
-The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
+[Checking](#check) described how to run `R CMD check`. For release to CRAN, you need to both run it and document it.
 
-An R package version can consist of a series of numbers, each separated with "." or "-". For example, a package might have a version 1.9. This version number is considered by R to be the same as 1.9.0, less than version 1.9.2, and all of these are less than version 1.10 (which is version "one point ten", not "one point one zero). R uses version numbers to determine whether package dependencies are satisfied. A package might, for example, import package `devtools (>= 1.9.2)`, in which case version 1.9 or 1.9.0 wouldn't work.
-
-The version numbering advice here is inspired in part by [Semantic Versioning](http://semver.org) and by the [X.Org](http://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
-
-A version number consists of up to three numbers, _<major>_._<minor>_._<patch>_. For version number 1.9.2, 1 is the major number, 9 is the minor number, and 2 is the patch number. If your version number is 2.0, then implicit patch number is 0.
-
-As your package evolves, the way the version number changes can reflect the type of changes in the code:
-
-* The major number changes when there are incompatible API changes.
-* The minor number changes when there are backward-compatible API changes.
-* The patch number changes with backwards-compatible fixes.
-* Additionally, during development between released versions, the package has a sub-patch version number of 9xxx, as in 1.9.0.9000, 1.9.0.9001, and so on. Whenever an important feature is added or a bug is fixed, increment the number. This makes it clear for users that they're using a development version of the package, as opposed to a formally released version, and it also makes it easy for people to see when their development version is out of date.
-
-Remember that these are guidelines. In practice, you might make changes that fall between the cracks. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. If you fix a bug that people are depending on, then it will feel like an API breaking change to them.
-
-## Publishing on CRAN
-
-The most important thing to understand about CRAN is that it's staffed by volunteers and its a lot of work. In a typical week, CRAN recieves around 130 packages, and there are only 3 volunteers. Anything you can do to make their lives easier is appreciated.
-
-`cran-comments.md`. Check into source code control, and modify prior to release. It should start by saying how you've tested the package.
-
-### Check basics {#release-check}
+The most important thing to understand about CRAN is that it's staffed by volunteers and its a lot of work. In a typical week, CRAN recieves around 130 packages, and there are only 3 volunteers to process all the submissions. Anything you can do to make their lives easier is appreciated.
 
 You must ensure that `R CMD check` passes with no ERRORs or WARNINGs, and you should strive to minimise the number of NOTEs. If there are notes that you do not believe are important, it is almost always easier to hack around them than to persuade CRAN that they're ok. The release process for a package with no NOTEs is much smoother.
 
-In `cran-comments.md` include a bulleted list with one bullet for each note. Copy and paste the message from `R CMD check` and include a brief description of why you believe the NOTE is a false-positive.
+In `cran-comments.md` include a bulleted list with one bullet for each note. Make sure it's listed in `.Rbuildignore`. Check into source code control, and modify prior to release. Use markdown (loosely). It should start by saying how you've tested the package. Copy and paste the message from `R CMD check` and include a brief description of why you believe the NOTE is a false-positive. The goal is to create a file that the CRAN maintainers can easily use.
 
 For example, here's the relevent bit of `cran-comments.md` for a recent version of devtools:
 
-    * checking dependencies in R code ... NOTE
-      Namespace in Imports field not imported from: ‘memoise’
-      All declared Imports should be used.
-      
-      memoise is a build-time dependency.
-    
-    * checking R code for possible problems ... NOTE
-      Found the following calls to attach():
-        File 'devtools/R/package-env.r':
-          attach(NULL, name = pkg_env_name(pkg))
-        File 'devtools/R/shims.r':
-          attach(e, name = "devtools_shims", warn.conflicts = FALSE)
-    
-      These are needed because devtools simulates package loading, and hence
-      needs to attach environments to the search path.
+```
+* checking dependencies in R code ... NOTE
+  Namespace in Imports field not imported from: ‘memoise’
+  All declared Imports should be used.
+  
+  memoise is a build-time dependency.
+
+* checking R code for possible problems ... NOTE
+  Found the following calls to attach():
+    File 'devtools/R/package-env.r':
+      attach(NULL, name = pkg_env_name(pkg))
+    File 'devtools/R/shims.r':
+      attach(e, name = "devtools_shims", warn.conflicts = FALSE)
+
+  These are needed because devtools simulates package loading, and hence
+  needs to attach environments to the search path.
+```
+
+* R-devel
+* Cross-platform
+* Dependencies
 
 ### R-devel
 
@@ -162,13 +172,15 @@ If you are releasing a new version of an existing package, it's your responsibil
 
 If any packages fail `R CMD check`, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN.  After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`. Each package should be accompanied  brief explanation - either that it's a false positive in `R CMD check` or a legitimate change in the API. Inform CRAN of your release process: "I advised all downstream packages maintainers of these problems two weeks ago". Here's an example from a recent release of httr:
 
-    I have also run R CMD check on downstream dependencies of httr. Results are 
-    available at R release: https://github.com/wch/checkresults/blob/master/httr/r-release.
-    Potential problems:
-    
-    * Ecoengine: this appears to be a failure related to config on that machine,
-      I couldn't reproduce locally, and it doesn't seem to be related to changes 
-      in httr (the same problem exists with httr 0.4).
+```
+I have also run R CMD check on downstream dependencies of httr. Results are 
+available at R release: https://github.com/wch/checkresults/blob/master/httr/r-release.
+Potential problems:
+
+* Ecoengine: this appears to be a failure related to config on that machine,
+  I couldn't reproduce locally, and it doesn't seem to be related to changes 
+  in httr (the same problem exists with httr 0.4).
+```
 
 ### CRAN policies
 
@@ -180,19 +192,19 @@ Most important points:
   license (so CRAN can distribute it) and not include any files that can not
   be generated from "source".
 
-* Maintainer email address must be correct. CRAN will make no effort
-  to contact apart from through this address. Make sure it's something
-  that's likely to be around for a while, and that it's not heavily filtered.
+* It is vital that maintainer email address is stable. This is the only way
+  that CRAN has to contact you, and they will remove your package from CRAN
+  if there are problems and they can't get in touch with. Make sure it's 
+  something that's likely to be around for a while, and that it's not heavily 
+  filtered.
 
 * Packages shouldn't make external changes without explicit user permission.
   Don't write to the file system, change options, install packages, quit R, 
   send information over the internet, open external software, etc.
-  
-* You must not use `:::`
 
-### Release
+## Release
 
-Once you've run the automated checks on you need to upload your package to CRAN.  I recommend using `devtools::release()` which asks a number of questions to make sure that you're ready, then builds, uploads and submits for you.
+Once you've run the automated checks on you need to upload your package to CRAN. I recommend using `devtools::release()` which asks a number of questions to make sure that you're ready, then builds, uploads and submits for you.
 
 * Adding extra questions
 * Comments to CRAN
@@ -205,7 +217,7 @@ Devtools comes with a small guarantee to make life a little more pleasant: If a 
 
 ### Binary builds
 
-After the package has been accepted by CRAN it will be built for each platform. It's possible this may uncovered further errors.
+After the package has been accepted by CRAN it will be built for each platform. It's possible this may uncover further errors.
 
 ## Post-release
 
