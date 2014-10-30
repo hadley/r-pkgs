@@ -10,107 +10,152 @@ If you want your package to have significant traction in the R community, you ne
 
 Follow these steps when your package is ready for release:
 
+1. Pick a version.
 1. Update `README.md` and `NEWS.md`.
 1. Document your `R CMD check` process.
 1. Submit the package to CRAN.
 1. Prepare for the next version.
 1. Publicise the new version.
 
+## Version
+
+If you're following the advice in [version](#version), the version number will look like `1.0.0.9000`. Now you need to look at the changes you've made and decide if this will be version `1.0.1`, `1.1.0`, or `2.0.0`:
+  
+  * For a patch, increment the third component, `1.0.1`. This for 
+    show-stopping bugs that need to be fixed ASAP.
+  
+  * For backward compatible changes, increment the second component, `1.1.0`. 
+    If you've added new features and fixed bugs in such a way that existing code 
+    should continue work, increment the second component. This is the most
+    common type of release. It's perfectly fine to have so many minor releases
+    that you need to use two digits, e.g. `1.17.0`.
+  
+  * For backward incompatilbe changes, increment the first component, `2.0.0`.
+    If you've made backward incompatible changes that are likely to affect many 
+    users. (Some subjectivity is needed here - if you've made a backward 
+    incompatible change to a function that no one is likely to use then 
+    a minor version might be acceptable. You need to use your judgement).
+    
+    You may also increment from `0.9.0` to `1.0.0` when you feel that the package
+    is feature complete and the API is unlikely to change majorly in the future.
+
+### Backward compatibility
+
+The importance of backward compatability is directly proportional to the number of people using your package. When you start developing a package, I wouldn't worry too much about backwards compatibility. Sure, you'll break some code, but you don't want to be paralysed.  You are effectively trading your time for your users time. The harder you strive to be backward compatible, the harder it is to develop new features. It also gets harder to read and understand your code because it has to incorporate multiple paths for previous versions.
+
+If you want to be more conservation, and avoid breaking existing code, you can use the following techniques:
+
+* Don't immediately remove a function. First deprecate it, then flag it as 
+  defunct, then remove it.
+
+* Don't just immediately remove function arguments. Keep both arguments in the 
+  function but print a warning when the wrong version is used.
+
+* Avoid significant changes to the operation of a function. Instead create a 
+  new function.
+
 ## Important files
 
-* `NEWS` or `NEWS.md` describes the changes in each version of the package. 
-  Using the standard R format will allow you to take advantage of automated
-  tools for displaying changes between versions. Using markdown makes it 
-  easy to describe in github releases.
-
-* the `README.md` file gives a general overview of your package, including why
-  it's important. This text should be included in any package announcement, to
-  help others understand why they might want to use your package.
+Every package should contain a `README.md` that describes what the package does, and a `NEWS.md` that describes what's changed since the previous version. I recommend using markdown for these files, because it's useful for them to be readable in plain text (e.g. in emails) and in html (e.g. on github, in blog posts). I recommend using Github flavoured markdown, [gfm](#gfm), for these files.
 
 ### README.md {#readme}
 
-The `README.md` file lives in the package directory. It should be fairly short (3-4 paragraphs) and answer the following questions:
+The goal of the `README.md` is to answer the following questions:
 
-* Why should someone use your package?
-* How does it compare to other existing solutions?
-* What are the main functions?
+* Why should I use it?
+* How do I use it?
+* How do I get it?
 
-If you're using github, this will appear on the package home page. I also recommend using it when you announce a new version of your package. 
+On github, the `README.md` will be rendered to html and displayed on the repo home page. 
 
-See [markdown](#markdown) for more details on markdown.
+I normally structure my `README` as follows:
+
+1.  A paragraph that describes the high-level purpose of the package.
+1.  An example showing how to use the package to solve a simple problem.
+1.  An overview that describes the main components of the package. For more
+    complex packages, this will point to vignettes for more details.
+1.  Installation instructions, giving code that can be copied and pasted in R.
+
+If you include an example in your `README` (a good idea!) you may want to generate it with Rmarkdown. Use these tips to make it as easy as possible:
+
+* Use `format: md_document` in the yaml metadata to output a markdown file.
+
+* Add `README.Rmd` to `.Rbuildignore` with 
+  `devtools::add_ignore_file("README.Rmd")`.
+
+* I recommend using the following knitr options:
+
+    ```
+    ```{r, echo = FALSE}
+    knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+    ```
+    ```
+
+* Remember to re-knit `README.Rmd` each time you modify it.
 
 ### NEWS.md {#news}
 
-The `NEWS` file should list all changes that have occurred since the last release of the package.
+The `README.md` is aimed at a potential new user of your package. The `NEWS.md` is aimed at existing users: it should list all changes in each last release of the package. There are a number formats you can use for package news, but I recommend `NEWS.md`. It's not supported by CRAN (so you'll need to run `devtools::add_build_ignore("NEWS.md")`), but it's well supported by github and is easy to re-purpose to other formats.
 
-Three ways to write NEWS:
+Organise your `NEWS.md` as follows:
 
-* Plain text (with special formatting)
-* Markdown
-* `Rd`.
+* Use a level-one heading for each version: e.g. `# mypage 1.0`. The most
+  recent version should go at the top.
 
-The following sample shows the `NEWS` file from the `stringr` package.
+* Each change should be included in a bulleted list. If you have a lot of 
+  changes you might want to break them up using subheadings, `## Major changes`,
+  `## Bug fixes` etc. I usually stick with a simple list until just before
+  releasing the package when I'll reorgnise into sections, if needed.
+  It's hard to know in advance exactly how many 
 
-    stringr 0.5
-    ===========
+* If an item is related to an issue in github, include the issue number in
+  parentheses, e.g. `(#10)`. If an item is related to a pull request, include 
+  the pull request number and the author, e.g. `(#101, @hadley)`. Doing
+  this makes it easy to navigate to the 
 
-    * new `str_wrap` function which gives `strwrap` output in a more
-      convenient format
-
-    * new `word` function extract words from a string given user defined
-      separator (thanks to suggestion by David Cooper)
-
-    * `str_locate` now returns consistent type when matching empty string
-      (thanks to Stavros Macrakis)
-
-    * new `str_count` counts number of matches in a string.
-
-    * `str_pad` and `str_trim` receive performance tweaks - for large vectors
-      this should give at least a two order of magnitude speed up
-
-    * str_length returns NA for invalid multibyte strings
-
-    * fix small bug in internal `recyclable` function
-
-`NEWS` has a special format, but it's not well documented. The basics are:
-
-* The information for each version should start with the name of the package
-  and its version number, followed by a line of `=`s.
-
-* Each change should be listed with a bullet. If a bullet continues over
-  multiple lines, the second and subsequent lines need to be indented by at
-  least two spaces. (I usually add a blank line between each bullet to make it
-  easier to read.)
-
-* If you have many changes, you can use subheadings to divide them into
-  sections. A subheading should be all upper case and flush left.
-
-* I use markdown formatting inside the bullets. This doesn't help the
-  formatting in R, but is useful if you want to publish the `NEWS` file
-  elsewhere.
-
-You can use `devtools::show_news()` to display the `NEWS` using R's built-in parser and check that it appears correctly. `show_news()` defaults to showing just the news for the most recent version of the package.
-
-Another option is to write `NEWS.md`.  
-
-* Can't include in package (needs to be in `.Rbuildignore`), and so not 
-  on CRAN.
-* Easier to read on github
-* Easier to copy-and-paste into github releases.
+The main challenge with `NEWS.md` is getting into the habit of noting each change as it happens. 
 
 ## The check process {#release-check}
 
-[Checking](#check) described how to run `R CMD check`. For release to CRAN, you need to both run it and document it.
+The automated checks provided by `R CMD check` are described in detail in [automated checking](#check). Here I'll focus on how the automated checks interact with CRAN. 
 
-The most important thing to understand about CRAN is that it's staffed by volunteers and its a lot of work. In a typical week, CRAN recieves around 130 packages, and there are only 3 volunteers to process all the submissions. Anything you can do to make their lives easier is appreciated.
+* You need to have run `R CMD check` and eliminated all `ERROR`s and `WARNING`s.
+  You should have eliminated as many `NOTE`s as possible.
+  
+* You need to clearly communicate what checks you have run and why any potential 
+  problems are in fact ok. 
+  
+I have adopted the convention of using a `cran-comments.md` file to record my communications with CRAN. It should be checked into git (so you can track it over time), and listed in `.Rbuildignore` (so its not included in the package submitted to CRAN). I recommend using markdown in the file, because it gives a standard way of laying out plain text, but the contents will never be rendered to another format, so you don't need to worry about sticking to it too closely.
 
-You must ensure that `R CMD check` passes with no ERRORs or WARNINGs, and you should strive to minimise the number of NOTEs. If there are notes that you do not believe are important, it is almost always easier to hack around them than to persuade CRAN that they're ok. The release process for a package with no NOTEs is much smoother.
+The most important thing to understand about CRAN is that it's staffed by volunteers and its a lot of work. In a typical week, CRAN recieves around 130 packages, and there are only 3 volunteers to process all the submissions. Anything you can do to make their lives easier is appreciated. This means:
 
-In `cran-comments.md` include a bulleted list with one bullet for each note. Make sure it's listed in `.Rbuildignore`. Check into source code control, and modify prior to release. Use markdown (loosely). It should start by saying how you've tested the package. Copy and paste the message from `R CMD check` and include a brief description of why you believe the NOTE is a false-positive. The goal is to create a file that the CRAN maintainers can easily use.
+* Eliminate as many `NOTE`s as possible. Each `NOTE` requires human oversight,
+  which is a precious commodity. If there are notes that you do not believe are 
+  important, it is almost always easier to fix them (even if the fix is a bit 
+  of a hack) than to persuade CRAN that they're ok. 
+  
+* Write your comments in way that's easy to scan, and easy to match up with
+  `R CMD check`. Provide the CRAN maintainers with everything they need in 
+  one place, even if it means repeating yourself.
+
+Your `cran-comments.md` should be organised as follows:
+
+* Start by listing how you have checked the package. What platforms and 
+  what version of R did you use? In an ideal world you will have 
+  checked with the latest development version of R and on at least two 
+  platforms.
+
+* If there are any `NOTE`s, copy and paste the message from `R CMD check` and 
+  include a brief description of why you believe the NOTE is a false positive. 
+  
+* If there are CRAN packages that use your package, you need to run 
+  `R CMD check` on all those packages, and 
 
 For example, here's the relevent bit of `cran-comments.md` for a recent version of devtools:
 
 ```
+The following notes were generated across my local OS X install, ubuntu running on travis-ci and win builder. Response to NOTEs across three platforms below.
+
 * checking dependencies in R code ... NOTE
   Namespace in Imports field not imported from: ‘memoise’
   All declared Imports should be used.
@@ -127,10 +172,6 @@ For example, here's the relevent bit of `cran-comments.md` for a recent version 
   These are needed because devtools simulates package loading, and hence
   needs to attach environments to the search path.
 ```
-
-* R-devel
-* Cross-platform
-* Dependencies
 
 ### R-devel
 
