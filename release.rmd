@@ -76,29 +76,36 @@ I normally structure my `README` as follows:
     complex packages, this will point to vignettes for more details.
 1.  Installation instructions, giving code that can be copied and pasted in R.
 
-If you include an example in your `README` (a good idea!) you may want to generate it with Rmarkdown. Use these tips to make it as easy as possible:
+### README.Rmd {#readme-rmd}
 
-* Use the following yaml block to output a markdown file.
-  ```
-  ---
-  output:
-    md_document:
-      variant: markdown_github
-  ---
-  ```
+If you include an example in your `README` (a good idea!) you may want to generate it with Rmarkdown. The easiest way to get started is to use `devtools::use_readme_rmd()`. This creates a template `README.Rmd` and adds it to `.Rbuildignore`. The template looks like:
+    
+```{r, echo = FALSE, comment = ""}
+cat(devtools:::render_template("README.Rmd"), "\n")
+```
 
-* Add `README.Rmd` to `.Rbuildignore` with 
-  `devtools::add_ignore_file("README.Rmd")`.
+This:
 
-* I recommend using the following knitr options:
+* Uses Github's markdown format for output (it has a few less features than the 
+  pandoc standard).
 
-    ```
-    ```{r, echo = FALSE}
-    knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-    ```
-    ```
+* Includes a comment in `README.md` to remind you to edit `README.Rmd`, not
+  `README.md`.
 
-* Remember to re-knit `README.Rmd` each time you modify it.
+* Sets up my recommend knitr options, including saving an images to 
+  `README-chunkname.png` (which is automatically `.Rbuildignore`d.)
+
+You'll need to remember to re-knit `README.Rmd` each time you modify it. If you use git, `use_readme_rmd()` automatically adds the following "pre-commit" hook:
+
+```bash
+#!/bin/bash
+if [[ README.Rmd -nt README.md ]]; then
+  echo "README.md is out of date; please re-knit README.Rmd"
+  exit 1
+fi 
+```
+
+This prevents `git commit` from succeeding unless `README.md` is more recent than `README.Rmd`. If you get a false positive, you can ignore the check with `git commit --no-verify`.  Note that git commit hooks are not stored in the repository, so every time you check out the repo, you'll need to run `devtools::use_readme_rmd()` to set it up again.
 
 ### NEWS.md {#news}
 
