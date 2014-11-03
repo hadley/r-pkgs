@@ -10,34 +10,35 @@ If you want your package to have significant traction in the R community, you ne
 
 Follow these steps when your package is ready for release:
 
-1. Pick a version.
+1. Pick a version number.
+1. Run and document `R CMD check`.
 1. Update `README.md` and `NEWS.md`.
-1. Document your `R CMD check` process.
 1. Submit the package to CRAN.
 1. Prepare for the next version.
 1. Publicise the new version.
 
-## Version {#release-version}
+## Version number {#release-version}
 
-If you're following the advice in [version](#version), the version number will look like `1.0.0.9000`. Now you need to look at the changes you've made and decide if this will be version `1.0.1`, `1.1.0`, or `2.0.0`:
+If you've been following the advice in [versioning](#version), the version number of your in-development package will have four components, `a.b.c.d` (where d is at least 9000). The released version should only have three components, `a.b.c`, because this makes it easy to see at a glance whether you're working with a released or development package. The three components are often called the major, minor and patch components.
+
+When releasing your package, you need to pick a version number based on the changes you've made. For example, if the current version is `0.8.1` will the next version be `0.8.2`, `0.9.0` or `1.0.0`? Use this advice to decide:
   
-  * For a patch, increment the third component, `1.0.1`. This is for 
-    show-stopping bugs that need to be fixed ASAP.
+  * Increment `c`, e.g. `0.8.2` for a __patch__: you've fixed
+    bugs without adding significant new features. I'll often do a patch release 
+    if after release I discover a show-stopping bug that needs to be fixed 
+    ASAP.
   
-  * For backward compatible changes, increment the second component, `1.1.0`. 
-    If you've added new features and fixed bugs in such a way that existing code 
-    should continue work, increment the second component. This is the most
-    common type of release. It's perfectly fine to have so many minor releases
-    that you need to use two digits, e.g. `1.17.0`.
+  * Increment `b`, e.g. `0.9.0`, for a __minor release__. A minor 
+    release can include bug fixes, new features and backward compatible changes. 
+    This is the most common type of release. It's perfectly fine to have so 
+    many minor releases that you need to use two digits, e.g. `1.17.0`.
   
-  * For backward incompatilbe changes, increment the first component, `2.0.0`.
-    If you've made backward incompatible changes that are likely to affect many 
-    users. (Some subjectivity is needed here - if you've made a backward 
-    incompatible change to a function that no one is likely to use then 
-    a minor version might be acceptable. You need to use your judgement.)
-    
-    You may also increment from `0.9.0` to `1.0.0` when you feel that the package
-    is feature complete and the API is unlikely to change majorly in the future.
+  * Increment `b`, e.g. `1.0.0`, for a __major release__. This is
+    best reserved for backward incompatible changes that are likely to affect many 
+    users. Going from `0.b.c` to `1.0.0` typically indicates that your package
+    is feature complete with a stable API.
+
+These are guidelines. In practice, you might make changes that fall between the cracks. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. If you fix a bug that many people are depending on, it will feel like an API breaking change. Uses your best judgement.
 
 ### Backward compatibility
 
@@ -53,81 +54,6 @@ If you want to be more conservation, and avoid breaking existing code, you can u
 
 * Avoid significant changes to the operation of a function. Instead create a 
   new function.
-
-## Important files {#important-files}
-
-Every package should contain a `README.md` that describes what the package does, and a `NEWS.md` that describes what's changed since the previous version. I recommend using markdown for these files, because it's useful for them to be readable in plain text (e.g. in emails) and in html (e.g. on github, in blog posts). I recommend using Github flavoured markdown, [gfm](#gfm), for these files.
-
-### README.md {#readme}
-
-The goal of the `README.md` is to answer the following questions:
-
-* Why should I use it?
-* How do I use it?
-* How do I get it?
-
-On github, the `README.md` will be rendered to html and displayed on the repo home page. 
-
-I normally structure my `README` as follows:
-
-1.  A paragraph that describes the high-level purpose of the package.
-1.  An example showing how to use the package to solve a simple problem.
-1.  An overview that describes the main components of the package. For more
-    complex packages, this will point to vignettes for more details.
-1.  Installation instructions, giving code that can be copied and pasted in R.
-
-### README.Rmd {#readme-rmd}
-
-If you include an example in your `README` (a good idea!) you may want to generate it with Rmarkdown. The easiest way to get started is to use `devtools::use_readme_rmd()`. This creates a template `README.Rmd` and adds it to `.Rbuildignore`. The template looks like:
-    
-```{r, echo = FALSE, comment = ""}
-cat(devtools:::render_template("README.Rmd"), "\n")
-```
-
-This:
-
-* Uses Github's markdown format for output (it has a few less features than the 
-  pandoc standard).
-
-* Includes a comment in `README.md` to remind you to edit `README.Rmd`, not
-  `README.md`.
-
-* Sets up my recommend knitr options, including saving an images to 
-  `README-chunkname.png` (which is automatically `.Rbuildignore`d.)
-
-You'll need to remember to re-knit `README.Rmd` each time you modify it. If you use git, `use_readme_rmd()` automatically adds the following "pre-commit" hook:
-
-```bash
-#!/bin/bash
-if [[ README.Rmd -nt README.md ]]; then
-  echo "README.md is out of date; please re-knit README.Rmd"
-  exit 1
-fi 
-```
-
-This prevents `git commit` from succeeding unless `README.md` is more recent than `README.Rmd`. If you get a false positive, you can ignore the check with `git commit --no-verify`.  Note that git commit hooks are not stored in the repository, so every time you check out the repo, you'll need to run `devtools::use_readme_rmd()` to set it up again.
-
-### NEWS.md {#news}
-
-The `README.md` is aimed at a potential new user of your package. The `NEWS.md` is aimed at existing users: it should list all changes in each last release of the package. There are a number formats you can use for package news, but I recommend `NEWS.md`. It's not supported by CRAN (so you'll need to run `devtools::add_build_ignore("NEWS.md")`), but it's well supported by github and is easy to re-purpose to other formats.
-
-Organise your `NEWS.md` as follows:
-
-* Use a level-one heading for each version: e.g. `# mypage 1.0`. The most
-  recent version should go at the top.
-
-* Each change should be included in a bulleted list. If you have a lot of 
-  changes you might want to break them up using subheadings, `## Major changes`,
-  `## Bug fixes` etc. I usually stick with a simple list until just before
-  releasing the package when I'll reorgnise into sections, if needed.
-  It's hard to know in advance exactly how many 
-
-* If an item is related to an issue in github, include the issue number in
-  parentheses, e.g. `(#10)`. If an item is related to a pull request, include 
-  the pull request number and the author, e.g. `(#101, @hadley)`. Doing
-  this makes it easy to navigate to the relevant issues on github.
-
-The main challenge with `NEWS.md` is getting into the habit of noting each change as it happens. 
 
 ## The check process {#release-check}
 
@@ -238,6 +164,83 @@ Most important points:
 * Packages shouldn't make external changes without explicit user permission.
   Don't write to the file system, change options, install packages, quit R, 
   send information over the internet, open external software, etc.
+
+
+## Important files {#important-files}
+
+Every package should contain a `README.md` that describes what the package does, and a `NEWS.md` that describes what's changed since the previous version. I recommend using markdown for these files, because it's useful for them to be readable in plain text (e.g. in emails) and in html (e.g. on github, in blog posts). I recommend using Github flavoured markdown, [gfm](#gfm), for these files.
+
+### README.md {#readme}
+
+The goal of the `README.md` is to answer the following questions:
+
+* Why should I use it?
+* How do I use it?
+* How do I get it?
+
+On github, the `README.md` will be rendered to html and displayed on the repo home page. 
+
+I normally structure my `README` as follows:
+
+1.  A paragraph that describes the high-level purpose of the package.
+1.  An example showing how to use the package to solve a simple problem.
+1.  An overview that describes the main components of the package. For more
+    complex packages, this will point to vignettes for more details.
+1.  Installation instructions, giving code that can be copied and pasted in R.
+
+### README.Rmd {#readme-rmd}
+
+If you include an example in your `README` (a good idea!) you may want to generate it with Rmarkdown. The easiest way to get started is to use `devtools::use_readme_rmd()`. This creates a template `README.Rmd` and adds it to `.Rbuildignore`. The template looks like:
+    
+```{r, echo = FALSE, comment = ""}
+cat(devtools:::render_template("README.Rmd"), "\n")
+```
+
+This:
+
+* Uses Github's markdown format for output (it has a few less features than the 
+  pandoc standard).
+
+* Includes a comment in `README.md` to remind you to edit `README.Rmd`, not
+  `README.md`.
+
+* Sets up my recommend knitr options, including saving an images to 
+  `README-chunkname.png` (which is automatically `.Rbuildignore`d.)
+
+You'll need to remember to re-knit `README.Rmd` each time you modify it. If you use git, `use_readme_rmd()` automatically adds the following "pre-commit" hook:
+
+```bash
+#!/bin/bash
+if [[ README.Rmd -nt README.md ]]; then
+  echo "README.md is out of date; please re-knit README.Rmd"
+  exit 1
+fi 
+```
+
+This prevents `git commit` from succeeding unless `README.md` is more recent than `README.Rmd`. If you get a false positive, you can ignore the check with `git commit --no-verify`.  Note that git commit hooks are not stored in the repository, so every time you check out the repo, you'll need to run `devtools::use_readme_rmd()` to set it up again.
+
+### NEWS.md {#news}
+
+The `README.md` is aimed at a potential new user of your package. The `NEWS.md` is aimed at existing users: it should list all changes in each last release of the package. There are a number formats you can use for package news, but I recommend `NEWS.md`. It's not supported by CRAN (so you'll need to run `devtools::add_build_ignore("NEWS.md")`), but it's well supported by github and is easy to re-purpose to other formats.
+
+Organise your `NEWS.md` as follows:
+
+* Use a level-one heading for each version: e.g. `# mypage 1.0`. The most
+  recent version should go at the top.
+
+* Each change should be included in a bulleted list. If you have a lot of 
+  changes you might want to break them up using subheadings, `## Major changes`,
+  `## Bug fixes` etc. I usually stick with a simple list until just before
+  releasing the package when I'll reorgnise into sections, if needed.
+  It's hard to know in advance exactly how many 
+
+* If an item is related to an issue in github, include the issue number in
+  parentheses, e.g. `(#10)`. If an item is related to a pull request, include 
+  the pull request number and the author, e.g. `(#101, @hadley)`. Doing
+  this makes it easy to navigate to the relevant issues on github.
+
+The main challenge with `NEWS.md` is getting into the habit of noting each change as it happens. 
+
 
 ## Release
 
