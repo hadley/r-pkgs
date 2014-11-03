@@ -34,26 +34,86 @@ When releasing your package, you need to pick a version number based on the chan
     many minor releases that you need to use two digits, e.g. `1.17.0`.
   
   * Increment `b`, e.g. `1.0.0`, for a __major release__. This is
-    best reserved for backward incompatible changes that are likely to affect many 
-    users. Going from `0.b.c` to `1.0.0` typically indicates that your package
-    is feature complete with a stable API.
-
-These are guidelines. In practice, you might make changes that fall between the cracks. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. If you fix a bug that many people are depending on, it will feel like an API breaking change. Uses your best judgement.
-
+    best reserved for backward incompatible changes that are likely to affect 
+    many users. Going from `0.b.c` to `1.0.0` typically indicates that your 
+    package is feature complete with a stable API.
+    
 ### Backward compatibility
 
-The importance of backward compatability is directly proportional to the number of people using your package. When you start developing a package, I wouldn't worry too much about backward compatibility. Sure, you'll break some code, but you don't want to be paralysed.  You are effectively trading your time for your users time. The harder you strive to be backward compatible, the harder it is to develop new features. It also gets harder to read and understand your code because it has to incorporate multiple paths for previous versions.
+These are guidelines. In practice, you might make changes that fall between the cracks. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. If you fix a bug that many people are depending on, it will feel like an API breaking change. Use your best judgement.
 
-If you want to be more conservation, and avoid breaking existing code, you can use the following techniques:
+The importance of backward compatability is directly proportional to the number of people using your package. You are effectively trading your time for your users time. The harder you strive to be backward compatible, the harder it is to develop new features. It also gets harder to read and understand your code because it has to incorporate multiple paths for previous versions. Be concerned about backward compatibility, but don't let it paralyse you. R users are increasingly recognising the importance of capturing version dependencies on a per-project basis. Using a tool like [packrat](http://rstudio.github.io/packrat/) protect you from the vicissitudes of package maintainers.
 
-* Don't immediately remove a function. First deprecate it, then flag it as 
-  defunct, then remove it.
+If you want to be more conservative, and avoid breaking existing code, you can use the following techniques:
 
-* Don't just immediately remove function arguments. Keep both arguments in the 
-  function but print a warning when the wrong version is used.
+  * Don't immediately remove a function. First deprecate it. For example, imagine
+    your package is version `0.5.0` and you want to remove `fun()`. In 
+    version, `0.6.0`, you'd use `.Deprecated()` to display a warning message
+    whenever someone uses the function:
+  
+    ```{r}
+    # 0.1.0
+    fun <- function(x, y, z) {
+      .Deprecated("sum")
+      x + y + z
+    }
+    ```
+    
+    Then you'd remove the function once you got to `0.7.0` (or if you were
+    being very strict, once you got to `1.0.0` since it's a backward 
+    incompatible change).
 
-* Avoid significant changes to the operation of a function. Instead create a 
-  new function.
+  * Similarly, if you're removing a function argument, first warn about it:
+  
+    ```{r}
+    bar <- function(x, y, z) {
+      if (!missing(y)) {
+        warning("argument y is deprecated; please use z instead.", 
+          call. = FALSE)
+        z <- y
+      }
+    }
+    ```
+
+  * If you're deprecating a lot of components, it can be useful to add 
+    a helper function. For example, ggplot2 has `gg_dep` which automatically
+    displays a message, warning or error, depending on how much the version
+    number has changed.
+    
+    ```{r}
+    gg_dep <- function(version, msg) {
+      v <- as.package_version(version)
+      cv <- packageVersion("ggplot2")
+    
+      # If current major number is greater than last-good major number, or if
+      #  current minor number is more than 1 greater than last-good minor number,
+      #  give error.
+      if (cv[[1,1]] > v[[1,1]]  ||  cv[[1,2]] > v[[1,2]] + 1) {
+        stop(msg, " (Defunct; last used in version ", version, ")",
+          call. = FALSE)
+    
+      # If minor number differs by one, give warning
+      } else if (cv[[1,2]] > v[[1,2]]) {
+        warning(msg, " (Deprecated; last used in version ", version, ")",
+          call. = FALSE)
+    
+      # If only subminor number is greater, give message
+      } else if (cv[[1,3]] > v[[1,3]]) {
+        message(msg, " (Deprecated; last used in version ", version, ")")
+      }
+    
+      invisible()
+    }
+    ```
+
+  * Making significant changes to a function will require planning and may 
+    require gradual changes over multiple versions. A good case study is 
+    `install_github()`. The initial version of install github assumed that 
+    the username was hadley. After I realised that many other people wanted 
+    to use it, I decided it was better to be explicit and use `hadley/devtools`.
+    Then after several more versions I deprecated the `username` parameter.
+    Eventually I'll remove it all together.
+
 
 ## The check process {#release-check}
 
@@ -165,7 +225,6 @@ Most important points:
   Don't write to the file system, change options, install packages, quit R, 
   send information over the internet, open external software, etc.
 
-
 ## Important files {#important-files}
 
 Every package should contain a `README.md` that describes what the package does, and a `NEWS.md` that describes what's changed since the previous version. I recommend using markdown for these files, because it's useful for them to be readable in plain text (e.g. in emails) and in html (e.g. on github, in blog posts). I recommend using Github flavoured markdown, [gfm](#gfm), for these files.
@@ -249,9 +308,11 @@ Once you've run the automated checks on you need to upload your package to CRAN.
 * Adding extra questions
 * Comments to CRAN
 
-On failure, make the suggested changes, update `cran-comments.md` describing what you did and why, and re-run `release()`. CRAN prefers you to not respond to their emails unless discussion is required.
+### On failure
 
-Failures are frustrating, and the response you receive may be curt or downright insulting. Unfortunately no recourse is available, so you just have to develop a thick skin. You're not alone: even members of R-core have to go through the same gruelling process, and CRAN is no friendlier to them. Try not to get upset by the feedback. Ignore any ad hominen attacks, and simply respond to the technical content. 
+Failures are frustrating, and the response you receive may be curt or downright insulting. Unfortunately no recourse is available, so you just have to develop a thick skin. You're not alone: even members of R-core have to go through the same gruelling process, and CRAN is no friendlier to them. Try not to get upset by the feedback. Ignore any ad hominen attacks, and simply respond to the technical content.  Arguing with CRAN about the merits of a check is usually fruitless and best avoided.
+
+On failure, make the suggested changes, update `cran-comments.md` describing what you did and why, and re-run `release()`. CRAN prefers you to not respond to their emails unless discussion is required.
 
 Devtools comes with a small guarantee to make life a little more pleasant: If a CRAN maintainer is annoyed with you because devtools did something wrong, I will send you a hand-written apology card. Please send me an email with your address.
 
