@@ -241,11 +241,11 @@ Running a sequence of expectations is useful because it ensures that your code b
 
 ## Tests
 
-Each test should test a single item of functionality and have an informative name. The idea is that when a test fails, you should know exactly where to look for the problem in your code. You create a new test with `test_that()`, with parameters name and code block. The test name should complete the sentence "Test that" and the code block should be a collection of expectations. When there's a failure, it's the test name that will help you figure out what's gone wrong.
+Each test should have an informative name and cover a single item of functionality. The idea is that when a test fails, you'll know what's wrong and where in your code to look for the problem. You create a new test using `test_that()`, with parameter names and code block as arguments. The test name should complete the sentence "Test that ..." The code block should be a collection of expectations.
 
-It's up to you how to organise your expectations into tests. The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem. Try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer big tests.
+It's up to you how to organise your expectations into tests. The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem. Try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer larger tests.
 
-Each test is run in its own environment so it is self-contained. The exceptions are actions which have effects outside the local environment. These include things that affect:
+Each test is run in its own environment and is self-contained. The exception are actions which have effects outside the local environment. These include things like:
 
 * The filesystem: creating and deleting files, changing the working directory,
   etc.
@@ -254,7 +254,7 @@ Each test is run in its own environment so it is self-contained. The exceptions 
 
 * Global options, like `options()` and `par()`.
 
-When you use these actions in tests, you'll need to clean up after yourself. Many other testing packages have set-up and teardown methods that are run automatically before and after each test. These are not so important with testthat because you can create objects outside of the tests and rely on R's copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.
+When you use these actions in tests, you'll need to clean up after yourself. While many other testing packages have set-up and teardown methods that are run automatically before and after each test, these are not so important with testthat because you can create objects outside of the tests and you can rely on R's copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.
 
 ### What to test
 
@@ -274,7 +274,7 @@ You may find it helpful to adopt the test first philosphy. There you always star
 
 ### Skipping a test
 
-Sometimes it's impossible to perform a test - maybe you need an internet connection and it's not present, or there's a missing file. The more systems that you test your code on, the more likely that you won't be able to run all of your tests. Instead of giving a failure, sometimes you just want to skip the test. To do that, you can use the `skip()` function - it will print an `S` in the output, but it won't throw an error.
+Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file. Unfortunately, another likely reason follows from this simple rule: the more machines you use to write your code, the more likely it is that you won't be able to run all of your tests. In short, there are times when, instead of getting a failure, you just want to skip a test. To do that, you can use the `skip()` function - rather than throwing an error it simply prints an `S` in the output.
 
 ```{r, eval = FALSE}
 check_api <- function() {
@@ -289,10 +289,9 @@ test_that("foo api returns bar when given baz", {
 })
 ```
 
-
 ### Refactoring common behaviour
 
-The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.  There's a lot of duplication in these tests, so we might want to extract common behaviour into a new function.
+The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. There's a lot of duplication in these tests, so we might want to extract common behaviour into a new function.
 
 ```{r}
 library(lubridate)
@@ -345,13 +344,13 @@ expect_floor_equal <- function(unit, time) {
 expect_floor_equal("year", "2009-01-01 00:00:00")
 ```
 
-However, this doesn't give very informative output if the expectation fails:
+However, if the expectation fails this doesn't give very informative output:
 
 ```{r, error = TRUE}
 expect_floor_equal("year", "2008-01-01 00:00:00")
 ```
 
-Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce more informative output. The key is to use `bquote()` and `eval()`. In the `bquote()` call below, note the use of `.(x)` - the value of anything inside will be inserted into the call.
+Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce something more informative. The key is to use `bquote()` and `eval()`. In the `bquote()` call below, note the use of `.(x)` - the value of anything inside that argument will be inserted into the call.
 
 ```{r, error = TRUE}
 expect_floor_equal <- function(unit, time) {
@@ -361,7 +360,7 @@ expect_floor_equal <- function(unit, time) {
 expect_floor_equal("year", "2008-01-01 00:00:00")
 ```
 
-This sort of refactoring is often worthwhile because it removing repeated code makes it easier to see what's changing. It's important that your tests be easy to read so that you can be confident they're correct.
+This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what's changing. More importantly, readable tests give you more confidence that they're correct.
 
 ```{r}
 test_that("floor_date works for different units", {
