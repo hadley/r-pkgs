@@ -6,48 +6,138 @@ output: bookdown::html_chapter
 
 # Git and github {#git}
 
-It is possible to use tools other than git and websites other than github. However, the majority of the R community uses git and github, and I think it's the friendliest system for new developers.
+  * Do you have a directory full of files like `my-script.R`, `my-script-1.R`,
+    `myscript-2-I-really-hope-this-works.R`, `myscript-FINALLY.R` and so on?
+    Git takes care of managing multiple versions of your code so that you
+    can easily see what's change, and revert any mistakes that you've made.
 
-## Git
+  * It makes it easy for other people to install your package. Any R user can 
+    get your package with at most two lines of code:
+    
+    ```{r, eval = FALSE}
+    install.packages("devtools")
+    devtools::install_github("username/packagename")
+    ```
+    
+  * Not only can other people use your code, they can also suggest improvements 
+    with pull requests. Once you've experienced your first pull request, you'll
+    never want to go back to developing code any other way.
+    
+  * Github makes it possible to collaboratively code a package with other 
+    people. As long as you're working on different parts of the file,
+    git can figure out how to combine your changes. If you are working on
+    the same part of the file, git provides tools to help you choose
+    between the conflicting changes.
 
-Using a source code control system, like git, is highly recommended because it makes it easy to:
+  * Track issues.
 
-* incorporate contributions from multiple developers working on the code at
-  the same time
+At first, working in the open seems a little scary. Do you really want the whole world seeing your crappy code? Don't worry, nobody is judging you - everybody rights bad code at some point in their lives, and most people are more interested in helping you write better code than making fun of your existing efforts. Once you get used to it, you'll find that coding in the open is tremendously empowering as it helps other people help you.
 
-* rewind time to undo mistakes or see what has changed between working code and broken code
+Yes, you can do many of the same things with tools other than git (like svn or bazaar or mercurial) and other websites (like gitlab and bitbucket). But the majority of the R community uses git and github, and I think it's the friendliest system for new developers (and being the most popular means that it's more likely that someone has solved the same problem as you in the past). 
 
-In this document, I'll describe the use of git and github because they are the tools that I am most familiar with. There are many others (like subversion, mercurial and bazaar) that offer similar capabilities - the choice of git is somewhat arbitrary but the skills will readily transfer to other systems.
+This chapter describes git and github together, making no attempt to separate the features of each. To me, git and github are best used together.
 
-I'll just give you the basics, and give pointers to places where you can learn more advanced techniques.
+No one knows all of the possible github commands, and it's very possible to get stuck and not know how to figure it out. Fortunately, pretty much every possible git problem has already been experienced by someone else, and they've asked about it on stackoverflow, and got a selection of great answers. As you start learning git you should absolutely expect to be using SO to figure out problems.
 
-http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+## Initial set up
 
-### The basics
+1.  Install git:
 
-To really master git, you'll need to use it from the command line. However, you can get a lot out of git without mastering it, so in this chapter I'll focus on the 
+    * Windows: <http://msysgit.github.io/>
+    * OSX: <http://code.google.com/p/git-osx-installer/>
+    * Debian/Ubuntu: `sudo apt-get install git-core`
+
+1.  Sign up for github: <https://github.com>.
+
+1.  ```bash
+    git config --global user.name "YOUR NAME"
+    git config --global user.email "YOUR EMAIL ADDRESS"
+    ```
+    
+1.  Generate ssh keys. You can either follow the github instructions at
+    <https://help.github.com/articles/generating-ssh-keys/>, or do it 
+    via RStudio in Preferences > Git/SVN > Create RSA key.... 
+
+## Git, github and RStudio
+
+Git pane.
+File drop-down.
+
+## Create a new git repository
 
 * `git init`
-* `git add`
-* `git commit`
-* `git push`
-* `git pull`
-* `git st`
-* `git diff`
 
-## Github
+* Initialise when you create a project 
 
-* makes it easy for others to send in patches
-* ticketing system for tracking bugs
-* RSS feed of changes, and line-by-line comments are very useful for working with collaborators
+* Project options
 
-Additionally github gives you free hosting for public repositories.  You only have to pay if you want private repositories with private collaborators.
+To connect github to an existing package:
 
+1.  Create a new repo: <https://github.com/new>
+
+1.  ```
+    git remote add origin git@github.com:rstudio/ggcomp.git
+    git push -u origin master
+    ```
+
+(`use_github()` will be coming soon to a devtools near you)
+
+Once you've put your package on github, make sure to update your `DESCRIPTION` to include links to your repo, e.g.:
+
+```
+URL: http://github.com/hadley/dplyr
+BugReports: http://github.com/hadley/dplyr/issues
+```
+
+## See what's changed
+
+* RStudio pane
+* `git st`, `git diff`
+
+## Add and commit files
+
+Staging.
+
+* Rstudio git pane
+* (Stage chunk and discard chunk)
+* `git add`, `git commit`.
+
+The first line of a commit message should be 50 characters or less. If it's a simple commit, that's all you need. If it's more complicated, follow it with a blank line and then a paragraph or bulleted list describing what you've done in more detail.  The purpose of the commit message is when other people (including future you!) are skimming the commits it describes what's changed. It's worthwhile to spend a little effort on your commit messages, so that if you do need to look at history, you can easily see. But don't spend too much time!  Most important when you're on a team.
+
+Write messages in imperative. "Fix this bug". Not "fixed this bug".  Write it as if you were telling someone what to do.
+
+Generally better to err on the side of smaller commits than larger commits.
+
+Github shows first line. Then click ... to show others.
+
+Ignoring files that you never want to commit. If there are files that you don't want to commit it's error prone to unselect them each time. Instead add them to `.gitignore` to prevent them from every being added.
+
+## Synchronise with github
+
+Use push to send your changes to github. Use pull to get them back.
+
+How does Rstudio deal with conflicts?
+
+* `git push`, `git pull`
+
+## History
+
+* History view
 * View on github
 * Blame on github
 
-### Commit messages
+## Issues
 
-`Close #n`, `@xyz`. etc.
+I recommend that you use them. Don't go too crazy with tags and milestones.
 
-### Github flavoured markdown {#gfm}
+Close issues with commit messages: `Close #n`, `@xyz`. etc.
+
+Good idea to add a bullet point to `NEWS.md`. Describe more in user terms. Commit message describes in developer terms.
+
+## Pull requests
+
+### Handling
+
+### Making
+
+* Branch
