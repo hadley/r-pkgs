@@ -14,16 +14,15 @@ When you first start using namespaces, it'll seem like a lot of work for little 
 
 As the name suggests, namespaces provide "spaces" for "names". They provide a context for looking up the value of an object associated with a name. 
 
-You've probably already used namespaces in your data analysis. Have you used `::` before? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a `summarize()` function. If you load plyr, then Hmisc, `summarize()` will refer to the HMisc version; if you load the packages in the opposite order, then `summarize()` will refer to the plyr version. This is obviously 
-confusing, so instead, you can be explicit and refer to `Hmisc::summarize()` or `plyr::summarize()`. Then it doesn't matter the order in which the packages were loaded.
+Without knowing it, you've probably already used namespaces. For example, have you ever used `::`? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a `summarize()` function. If you load plyr, then Hmisc, `summarize()` will refer to the HMisc version. But if you load the packages in the opposite order, then `summarize()` will refer to the plyr version. This is obviously confusing, so instead, you can be explicit and refer to `Hmisc::summarize()` or `plyr::summarize()`. Then the order in which the packages were loaded won't matter.
 
-In package development, namespaces help your packages be self contained in two ways. The namespace __imports__ defines how a function in a package finds a function in another package. What happens if someone changes the definition of a function that you rely on? For example, take the simple `nrow()` function in base R:
+Namespaces make your packages self-contained in two ways: __imports__ and __exports__. The __imports__ namespace defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple `nrow()` function in base R:
   
 ```{r}
 nrow
 ```
 
-It's defined in terms of `dim()`, so what happens if we override `dim()` 
+It's defined in terms of `dim()`. So what will happen if we override `dim()` 
 with our own definition? Does `nrow()` break?
 
 ```{r}
@@ -32,11 +31,11 @@ dim(mtcars)
 nrow(mtcars)
 ```
 
-Suprisingly, it does not! That's because when `nrow()` looks for an object 
+Surprisingly, it does not! That's because when `nrow()` looks for an object 
 called `dim()`, it uses the package namespace, so it finds `dim()` in 
 the base environment, not the `dim()` we created in the global environment.
 
-Namespaces also help your package avoid conflicts with other packages through the __exports__. The exports control which functions are available outside of your package. Internal functions are available only within your package - they can't (easily) be used from another package. You export a minimal set of functions to be used by others; the fewer functions you export, the smaller the chance of a conflict with another package. (Conflicts aren't the end of the world, because you can always use `::` to disambiguate but they're best avoided where possible because it makes the lives of your users easier.)
+The __exports__ namespaces helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can't easily be used by another package). Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. (While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible because it makes the lives of your users easier.)
 
 ## Search path {#search-path}
 
