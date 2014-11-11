@@ -33,43 +33,195 @@ output: bookdown::html_chapter
 
 At first, working in the open seems a little scary. Do you really want the whole world seeing your crappy code? Don't worry, nobody is judging you - everybody rights bad code at some point in their lives, and most people are more interested in helping you write better code than making fun of your existing efforts. Once you get used to it, you'll find that coding in the open is tremendously empowering as it helps other people help you.
 
-Yes, you can do many of the same things with tools other than git (like svn or bazaar or mercurial) and other websites (like gitlab and bitbucket). But the majority of the R community uses git and github, and I think it's the friendliest system for new developers (and being the most popular means that it's more likely that someone has solved the same problem as you in the past). 
+You can do many of the same things with other tools (like svn or bazaar or mercurial) and other websites (like gitlab and bitbucket). But I think git and github is the friendliest system for new developers, not least because it's the most popular, which means every possible problem has already been asked and answered on StackOverflow. Indeed, StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first recourse.
 
-This chapter describes git and github together, making no attempt to separate the features of each. To me, git and github are best used together.
+This chapter describes git and github together, making no attempt to separate the features of each. The goal is to give you the absolute minimum you need to know to use git for an R package. After reading this chapter and working with git for a while, it's highly likely that you'll want to learn more. Some good resource are:
 
-No one knows all of the possible github commands, and it's very possible to get stuck and not know how to figure it out. Fortunately, pretty much every possible git problem has already been experienced by someone else, and they've asked about it on stackoverflow, and got a selection of great answers. As you start learning git you should absolutely expect to be using SO to figure out problems.
+* Github help, <https://help.github.com>. This not only teaches you about
+  github, but also many of the features of git as well.
+  
+* If you'd like to practice using git from the command line, try 
+  <https://try.github.io>. It steps you through a number of challenges in
+  a virtual shell.
+
+* If you'd like to learn more about the details of git, read 
+  [Pro Git](http://git-scm.com/book/en/v2) by Scott Chacon and Ben Straub.
+
+RStudio provides many tools to make your day-to-day use of git as easy as possible. However, there are a huge number of git commands, and they're not at all available in the IDE. That means you'll need to run a handful of commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. The easiest way to get to a shell is Tools > Shell.
+
+Git and backups. Git is not a replacement for a backup system.
 
 ## Initial set up
+
+If you've never used git or github before, you'll need to do a little initial setup:
 
 1.  Install git:
 
     * Windows: <http://msysgit.github.io/>
-    * OSX: <http://code.google.com/p/git-osx-installer/>
+    * OS X: <http://code.google.com/p/git-osx-installer/>
     * Debian/Ubuntu: `sudo apt-get install git-core`
 
 1.  Sign up for github: <https://github.com>.
 
-1.  ```bash
-    git config --global user.name "YOUR NAME"
-    git config --global user.email "YOUR EMAIL ADDRESS"
+1.  In a shell, run:
+
+    ```bash
+    git config --global user.name "<YOUR NAME>"
+    git config --global user.email "<YOUR EMAIL ADDRESS>"
     ```
     
-1.  Generate ssh keys. You can either follow the github instructions at
-    <https://help.github.com/articles/generating-ssh-keys/>, or do it 
-    via RStudio in Preferences > Git/SVN > Create RSA key.... 
+1.  If needed, generate ssh keys. You can check if you have an ssh key
+    already by running:
+    
+    ```{r, eval = FALSE}
+    file.exists("~/.ssh/id_rsa.pub")
+    ```
 
-## Git, github and RStudio
+    If it's `FALSE`, you'll need to create one. You can follow the [github 
+    instructions](https://help.github.com/articles/generating-ssh-keys) or
+    use RStudio. Go to RStudio preferences, choose the Git/SVN panel, then 
+    click "Create RSA key...":
+    
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-config.png", dpi = 220)
+    ```
 
-Git pane.
-File drop-down.
+## Create a local git repository
 
-## Create a new git repository
+Now that you have git installed and configured, you need to initialise a local git repository for your package. This repository (or repo for short) exists only on your computer. 
 
-* `git init`
+There are two ways to do this:
 
-* Initialise when you create a project 
+  * In RStudio, go to project options, then the Git/SVN panel. Change the 
+    "Version control system" from "None" to "Git":
+    
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-proj-config.png", dpi = 220)
+    ```
+    
+    You'll then be prompted to restart RStudio.
 
-* Project options
+  * In a shell, run `git init`. Restart RStudio and reopen your package.
+
+Once git has been activated in a project, you'll see two new components in the IDE:
+
+  * The git pane. This appears in the top-right by default. It shows you what
+    files have changed since you last committed, and exposes the most important
+    git commands as buttons.
+    
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-pane.png", dpi = 220)
+    ```
+    
+  * The git dropdown in the toolbar. This exposes git and github commands
+    useful for working with the current file:
+  
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-dropdown.png", dpi = 220)
+    ```
+
+## See what's changed
+
+The RStudio git pane shows you at a glance what you've changed since the last time you committed ("saved") your changes. This is equivalent to running `git status` in the shell. Each modified file is listed, along with an icon summarising the change:
+
+* Unknown: `r bookdown::embed_png("screenshots/git-unknown.png", dpi = 220)`.
+  You'll see this when you first add a file to git
+  when you first add a new file, git doesn't 
+
+* Deleted: `r bookdown::embed_png("screenshots/git-deleted.png", dpi = 220)`
+
+* Modified: `r bookdown::embed_png("screenshots/git-modified.png", dpi = 220)`.
+  You can get more details about how the files have been modified with a 
+  "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`.
+  This opens a new window showing the detailed __diff__erences: removed text
+  is shown in red and new text is shown in green. (This is equivalent to running
+  `git diff` in the shell).
+
+## Add and commit files
+
+The fundamenetal unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. A commit is a checkpoint in the history of your code - it's fixed and unchanging, and you can go back to it in time.  Each commit is given a unique id, called a sha. 
+
+Commit is used in two senses: 
+
+* A noun: a commit is a snapshot in time.
+* A verb: commit you code to create a new snapshot.
+
+I'll try to avoid confusing sentences like you commit code to create a commit.
+
+There are two steps to creating a new commit:
+
+1.  You __stage__ files, telling git that you want to include them in the
+    next commit. On the command line, this is done with `git add` for new files
+    and `git rm` for old files.
+  
+1.  You __commit__ the staged files, describe the changes with a message.
+    This is equivalent to `git commit` on the command line.
+
+You perform both these steps in the same place in RStudio: the commit window. Open the commit window by clicking `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)`. This opens three-pane window. This one shows the status while I was working on this chapter.
+
+```{r, echo = FALSE}
+bookdown::embed_png("screenshots/git-commit-window.png", dpi = 220)
+```
+
+* The top-left pane is the status, the same as the git pane.
+
+* The top-right pane is the commit message, where you provide a human readable
+  message describing the changes you've made in this commit. More on that 
+  shortly.
+
+* The bottom pane shows the diff for the currently selected file. 
+
+To make a new commit:
+
+1.  Save your current file.
+
+1.  Click commit or press `Ctrl + Cmd + M`.
+
+1.  Stage the files that you want to be included. If you want to include all 
+    the files, press Cmd + A, then click 
+    `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`.
+    As you stage each file, you'll notice that its status will change. There 
+    are two columns: staged (on the left) and unstaged (on the right). You'll 
+    see two new statuses:
+
+      * Added: `r bookdown::embed_png("screenshots/git-added.png", dpi = 220)`: once
+        you've staged a new file, git now knows that you've added it to the repo.
+      
+      * Renamed: `r bookdown::embed_png("screenshots/git-renamed.png", dpi = 220)`:
+        If you rename a file, git initially sees it as a delete and an add. If you
+        stage the new and old files, git will recognise it as a rename.
+
+1.  Write a commit message (top-right panel). The first line of a commit message 
+    should be 50 characters or less and summarise the changes you've made. For
+    complicate commits, you can follow it with a blank line and then a paragraph 
+    or bulleted list providing more detail. Write messages in imperative, like
+    you're telling someone what to do: "fix this bug", not "fixed this bug".
+    
+    The purpose of the commit message is when other people (including future 
+    you!) are skimming the commits it describes what's changed. It's worthwhile 
+    to spend a little effort on your commit messages, so that if you do need to 
+    look at history, you can easily see. But don't spend too much time!  
+    Most important when you're on a team.
+
+1.  Click Commit.
+
+Often there are files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling), or they might be too big, or they might be generated on demand. Instead of not-staging them each time, you should add them to `.gitignore` to prevent them from every being added.  The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard like `*.png`.
+
+## Undo a mistake
+
+* If you made a mistake in a commit, you can modify the previous commit by 
+  clicking `r bookdown::embed_png("screenshots/git-commit-amend.png", dpi = 220)`. 
+  There are more advanced history modifying features available from the command
+  line. See [rewriting history](http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History)
+  for details.
+  
+* If you want undo the changes you've made to a file, right click on it in 
+  the git pane and select "revert". BEWARE: this will undo all local changes
+  and you can't recover them.
+
+## Connect your repo to github
+
+Most of the time you work locally. This is really convenient because you don't need internet access to use git - you can keep on committing changes even when you're on a plane, and then later synchronise with thyour 
 
 To connect github to an existing package:
 
@@ -88,29 +240,6 @@ Once you've put your package on github, make sure to update your `DESCRIPTION` t
 URL: http://github.com/hadley/dplyr
 BugReports: http://github.com/hadley/dplyr/issues
 ```
-
-## See what's changed
-
-* RStudio pane
-* `git st`, `git diff`
-
-## Add and commit files
-
-Staging.
-
-* Rstudio git pane
-* (Stage chunk and discard chunk)
-* `git add`, `git commit`.
-
-The first line of a commit message should be 50 characters or less. If it's a simple commit, that's all you need. If it's more complicated, follow it with a blank line and then a paragraph or bulleted list describing what you've done in more detail.  The purpose of the commit message is when other people (including future you!) are skimming the commits it describes what's changed. It's worthwhile to spend a little effort on your commit messages, so that if you do need to look at history, you can easily see. But don't spend too much time!  Most important when you're on a team.
-
-Write messages in imperative. "Fix this bug". Not "fixed this bug".  Write it as if you were telling someone what to do.
-
-Generally better to err on the side of smaller commits than larger commits.
-
-Github shows first line. Then click ... to show others.
-
-Ignoring files that you never want to commit. If there are files that you don't want to commit it's error prone to unselect them each time. Instead add them to `.gitignore` to prevent them from every being added.
 
 ## Synchronise with github
 
