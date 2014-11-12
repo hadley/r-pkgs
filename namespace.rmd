@@ -39,27 +39,30 @@ The __exports__ namespaces helps you avoid conflicts with other packages by spec
 
 ## Search path {#search-path}
 
-To understand why namespaces are important, you need a solid understanding of the search path. To call a function, R first has to find it. R first looks in the global environment, and if it doesn't find it there, it looks on the search path, the list of all the packages you have __attached__. You can see that list by running `search()`. For example, here's the search path for the code in this book:
+To understand why namespaces are important, you need a solid understanding of search paths. To call a function, R first has to find it. R does this by first looking in the global environment. If R doesn't find it there, it looks in the search path, the list of all the packages you have __attached__. You can see this list by running `search()`. For example, here's the search path for the code in this book:
 
 ```{r}
 search()
 ```
 
-There's an important difference between loading a package and attaching it. Normally you talk about loading a package with `library()`, but what you're actually doing is attaching it:
+There's an important difference between loading and attaching a package. Normally when you talk about loading a package you think of `library()`, but that actually attaches the package. 
 
-* __Loading__ a package loads the code, data and any DLLs, it registers S3 and 
-  S4 methods, and runs the `.onLoad()` function, if present. After loading, the 
-  package is in memory, and available, but you can't access its components 
-  without using `::`. A package is loaded by `::`, or you can load it 
-  explicitly with `requireNamespace()` or `loadNamespace()`.
+If a package is present,
+
+* __Loading__ will load code, data and any DLLs; register S3 and 
+  S4 methods; and run the `.onLoad()` function. After loading, the 
+  package is available in memory, but because it's not in the search 
+  path, you can't access its components without using `::`. A package 
+  is loaded by `::`. You can load it explicitly with `requireNamespace()` 
+  or `loadNamespace()`.
   
-* __Attaching__ a package makes it available on the search path. You can attach
-  a package with `library()` or `require()`, which always first loads the 
-  package. Attaching a package adds it to the search path and runs the 
-  `.onAttach()` function, if present. Every attached package is on the
-  search path and is listed by `search()`.
+* __Attaching__ puts the package in the search path. You can attach
+  a package with either `library()` or `require()`. Doing so loads 
+  the package, adds it to the search path and runs the `.onAttach()` 
+  function. Every attached package will be in the search path and will
+  be listed by `search()`.
 
-When you use `::` it loads the package, but does not attach it.. Notice the difference between these two ways of running `expect_that()` from the testthat package. If we use `library()`, testthat is attached to the search path. If we use `::`, testthat it's not.
+For example, consider the differences between two ways of running `expect_that()` from the testthat package. If we use `library()`, testthat is attached to the search path. If we use `::`, testthat it's not.
 
 ```{r, error = TRUE}
 old <- search()
@@ -73,26 +76,28 @@ setdiff(search(), old)
 expect_true(TRUE)
 ```
 
-There are four functions that make a package available. They differ based on whether they load or attach, and what happens if the package is not found: does it throw an error, or does it return FALSE?
+There are four functions that make a package available. They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).
 
 |        | Returns `FALSE`                           | Throws error         |
 |--------|-------------------------------------------|----------------------|
 | Load   | `requireNamespace("x", quietly = TRUE)`   | `loadNamespace("x")` |
 | Attach | `require(x, quietly = TRUE)`              | `library(x)`         |
 
-Of the four functions, you should only ever use two:
+Of the four, you should only ever use two:
 
 * Use `library(x)` in data analysis scripts. It will throw an error if the
   package is not installed, and will terminate the script. You want to attach 
   the package to save typing. Never use `library()` in a package.
   
-* Use `requireNamespace(x, quietly = TRUE)` inside a package if you want
-  do something different (e.g. throw an error) depending on whether or not
+* Use `requireNamespace(x, quietly = TRUE)` inside a package if you want a
+  specific action (e.g. throw an error) depending on whether or not
   a suggested package is installed.
   
-You never need to use `require()` (`requireNamespace()` is almost always better), or `loadNamespace()` (which is only needed for internal R code). You should never use `require()` or `library()` in a package: use the `Depends` or `Imports` fields in the `DESCRIPTION`.
+You never need to use `require()` (`requireNamespace()` is almost always better), or `loadNamespace()` (which is only needed for internal R code). You should never use `require()` or `library()` in a package: instead, use the `Depends` or `Imports` fields in the `DESCRIPTION`.
 
-Now's a good time to come back to an important issue which we glossed over earlier: what's the difference between `Depends` and `Imports` in the `DESCRIPTION` and when should you use each one? Listing a package in either `Depends` or `Imports` ensures that it's installed when needed. The main difference is that `Depends` _attaches_ the package, where `Imports` just loads it. There are no other differences, and the rest of the advice in this chapter applies whether or not the package is in `Depends` or `Imports`.
+Now's a good time to come back to an important issue which we glossed over earlier. What's the difference between `Depends` and `Imports` in the `DESCRIPTION`? When should you use one or the other? 
+
+Listing a package in either `Depends` or `Imports` ensures that it's installed when needed. The main difference is that where `Imports` just _loads_ the package, `Depends` _attaches_ it. There are no other differences. The rest of the advice in this chapter applies whether or not the package is in `Depends` or `Imports`.
 
 Unless there is a good reason otherwise, you should alway list packages in `Imports` not `Depends`. That's because a good package is self-contained, and minimises changes to the global environment (including the search path). There are a few exceptions:
 
@@ -102,14 +107,14 @@ Unless there is a good reason otherwise, you should alway list packages in `Impo
   without vegan, so it has vegan in `Depends` instead of `Imports`. ggplot2
   should really `Depend` on scales, rather than `Import`ing it.
 
-* The DBI package provides a common set of S4 classes and generics to be used
+* The DBI package provides a common set of S4 classes and generics that are used
   by any package that talks to a database. A new database backend for DBI 
   doesn't actually implement any functions, it just creates new classes and
   provides methods. So if DBI is not attached, the backend is useless. That
-  means packages that implement backends should have DBI in `Depends` and not
+  means packages that implement backends should have DBI in `Depends`, not
   in `Imports`.
 
-Now that you understand the importance of the namespace, let's dive into the nitty gritty details. The two sides of the package namespace, imports and exports are both described by the `NAMESPACE`. You'll learn what this file looks like in the next section, and in the following section you'll learn the details of exporting and importing functions and other objects.
+Now that you understand the importance of the namespace, let's dive into the nitty gritty details. The two sides of the package namespace, imports and exports, are both described by the `NAMESPACE`. You'll learn what this file looks like in the next section. In the section after that, you'll learn the details of exporting and importing functions and other objects.
 
 ## The `NAMESPACE` {#NAMESPACE}
 
