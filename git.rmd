@@ -6,10 +6,18 @@ output: bookdown::html_chapter
 
 # Git and github {#git}
 
+If you're serious about software development, the most important tool to learn is git. Git is a software tool revision management tool which allows you to track changes to your code and share those changes with others. Git is most useful when combined with [github](http://github.com), a website that allows you to share your code with the world, solicit code improvements (pull requests) and track issues.
+
+You can do many of the same things with other tools (like svn or bazaar or mercurial) and other websites (like gitlab and bitbucket). But I think git and github is the friendliest system for new developers, not least because it's the most popular, which means every possible problem has already been asked and answered on StackOverflow. 
+
+Why use git and github?
+
   * Do you have a directory full of files like `my-script.R`, `my-script-1.R`,
     `myscript-2-I-really-hope-this-works.R`, `myscript-FINALLY.R` and so on?
     Git takes care of managing multiple versions of your code so that you
     can easily see what's change, and revert any mistakes that you've made.
+    (But note that git isn't a substitute for a backup sytem, you should be
+    use git with your backups, not instead of).
 
   * It makes it easy for other people to install your package. Any R user can 
     get your package with at most two lines of code:
@@ -19,8 +27,11 @@ output: bookdown::html_chapter
     devtools::install_github("username/packagename")
     ```
     
+    (The first line isn't necesary if they already have devtools installed.)
+    
   * Not only can other people use your code, they can also suggest improvements 
-    with pull requests. Once you've experienced your first pull request, you'll
+    with pull requests, patches to your code that fixb bugs or implement new
+    functionality. Once you've experienced your first pull request, you'll
     never want to go back to developing code any other way.
     
   * Github makes it possible to collaboratively code a package with other 
@@ -29,27 +40,28 @@ output: bookdown::html_chapter
     the same part of the file, git provides tools to help you choose
     between the conflicting changes.
 
-  * Track issues.
+  * Track issues (bugs and feature requests) in one central location. You
+    can discuss the problem and propose solutions. When you resolve an 
+    issue you can connect it to the exact change that solved the problem,
+    which is very useful when you come back to it in the future.
 
 At first, working in the open seems a little scary. Do you really want the whole world seeing your crappy code? Don't worry, nobody is judging you - everybody rights bad code at some point in their lives, and most people are more interested in helping you write better code than making fun of your existing efforts. Once you get used to it, you'll find that coding in the open is tremendously empowering as it helps other people help you.
 
-You can do many of the same things with other tools (like svn or bazaar or mercurial) and other websites (like gitlab and bitbucket). But I think git and github is the friendliest system for new developers, not least because it's the most popular, which means every possible problem has already been asked and answered on StackOverflow. Indeed, StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first recourse.
-
 This chapter describes git and github together, making no attempt to separate the features of each. The goal is to give you the absolute minimum you need to know to use git for an R package. After reading this chapter and working with git for a while, it's highly likely that you'll want to learn more. Some good resource are:
-
-* Github help, <https://help.github.com>. This not only teaches you about
-  github, but also many of the features of git as well.
   
 * If you'd like to practice using git from the command line, try 
   <https://try.github.io>. It steps you through a number of challenges in
   a virtual shell.
 
+* Github help, <https://help.github.com>, not only teaches you about
+  github, but also has good tutorials on many git features.
+
 * If you'd like to learn more about the details of git, read 
   [Pro Git](http://git-scm.com/book/en/v2) by Scott Chacon and Ben Straub.
 
-RStudio provides many tools to make your day-to-day use of git as easy as possible. However, there are a huge number of git commands, and they're not at all available in the IDE. That means you'll need to run a handful of commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. The easiest way to get to a shell is Tools > Shell.
+StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first resource. It's highly likely that some one has had exactly the same problem as you, and there will be a variety of approaches to choose from.
 
-Git and backups. Git is not a replacement for a backup system.
+RStudio provides many tools to make your day-to-day use of git as easy as possible. However, there are a huge number of git commands, and they're not at all available in the IDE. That means you'll need to run a handful of commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. The easiest way to get to a shell is Tools > Shell.
 
 ## Initial set up
 
@@ -61,14 +73,15 @@ If you've never used git or github before, you'll need to do a little initial se
     * OS X: <http://code.google.com/p/git-osx-installer/>
     * Debian/Ubuntu: `sudo apt-get install git-core`
 
-1.  Sign up for github: <https://github.com>.
-
 1.  In a shell, run:
 
     ```bash
     git config --global user.name "<YOUR NAME>"
     git config --global user.email "<YOUR EMAIL ADDRESS>"
     ```
+
+1.  Create a free account on github: <https://github.com>. Use the same
+    name and email address as the previous step.
     
 1.  If needed, generate ssh keys. You can check if you have an ssh key
     already by running:
@@ -85,12 +98,16 @@ If you've never used git or github before, you'll need to do a little initial se
     ```{r, echo = FALSE}
     bookdown::embed_png("screenshots/git-config.png", dpi = 220)
     ```
+    
+1.  Add your public key to <https://github.com/settings/ssh>. The
+    easiest way to get the key is to click "View public key" in the
+    Git/SVN preferences pane (as shown above).
 
 ## Create a local git repository
 
-Now that you have git installed and configured, you need to initialise a local git repository for your package. This repository (or repo for short) exists only on your computer. 
+Now that you have git installed and configured, you need to initialise a local git repository for your package. This repository (or repo for short) exists only on your computer. If you've used svn before this is a bit different. Git makes a clear distinction between local and remote repos; you mostly work locally then push your changes to a central repo when you're ready.
 
-There are two ways to do this:
+There are two ways to create a new git repo:
 
   * In RStudio, go to project options, then the Git/SVN panel. Change the 
     "Version control system" from "None" to "Git":
@@ -105,7 +122,7 @@ There are two ways to do this:
 
 Once git has been activated in a project, you'll see two new components in the IDE:
 
-  * The git pane. This appears in the top-right by default. It shows you what
+  * The git pane, which is shown the top-right (by default). It shows you what
     files have changed since you last committed, and exposes the most important
     git commands as buttons.
     
@@ -120,42 +137,48 @@ Once git has been activated in a project, you'll see two new components in the I
     bookdown::embed_png("screenshots/git-dropdown.png", dpi = 220)
     ```
 
+You'll learn about those commands in the following sections.
+
 ## See what's changed
 
-The RStudio git pane shows you at a glance what you've changed since the last time you committed ("saved") your changes. This is equivalent to running `git status` in the shell. Each modified file is listed, along with an icon summarising the change:
+The RStudio git pane shows, at a glance, what's changed. (In the shell you can get similar information by running `git status`.). Each added, modified or deleted file is listed, along with an icon summarising the change:
 
-* Unknown: `r bookdown::embed_png("screenshots/git-unknown.png", dpi = 220)`.
-  You'll see this when you first add a file to git
-  when you first add a new file, git doesn't 
+* `r bookdown::embed_png("screenshots/git-modified.png", dpi = 220)`, 
+  __Modified__. You can get more details about how the files have been modified 
+  with a "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`.
+  This opens a new window showing the detailed **diff**erences: removed text
+  is shown in red and new text is shown in green. Context, lines near the
+  change, are shown in grey. These help you understand the change in the 
+  context of the surrounding code (This is equivalent to running `git diff` in 
+  the shell).
 
-* Deleted: `r bookdown::embed_png("screenshots/git-deleted.png", dpi = 220)`
+* `r bookdown::embed_png("screenshots/git-unknown.png", dpi = 220)`, 
+  __unknown__. You'll see this when you first create a file because git doesn't 
+  know about it. 
 
-* Modified: `r bookdown::embed_png("screenshots/git-modified.png", dpi = 220)`.
-  You can get more details about how the files have been modified with a 
-  "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`.
-  This opens a new window showing the detailed __diff__erences: removed text
-  is shown in red and new text is shown in green. (This is equivalent to running
-  `git diff` in the shell).
+* `r bookdown::embed_png("screenshots/git-deleted.png", dpi = 220)`, 
+  __deleted__. The file has been removed. If you've accidentally deleted a 
+  file you can get it back by right-clicking on it and selecting "Revert".
 
 ## Add and commit files
 
-The fundamenetal unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. A commit is a checkpoint in the history of your code - it's fixed and unchanging, and you can go back to it in time.  Each commit is given a unique id, called a sha. 
+The fundamental unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. You can think of a commit as a set of changes: what files did you add, edit and delete? A commit is a checkpoint in the history of your code - it's fixed and unchanging, and you can go back to it later. Each commit is given a unique id, called a sha. Commit can be a confusing word because it's used in two senses: 
 
-Commit is used in two senses: 
-
-* A noun: a commit is a snapshot in time.
-* A verb: commit you code to create a new snapshot.
+* As a noun: a commit is a snapshot of your code.
+* As a verb: commit your changes to create a new snapshot.
 
 I'll try to avoid confusing sentences like you commit code to create a commit.
 
-There are two steps to creating a new commit:
+Committing code is the most common git operation. You'll create many commits each day. A commit is always accompanied by a message, a human readable string that describes what the change does. Commit messages are used when you look back at the __history__ of the project. This is a less common operation, but it's important if you want to see what's changed or undo a mistake.
+
+Creating a commmit occurs in two stages:
 
 1.  You __stage__ files, telling git that you want to include them in the
-    next commit. On the command line, this is done with `git add` for new files
-    and `git rm` for old files.
+    next commit. In the shell you use `git add` for new and modified files,
+    and `git rm` for deleted files. 
   
 1.  You __commit__ the staged files, describe the changes with a message.
-    This is equivalent to `git commit` on the command line.
+    In the shell you use `git commit`.
 
 You perform both these steps in the same place in RStudio: the commit window. Open the commit window by clicking `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)`. This opens three-pane window. This one shows the status while I was working on this chapter.
 
@@ -163,33 +186,41 @@ You perform both these steps in the same place in RStudio: the commit window. Op
 bookdown::embed_png("screenshots/git-commit-window.png", dpi = 220)
 ```
 
-* The top-left pane is the status, the same as the git pane.
+* The top-left pane shows the current status, the same as the git pane.
 
-* The top-right pane is the commit message, where you provide a human readable
-  message describing the changes you've made in this commit. More on that 
-  shortly.
+* The top-right pane shows the commit message, where you provide a human 
+  readable message describing the changes you've made in this commit. More on 
+  that shortly.
 
 * The bottom pane shows the diff for the currently selected file. 
 
 To make a new commit:
 
-1.  Save your current file.
-
-1.  Click commit or press `Ctrl + Cmd + M`.
+1.  Save your current file and click commit or press `Ctrl + Alt + M`.  
 
 1.  Stage the files that you want to be included. If you want to include all 
     the files, press Cmd + A, then click 
-    `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`.
-    As you stage each file, you'll notice that its status will change. There 
-    are two columns: staged (on the left) and unstaged (on the right). You'll 
-    see two new statuses:
+    `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`. Otherwise
+    click the stage checkbox next to each file you want to include. As you stage 
+    each file, you'll notice that its status will change. There are two columns: 
+    staged (on the left) and unstaged (on the right). A staged change will be
+    included in the next commit and unstaged change won't be.
+    
+    There are two new new statuses icons that you'll see when staging files:
 
-      * Added: `r bookdown::embed_png("screenshots/git-added.png", dpi = 220)`: once
-        you've staged a new file, git now knows that you've added it to the repo.
+      * Added: `r bookdown::embed_png("screenshots/git-added.png", dpi = 220)`: 
+        once you've staged a new file, git now knows that you want to add it to 
+        the repo.
       
       * Renamed: `r bookdown::embed_png("screenshots/git-renamed.png", dpi = 220)`:
-        If you rename a file, git initially sees it as a delete and an add. If you
-        stage the new and old files, git will recognise it as a rename.
+        If you rename a file, git initially sees it as deleting one file and
+        adding a new file. Once you stage both changes, git will recognise 
+        that it's a rename.
+        
+    Sometimes you'll see a status in both columns, e.g. 
+    `r bookdown::embed_png("screenshots/git-modified-staged.png", dpi = 220)`.
+    This means you've made some changes, staged them, and then made some more.
+    Clicking the staged checkbox again will stage your new changes.
 
 1.  Write a commit message (top-right panel). The first line of a commit message 
     should be 50 characters or less and summarise the changes you've made. For
@@ -205,9 +236,11 @@ To make a new commit:
 
 1.  Click Commit.
 
-Often there are files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling), or they might be too big, or they might be generated on demand. Instead of not-staging them each time, you should add them to `.gitignore` to prevent them from every being added.  The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard like `*.png`.
+Often there are files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling), or they might be too big, or they might be generated on demand. Instead of not-staging them each time, you should add them to `.gitignore` to prevent them from every being added.  The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
 
 ## Undo a mistake
+
+The best thing about using commits is that you can undo mistakes. RStudio provides some help:
 
 * If you made a mistake in a commit, you can modify the previous commit by 
   clicking `r bookdown::embed_png("screenshots/git-commit-amend.png", dpi = 220)`. 
@@ -216,48 +249,106 @@ Often there are files that you don't want to include in the repository. They mig
   for details.
   
 * If you want undo the changes you've made to a file, right click on it in 
-  the git pane and select "revert". BEWARE: this will undo all local changes
-  and you can't recover them.
+  the git pane and select "revert". Proceed with caution: this will undo all 
+  changes and you can't recover them.
 
-## Connect your repo to github
+* You undo changes to parts of a file in the diff window. Look for the
+  discard chunk button above the block of changes that you want to undo:
+  `r bookdown::embed_png("screenshots/git-chunk.png", dpi = 220)`
 
-Most of the time you work locally. This is really convenient because you don't need internet access to use git - you can keep on committing changes even when you're on a plane, and then later synchronise with thyour 
+To undo more general problems you'll need to use the command line. The first step in undoing a mistake is to go back in time and find a good commit. The easiest way to do that is to use the "History" view to find the commit where the mistake occured. Then the __parent__ of that commit will be good. Note the sha (the unique identifier for that commit) of the parent. You can then "undo" that commit with:
 
-To connect github to an existing package:
+```bash
+# See what the file looked at that point in time so you can copy-and-paste
+git show <sha> <filename>
+# Copy historical version into the present
+git checkout <sha> <filename>
+```
 
-1.  Create a new repo: <https://github.com/new>
+This will copy the filename from history into the current time. You can then diff the file, unstage any changes you don't want and commit the change.
 
-1.  ```
+(It's also possible to use git as if you went back in time and prevented the mistake from happening in the first place. This is called __rebasing history__ and is an advanced technique. As you can imaging going back in time to change the past can have profound impacts on the present. It can be useful, but needs extreme care.)
+    
+## Synchronising with github
+
+Most of the time you work locally. This is really convenient because you don't need internet access to use git - you can keep on committing changes even when you're on a plane. However, git is most useful in conjunction with github, allowing you to share you code with the world.  
+
+1. Create a new repo on github: <https://github.com/new>.
+
+1.  In the shell, run the instructions provided by github. They'll look
+    something like this:
+
+    ```bash
     git remote add origin git@github.com:rstudio/ggcomp.git
     git push -u origin master
     ```
-
-(`use_github()` will be coming soon to a devtools near you)
-
+  
+    This tells git where the "origin" of your repo is, and to send all the
+    changes you've made so far. You only need to run these set up commands
+    once.
+  
 Once you've put your package on github, make sure to update your `DESCRIPTION` to include links to your repo, e.g.:
 
-```
+```yaml
 URL: http://github.com/hadley/dplyr
 BugReports: http://github.com/hadley/dplyr/issues
 ```
 
-## Synchronise with github
+Now you can use the "Push" to send your changes to github.  (This is the same as `git push` in the shell). Once you've connected your repo to github, RStudio will tell you how many commits you have locally that are not on github. This message indicates that I have 1 commit locally ("my branch") that does not appear on github ("origin/master"): `r bookdown::embed_png("screenshots/git-local-commits.png", dpi = 220)`.
+
+## Retrieve a repo from github
+
+Creating a local copy of a remote repo is called __cloning__. You can do it from the shell with `git clone`, or use github:
+
+1.  Go to the github page and determine the git repo url. It's shown
+    in the right-hand sidebar:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-clone-github.png", dpi = 220)
+    ```
+    
+    I recommend using the ssh url (by clicking ssh). Click the copy button
+    to put the url on your clipboard.
+    
+1.  Create a new project in RStudio:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-clone-1.png", dpi = 220)
+    bookdown::embed_png("screenshots/git-clone-2.png", dpi = 220)
+    ```
+    
+1.  Paste the repo url:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-clone-3.png", dpi = 220)
+    ```
+
+    (Here I'm cloning the repo for this book.)
+
+## Working with others
 
 Use push to send your changes to github. Use pull to get them back.
 
-How does Rstudio deal with conflicts?
+What happens if two people have changed the same file? Most of the time git is smart enough to integrate the changes. But if both people edited the same part of the file, you need to tell git how to combine the changes. This is called a merge conflict.
 
-* `git push`, `git pull`
+Rstudio currently doesn't provide any tools so you'll need to do it by hand.  
+
+Merge conflict markers.
+
+How to interpret.
 
 ## History
 
-* History view
-* View on github
-* Blame on github
+* Commits on github.
+* History view.
+* View on github.
+* Blame on github.
 
 ## Issues
 
 I recommend that you use them. Don't go too crazy with tags and milestones.
+
+<https://guides.github.com/features/issues/>
 
 Close issues with commit messages: `Close #n`, `@xyz`. etc.
 
