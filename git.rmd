@@ -59,6 +59,11 @@ This chapter describes git and github together, making no attempt to separate th
 * If you'd like to learn more about the details of git, read 
   [Pro Git](http://git-scm.com/book/en/v2) by Scott Chacon and Ben Straub.
 
+What you won't learn here:
+
+* branching
+* any history modifying changes like (`git rebase` or `git pull --rebase`).
+
 StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first resource. It's highly likely that some one has had exactly the same problem as you, and there will be a variety of approaches to choose from.
 
 RStudio provides many tools to make your day-to-day use of git as easy as possible. However, there are a huge number of git commands, and they're not at all available in the IDE. That means you'll need to run a handful of commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. The easiest way to get to a shell is Tools > Shell.
@@ -162,7 +167,20 @@ The RStudio git pane shows, at a glance, what's changed. (In the shell you can g
 
 ## Add and commit files
 
-The fundamental unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. You can think of a commit as a set of changes: what files did you add, edit and delete? A commit is a checkpoint in the history of your code - it's fixed and unchanging, and you can go back to it later. Each commit is given a unique id, called a sha. Commit can be a confusing word because it's used in two senses: 
+The fundamental unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. You can think of a commit as a set of changes: what files did you add, edit and delete? A commit is a checkpoint in the history of your code - it's fixed and unchanging, and you can go back to it later. 
+
+A commit is made up of:
+
+* A unique identifier called a sha.
+
+* A human-readable commit message.
+
+* A parent, the change that came before this one. (Commits can have multiple
+  parents, as you'll learn in XYZ)
+
+* A changeset describing what files were added, modified and changed.
+
+Commit can be a confusing word because it's used in two senses: 
 
 * As a noun: a commit is a snapshot of your code.
 * As a verb: commit your changes to create a new snapshot.
@@ -228,21 +246,43 @@ To make a new commit:
     or bulleted list providing more detail. Write messages in imperative, like
     you're telling someone what to do: "fix this bug", not "fixed this bug".
     
-    The purpose of the commit message is when other people (including future 
-    you!) are skimming the commits it describes what's changed. It's worthwhile 
-    to spend a little effort on your commit messages, so that if you do need to 
-    look at history, you can easily see. But don't spend too much time!  
-    Most important when you're on a team.
-
 1.  Click Commit.
+
+
+### Commit best practices
+
+In a perfect world, each commit you make would be modular, describing a single change, with a concise message that clearly describes not only what changed, but why. You'd be able to read the commmit messages in order like a unfolding novel, and new comers to the project could easily understand the history by reading the commit logs.
+
+In practice this is difficult to do, and it's worthwhile understanding the tradeoffs. It's obvious what you lose when you spend a lot of time carefully crafting commits (your time!), but what do you lose with sloppy commit practices?
+
+The purpose of the commit message is when other people (including future you!) are skimming the commits it describes what's changed. It's worthwhile to spend a little effort on your commit messages, so that if you do need to look at history, you can easily see. But don't spend too much time!  Most important when you're on a team.
+
+Good commmit messages help other people understand the history of your project. The most important other person is future you, who probably has forgotten a lot of things that present you knows. There's nothing more frustrating that tracking down a new bug to line of a code and looking up the commit message only to find that it says "fix bug".
+
+If you look at the commits for this repo, you'll notice that most of them aren't very informative. That's because writing is different to coding - it isn't as discrete, and you're less likely to want to roll back specific changes. That changes the cost-benefit equation to favour bigger commits and less informative messages.
+
+Smaller commits make it easier to work with others. If you both change the same file in the same place, you'll only need to resolve a small problem instead of a big one.
+
+Ideally a commit will not break the package - i.e. you should run `R CMD check` before committing. In practice, I find this a bit too stringent and it costs more time than it saves.
+
+### Ignoring files
 
 Often there are files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling), or they might be too big, or they might be generated on demand. Instead of not-staging them each time, you should add them to `.gitignore` to prevent them from every being added.  The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
 
-(If you look at the commits for this repo, you'll notice that most of them aren't very informative. That's because writing is different to coding - it isn't as discrete, and you're less likely to want to roll back specific changes. That changes the cost-benefit equation to favour bigger commits and less informative messages.)
+The man directory
 
 ## Undo a mistake
 
-The best thing about using commits is that you can undo mistakes. RStudio provides some help:
+The best thing about using commits is that you can undo mistakes. Unless you run some dangerous commands, git keeps most things around for two weeks.
+
+1. Don't panic. The chances are that you can recover whatever was lost.
+
+2. Take a backup of the directory, include `.git/` which stores all
+   gits metadata
+
+<http://sethrobertson.github.io/GitFixUm/>
+
+RStudio provides some help:
 
 * If you made a mistake in a commit, you can modify the previous commit by 
   clicking `r bookdown::embed_png("screenshots/git-commit-amend.png", dpi = 220)`. 
@@ -267,7 +307,7 @@ git show <sha> <filename>
 git checkout <sha> <filename>
 ```
 
-This will copy the filename from history into the current time. You can then diff the file, unstage any changes you don't want and commit the change.
+In both cases you'll need finish by staging and commiting the files.
 
 (It's also possible to use git as if you went back in time and prevented the mistake from happening in the first place. This is called __rebasing history__ and is an advanced technique. As you can imaging going back in time to change the past can have profound impacts on the present. It can be useful, but needs extreme care.)
     
@@ -297,6 +337,8 @@ BugReports: http://github.com/hadley/dplyr/issues
 ```
 
 Now you can use the "Push" to send your changes to github.  (This is the same as `git push` in the shell). Once you've connected your repo to github, RStudio will tell you how many commits you have locally that are not on github. This message indicates that I have 1 commit locally ("my branch") that does not appear on github ("origin/master"): `r bookdown::embed_png("screenshots/git-local-commits.png", dpi = 220)`.
+
+Pushing = publishing your code for the world to use, so you need to make sure it's useful. I think it's good practice to run `R CMD check` before you. Fix any problems before pushing.
 
 ## Retrieve a repo from github
 
@@ -329,15 +371,67 @@ Creating a local copy of a remote repo is called __cloning__. You can do it from
 
 ## Working with others
 
-Use push to send your changes to github. Use pull to get them back.
+So far you've been using push to synchronise your changes with github. The main difference when working with others, is that they're also synchronising their changes to github, so you'll need to get them. You do that with pull.
 
-What happens if two people have changed the same file? Most of the time git is smart enough to integrate the changes. But if both people edited the same part of the file, you need to tell git how to combine the changes. This is called a merge conflict.
+When you pull, git first downloads (fetches) all of the changes and then merges them with the changes that you've made. A merge is a commit with two parents. It takes two different lines of development and combines them into a single result. To do so, git needs to combine two sets of changes. In many cases it can do so automatically - if the changes are to different files, or even different parts of the same file. However, if the changes are to the same place in a file, you'll need to resolve the changes yourself. This is called a __merge conflict__.
 
-Rstudio currently doesn't provide any tools so you'll need to do it by hand.  
+In RStudio, you'll discover that you have merge conflict when:
 
-Merge conflict markers.
+* Pull fails with an error.
 
-How to interpret.
+* You get the status 
+  `r bookdown::embed_png("screenshots/git-commit-conflict.png", dpi = 220)`
+
+RStudio currently doesn't provide any tools to help with merge conflicts, so you'll need to use the command line. I recommend starting by setting your merge conflict "style" to diff3. The diff3 style shows three things when you get a merge conflict: your local changes, the original file and remote changes. The default style is diff2, which only shows your changes and the remote changes, which generally makes it harder to figure out what's happened. 
+
+* If you've encountered your first merge conflict:
+
+    ```bash
+    # Abort this merge
+    git merge --abort
+    # Set the conflict style
+    git config --global merge.conflictstyle diff3
+    # Re-try the merge
+    git pull
+    ```
+    
+* If you're not in the middle of a merge conflict, just run 
+
+    ```bash
+    git config --global merge.conflictstyle diff3
+    ```
+
+To resolve the merge conflict, you need to open every file with the status `r bookdown::embed_png("screenshots/git-commit-conflict.png", dpi = 220)`. In each file, you'll find a conflict marker that looks like this:
+
+```
+<<<<<<< HEAD
+
+||||||| merged common ancestors
+
+=======
+
+>>>>>>> remote
+```
+
+This shows all three versions of the conflicting code:
+
+* At top, the code that you code.
+* In the middle, the code from the previous commit.
+* At bottom, the code that you're trying to merge in.
+
+You need to work through each conflict block and decide either which version is better, or integrate the changes from each.  Delete the conflict markers, leaving only the new code.  As you fix each file, stage it, and then once you've fixed them all, make a new commit. 
+
+Special notes:
+
+* `man/`: don't fix. Resolve the conflicts in the R files that generated them
+   and re-document.
+   
+* `NAMESPACE`: merge conflicts in the `NAMESPACE` file prevent you from 
+  re-loading or re-documenting the package. You'll need to resolve them 
+  sufficiently that the package can load, then re-document to generate a clean & 
+  correct `NAMESPACE`.
+
+If you manage to get totally confused, remember you can always restart from scratch by running `git merge --abort` then `git pull`. Otherwise remember that google and stackoverflow are great resources - processing merge conflicts is one of the trickiest parts of git and there are a lot of tutorials out there. You may need to read a few to really get the hang of it.
 
 ## History
 
