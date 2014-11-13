@@ -35,16 +35,6 @@ source_clean <- function(path) {
 chapters <- dir(".", pattern = "\\.rmd$")
 lapply(chapters, render_chapter)
 
-# Apply regular expressions to files -------------------------------------------
-apply_regexp <- function(file, regexps) {
-  lines <- readLines(file)
-  for (i in seq_along(regexps)) {
-    lines <- gsub(escape(names(regexps)[i]), escape(regexps[[i]]), lines)
-  }
-
-  writeLines(lines, file)
-}
-
 # Copy across additional files -------------------------------------------------
 file.copy("book/r-packages.tex", "book/tex/", recursive = TRUE)
 file.copy("diagrams/", "book/tex/", recursive = TRUE)
@@ -53,12 +43,8 @@ file.copy("screenshots/", "book/tex/", recursive = TRUE)
 # Build tex file ---------------------------------------------------------------
 # (build with Rstudio to find/diagnose errors)
 old <- setwd("book/tex")
-unlink("r-packages.ind") # delete old index
-system("xelatex -interaction=batchmode r-packages ")
-system("makeindex r-packages")
 system("xelatex -interaction=batchmode r-packages ")
 system("xelatex -interaction=batchmode r-packages ")
 setwd(old)
 
 file.copy("book/tex/r-packages.pdf", "book/r-packages.pdf", overwrite = TRUE)
-embedFonts("book/tex/r-packages.pdf")
