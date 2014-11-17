@@ -66,19 +66,21 @@ What you won't learn here:
 
 StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first resource. It's highly likely that some one has had exactly the same problem as you, and there will be a variety of approaches to choose from.
 
-RStudio provides many tools to make your day-to-day use of git as easy as possible. However, there are a huge number of git commands, and they're not at all available in the IDE. That means you'll need to run a handful of commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. The easiest way to get to a shell is Tools > Shell.
+RStudio provides many tools to make your day-to-day use of git as easy as possible. However, there are a huge number of git commands, and they're not at all available in the IDE. That means you'll need to run a handful of commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. The easiest way to get to a shell is Tools > Shell. It's also important to be familiar with using git from the command line because if you're searching for problems, you'll need to know what the standard commands are.
 
-## Initial set up
+## Initial set up {#git-init}
 
 If you've never used git or github before, you'll need to do a little initial setup:
 
 1.  Install git:
 
-    * Windows: <http://msysgit.github.io/>
-    * OS X: <http://code.google.com/p/git-osx-installer/>
-    * Debian/Ubuntu: `sudo apt-get install git-core`
+    * Windows: <http://msysgit.github.io/>.
+    * OS X: <http://code.google.com/p/git-osx-installer/>.
+    * Debian/Ubuntu: `sudo apt-get install git-core`.
 
-1.  In a shell, run:
+1.  Tell git your name and email address. These are used to label each commit
+    so that when you start collaborating with others, it's clear who made 
+    each change. In a shell, run:
 
     ```bash
     git config --global user.name "<YOUR NAME>"
@@ -110,7 +112,7 @@ If you've never used git or github before, you'll need to do a little initial se
 
 ## Create a local git repository
 
-Now that you have git installed and configured, you need to initialise a local git repository for your package. This repository (or repo for short) exists only on your computer. If you've used svn before this is a bit different. Git makes a clear distinction between local and remote repos; you mostly work locally then push your changes to a central repo when you're ready.
+Now that you have git installed and configured, you need to initialise a local git repository for your package. This repository (repo for short) exists only on your computer. This is different to old systems like svn which were always connected to a central server. Git makes a clear distinction between local and remote repos; you mostly work locally then push your changes to a remote repo when you're ready to share your work with others.
 
 There are two ways to create a new git repo:
 
@@ -142,34 +144,45 @@ Once git has been activated in a project, you'll see two new components in the I
     bookdown::embed_png("screenshots/git-dropdown.png", dpi = 220)
     ```
 
-You'll learn about those commands in the following sections.
+With the repository set up, you can now:
 
-## See what's changed
+* See what you've changed: [git status](#git-status).
+* Add and commit files: [git commit](#git-commit).
+* Undo mistakes: [undo](#git-undo)
 
-The RStudio git pane shows, at a glance, what's changed. (In the shell you can get similar information by running `git status`.). Each added, modified or deleted file is listed, along with an icon summarising the change:
+To get more out of git, you'll need to connect your repo with github:
+
+* [initialising github](#github-init)
+* [cloning a repo](#git-clone)
+* working with others, [`git pull`](#git-pull)
+* review history, [`git log`](#git-log)
+
+## See what's changed {#git-status}
+
+The RStudio git pane shows, at a glance, what's changed. Each added, modified or deleted file is listed, along with an icon summarising the change:
 
 * `r bookdown::embed_png("screenshots/git-modified.png", dpi = 220)`, 
-  __Modified__. You can get more details about how the files have been modified 
-  with a "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`.
-  This opens a new window showing the detailed **diff**erences: removed text
-  is shown in red and new text is shown in green. Context, lines near the
-  change, are shown in grey. These help you understand the change in the 
-  context of the surrounding code (This is equivalent to running `git diff` in 
-  the shell).
+  __Modified__. You've changed the contents of the file.
 
 * `r bookdown::embed_png("screenshots/git-unknown.png", dpi = 220)`, 
-  __unknown__. You'll see this when you first create a file because git doesn't 
-  know about it. 
+  __Untracked__. You've added a new file that git hasn't seen before.
 
 * `r bookdown::embed_png("screenshots/git-deleted.png", dpi = 220)`, 
-  __deleted__. The file has been removed. If you've accidentally deleted a 
-  file you can get it back by right-clicking on it and selecting "Revert".
+  __Deleted__. You've deleted a file.
+  
+You can get the same information (in a slightly different format) in the shell by running `git status`. 
 
-## Add and commit files
+For text files, you can get more details about modifications a "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`. This opens a new window showing the detailed **diff**erences:
 
-The fundamental unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. You can think of a commit as a set of changes: what files did you add, edit and delete? A commit is a checkpoint in the history of your code - it's fixed and unchanging, and you can go back to it later. 
+```{r, echo = FALSE}
+bookdown::embed_png("screenshots/git-diff-window.png")
+```
 
-A commit is made up of:
+Red blocks show removed text and green blocks show added text. Context, lines surrounding the change, are shown in grey, and help you to place the change in the context of complete file. You can get a similar display in the shell by running `git diff`. 
+
+## Add and commit files {#git-commit}
+
+The fundamental unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. You can think of a commit as a set of changes: what files did you add, edit and delete? Committing code is the most common git operation. You'll create many commits each day. A commit is made up of:
 
 * A unique identifier called a sha.
 
@@ -187,8 +200,6 @@ Commit can be a confusing word because it's used in two senses:
 
 I'll try to avoid confusing sentences like you commit code to create a commit.
 
-Committing code is the most common git operation. You'll create many commits each day. A commit is always accompanied by a message, a human readable string that describes what the change does. Commit messages are used when you look back at the __history__ of the project. This is a less common operation, but it's important if you want to see what's changed or undo a mistake.
-
 Creating a commmit occurs in two stages:
 
 1.  You __stage__ files, telling git that you want to include them in the
@@ -198,37 +209,47 @@ Creating a commmit occurs in two stages:
 1.  You __commit__ the staged files, describe the changes with a message.
     In the shell you use `git commit`.
 
-You perform both these steps in the same place in RStudio: the commit window. Open the commit window by clicking `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)`. This opens three-pane window. This one shows the status while I was working on this chapter.
+You perform both these steps in the same place in RStudio: the commit window. Open the commit window by clicking `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)`, or by pressing Ctrl + Alt + m. Here's a screenshot I took while writing this chapter:
 
 ```{r, echo = FALSE}
 bookdown::embed_png("screenshots/git-commit-window.png", dpi = 220)
 ```
 
-* The top-left pane shows the current status, the same as the git pane.
+There are three panes:
 
-* The top-right pane shows the commit message, where you provide a human 
-  readable message describing the changes you've made in this commit. More on 
+* The top-left pane shows the current status, the same as the git pane in the 
+  main RStudio window.
+
+* The bottom pane shows the changes made (the "diff") in the file currently 
+  selected in the status pane.
+
+* The top-right pane is where you'll enter the commit message, a human 
+  readable message summarising the changes made in the commit. More on 
   that shortly.
 
-* The bottom pane shows the diff for the currently selected file. 
+(Yes, this is exactly the same window you see when clicking `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`!)
 
 To make a new commit:
 
-1.  Save your current file and click commit or press `Ctrl + Alt + M`.  
+1.  __Save your changes__.
 
-1.  Stage the files that you want to be included. If you want to include all 
-    the files, press Cmd + A, then click 
-    `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`. Otherwise
-    click the stage checkbox next to each file you want to include. As you stage 
-    each file, you'll notice that its status will change. There are two columns: 
-    staged (on the left) and unstaged (on the right). A staged change will be
-    included in the next commit and unstaged change won't be.
+1.  __Open the commit window__ by clicking 
+    `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)` or 
+    pressing `Ctrl + Alt + M`.  
+
+1.  __Stage files to be included in the next commit__.  To stage a single 
+    file, tick the corresponding check box. To stage all files, press Cmd + A, 
+    then click `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`. 
     
-    There are two new new statuses icons that you'll see when staging files:
+    As you stage each file, you'll notice that its status changes. There are two 
+    columns: staged status on the left and unstaged status on the right. All
+    staged change will be included in the next commit.
+    
+    There are two new new statuses that you'll see when staging files:
 
       * Added: `r bookdown::embed_png("screenshots/git-added.png", dpi = 220)`: 
-        once you've staged a new file, git now knows that you want to add it to 
-        the repo.
+        after staging an untracked file, git now knows that you want to add it 
+        to the repo.
       
       * Renamed: `r bookdown::embed_png("screenshots/git-renamed.png", dpi = 220)`:
         If you rename a file, git initially sees it as deleting one file and
@@ -237,89 +258,113 @@ To make a new commit:
         
     Sometimes you'll see a status in both columns, e.g. 
     `r bookdown::embed_png("screenshots/git-modified-staged.png", dpi = 220)`.
-    This means you've made some changes, staged them, and then made some more.
-    Clicking the staged checkbox again will stage your new changes.
+    This means that you have both staged unstaged changes in the same file.
+    This means that you've made some changes, staged them, and then made some 
+    more. Clicking the staged checkbox will stage your new changes, clicking
+    it again will unstage both sets of changes.
 
-1.  Write a commit message (top-right panel). The first line of a commit message 
-    should be 50 characters or less and summarise the changes you've made. For
-    complicate commits, you can follow it with a blank line and then a paragraph 
-    or bulleted list providing more detail. Write messages in imperative, like
-    you're telling someone what to do: "fix this bug", not "fixed this bug".
+1.  __Write a commit message__ (top-right panel). The first line of a commit 
+    message is called the subject line and should be brief (50 characters or 
+    less). For complicated commits, you can follow it with a blank line and 
+    then a paragraph or bulleted list providing more detail. Write messages in 
+    imperative, like you're telling someone what to do: "fix this bug", not 
+    "fixed this bug".
     
-1.  Click Commit.
-
-
-### Commit best practices
-
-In a perfect world, each commit you make would be modular, describing a single change, with a concise message that clearly describes not only what changed, but why. You'd be able to read the commmit messages in order like a unfolding novel, and new comers to the project could easily understand the history by reading the commit logs.
-
-In practice this is difficult to do, and it's worthwhile understanding the tradeoffs. It's obvious what you lose when you spend a lot of time carefully crafting commits (your time!), but what do you lose with sloppy commit practices?
-
-The purpose of the commit message is when other people (including future you!) are skimming the commits it describes what's changed. It's worthwhile to spend a little effort on your commit messages, so that if you do need to look at history, you can easily see. But don't spend too much time!  Most important when you're on a team.
-
-Good commmit messages help other people understand the history of your project. The most important other person is future you, who probably has forgotten a lot of things that present you knows. There's nothing more frustrating that tracking down a new bug to line of a code and looking up the commit message only to find that it says "fix bug".
-
-If you look at the commits for this repo, you'll notice that most of them aren't very informative. That's because writing is different to coding - it isn't as discrete, and you're less likely to want to roll back specific changes. That changes the cost-benefit equation to favour bigger commits and less informative messages.
-
-Smaller commits make it easier to work with others. If you both change the same file in the same place, you'll only need to resolve a small problem instead of a big one.
-
-Ideally a commit will not break the package - i.e. you should run `R CMD check` before committing. In practice, I find this a bit too stringent and it costs more time than it saves.
-
-Good commit messages are most important when you're submitting a pull request, sharing your changes with someone else. You want to make life as easy as possible for them, so that they can easily see what you've done, decreasing the amount of work they have to do and increasing the chances that your pull request will be accepted.
+1.  __Click Commit__.
 
 ### Ignoring files
 
-Often there are files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling), or they might be too big, or they might be generated on demand. Instead of not-staging them each time, you should add them to `.gitignore` to prevent them from every being added.  The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
+There are often files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling C code), or they might be too big, or they might be generated on demand. Instead of carefully not-staging them each time, you should add them to `.gitignore` to prevent them from every being added. 
 
-The man directory
+The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
 
-## Undo a mistake
+Some developers stick to the convention that no files that can be generated from other files should ever be committed into git. For R packages this means the `man/` directory that is autogenerated from R comments. Pragmatically, it's better not to do this because currently R packages have no way to generate `.Rd` files on install, so if you don't check them in and someone installs your package from github they won't have any documentation.
 
-The best thing about using commits is that you can undo mistakes. Unless you run some dangerous commands, git keeps most things around for two weeks.
+## Commit best practices {#commit-best-practices}
 
-1. Don't panic. The chances are that you can recover whatever was lost.
+Ideally, each commit should:
 
-2. Take a backup of the directory, include `.git/` which stores all
-   gits metadata
+* __Minimal__
 
-<http://sethrobertson.github.io/GitFixUm/>
+* __Related__
 
-RStudio provides some help:
+* __Complete__
+
+And each commit message should:
+
+* __Be concise, yet evocative__.
+
+* __Describe the why, not the what__. You can always retrieve the diff 
+  associated with a commit, so the message doesn't need to say exactly what 
+  changed. Instead it should provide a high-level summary, and focus on the 
+  motivation for the change.
+
+If you do this then:
+
+* It's easier to work with others. If two people have changed the same file
+  in the same place, it's easier to resolve the conflict if the commits are
+  small and it's clear why each change was made.
+  
+* Newcomers to the project could easily understand the history by reading 
+  the commit logs.
+  
+* You can load and run your package at any point in its life. This can
+  be tremendously useful in conjunction with tools like 
+  [bisectr](https://github.com/wch/bisectr), which allow you to use binary
+  search to quickly narrow in on the commit that introduced a bug.
+
+* When you discover exactly when you introduced a bug, you can easily 
+  understand what you were doing (and why!).
+
+The time you spend on your commits is inversely proportional to the amount of time others will spend understanding the history of your project. This is a less common operation, but it's important if you want to see what's changed or undo a mistake.  Commit messages are most important when you are collaborating with others. You might think that no one else will ever look at your repo, but there is one important collaborator for every project that you do: future-you! Future-you probably has forgotten a lot of things that present-you knows.
+
+Remember that these are aspirations, and you shouldn't let them get in your way.  If you look at the commit history of my repositories, you'll notice a lot of them aren't that great, especially when I start to get frustrated that I __still__ haven't managed to fix a bug.
+
+## Undo a mistake {#git-undo}
+
+The best thing about using commits is that you can undo mistakes. RStudio provides some tools for the most common types of mistake:
 
 * If you made a mistake in a commit, you can modify the previous commit by 
   clicking `r bookdown::embed_png("screenshots/git-commit-amend.png", dpi = 220)`. 
-  There are more advanced history modifying features available from the command
-  line. See [rewriting history](http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History)
-  for details.
   
 * If you want undo the changes you've made to a file, right click on it in 
-  the git pane and select "revert". Proceed with caution: this will undo all 
-  changes and you can't recover them.
+  the git pane and select "revert". Proceed with caution: this is one of the
+  few operations that you can't undo.
 
 * You undo changes to parts of a file in the diff window. Look for the
   discard chunk button above the block of changes that you want to undo:
   `r bookdown::embed_png("screenshots/git-chunk.png", dpi = 220)`
 
-To undo more general problems you'll need to use the command line. The first step in undoing a mistake is to go back in time and find a good commit. The easiest way to do that is to use the "History" view to find the commit where the mistake occured. Then the __parent__ of that commit will be good. Note the sha (the unique identifier for that commit) of the parent. You can then "undo" that commit with:
+If one of these doesn't help, don't panic. The chances are that you can recover whatever was lost. Start by making a backup of the directory. Then even if you make a mistake while trying to fix your first mistake, you can start again. To undo more general problems you'll need to use the command line. 
 
-```bash
-# See what the file looked at that point in time so you can copy-and-paste
-git show <sha> <filename>
-# Copy historical version into the present
-git checkout <sha> <filename>
-```
+The first step in undoing a mistake is to go back in time and find a good commit. The easiest way to do that is to use the "History" view to find the commit where the mistake occured. Then the __parent__ of that commit will be good. Note the sha (the unique identifier for that commit) of the parent. Then you can:
 
+  * See what the file looked in the paste so you can copy-and paste the old
+    code:
+    
+    ```bash
+    git show <sha> <filename>
+    ```
+
+  * Copy historical version into the present:
+
+    ```bash
+    git checkout <sha> <filename>
+    ```
+    
 In both cases you'll need finish by staging and commiting the files.
 
 (It's also possible to use git as if you went back in time and prevented the mistake from happening in the first place. This is called __rebasing history__ and is an advanced technique. As you can imaging going back in time to change the past can have profound impacts on the present. It can be useful, but needs extreme care.)
+
+If you're still stuck, try <http://sethrobertson.github.io/GitFixUm/fixup.html> which provides a step-by-step approach to fixing many other problems.
     
-## Synchronising with github
+## Synchronising with github {#github-init}
 
 Most of the time you work locally. This is really convenient because you don't need internet access to use git - you can keep on committing changes even when you're on a plane. However, git is most useful in conjunction with github, allowing you to share you code with the world.  
 
-1. Create a new repo on github: <https://github.com/new>.
+1.  Create a new repo on github: <https://github.com/new>.
 
-1.  In the shell, run the instructions provided by github. They'll look
+1.  In the shell, follow the instructions provided by github. They'll look
     something like this:
 
     ```bash
@@ -327,51 +372,26 @@ Most of the time you work locally. This is really convenient because you don't n
     git push -u origin master
     ```
   
-    This tells git where the "origin" of your repo is, and to send all the
-    changes you've made so far. You only need to run these set up commands
-    once.
+    This tells git where the "origin" of your repo is, and to send it all the
+    changes you've made so far. 
+    
+    You only need to run these commands once per repo.
   
-Once you've put your package on github, make sure to update your `DESCRIPTION` to include links to your repo, e.g.:
+1.  Add `URL` and `BugReports` fields to your `DESCRIPTION` to links to your 
+    new github site. For example, dplyr has:
 
-```yaml
-URL: http://github.com/hadley/dplyr
-BugReports: http://github.com/hadley/dplyr/issues
-```
-
-Now you can use the "Push" to send your changes to github.  (This is the same as `git push` in the shell). Once you've connected your repo to github, RStudio will tell you how many commits you have locally that are not on github. This message indicates that I have 1 commit locally ("my branch") that does not appear on github ("origin/master"): `r bookdown::embed_png("screenshots/git-local-commits.png", dpi = 220)`.
-
-Pushing = publishing your code for the world to use, so you need to make sure it's useful. I think it's good practice to run `R CMD check` before you. Fix any problems before pushing.
-
-## Retrieve a repo from github
-
-Creating a local copy of a remote repo is called __cloning__. You can do it from the shell with `git clone`, or use github:
-
-1.  Go to the github page and determine the git repo url. It's shown
-    in the right-hand sidebar:
-
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-clone-github.png", dpi = 220)
-    ```
-    
-    I recommend using the ssh url (by clicking ssh). Click the copy button
-    to put the url on your clipboard.
-    
-1.  Create a new project in RStudio:
-
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-clone-1.png", dpi = 220)
-    bookdown::embed_png("screenshots/git-clone-2.png", dpi = 220)
-    ```
-    
-1.  Paste the repo url:
-
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-clone-3.png", dpi = 220)
+    ```yaml
+    URL: http://github.com/hadley/dplyr
+    BugReports: http://github.com/hadley/dplyr/issues
     ```
 
-    (Here I'm cloning the repo for this book.)
+Now you can __push__ your changes to github by clicking `r bookdown::embed_png("screenshots/git-push.png", dpi = 220)`. (This is the same as running `git push` in the shell). 
 
-## Working with others
+Pushing your code to github publishes it for the world to use. For that reason, once you've learned about `R CMD check` in [automated checking](#check), it's a good idea to run that before you push. Fix any problems so that you're always publishing good code.
+
+Once you've connected your repo to github, the git pane will show you how many commits you have locally that are not on github: `r bookdown::embed_png("screenshots/git-local-commits.png", dpi = 220)`. This message indicates that I have 1 commit locally (my branch) that it not on github ("origin/master").
+
+## Working with others {#git-pull}
 
 So far you've been using push to synchronise your changes with github. The main difference when working with others, is that they're also synchronising their changes to github, so you'll need to get them. You do that with pull.
 
@@ -437,7 +457,7 @@ Special notes:
 
 If you manage to get totally confused, remember you can always restart from scratch by running `git merge --abort` then `git pull`. Otherwise remember that google and stackoverflow are great resources - processing merge conflicts is one of the trickiest parts of git and there are a lot of tutorials out there. You may need to read a few to really get the hang of it.
 
-## History
+## History {#git-log}
 
 * History view.
 * Commits on github.
@@ -454,15 +474,50 @@ Close issues with commit messages: `Close #n`, `@xyz`. etc.
 
 Good idea to add a bullet point to `NEWS.md`. Describe more in user terms. Commit message describes in developer terms.
 
-## Pull requests
-
-### Reviewing
+## Reviewing and accepting pull requests
 
 Add bullet to news. 
 
 <http://sarah.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/>
 
+## Making pull requests
+
+### Retrieve a repo from github {#git-clone}
+
+Creating a local copy of a remote repo is called __cloning__. You can do it from the shell with `git clone`, or use RStudio.  If you want 
+
+1.  Go to the github page and determine the git repo url. It's shown
+    in the right-hand sidebar:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-clone-github.png", dpi = 220)
+    ```
+    
+    I recommend using the ssh url (by clicking SSH). Click the copy button
+    to put the url on your clipboard.
+    
+1.  Create a new project in RStudio:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-clone-1.png", dpi = 220)
+    bookdown::embed_png("screenshots/git-clone-2.png", dpi = 220)
+    ```
+    
+1.  Paste the repo url:
+
+    ```{r, echo = FALSE}
+    bookdown::embed_png("screenshots/git-clone-3.png", dpi = 220)
+    ```
+
+    (Here I'm cloning the repo for this book.)
+
 ### Making
+
+Good commit messages are most important when you're submitting a pull request, sharing your changes with someone else. You want to make life as easy as possible for them, so that they can easily see what you've done, decreasing the amount of work they have to do and increasing the chances that your pull request will be accepted.
 
 * Strive to make as clean as possible.
 * Branch
+
+There are more advanced history modifying features available from the command
+line. See [rewriting history](http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History)
+for details.
