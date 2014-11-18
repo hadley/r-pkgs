@@ -436,15 +436,15 @@ If you're still stuck, try <http://sethrobertson.github.io/GitFixUm/fixup.html> 
 
 ## Working with others {#git-pull}
 
-So far you've been using push to synchronise your changes with github. The main difference when working with others is that they're also synchronising their changes to github, so you'll need to get them. You do that with pull.
+You use __push__ to send your changes to github. If you're working with other people, they're also pushing their changes to github, so you'll need to __pull__ their changes from github to see them locally. (You can only push to a repo when you have the most recent version of it, so you also need to pull before you push your changes).
 
-When you pull, git first downloads (fetches) all of the changes and then merges them with the changes that you've made. A merge is a commit with two parents. It takes two different lines of development and combines them into a single result. To do so, git needs to combine two sets of changes. In many cases it can do so automatically - if the changes are to different files, or even different parts of the same file. However, if the changes are to the same place in a file, you'll need to resolve the changes yourself. This is called a __merge conflict__.
+When you pull, git first downloads (__fetches__) all of the changes then __merges__ them with the changes that you've made. A merge is a commit with two parents. It takes two different lines of development and combines them into a single result. To do so, git needs to combine two sets of changes. In many cases it can do so automatically - if the changes are to different files, or even different parts of the same file. However, if the changes are to the same place in a file, you'll need to resolve the changes yourself. This is called a __merge conflict__.
 
 In RStudio, you'll discover that you have merge conflict when:
 
 * Pull fails with an error.
 
-* You get the status 
+* In the git pane, you see a status like
   `r bookdown::embed_png("screenshots/git-commit-conflict.png", dpi = 220)`
 
 RStudio currently doesn't provide any tools to help with merge conflicts, so you'll need to use the command line. I recommend starting by setting your merge conflict "style" to diff3. The diff3 style shows three things when you get a merge conflict: your local changes, the original file and remote changes. The default style is diff2, which only shows your changes and the remote changes, which generally makes it harder to figure out what's happened. 
@@ -498,40 +498,80 @@ Special notes:
   sufficiently that the package can load, then re-document to generate a clean & 
   correct `NAMESPACE`.
 
-If you manage to get totally confused, remember you can always restart from scratch by running `git merge --abort` then `git pull`. Otherwise remember that google and stackoverflow are great resources - processing merge conflicts is one of the trickiest parts of git and there are a lot of tutorials out there. You may need to read a few to really get the hang of it.
+If you manage to get totally confused, remember you can always restart from scratch by running `git merge --abort` then `git pull`. Also remember that Google and StackOverflow are great resources - processing merge conflicts is one of the trickiest parts of git and there are a lot of tutorials out there. You may need to read a few to really get the hang of it.
 
 ## Issues
 
-I recommend that you use them. Don't go too crazy with tags and milestones.
+Every github repo comes with a page for tracking issues. Use them!  If you encounter a bug while working on another project, jot a note down in your issues. When you have a smaller project, don't worry too much about milestones, tags and assigning issues to specific people. Those are more useful once you get over one page of issues (~50). Once you get to that point, read the github guide on issues: <https://guides.github.com/features/issues/>.
 
-<https://guides.github.com/features/issues/>
+One particularly useful tip is that you can close issues with commit messages. Just put `Closes #<issue number>` somewhere in your commit message and github will close the issue for you when you next push. The best thing about closing issues that way is that it makes a link from the issue to the commit. This is useful if you ever have to come back to the bug and see exactly what you did to fix it. If you want to make the link without closing the issue, you can just do `#<issue number>`.
 
-Close issues with commit messages: `Close #n`, `@xyz`. etc.
+Whenever you close an issue, it's a good idea to get in to the habit of add a bullet point to `NEWS.md`. See [NEWS.md](#news) for more details. The bullet point should describe the issue in terms that users will understand, where commit messages are designed to be read by developers.
 
-Good idea to add a bullet point to `NEWS.md`. Describe more in user terms. Commit message describes in developer terms.
+## Code review
 
-## Reviewing and accepting pull requests
+Sometimes you want to make a big change to your code. You want to break it up into multiple simple commits so you can easily track what you're doing, but you don't want to merge them into the main stream of development. Or maybe you're not sure what you've done is the best approach and you want someone else to review your code. Or maybe you want to try something experimental - you only want to merge it back in if the experiment succeeds.  Branches plus pull requests are a great way to handle these cases.
 
-Add bullet to news. 
+So far you've only been using the master branch. But there are a lot of great reasons to create more development branches.
 
-<http://sarah.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/>
+You can switch branches in RStudio, but you can't create new ones. You'll need to do that in the shell:
 
-## Making pull requests
+* `git branch` will show you all the existing branches in your code.
+
+* `git checkout -b <branch-name>` will create a new branch. It should only use
+  lowercase letters and numbers, and use `-` to separate words.
+
+* Switch between branches with `git checkout <branch-name>`. You can always 
+  return to the main line of development with `git branch master`.
+  
+* `git merge` will combine the changes from one branch to another. A merge
+  creates a new commit with two parents. 
+  
+* Once you're done with it, delete the branch with `git branch -d <branch-name>`
+  
+If you understand branches and merging, you can now understand what pulling does in more detail.
+
+* It fetches the remote changes into a local branch called `origin/master`.
+* It merges `origin/master` into `master`.
+
+https://www.atlassian.com/git/tutorials/using-branches/git-branch
+
+Does RStudio push work on a branch?
+
+Once you've created a pull request and 
 
 Pull request on your own repo. How to branch
 
+## Reviewing and accepting pull requests
+
+<http://sarah.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/>
+
+Add bullet to news. 
+
+## Making a pull request on other repos
+
+Adds another layer. You have a remote repo with the changes, and then you request to incorporate the changes into another. A pull request is a branch, so if you change the branch you'll also change the pull request. This is a feature because it allows you to update the pull request in response to comments from the maintainer. But it means that you should always create a branch for each pull request.
+
+### Fork the repo
+
 1.  Fork the repo
 
-1.  Clone it locally.
+1.  Fork of the main repo by going to https://github.com/hadley/ggplot2/fork.
+    A fork is a copy of ggplot2 that you can work on independently.
+    See [fork a repo](https://help.github.com/articles/fork-a-repo) for
+    more details.
 
-1.  Set up with Winston's stuff.
 
-### Retrieve a repo from github {#git-clone}
+1.  Click fork.
 
-Creating a local copy of a remote repo is called __cloning__. You can do it from the shell with `git clone`, or use RStudio.  If you want 
+### Clone the repo
 
-1.  Go to the github page and determine the git repo url. It's shown
-    in the right-hand sidebar:
+Creating a local copy of a remote repo is called __cloning__. You can do it from the shell with `git
+clone`, or use RStudio. 
+
+1.  Go to the github page and determine the git repo url. You need to clone
+    your forked repo, not the original (otherwise you can't push any changes
+    to git). It's shown in the right-hand sidebar:
 
     ```{r, echo = FALSE}
     bookdown::embed_png("screenshots/git-clone-github.png", dpi = 220)
@@ -555,7 +595,14 @@ Creating a local copy of a remote repo is called __cloning__. You can do it from
 
     (Here I'm cloning the repo for this book.)
 
-### Making
+1.  Once you've done that, add the main repository as a remote and set up
+    the master branch to track the original repo. This will make it
+    easier to keep up to date.
+
+    ```
+    git remote add <username> git://github.com/<username>/<repo>.git
+    git branch --set-upstream master <username>/master
+    ```
 
 Good commit messages are most important when you're submitting a pull request, sharing your changes with someone else. You want to make life as easy as possible for them, so that they can easily see what you've done, decreasing the amount of work they have to do and increasing the chances that your pull request will be accepted.
 
@@ -565,3 +612,4 @@ Good commit messages are most important when you're submitting a pull request, s
 There are more advanced history modifying features available from the command
 line. See [rewriting history](http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History)
 for details.
+
