@@ -180,7 +180,7 @@ Generating the namespace with roxygen2 is just like generating function document
 
 ## Exports {#exports}
 
-For a function to be usable outside of your package, you must __export__ it. When you create a new package with `devtools::create()`, it produces a temporary `NAMESPACE` that exports everything in your package that doesn't start with `.` (a single period). If you're just working locally, it's fine to export everything in your package. However, if you're planning on sharing your package with others, it's a really good idea to only export the needed functions. This reduces the chances of a conflict with another package.
+For a function to be usable outside of your package, you must __export__ it. When you create a new package with `devtools::create()`, it produces a temporary `NAMESPACE` that exports everything in your package that doesn't start with `.` (a single period). If you're just working locally, it's fine to export everything in your package. However, if you're planning on sharing your package with others, it's a really good idea to only export needed functions. This reduces the chances of a conflict with another package.
 
 To export an object, put `@export` in its roxygen block. For example:
 
@@ -195,7 +195,7 @@ This will then generate `export()`, `exportMethods()`, `exportClass()` or `S3met
 
 You export functions that you want other people to use. Exported functions must be documented, and you must be cautious when changing their interface --- other people are using them! Generally, it's better to export too little than too much. It's easy to export things that you didn't before; it's hard to stop exporting a function because it might break existing code. Always err on the side of caution, and simplicity. It's easier to give people more functionality than it is to take away stuff they're used to.
 
-I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or closely related set of problems), and any functions not related to that purpose should not be exported. For example, most of my packages have a `utils.R` file that contains many small functions that are useful for me, but aren't part of the core purpose of the package. I never export these functions. 
+I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or a set of closely related problems). Any functions not related to that purpose should not be exported. For example, most of my packages have a `utils.R` file that contains many small functions that are useful for me, but aren't part of the core purpose of those packages. I never export these functions.
 
 ```{r}
 # Defaults for NULL values
@@ -207,7 +207,7 @@ compact <- function(x) {
 }
 ```
 
-That said, if you're creating a package for yourself, it's far less important to have a consistent theme. You know what's in your package. It's fine to have a local "misc" package that contains a passel of functions that you find useful, but I don't think you should release such a package more widely.
+That said, if you're creating a package for yourself, it's far less important to be so disciplined. Because you know what's in your package, it's fine to have a local "misc" package that contains a passel of functions that you find useful. But I don't think you should release such a package.
 
 The following sections describes what you should export if you're using S3, S4 or RC.
 
@@ -215,31 +215,31 @@ The following sections describes what you should export if you're using S3, S4 o
 
 If you want others to be able to create instances of an S3 class, `@export` the constructor function. S3 generics are just regular R functions, you can `@export` them like functions. 
 
-S3 methods are the most complicated because there are four basic scenarios:
+S3 methods represent the most complicated case because there are four different scenarios:
 
 * A method for an exported generic: export every method.
 
 * A method for an internal generic: technically, you don't need to export
   these methods. However, I recommend exporting every S3 method you write
-  because it's simpler and makes it less likely that you introduce hard to 
-  find bugs. You can use `devtools::missing_s3()` to list all S3 methods that 
+  because it's simpler and makes it less likely that you'll introduce hard to 
+  find bugs. Use `devtools::missing_s3()` to list all S3 methods that 
   you've forgotten to export.
 
 * A method for a generic in a required package. You'll need to import the
   generic (see below), and export the method.
 
 * A method for a generic in a suggested package. Namespace directives must
-  refer to available functions, so can not reference suggested packages. 
+  refer to available functions, so they can not reference suggested packages. 
   It's possible to use package hooks and code to add this at run-time,
-  but this is sufficiently complicated that I don't currently recommend it.
-  Instead, you'll have to architect your package dependencies to avoid this
+  but this is sufficiently complicated that I currently wouldn't recommend it.
+  Instead, you'll have to design your package dependencies in a way that avoids this 
   scenario.
 
 ### S4 {#export-s4}
 
 S4 classes: if you want others to be able to extend your class, `@export` it.
-If you want others to create instances of your class, but not extend it,
-`@export` the constructor function, but not the class.
+If you want others to create instances of your class but not to extend it,
+`@export` the constructor function, not the class.
 
 ```{r, eval = FALSE}
 # Can extend and create
@@ -266,11 +266,11 @@ S4 methods: you only need to `@export` methods for generics that you did not def
 
 ### RC {#export-rc}
 
-The same principles apply as for S4 classes. Note that due to the way that RC is currently implemented, it's typically impossible for your classes to be extended outside of your package.
+The principles used for S4 classes apply here. Note that due to the way that RC is currently implemented, it's typically impossible for your classes to be extended outside of your package.
 
 ### Data {#export-data}
 
-Package data doesn't use the namespace mechanism and should never be exported. 
+Package data don't use the namespace mechanism and should never be exported. 
 
 ## Imports {#imports}
 
