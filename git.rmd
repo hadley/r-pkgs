@@ -526,34 +526,35 @@ Whenever you close an issue, it's a good idea to get in to the habit of add a bu
 
 Sometimes you need to make a big change to your code. You want to break it up into multiple simple commits so you can easily track what you're doing, but you don't want to merge them into the main stream of development. Or maybe you're not sure what you've done is the best approach and you want someone else to review your code. Or maybe you want to try something experimental - you only want to merge it back in if the experiment succeeds.  Branches and pull requests provide powerful tools to handle these situations.
 
-Although you haven't realised it, you've been using two branches so far: master and origin/master: master contains all your commits, origin/master contains all the commits on github (from the last time that you synced). When you run `git pull`, it does two things:
+Although you haven't realised it, you're already using branches. The default branch is called __master__, and it's where you've been saving your commits. If you synchronise your code to github, you have another branch called __origin/master__, which is a local copy of all the commits on github (synchronised whenever you push or pull). When you run `git pull`, it does two things:
 
 * `git fetch origin master`, to downloads all the commits on github into the 
   `origin/master`
   
 * `git merge orgin/master`, to combine the remote changes with your changes.
 
-It's useful to create your own new branches when you want to break off the main stream of development for a while. 
-
-Basic branch management tools.
-
-* Create a new branch: `git checkout -b <branch-name>`. Names should use
-  lower case letters, numbers, and `-` to separate words
+It's useful to create your own new branches when you want to break off the main stream of development for a while. Create a new branch with `git checkout -b <branch-name>`. Names should use lower case letters, numbers, and `-` to separate words
   
-* List all existing branches with `git branch`. Use `git branch -a` to 
-  also see the remote branches that you have synced locally.
+Switch between branches with `git checkout <branch-name>`. For example, to return to the main line of development with `git branch master`. You can also use the branch switcher at the top right of the git pane:
+  
+```{r, echo = FALSE}
+bookdown::embed_png("screenshots/git-branch.png", dpi = 220)
+```
 
-* Switch between branches with `git checkout <branch-name>`. You can always 
-  return to the main line of development with `git branch master`. You can 
-  also use the branch switcher at the top right of the git pane:
-  
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-branch.png", dpi = 220)
-    ```
-  
+If you've forgotten the name of your branch in the shell, you can use `git branch` to list all existing branches. 
+
+If you try to synchronise this branch to github from inside RStudio, you'll notice that push and pull are disabled: `r bookdown::embed_png("screenshots/git-no-remote.png", dpi = 220)`. To enable them, you'll need to first tell git that your local branch should have a remote equivalent:
+
+```bash
+git push --set-upstream origin <branch-name>
+```
+
+Once you've done that the first time you can use the pull and push buttons like usual.
+
+
 If you've been working in a branch for a while, other work might have been going on in master. To integrate that work into your branch, run `git merge master`. You will need to resolve any merge conflicts as described above. It's best to do this fairly frequently - the less your branch has diverged from the master, the easier it will be to merge.
 
-Once you're done working in a branch, you can merge it back into master and then delete it:
+Once you're done working in a branch, merge it back into master, then delete it:
 
 ```bash
 git checkout master
@@ -561,15 +562,7 @@ git merge <branch-name>
 git branch -d <branch-name>
 ```
 
-If you want to abandon a branch (i.e. delete it without merging it), you need a slightly different commnand. If you want to force delete it, use `-D` instead of `-d`.
-
-If you go to synchronise this branch to github, you'll notice that push and pull are disabled: `r bookdown::embed_png("screenshots/git-no-remote.png", dpi = 220)`. To enable them, you'll need to first tell git that your local branch should have a remote equivalent:
-
-```bash
-git push --set-upstream origin <branch-name>
-```
-
-Once you've done that the first time you can use the pull and push buttons like usual.
+(Git won't let you delete a branch unless you've merged it back into master. If you do want to abandon a branch without merging it, you'll need to force delete it by using `-D` instead of `-d`.)
 
 ## Making a pull request
 
