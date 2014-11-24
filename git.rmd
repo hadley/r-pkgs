@@ -581,12 +581,9 @@ Instead of merging your changes directly back into the main branch, you might wa
   where you see the overall diff of the commits, and you can comment
   on individual lines.
 
-We'll talk about the most common usage of pull requests, contributing to other people's code, next. But it's easiest to start using pull requests with your own repo because you own all the pieces, and it's easy to experiment. Pull requests against your own code are particularly useful when you want to get feedback on a proposed change.
+We'll talk about the most common usage of pull requests, contributing to other people's code, next. But it's easiest to start using pull requests with your own repo because you own all the pieces, and it's easy to experiment. Pull requests against your own code are particularly useful when you want to get feedback on a proposed change. We use them frequently at RStudio to get feedback before merging major changes.
 
-To create a pull request, you need to work in a branch and synchronise the branch with github. Then when you next go to github you'll see a header that invites you to submit a pull request.
-<https://help.github.com/articles/using-pull-requests/>
-
-You can also do it by:
+To create a pull request, you need to work in a branch and synchronise that branch with github. When you next go to github you'll see a header that invites you to submit a pull request. You can also do it by:
 
 * switching branches: 
 
@@ -596,64 +593,73 @@ You can also do it by:
 
 * clicking `r bookdown::embed_png("screenshots/pr-create.png", dpi = 220)`
 
+Learn more at <https://help.github.com/articles/using-pull-requests/>.
+
 ## Reviewing and accepting pull requests {#pr-accept}
+
+Recieving a pull request is fantastic. Someone not only cares about your package enough to use, they're actually read the source code and make an improvement.
 
 <http://sarah.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/>
 
-Add bullet to news. 
+Always remind contributs to add bullet point to `NEWS.md`, thanking themselves, including their github username (which will eventually get turned into a nice clickable link in the release notes. You'll learn about that in  [post release](#post-release)).
 
 ## Making a pull request on other repos {#pr-make}
 
-Making a pull request to someone else's code is similar to yours:
+Making a pull request to someone else's code is similar to make a pull request to your own repo. The main difference is that there's one more repository involved in the process. In total there are three repos you need to think about:
 
-Adds another layer. You have a remote repo with the changes, and then you request to incorporate the changes into another. A pull request is a branch, so if you change the branch you'll also change the pull request. This is a feature because it allows you to update the pull request in response to comments from the maintainer. But it means that you should always create a branch for each pull request.
+* The repo that you want to submit the pull request to. We'll call this the 
+  __upstream__ repo. You can't modify this repo, which is why you're making a 
+  pull request. 
 
-1.  Fork the repo. A fork is a copy of the repo that you can work on 
-    independently. See [fork a repo](https://help.github.com/articles/fork-a-repo) 
+* Your remote repo, the __origin__. You create this on github by __forking__ 
+  the upstream repository on github. This is a copy of the upstream repo 
+  that you have access to - it's somewhere for you to push your local changes
+  to so that github can see them.
+  
+* Your local repo. As usual this is where you work.
+
+Follow these steps to set up the two repos that you'll need to submit a pull request:
+
+1.  __Fork__ the upstream repo. A fork is a copy of repo that you belongs 
+    to you. See [fork a repo](https://help.github.com/articles/fork-a-repo) 
     for more details.
 
-1.  Creating a local copy of a remote repo is called __cloning__. You can do it
-    from the shell with `git clone`, or use RStudio. Go to the github page and 
-    determine the git repo url. You need to clone your forked repo, not the 
-    original (otherwise you can't push any changes to github). It's shown in 
-    the right-hand sidebar:
-
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-clone-github.png", dpi = 220)
+1.  __Clone__ the forked repo to create a local copy of the remote repo. 
+    It's possible to do this from RStudio (using "Create new project" from 
+    "Version control") but I think it's easier to do it from the shell:
+    
+    ```bash
+    git clone git@github.com:<your-name>/<repo>.git
+    cd <repo>
     ```
     
-    I recommend using the ssh url (by clicking SSH). Click the copy button
-    to put the url on your clipboard.
-    
-1.  Create a new project in RStudio:
-
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-clone-1.png", dpi = 220)
-    bookdown::embed_png("screenshots/git-clone-2.png", dpi = 220)
-    ```
-    
-1.  Paste the repo url:
-
-    ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-clone-3.png", dpi = 220)
-    ```
-
-    (Here I'm cloning the repo for this book.)
-
-1.  Tell the fork about the original repo:
+1.  __Set up__ your fork so that it knows about the upstream repo:
 
     ```bash
-    git remote add upstream git@github.com:wch/extrafont.git
+    git remote add upstream git@github.com:<original-name>/extrafont.git
     git fetch upstream
-    git branch -u upstream/master
+    git branch -u upstream/master   
     ```
 
-Good commit messages are most important when you're submitting a pull request, sharing your changes with someone else. You want to make life as easy as possible for them, so that they can easily see what you've done, decreasing the amount of work they have to do and increasing the chances that your pull request will be accepted.
+While you're creating the pull request, the upstream repo might change. To update your branch:
 
-* Strive to make as clean as possible.
-* Branch
+1.  Pull the upstream changes down into your local repo:
 
-There are more advanced history modifying features available from the command
-line. See [rewriting history](http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History)
-for details.
+    ```bash
+    git checkout master
+    git pull
+    ```
+    
+1.  Merge the changes with your branch:
+
+    ```bash
+    git checkout <my-branch>
+    git merge master
+    ```
+    
+The reposities and the connections between them are summarised below:
+
+```{r, echo = FALSE}
+bookdown::embed_png("diagrams/pull-request-process.png", dpi = 220)    
+```
 
