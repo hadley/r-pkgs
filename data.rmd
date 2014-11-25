@@ -6,18 +6,18 @@ output: bookdown::html_chapter
 
 # External data {#data}
 
-It's often useful to include data in a package. If you're releasing the package to a broad audience, an interesting dataset is useful for building compelling examples. Or you might be interested primarily in the data, and a package is a good way to distribute data and documentation together (as long as your audience is R users)
+It's often useful to include data in a package. If you're releasing the package to a broad audience, it's a way to provide compelling use cases for the package's functions. If you're releasing the package to a more specific audience, interested either in the data (e.g., NZ census data) or the subject (e.g., demography), it's a way to distribute that data along with its documentation (as long as your audience is R users).
 
 There are three ways to include data in your package, depending on what you want to do with it and who should be able to use it:
 
-* If you want to store parsed data, and make it available to the user, put it
+* If you want to store parsed data, and make it available to the user, put them
   in `data/`. This is the best place to put example datasets.
   
 * If you want to store parsed data, but not make it available to the user,
-  put it all `R/sysdata.rda`. This is the best place to put data that your
+  put them `R/sysdata.rda`. This is the best place to put data that your
   functions need.
 
-* If you want to store raw data, put it in `inst/extdata`.
+* If you want to store raw data, put them in `inst/extdata`.
 
 Each possible location is described in more detail below.
 
@@ -30,9 +30,9 @@ x <- sample(1000)
 devtools::use_data(x, mtcars)
 ```
 
-It is possible to use other types of file, but I don't recommend it because `.rdata` files are fast, small and explicit. Other options are described in `data()`.  For larger datasets, you may want to experiment with the compression setting. The default is `bzip2`, but sometimes `gzip` or `xz` can create smaller files (typically at the expense of slower loading names)
+It's possible to use other types of files, but I don't recommend it because `.rdata` files are already fast, small and explicit. Other options are described in `data()`. For larger datasets, you may want to experiment with the compression setting. The default is `bzip2`, but sometimes `gzip` or `xz` can create smaller files (typically at the expense of slower loading times)
 
-If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded. This means that they don't occupy any memory until you use them. The following example shows the memory usage before and after loading the nycflights13 package. The memory usage doesn't change until you inspect the flights dataset stored inside the package. 
+If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded. This means that they won't occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn't change until you inspect the flights dataset stored inside the package. 
 
 ```{r}
 pryr::mem_used()
@@ -45,13 +45,13 @@ pryr::mem_used()
 
 I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `devtools::create()` does this for you.
 
-Often you'll create the data files in `data/` from raw data gathered from elsewhere. I highly recommend taking the time to make this code fully reproducible so that you can re-run whenever you need to update the data. I suggest that you put this code in `data-raw/`. You'll need to add to the `.Rbuildignore` so it doesn't get included in the distributed packgage. Do this automatically with:
+Often, the data you include in `data/` is a cleaned up version of raw data you've gathered from elsewhere. I highly recommend taking the time to include the code used to do this. This will make it easy for you to update or reproduce your version of the data. I suggest that you put this code in `data-raw/`. You'll need to add it to the `.Rbuildignore` so it doesn't get included in the distributed packgage. Do this automatically with:
 
 ```{r, eval = FALSE}
 devtools::use_data_raw()
 ```
 
-You can see this approach in practice in some of my recent data packages. I've been creating these packages because the data will change rarely, and then multiple packages can use them for examples:
+You can see this approach in practice in some of my recent data packages. I've been creating these as packages because the data will rarely change, and because multiple packages can then use them for examples:
 
 * [babynames](https://github.com/hadley/babynames)
 * [fueleconomy](https://github.com/hadley/fueleconomy)
@@ -61,7 +61,7 @@ You can see this approach in practice in some of my recent data packages. I've b
 
 ### Documenting datasets {#documenting-data}
 
-Objects in `data/` are always effectively exported (they use a slightly different mechanism to the `NAMESPACE` but the details are not important). This means that they must be documented. Documenting data is like documenting a function with a few minor differences. Instead of documenting the data directly, you document the name of the dataset. For example, the roxygen2 block used to document the diamonds data in ggplot2 looks something like this:
+Objects in `data/` are always effectively exported (they use a slightly different mechanism than `NAMESPACE`'s but the details are not important). This means that they must be documented. Documenting data is like documenting a function with a few minor differences. Instead of documenting the data directly, you document the name of the dataset. For example, the roxygen2 block used to document the diamonds data in ggplot2 looks something like this:
 
 ```{r, eval = FALSE}
 #' Prices of 50,000 round cut diamonds.
@@ -81,11 +81,11 @@ Objects in `data/` are always effectively exported (they use a slightly differen
 
 There are two additional tags that are important for documenting datasets:
 
-* `@format`, which gives an overview of the dataset. For data frames, you 
+* `@format` gives an overview of the dataset. For data frames, you 
   should include a definition list that describes each variable. It's usually
-  a good idea to describe units here.
+  a good idea to describe variables' units here.
   
-* `@source` where you got the data form, often a `\url{}`.
+* `@source` provides details of where you got the data, often a `\url{}`.
 
 Never `@export` a data set.
 
@@ -100,13 +100,13 @@ x <- sample(1000)
 devtools::use_data(x, mtcars, internal = TRUE)
 ```
 
-Again, it's a good idea to make the code used to generate this file reproducible. Put it in `data-raw/`.
+Again, to make this data reproducible it's a good idea to include the code used to generate it. Put it in `data-raw/`.
 
-Objects in `R/sysdata.rda` are not exported (and shouldn't be), so don't need to be documented. They're only available inside your package.
+Objects in `R/sysdata.rda` are not exported (they shouldn't be), so they don't need to be documented. They're only available inside your package.
 
 ## Raw data {#data-extdata}
 
-If you want to show examples of loading/parsing raw data, put the original files in `inst/extdata`. When the package is installed, all files in `inst/` are moved into the top-level directory (so they can't have names like `R/` or `DESCRIPTION`). To refer to files in `inst/extdata` (whether installed or not), use `system.file()`:
+If you want to show examples of loading/parsing raw data, put the original files in `inst/extdata`. When the package is installed, all files in `inst/` are moved to the top-level directory (so they can't have names like `R/` or `DESCRIPTION`). To refer to files in `inst/extdata` (whether installed or not), use `system.file()`:
 
 ```{r}
 system.file("include", "Rcpp.h", package = "Rcpp")
@@ -120,21 +120,21 @@ system.file("include", "Rcp.h", package = "Rcpp")
 
 ## Other data {#other-data}
 
-* Data for tests: it's ok to put small files directly in your tests directory.
+* Data for tests: it's ok to put small files directly in your test directory.
   But remember unit tests are for testing correctness, not performance, so keep
   the size small.
   
-* Data for vignettes. Data should either go in `data/` if you want to show
-  how to work with an already loaded dataset, or in `inst/extdata` if you want
-  to show how to load raw data.
+* Data for vignettes. If you want to show how to work with an already loaded 
+  dataset, put that data in `data/`. If you want to show how to load raw data, 
+  put that data in `inst/extdata.`
 
 ## CRAN notes {#data-cran}
 
-Generally, package data should be smaller than a megabyte - if it's larger you'll need to argue for an exemption. This is usually easier to do if the data is its own package, and it won't be updated frequently. You should also make sure that the data has been optimally compressed:  
+Generally, package data should be smaller than a megabyte - if it's larger you'll need to argue for an exemption. This is usually easier to do if the data is in its own package and won't be updated frequently. You should also make sure that the data has been optimally compressed:  
 
 1. Run `tools::checkRdaFiles()` to determine the best compression for each file.
 
-2. Re-run `devtools::use_data()` with `compression` set to the optimal value.
+2. Re-run `devtools::use_data()` with `compression` set to that optimal value.
    If you've lost the code for recreating the files, you can use 
    `tools::resaveRdaFiles()` to re-save in place.
    
