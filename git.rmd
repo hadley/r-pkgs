@@ -41,21 +41,21 @@ There is a lot to learn about git, and if you look at tutorials online you'll fi
 
 ## RStudio, git and github
 
-RStudio makes your day-to-day use of git as easy as possible. Once you've set up a project to use git, you'll get a new toolbar icon and a new pane. They provide shortcuts for the most commonly used git commands.
+RStudio makes your day-to-day use of git as easy as possible. Once you've set up a project to use git, you'll get a new toolbar icon and a new pane. They provide shortcuts for the most commonly used git commands. However, there are over 150 git commands, and only a handful are available in Rstudio. That means you'll need to run some commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. It's also important to be familiar with using git from the command line because if you get stuck, you'll need to search for a solution using the standard command names.
 
-However, there are over 150 git commands, and only a handful are available in Rstudio. That means you'll need to run some commands from a shell (aka a console), especially when you're setting up, dealing with merge conflicts and getting out of jams. It's also important to be familiar with using git from the command line because if you get stuck, you'll need to search for a solution using the standard command names.
+The easiest way to get to a shell from RStudio is Tools > Shell. It will open a new shell located in the root directory of your project. (NB: on windows, this opens up a _bash_ shell, the standard linux shell, which behaves a little differently to the usual `cmd.exe`.) 
 
-The easiest way to get to a shell from RStudio is Tools > Shell. It will open a new shell located in the root directory of your project. The three most important shell commands are:
+If you've never used the shell before, don't worry, it's very similar to using R. The main difference is that instead of functions, you call commands. Commands have a slightly syntax (unfortunately shell commands are even less regular than R functions, but you'll only need a couple). For example, in R you might write `f(x, y = 1)`, where in the shell you'd write `f x --y=1` or `f x -y1`. In this chapter, you won't be doing much in the shell apart from running the git commands that I give you. However, it's a good idea to learn the three most important shell commands:
 
 * `pwd`: print working directory. This tells you where you are now.
 * `cd <name>`: change directory. Use `cd ..` to go up the directory hierarchy.
 * `ls`: list files. Shows all files in the current directory.
 
-If you've never used the shell before, you might want to start with <https://try.github.io>. It steps you through a number of git related challenges in a virtual shell.
+If you've never used the shell before, I recommend playing [Terminus](http://web.mit.edu/mprat/Public/web/Terminus/Web/main.html). It's a fun way to learn the basics of the shell. I also recommend try Philip Guo's [Basic Unix-like command line tutorial](http://pgbovine.net/command-line-tutorial.htm) videos, <http://www.ee.surrey.ac.uk/Teaching/Unix/unix1.html>, and <https://p1k3.com/userland-book/>.
 
 ## Initial set up {#git-init}
 
-If you've never used git or github before, you'll need to start by installing git, creating a github account and connecting the two together:
+If you've never used git or github before, start by installing git, creating a github account and connecting the two together:
 
 1.  Install git:
 
@@ -73,35 +73,38 @@ If you've never used git or github before, you'll need to start by installing gi
     git config --global user.email "<YOUR EMAIL ADDRESS>"
     ```
 
-1.  Create a free account on github: <https://github.com>. Use the same
-    name and email address as the previous step.
+1.  Create a free account on github, <https://github.com>. Use the same
+    name and email address as above.
     
-1.  If needed, generate a ssh key. Ssh key are used to securely communicate
-    with websites without having to use a password. You can check if you have 
-    an ssh key already by running:
+1.  If needed, generate a SSH key-pair. SSH keys are used to securely communicate
+    with websites without needing a password. There are two parts to an SSH key:
+    public and private. If someone has your public key, they can securely
+    encrypt data in a way that only your private key can open.
+    
+    You can check if you already have an SSH key-pair by running:
     
     ```{r, eval = FALSE}
     file.exists("~/.ssh/id_rsa.pub")
     ```
 
-    If it's `FALSE`, you'll need to create one. You can follow the [github 
-    instructions](https://help.github.com/articles/generating-ssh-keys) or
-    use RStudio. Go to RStudio preferences, choose the Git/SVN panel, then 
+    If that returns `FALSE`, you'll need to create a new key. You can follow the 
+    [github instructions](https://help.github.com/articles/generating-ssh-keys) 
+    or use RStudio. Go to RStudio preferences, choose the Git/SVN panel, then 
     click "Create RSA key...":
     
     ```{r, echo = FALSE}
-    bookdown::embed_png("screenshots/git-config.png", dpi = 220)
+    bookdown::embed_png("screenshots/git-config-2.png", dpi = 220)
     ```
     
-1.  Add your public key to <https://github.com/settings/ssh>. The
-    easiest way to get the key is to click "View public key" in the
-    Git/SVN preferences pane (see above).
+1.  Tell github what your SSH public key is at <https://github.com/settings/ssh>. 
+    The easiest way to find the key is to click "View public key" in the
+    Git/SVN preferences pane.
 
 ## Create a local git repository {#git-init}
 
-Now that you have git installed and configured, you can use it! First you need to set up a package to use git by initialising a local git repository. This repository (repo for short) exists only on your computer. This is different to older systems like svn which were always connected to a central server. Git makes a clear distinction between local and remote repos; you mostly work locally then push your changes to a remote repo when you're ready to share your work with others.
+Now that you have git installed and configured, you can use it! For each package that you want to use github with, you'll need to initialise a local repository, or __repo__ for short. This creates a `.git` directory which stores configuration files and a database that records changes to your code. A new repo exists only on your computer; you'll learn how to share it with others shortly.
 
-There are two ways to create a new git repo:
+To create a new repo:
 
   * In RStudio, go to project options, then the Git/SVN panel. Change the 
     "Version control system" from "None" to "Git":
@@ -114,31 +117,25 @@ There are two ways to create a new git repo:
 
   * In a shell, run `git init`. Restart RStudio and reopen your package.
 
-Once git has been activated in a project, you'll see two new components in the IDE:
+Once git has been initialised, you'll see two new components in the IDE:
 
   * The __git pane__, found at the top-right, shows you what files have 
-    changed, and exposes the most important git commands as buttons.
+    changed and exposes the most important git commands as buttons:
     
     ```{r, echo = FALSE}
     bookdown::embed_png("screenshots/git-pane.png", dpi = 220)
     ```
     
   * The __git dropdown__, found in the toolbar, exposes git and github commands
-    useful for working with the current file:
+    that apply to the current file:
   
     ```{r, echo = FALSE}
     bookdown::embed_png("screenshots/git-dropdown.png", dpi = 220)
     ```
 
-With the repository set up, you can now:
-
-* See what's changed: [git status](#git-status).
-* Add and commit files: [git commit](#git-commit).
-* Learn commit best practices: [best practices](#commit-best-practices).
-
 ## See what's changed {#git-status}
 
-The RStudio git pane shows at a glance what's changed. Every file that's been added, modified or deleted, along with an icon summarising the change:
+The first benefit to using git is that you can easily see what you've changed. I find this really helpful, as I often accidentally mistype keyboard shortcuts, leaving stray characters in my code. The RStudio git pane lists every file that's been added, modified or deleted. The icon describes the change:
 
 * `r bookdown::embed_png("screenshots/git-modified.png", dpi = 220)`, 
   __Modified__. You've changed the contents of the file.
@@ -148,27 +145,26 @@ The RStudio git pane shows at a glance what's changed. Every file that's been ad
 
 * `r bookdown::embed_png("screenshots/git-deleted.png", dpi = 220)`, 
   __Deleted__. You've deleted a file.
-  
-You can get the same information in the shell by running `git status`. 
 
-For text files, you can get more details about modifications with a "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`. This opens a new window showing the detailed **diff**erences:
+You can get more details about modifications with a "diff", `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`. This opens a new window showing the detailed **diff**erences:
 
 ```{r, echo = FALSE}
 bookdown::embed_png("screenshots/git-diff-window.png", dpi = 220)
 ```
 
-The background colour tells you whether the text has been added (green) or removed (red). (If you're colour blind you can use the line numbers in the two columns on the far-left. The a number in the first column means that's what was in the old version, a number on right means that's what's in the new version.) Context, lines surrounding the change, are shown in grey, and help you to place the change in the context of complete file. You can get a similar display in the shell by running `git diff`. 
+The background colour tells you whether the text has been added (green) or removed (red). (If you're colour blind you can use the line numbers in the two columns on the far left. A number in the first column means old version, a number on right new version.) Context, lines surrounding the change, are shown in grey, and help you to place the change in the context of complete file. 
 
-## Add and commit files {#git-commit}
+In the shell, use `git status` to show an overview of changes and `git diff` to see detailed differences. 
 
-The fundamental unit of work in git is a __commit__. A commit is a snapshot of the state of your code at a fixed point in time. You can think of a commit as a set of changes: what files did you add, edit and delete? Committing code is the most common git operation. You'll create many commits each day. A commit is both a noun and a verb:
+## Add and commit files {#git-stage-commit}
 
-* As a noun: a commit is a snapshot of your code.
-* As a verb: commit your changes to create a new snapshot.
+The fundamental unit of work in git is a __commit__. A commit takes snapshot of your code at a specified point in time. If you make a mistake, you can rollback changes to a previous commit. To see the history of a package, you can compare each commit to the previous to see what you've done. Most importantly for collaboration, you can combine commits from multiple people. 
 
-There are four components to every commit:
+There are five components to every commit:
 
-* A unique identifier called a sha (sha is short for secure hash algorithm).
+* A unique identifier called a sha (short for secure hash algorithm).
+
+* A changeset describing which files were added, modified and changed.
 
 * A human-readable commit message.
 
@@ -176,30 +172,27 @@ There are four components to every commit:
   this rule: the first commit doesn't have a parent, and merges, which you'll
   learn about later, have two parents.)
 
-* A changeset describing which files were added, modified and changed.
+* An author.
 
 Creating a commmit occurs in two stages:
 
 1.  You __stage__ files, telling git that you want to include them in the
     next commit. 
   
-1.  You __commit__ the staged files, describe the changes with a message.
+1.  You __commit__ the staged files, describing the changes with a message.
 
-### Staging
-
-You perform both these steps in the same place in RStudio: the commit window. Open the commit window by clicking `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)`, or by pressing Ctrl + Alt + m. Here's a screenshot I took while writing this chapter:
+In RStudio, staging and commmiting are done in the commmit window, which you can open by clicking `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)` or by pressing Ctrl + Alt + m.
 
 ```{r, echo = FALSE}
 bookdown::embed_png("screenshots/git-commit-window.png", dpi = 220)
 ```
 
-There are three panes:
+The commit window is made up of three panes:
 
 * The top-left pane shows the current status, the same as the git pane in the 
   main RStudio window.
 
-* The bottom pane shows the changes made (the "diff") in the file currently 
-  selected in the status pane.
+* The bottom pane shows the diff of the currently selected file.
 
 * The top-right pane is where you'll enter the commit message, a human 
   readable message summarising the changes made in the commit. More on 
@@ -207,27 +200,25 @@ There are three panes:
 
 (Yes, this is exactly the same window you see when clicking `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`!)
 
-Staging files is a bit more complicated in the shell. You use `git add` for new and modified files, and `git rm` for deleted files.
+### Staging {#git-stage}
 
-### Commiting
+The staging area lets you review your changes prior to committing them. It's a useful place to double check your code.
 
-To make a new commit:
+To stage files:
 
 1.  __Save your changes__.
 
 1.  __Open the commit window__ by clicking 
     `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)` or 
-    pressing `Ctrl + Alt + M`.  
+    pressing `Ctrl + Alt + m`.  
 
-1.  __Stage files to be included in the next commit__.  To stage a single 
-    file, tick the corresponding check box. To stage all files, press Cmd + A, 
+1.  __Select files__.  To stage (select) a single file for inclusion in the next
+    commit, tick the corresponding check box. To stage all files, press Cmd + A, 
     then click `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`. 
     
-    As you stage each file, you'll notice that its status changes. There are two 
-    columns: staged status on the left and unstaged status on the right. All
-    staged change will be included in the next commit.
-    
-    There are two new new statuses that you'll see when staging files:
+    As you stage each file, you'll notice that its status changes. The icon
+    will change columns from right (unstaged status) to left (staged status).
+    You'll see two new new icons when staging files:
 
       * Added: `r bookdown::embed_png("screenshots/git-added.png", dpi = 220)`: 
         after staging an untracked file, git now knows that you want to add it 
@@ -240,10 +231,18 @@ To make a new commit:
         
     Sometimes you'll see a status in both columns, e.g. 
     `r bookdown::embed_png("screenshots/git-modified-staged.png", dpi = 220)`.
-    This means that you have both staged unstaged changes in the same file.
-    This means that you've made some changes, staged them, and then made some 
+    This means that you have both staged and unstaged changes in the same file.
+    This happens when you've made some changes, staged them, and then made some 
     more. Clicking the staged checkbox will stage your new changes, clicking
     it again will unstage both sets of changes.
+
+Staging files is a bit more complicated in the shell. You use `git add` for new and modified files, and `git rm` for deleted files.
+
+### Commiting {#git-commit}
+
+To make a new commit:
+
+1.  __Stage files__, as a bove.
 
 1.  __Write a commit message__ (top-right panel). The first line of a commit 
     message is called the subject line and should be brief (50 characters or 
