@@ -159,27 +159,27 @@ The background colour tells you whether the text has been added (green) or remov
 
 In the shell, use `git status` to show an overview of changes and `git diff` to see detailed differences. 
 
-## Add and commit files {#git-stage-commit}
+## Record changes {#git-commit}
 
-The fundamental unit of work in git is a __commit__. A commit takes snapshot of your code at a specified point in time. If you make a mistake, you can rollback changes to a previous commit. To see the history of a package, you can compare each commit to the previous to see what you've done. Most importantly for collaboration, you can combine commits from multiple people. 
+The fundamental unit of work in git is a __commit__. A commit takes snapshot of your code at a specified point in time. If you make a mistake, you can rollback changes to a previous commit. Using a git commit is like using an anchor when climbing. If you're crossing a dangerous rock face you want to make sure you've used protection to catch you if you fall. Commits play a similar role: if you make a mistake, you can't fall past the previous commit. Coding without commits is like free climbing: it's an adrenalin rush because any mistake can mean death. Like rock climbing protection, you want to be judicious in your use of commits. Committing too frequently will slow your progress; use more commits when you're in uncertain or dangerous territory. Commits are also helpful to others, because they show your journey, not just the destination.
 
-There are five components to every commit:
+There are five key components to every commit:
 
-* A unique identifier called a sha (short for secure hash algorithm).
+* A unique identifier, called a sha (short for secure hash algorithm).
 
-* A changeset describing which files were added, modified and changed.
+* A changeset that describes which files were added, modified and deleted.
 
 * A human-readable commit message.
 
-* A parent, the change that came before this one. (There are two exceptions to 
-  this rule: the first commit doesn't have a parent, and merges, which you'll
+* A parent, the commit that came before this one. (There are two exceptions to 
+  this rule: the initial commit doesn't have a parent, and merges, which you'll
   learn about later, have two parents.)
 
 * An author.
 
-Creating a commmit occurs in two stages:
+You create a commit in two stages:
 
-1.  You __stage__ files, telling git that you want to include them in the
+1.  You __stage__ files, telling git which changes should be included in the
     next commit. 
   
 1.  You __commit__ the staged files, describing the changes with a message.
@@ -203,11 +203,7 @@ The commit window is made up of three panes:
 
 (Yes, this is exactly the same window you see when clicking `r bookdown::embed_png("screenshots/git-diff.png", dpi = 220)`!)
 
-### Staging {#git-stage}
-
-The staging area lets you review your changes prior to committing them. It's a useful place to double check your code.
-
-To stage files:
+To create a new commit:
 
 1.  __Save your changes__.
 
@@ -215,22 +211,21 @@ To stage files:
     `r bookdown::embed_png("screenshots/git-commit.png", dpi = 220)` or 
     pressing `Ctrl + Alt + m`.  
 
-1.  __Select files__.  To stage (select) a single file for inclusion in the next
-    commit, tick the corresponding check box. To stage all files, press Cmd + A, 
-    then click `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`. 
+1.  __Select files__.  To stage (select) a single file for inclusion, tick its
+    check box. To stage all files, press Cmd + A, then click 
+    `r bookdown::embed_png("screenshots/git-stage.png", dpi = 220)`. 
     
     As you stage each file, you'll notice that its status changes. The icon
-    will change columns from right (unstaged status) to left (staged status).
-    You'll see two new new icons when staging files:
+    will change columns from right (unstaged status) to left (staged status),
+    and you might see one of two new new icons:
 
       * Added: `r bookdown::embed_png("screenshots/git-added.png", dpi = 220)`: 
         after staging an untracked file, git now knows that you want to add it 
         to the repo.
       
       * Renamed: `r bookdown::embed_png("screenshots/git-renamed.png", dpi = 220)`:
-        If you rename a file, git initially sees it as deleting one file and
-        adding a new file. Once you stage both changes, git will recognise 
-        that it's a rename.
+        If you rename a file, git initially sees it as a deletion and addition.
+        Once you stage both changes, git will recognise that it's a rename.
         
     Sometimes you'll see a status in both columns, e.g. 
     `r bookdown::embed_png("screenshots/git-modified-staged.png", dpi = 220)`.
@@ -239,34 +234,23 @@ To stage files:
     more. Clicking the staged checkbox will stage your new changes, clicking
     it again will unstage both sets of changes.
 
-Staging files is a bit more complicated in the shell. You use `git add` for new and modified files, and `git rm` for deleted files.
+1.  __Stage files__, as above.
 
-### Commiting {#git-commit}
-
-To make a new commit:
-
-1.  __Stage files__, as a bove.
-
-1.  __Write a commit message__ (top-right panel). The first line of a commit 
-    message is called the subject line and should be brief (50 characters or 
-    less). For complicated commits, you can follow it with a blank line and 
-    then a paragraph or bulleted list providing more detail. Write messages in 
-    imperative, like you're telling someone what to do: "fix this bug", not 
-    "fixed this bug".
+1.  __Write a commit message__ (top-right panel)  which describes the changes
+    that you've made. The first line of a commit message is called the subject 
+    line and should be brief (50 characters or less). For complicated commits, 
+    you can follow it with a blank line and then a paragraph or bulleted list 
+    providing more detail. Write messages in imperative, like you're telling 
+    someone what to do: "fix this bug", not "fixed this bug" or 
+    "this bug was fixed".
     
 1.  __Click Commit__.
 
-### Ignoring files
-
-There are often files that you don't want to include in the repository. They might be transient artefacts (like stuff you get when building latex files, or compiling C code), or they might be too big, or they might be generated on demand. Instead of carefully not-staging them each time, you should add them to `.gitignore` to prevent them from every being added. 
-
-The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
-
-Some developers stick to the convention that no files that can be generated from other files should ever be committed into git. For R packages this means the `man/` directory that is autogenerated from R comments. Pragmatically, it's better not to do this because currently R packages have no way to generate `.Rd` files on install, so if you don't check them in and someone installs your package from github they won't have any documentation.
+Staging files is a little more complicated in the shell. You use `git add` to stage new and modified files, and `git rm` to stage deleted files. To create the commit, use `git commit -m <message>`.
 
 ## Commit best practices {#commit-best-practices}
 
-Ideally, each commit should:
+Ideally, each commit should be:
 
 * __Related__: All the changes in the commit should be related to the same
   goal. This makes it easier to understand the commit at a glance, and to 
@@ -280,7 +264,7 @@ Ideally, each commit should:
   If you think you've fixed a bug, the commit should contain a unit test
   that confirms that you're right.
 
-And each commit message should:
+Each commit message should:
 
 * __Be concise, yet evocative__. You want to be able to take in at a glance
   what a commit does, but there should be enough detail so you can remember
@@ -302,20 +286,24 @@ If you do this then:
 * You can load and run your package at any point in its life. This can
   be tremendously useful in conjunction with tools like 
   [bisectr](https://github.com/wch/bisectr), which allow you to use binary
-  search to quickly narrow in on the commit that introduced a bug.
+  search to quickly find the commit that introduced a bug.
 
 * When you discover exactly when you introduced a bug, you can easily 
   understand what you were doing (and why!).
 
-The time you spend on your commits is inversely proportional to the amount of time others will spend understanding the history of your project. This is a less common operation, but it's important if you want to see what's changed or undo a mistake.  
+The time you spend on your commits is inversely proportional to the amount of time others will spend understanding the history of your project. You might think that no one else will ever look at your repo, but every project has one very important collaborator: future-you! If you spend a little time now to polishing your commit messages, future-you will thank you when they do a post-mortem on a bug. 
 
-Commit messages are most important when you are collaborating with others. You might think that no one else will ever look at your repo, but there is one important collaborator for every project that you do: future-you! Future-you probably has forgotten a lot of things that present-you knows.
+Remember that these directives are aspirational, and you shouldn't let them get in your way. If you look at the commit history of my repositories, you'll notice a lot of them aren't that good, especially when I start to get frustrated that I __still__ haven't managed to fix a bug. Strive to follow these guidelines, but remember it's better to have multiple bad commits than one perfect commit.
 
-Remember that these directives are aspirational, and you shouldn't let aspirations get in your way.  If you look at the commit history of my repositories, you'll notice a lot of them aren't that great, especially when I start to get frustrated that I __still__ haven't managed to fix a bug. I'm a frequent offender on the "complete" front, often missing important parts of a problem.
+## Ignoring files
+
+There are often files that you don't want to include in the repository. They might be transient artefacts (like LaTex or C build artefacts), very large, or generated on demand. Instead of carefully not-staging them each time, you should add them to `.gitignore` to prevent them from every being added. The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
+
+Some developers never commit derived files, file that can be generated automatically. For an R package this would mean never checking in the `NAMESPACE` or `man/` directory because they're generated from comments. Pragmatically, it's better to commit these files because R packages have no way to generate `.Rd` files on install, so if you don't check them in users who install your package from github will have no documentation.
 
 ## Synchronising with github {#github-init}
 
-Most of the time you work locally. This is really convenient because you don't need internet access to use git - you can keep on committing changes even when you're on a plane. However, git is most useful in conjunction with github, allowing you to share your code with the world.  
+Most of the time you'll work locally. But git really shines when you start to work with others by publishing your code. 
 
 At first, working in the open seems a little scary. Do you really want the whole world seeing your crappy code? Don't worry, nobody is judging you - everybody rights bad code at some point in their lives, and most people are more interested in helping you write better code than making fun of your existing efforts. Once you get used to it, you'll find that coding in the open is tremendously empowering as it helps other people help you.
 
