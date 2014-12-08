@@ -297,56 +297,68 @@ Remember that these directives are aspirational, and you shouldn't let them get 
 
 ## Ignoring files
 
-There are often files that you don't want to include in the repository. They might be transient artefacts (like LaTex or C build artefacts), very large, or generated on demand. Instead of carefully not-staging them each time, you should add them to `.gitignore` to prevent them from every being added. The easiest way to do this is to right-click on the file in the git pane and select `Ignore`. If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`.
+There are often files that you don't want to include in the repository. They might be transient artefacts (like LaTex or C build artefacts), very large, or generated on demand. Instead of carefully not-staging them each time, you should add them to `.gitignore` to prevent them from every being added. The easiest way to do this is to right-click on the file in the git pane  and select `Ignore`:
 
-Some developers never commit derived files, file that can be generated automatically. For an R package this would mean never checking in the `NAMESPACE` or `man/` directory because they're generated from comments. Pragmatically, it's better to commit these files because R packages have no way to generate `.Rd` files on install, so if you don't check them in users who install your package from github will have no documentation.
+```{r, echo = FALSE}
+bookdown::embed_png("screenshots/git-ignore.png", dpi = 220)
+```
+
+If you want to ignore multiple files, you can use a wildcard "glob" like `*.png`. To learn more about the options, see [ignoring files](http://git-scm.com/book/ch2-2.html#Ignoring-Files) in Pro-Git.
+
+Some developers never commit derived files, files that can be generated automatically. For an R package this would mean never checking in the `NAMESPACE` or `man/` directory because they're generated from comments. Pragmatically, it's better to commit these files because R packages have no way to generate `.Rd` files on install, so if you don't check them in users who install your package from github will have no documentation.
 
 ## Synchronising with github {#github-init}
 
-Most of the time you'll work locally. But git really shines when you start to work with others by publishing your code. 
+So far we've only been working locally, using commits to track the progress of a project and provide safe checkpoints. However, git really shines when you start publishing your code in the open. We're going to use [github](http://github.com) to do this. There are other choices, but github is free for open source projects, has all the features you'll need and is popular choice in the R world. 
 
-At first, working in the open seems a little scary. Do you really want the whole world seeing your crappy code? Don't worry, nobody is judging you - everybody rights bad code at some point in their lives, and most people are more interested in helping you write better code than making fun of your existing efforts. Once you get used to it, you'll find that coding in the open is tremendously empowering as it helps other people help you.
+To publish, or __push__, your code to github:
 
-To push your code to github:
+1.  Create a new repo on github: <https://github.com/new>. Give it the same
+    name as your package, and include the package title as the repo
+    description. Leave all the other options as is, then click Submit.
 
-1.  Create a new repo on github: <https://github.com/new>.
-
-1.  In the shell, follow the instructions provided by github on the new
-    repo page. They'll look something like this:
+1.  Open a shell, then follow the instructions on the new repo page. 
+    They'll look something like this:
 
     ```bash
-    git remote add origin git@github.com:rstudio/ggcomp.git
+    git remote add origin git@github.com:hadley/r-pkgs.git
     git push -u origin master
     ```
-  
-    This tells git where the "origin" of your repo is, and to send it all the
-    changes you've made so far.
     
-    You only need to run these commands once per repo.
-  
-1.  Add `URL` and `BugReports` fields to your `DESCRIPTION` to link to your 
-    new github site. For example, dplyr has:
+    The first line tells git that your local repo should have a remote version 
+    that lives on github, and calls it "origin". The second line pushes all 
+    of your current work to that repo.
+
+Now let's make a commit and verify that the remote repo update:
+
+1.  Modify `DESCRIPTION` to add `URL` and `BugReports` fields to your that link 
+    to your new github site. For example, dplyr has:
 
     ```yaml
     URL: http://github.com/hadley/dplyr
     BugReports: http://github.com/hadley/dplyr/issues
     ```
 
-Now you can __push__ your changes to github by clicking `r bookdown::embed_png("screenshots/git-push.png", dpi = 220)`. (This is the same as running `git push` in the shell). 
+1.  Save the file and commit (with message "Updating DESCRIPTION to add links
+    to github site").
+    
+1.  __Push__ your changes to github by clicking 
+    `r bookdown::embed_png("screenshots/git-push.png", dpi = 220)`. (This is 
+    the same as running `git push` in the shell). 
 
-Typically, each push will include many commits. Pushing your code to github publishes it for the world to use. For that reason, once you've learned about `R CMD check` in [automated checking](#check), it's a good idea to run that before you push. Fix any problems so that you're always publishing good code.
+Usually, each push will include multiple commits, because you push much less often than you commit. How often you push versus committing is completely up to you, but pushing code is publishing code, and so you should strive to publish clean code that works.  Once you've learned about `R CMD check` in [automated checking](#check), I recommend always running it before you push. If you want to publish code that doesn't work (yet), I recommend using a branch, as you'll learn about in [branching](#git-branch).
 
 Once you've connected your repo to github, the git pane will show you how many commits you have locally that are not on github: `r bookdown::embed_png("screenshots/git-local-commits.png", dpi = 220)`. This message indicates that I have 1 commit locally (my branch) that is not on github ("origin/master").
 
-## Github 
+## Benefits of using github {#github-benefit}
 
-The first benefit to using git is that you get a decent website autogenerated from your github commits. The home page, e.g. <https://github.com/hadley/testthat> (the github repo for testthat), lists all the files and directories in the top-level. You can navigate throughout the project and look at the files. Any `.md` files well be automatically rendered as html. If you have a `README.md` file in the top-level directory, it will be displayed when on the homepage. You'll learn more about the benefits of creating this file in [README.md](#readme).
+The first benefit to using git is that you get a decent website. The github page for your project, e.g. <https://github.com/hadley/testthat> (the github repo for testthat), lists all the files and directories in your package. `.R` files are nicely syntax highlighted, and `.md`/`.Rmd` files are rendered as html. If you have a `README.md` file in the top-level directory, it will also be displayed on the homepage. You'll learn more about the benefits of creating this file in [README.md](#readme). 
 
-The second benefit is that people can now easily install your package with `devtools::install_github("<username>/<repo>")`. 
+The second benefit is that people can now easily install your package with `devtools::install_github("<your_username>/<your_package>")`. This makes it really easy for others to benefit from your hard work.
 
 ## History {#git-log}
 
-If you click on a file you'll see a nicely formatted version. This is useful for newcomers to your package - they can easily browse around and see what you package does before they download and try it out. There are three useful actions you can do to each file: `r bookdown::embed_png("screenshots/github-comment-line.png", dpi = 220)`:
+The third benefit of using github is that it's easy to access the history of a file. If you click on a file you'll see a nicely formatted version. There are three useful actions you can do to each file: `r bookdown::embed_png("screenshots/github-comment-line.png", dpi = 220)`:
   
   * Raw: this shows you the raw contents of the file, and can be useful if you
     want to copy-and-paste.
