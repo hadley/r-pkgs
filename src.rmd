@@ -394,7 +394,7 @@ Using C code from another package varies based on how the package is implemented
 
 ## Debugging compiled code {#src-debugging}
 
-It's possible, with a little extra work, to use an interactive debugger to debug your C/C++ in the same way that you can use `browser()` and `debug()` to debug your R code. Unfortunately you won't be able to use RStudio, and you'll have to run R from the command line. 
+It's possible, with a little extra work, to use an interactive debugger to debug your C/C++ in the same way that you can use `browser()` and `debug()` to debug your R code. Unfortunately you won't be able to use RStudio, you'll have to run R from the command line. 
 
 Open a shell (e.g. with Tools | Shell...) and start R by typing:
 
@@ -405,11 +405,11 @@ R --debugger=lldb
 R --debugger=gdb
 ```
 
-This will start either [lldb](http://lldb.llvm.org) or [gdb](http://www.gnu.org/software/gdb/), the debuggers that work with code produced by `clang` or `gcc` respectively. Like R, `lldb` and `gdb` provide a REPL, a run-eval-print loop where you enter commands and then look at the results. In the examples below I'll show the results of `lldb` (because that's what I use), the output from `gdb` is similar. For each interactive command I'll tell you the explicit, but long, `lldb` command and the short, but cryptic, `gdb` command. `lldb` understand all `gdb` commands so you can use choose to be explicit of terse.
+This will start either [lldb](http://lldb.llvm.org) or [gdb](http://www.gnu.org/software/gdb/), the debuggers that work with code produced by `clang` or `gcc` respectively. Like R, `lldb` and `gdb` provide a REPL, a run-eval-print loop where you enter commands and then look at the results. In the examples below I'll show the results of `lldb`, which is what I use (the output from `gdb` is similar). For each interactive command I'll tell you the explicit, but long, `lldb` command and the short, but cryptic, `gdb` command. Because `lldb` understand all `gdb` commands, you can use choose to be explicit of terse.
 
-Once you've started the debugger, the first run you need to do is tell it to start R by typing `process start` or `run`. Now when your C/C++ code crashes you'll be dumped into an interactive debugger instead of getting a cryptic error message and a crash. 
+Once you've started the debugger, start R by typing `process start` or `run`. Now when your C/C++ code crashes you'll be dumped into an interactive debugger instead of getting a cryptic error message and a crash. 
 
-Let's start with a simple C++ function designed to write to memory that doesn't belong to it:
+Let's start with a simple C++ function that writes to memory it doesn't "own":
 
 ```{r, eval = FALSE}
 Rcpp::cppFunction("
@@ -424,7 +424,7 @@ mistake()
 ```
 
 
-Use `devtools::load_all()` to load the current package. Then copy and paste the code that creates the bug. Here's a crash from a package I was working on:
+Use `devtools::load_all()` to load the current package. Then copy and paste the code that creates the bug. Here's a crash report from a package I was working on:
 
 ```
 Process 32743 stopped
@@ -439,7 +439,7 @@ Process 32743 stopped
    57
 ```
 
-It tells us that the crash because of a `EXC_BAD_ACCESS` - this is one of the most common types of crash in C/C++ code. Helpfully, lldb shows exactly which line of C++ code caused the problem: `vw-distance.cpp:54`. 
+It tells us that the crash occurred because of a `EXC_BAD_ACCESS` - this is one of the most common types of crash in C/C++ code. Helpfully, lldb shows exactly which line of C++ code caused the problem: `vw-distance.cpp:54`. 
 
 We're now at an interactive prompt can run the following commands:
 
@@ -469,7 +469,7 @@ Setting breakpoints
 
 1. `c` to continue running.
 
-This is also useful if your code is stuck in an infinite loop. Pretty `Ctrl + C` to break into the debugger and see which line of code is causing the problem.
+This is also useful if your code is stuck in an infinite loop. Press `Ctrl + C` to break into the debugger and see which line of code is causing the problem.
 
 
 
