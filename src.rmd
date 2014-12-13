@@ -204,34 +204,34 @@ To use C++ code from another package:
 
 ## C {#clang}
 
-If you're writing new compiled code, it's almost always better to use Rcpp. It's less work, more consistent, better documented, and has better tooling. However, there are some reasons you might choose to use C:
+If you're writing new compiled code, it's almost always better to use Rcpp. It's less work, more consistent, better documented, and it has better tools. However, there are some reasons to choose C:
 
 * You're working with an older package that already uses the C API.
 * You're binding to an existing C library.
 
 ### Getting started
 
-To call a C function from R, you first need a C function! In R packages, C code lives in `.c` files in `src/`. It needs to include two header files:
+To call a C function from R, you first need a C function! In an R package, C code lives in `.c` files in `src/`. You'll need to include two header files:
 
 ```c
 #include <R.h>
 #include <Rinternals.h>
 ```
 
-(Including `<Rinternals.h>` seems like bad form, but it doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you the "public" internal API which is both safe and necessary. Yes, this is confusing.)
+(Yes, including `<Rinternals.h>` seems like bad form. On top of that, doing so doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you access to the "public" internal API, which is both necessary and done for safety's sake. Yes, this is confusing.)
 
 These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read "[The R API](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#The-R-API)" in "Writing R Extensions". A number of exported functions are not documented, so you'll also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
 
-Here's the minimum you need to know: C functions that talk to R must use the `SEXP` type for both inputs and outputs. `SEXP`, short for S expression, is the C struct used to represent every type of object in R. A C function typically starts by converting `SEXP`s to C objects, and ends by converting C objects back to a `SEXP`. (The R API is designed so that these conversions often don't require copying.) The following table lists the functions that convert length one R vectors to and from C scalars:
+Here's the bare minimum you need to know: C functions that talk to R must use the `SEXP` type for both inputs and outputs. `SEXP`, short for S expression, is the C struct used to represent every type of object in R. A C function typically starts by converting `SEXP`s to C objects, and ends by converting C objects back to a `SEXP`. (The R API is designed so that these conversions often don't require copying.) The following table lists the functions that convert length one R vectors to and from C scalars:
 
 R type      | C type      | R -> C            |  C -> R 
 ------------|-------------|-------------------|-------------------
 integer     | int         | `asInteger(x)`    | `ScalarInteger(x)`
 numeric     | double      | `asReal(x)`       | `ScalarReal(x)`
 logical     | int         | `asLogical(x)`    | `ScalarLogical(x)`
-chararacter | const char* | `CHAR(asChar(x))` | `mkString(x)`
+character   | const char* | `CHAR(asChar(x))` | `mkString(x)`
 
-We now have enough information to write a simple C function that can add two numbers together:
+We now have enough information to write a simple C function that can add two numbers:
 
 ```c
 #include <R.h>
@@ -247,16 +247,14 @@ SEXP add_(SEXP x_, SEXP y_) {
 }
 ```
 
-To call a C function from R, use `.Call()`:
+There are two ways to call C functions from R: `.C()` and `.Call()`. `.C()` is an older interface and should not be used for new code. If you want to learn about it, you'll need to read [Interface .C and .Fortran functions](http://cran.r-project.org/doc/manuals/R-exts.html#Interface-functions-_002eC-and-_002eFortran) in "Writing R extensions". All modern code should use `.Call()`: 
 
 ```{r}
 #' @useDynLib mypackage add_
 add <- function(x, y) .Call(add_, x, y)
 ```
 
-There are two ways to call C functions from R: `.C()` and `.Call()`. `.C()` is an older interface and should not be used for new code. If you want to learn about it, you'll need to read [Interface .C and .Fortran functions](http://cran.r-project.org/doc/manuals/R-exts.html#Interface-functions-_002eC-and-_002eFortran) in "Writing R extensions". All modern code should use `.Call()`. 
-
-Where does the first argument to `.Call()`, `add_`, come from? This is thanks to `@useDynLib` which creates a line in the NAMESPACE that looks like:
+Where does the first argument to `.Call()`, `add_`, come from? It comes from `@useDynLib`, which creates a line in the NAMESPACE that looks like:
 
 ```
 useDynLib(mypackage, add_)
@@ -278,7 +276,7 @@ add_
 #> [1] "NativeSymbolInfo"
 ```
 
-`.Call()` takes pointer to a C function and calls it. It does not check the arguments, so you need to do that in the R function, in the C function, or just accept that R will crash every time you accidentally supply the wrong type of input.
+`.Call()` takes the pointer to a C function and calls it. It does not check the arguments, so you need to do that in the R function, in the C function, or just accept that R will crash every time you accidentally supply the wrong type of input.
 
 ### Workflow {#c-workflow}
 
@@ -292,9 +290,9 @@ The first time you add `@useDynLib`, you'll also need to run `devtools::document
 
 ### Exporting C code {#c-export}
 
-R packages need to provide relocatable DLLs; DLLs that work regardless of where they live on disk. This is because most R users don't build packages from source. Instead, they get binaries from CRAN, and they are installed in many different places. The need for relocatable DLLs makes importing and export C code for R packages require a few more steps (the same problem arises for C++, but Rcpp attributes automate the manual steps I describe below). 
+R packages need to provide DLLs that can be relocated; DLLs that work regardless of where they live on disk. This is because most R users don't build packages from source. Instead, they get binaries from CRAN that can get installed in many different places. This need for relocatable DLLs adds a few more steps to the job of importing and exporting C code for R packages (the same problem arises for C++, but Rcpp attributes automate the manual steps described below). 
 
-R solves this problem using __function registration__. To export a C function, you register it with `R_RegisterCCallable()`. To import a C function, you get a pointer to it with `R_GetCCallable()`. As we'll see below, a user-friendly package will do both these things, so users of the package can ignore the details and simply include a header a file.
+R solves this problem using __function registration__. To export a C function, you register it with `R_RegisterCCallable()`. To import a C function, you get a pointer to it with `R_GetCCallable()`. As we'll see below, a user-friendly package will do both these tasks, so users of the package can ignore the details and simply include a header a file.
 
 [Sidebar: Confusingly, there's another type of function registration. Instead of registering C functions using the namespace (i.e. `@useDynLib pkg fun`), you can register them with `R_registerRoutines()` and `@useDynLib mypackage, .registration = TRUE`. This is only useful if useful if you're using the older `.C` interface, or the more esoteric `.Fortran` and `.External` interfaces. To learn the details read [Registering native extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in "Writing R extensions".]
 
@@ -318,7 +316,7 @@ void R_init_mypackage(DllInfo *info) {
 
 It doesn't matter where this code lives, but it's usually put in a file called `src/mypackage-init.c`. 
 
-To access a registered function from another package, can `R_GetCCallable()`. It has two arguments, the function name and the package name, and it returns a function pointer. The function pointer has no type information, so it should always be wrapped in a helper function that defines the inputs:
+To access a registered function from another package, call `R_GetCCallable()`. It has two arguments, the function name and the package name. It returns a function pointer. The function pointer has no type information, so it should always be wrapped in a helper function that defines the inputs:
 
 ```c
 #include <R_ext/Rdynload.h>
@@ -333,23 +331,22 @@ SEXP add_(SEXP x, SEXP y) {
 }
 ```
 
-Rather than relying on each package that imports your C code to do this correctly, you should do it for them. Write `inst/include/mypackageAPI.h` which provides a wrapper function for each exported function. A popular package that does that is [xts](http://cran.r-project.org/web/packages/xts/). Download the source package and look in the `include/` directory to see what it does.
+Rather than relying on each package that imports your C code to do this correctly, you should instead do it for them. Write `inst/include/mypackageAPI.h` which provides a wrapper function for each exported function. A popular package that does that is [xts](http://cran.r-project.org/web/packages/xts/). Download the source package and look in the `include/` directory to see what it does.
 
 ### Importing C code {#c-import}
 
 Using C code from another package varies based on how the package is implemented:
 
-* If it uses the system descibed above, all you need is`LinkingTo: otherPackage` 
-  in the `DESCRIPTION`, and `#include mypackageAPI.h` in the C file. 
-  (Remember `LinkingTo` is not about linking, but actually affects the include 
-  path).
+* If it uses the system described above, all you need is `LinkingTo: otherPackage` 
+  in the `DESCRIPTION`, and `#include mypackageAPI.h` in the C file. (Remember 
+  `LinkingTo` is not about linking, but actually affects the include path).
    
 * If it registers the functions, but doesn't provide a header file, you'll
   need to write the wrapper yourself. Since you're not using any header
-  files from the package, you use `Imports` and not `LinkingTo`. You 
-  also need to make sure the package is loaded. You can do this by importing
-  any function with `@importFrom mypackage foo`, or by adding 
-  `requireNamespace("mypackage", quietly = TRUE)` to `.onLoad()`.
+  files from the package, use `Imports` and not `LinkingTo`. You also need to 
+  make sure the package is loaded. You can do this by importing any function 
+  with `@importFrom mypackage foo`, or by adding `requireNamespace("mypackage", 
+  quietly = TRUE)` to `.onLoad()`.
   
 * If it doesn't register the functions, you can't use them. You'll have to
   ask the maintainer nicely or even provide a pull request.
@@ -360,12 +357,12 @@ Using C code from another package varies based on how the package is implemented
   R process, not just your C code. Instead, use `error()` which is 
   equivalent to calling `stop()` in R.
 
-* To print output use `Rprintf()`, not `printf()`. This always prints to 
-  the right place, which might be a GUI console, or a file (if `sink()` 
-  is active).
+* To print output use `Rprintf()`, not `printf()`. Doing so always prints to 
+  the right place, whether it's the GUI console or a file (if `sink()` is 
+  active).
 
 * In long-running loops, regularly call `R_CheckUserInterrupt()` to allow
-  the user to interrupt C code.
+  the user to interrupt the C code.
 
 * Don't use C's random number generators (like `rand()` or `random()`), 
   instead use the C API to R's rngs: `unif_rand()`, `norm_rand()`, etc. 
