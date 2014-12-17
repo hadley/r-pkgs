@@ -616,43 +616,13 @@ There are three parts to a pull request:
 
 Once you've done discussing a pull request, you either choose to merge it or delete it. Merging it is equivalent to running `git merge <branchname>` from the shell; deleting is equivalent to `git branch -r <branchname>`.
 
-## Reviewing and accepting pull requests {#pr-accept}
+## Submitting a pull request to another repo {#pr-make}
 
-Recieving a pull request is fantastic. Someone not only cares about your package enough to use it, they've actually read the source code and make an improvement!
+To submit a pull request to a repo that you don't own, you first need to create a copy of the repo that you do own, called a __fork__, and clone that repo on your own computer:
 
-<http://sarah.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/>
-
-Always remind contributs to add bullet point to `NEWS.md`, thanking themselves, including their github username (which will eventually get turned into a nice clickable link in the release notes. You'll learn about that in  [post release](#post-release)).
-
-If the button doesn't work, github provides some instructions to do it from the command line:
-
-1. `git add remote` + `git fetch`: get's a local copy of their branch on your 
-    computer.
-    
-1. `git merge <branch>` merges their changes into master.
-
-1. You resolve the conflicts, then stage, commit and push like usual.
-
-## Making a pull request on other repos {#pr-make}
-
-Making a pull request to someone else's code is similar to make a pull request to your own repo. The main difference is that there's one more repository involved in the process. In total there are three repos you need to think about:
-
-* The repo that you want to submit the pull request to. We'll call this the 
-  __upstream__ repo. You can't modify this repo, which is why you're making a 
-  pull request. 
-
-* Your remote repo, the __origin__. You create this on github by __forking__ 
-  the upstream repository on github. This is a copy of the upstream repo 
-  that you have access to - it's somewhere for you to push your local changes
-  to so that github can see them.
-  
-* Your local repo. As usual this is where you work.
-
-Follow these steps to set up the two repos that you'll need to submit a pull request:
-
-1.  __Fork__ the upstream repo. A fork is a copy of repo that you belongs 
-    to you. See [fork a repo](https://help.github.com/articles/fork-a-repo) 
-    for more details.
+1.  __Fork__ the original repo by visiting the repo on github and clicking
+    `r bookdown::embed_png("screenshots/github-fork.png", dpi = 220)`. 
+    This creates a copy of the repo that belongs to you. 
 
 1.  __Clone__ the forked repo to create a local copy of the remote repo. 
     It's possible to do this from RStudio (using "Create new project" from 
@@ -662,40 +632,92 @@ Follow these steps to set up the two repos that you'll need to submit a pull req
     git clone git@github.com:<your-name>/<repo>.git
     cd <repo>
     ```
-    
-1.  __Set up__ your fork so that it knows about the upstream repo:
 
-    ```bash
-    git remote add upstream git@github.com:<original-name>/extrafont.git
-    git fetch upstream
-    git branch -u upstream/master   
-    ```
+A fork is a _static_ copy of the repo: once you've created it, github does nothing to keep it in sync with the upstream repo. This is a problem because while you're working on the pull request, changes might also been going on in the original repo, and you need to keep the forked and the original repo in sync. Start by telling your repo about the upstream repo:
 
-While you're creating the pull request, the upstream repo might change. To update your branch:
+```bash
+git remote add upstream git@github.com:<original-name>/extrafont.git
+git fetch upstream
+```
 
-1.  Pull the upstream changes down into your local repo:
+Then you can merge changes from the upstream repo in your local copy:
 
-    ```bash
-    git checkout master
-    git pull
-    ```
-    
-1.  Merge the changes with your branch:
+```bash
+git merge upstream/master
+```
 
-    ```bash
-    git checkout <my-branch>
-    git merge master
-    ```
-    
-The reposities and the connections between them are summarised below:
+When working on a forked repo, I recommend that you don't work on the branch. You're fundamentally not on the main line of develoment for that repo, so using master makes things confusing. If you always create pull requests in branches, you can make it a little easier to keep your local repo in sync with the upstream repo by running:
+
+```bash
+git branch -u upstream/master   
+```
+
+Then you only need this code to update your local repo:
+
+```bash
+git checkout master
+git pull
+```
+
+Changes may occur while you're working on the pull request, so remember to merge them into your branch with:
+
+```bash
+git checkout <my-branch>
+git merge master
+```
+
+A pull request is a one-to-one mapping to a branch, so you can also use this technique to make updates based on the pull request discussion. Don't create a new pull request each time you make a change; instead you just need to push the branch that the PR is based on and the PR webpage will automatically update.
+
+The diagram below illustrates the main steps when first creating a pull request and then updating it when the upstream repo changes:
 
 ```{r, echo = FALSE}
 bookdown::embed_png("diagrams/pull-request-process.png", dpi = 220)    
 ```
 
+## Reviewing and accepting pull requests {#pr-accept}
+
+As your packages get more popular, you're likely to also recieve pull requests. Recieving a pull request is fantastic. Someone not only cares about your package enough to use it, they've actually read the source code and make an improvement!
+
+When you receive a pull request, I recommend reviewing it using the three step approach described by Sarah Sharp. I summarise the three phases below, but I highly recommend reading the full article at <http://sarah.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/>:
+
+1.  Is it a good idea? If you don't think the contribution is a good fit for 
+    your project, it's polite to let the contributer know as quickly as 
+    possible. Thank them for their work, and refocus them on a better area to 
+    work on.
+    
+1.  Is the overall approach sound? At this point you want to focus on the big
+    picture: have they modified the right functions in the right way? Avoid
+    nit-picking minor style problems (that's the final phase), insteed just 
+    providing a pointer to your style preferences, e.g. 
+    <http://r-pkgs.had.co.nz/style.html>.
+
+1.  Is it polished? In the final review phase, make sure that the non-code
+    parts of the PR are polished. Prompt the contribute to update the 
+    documentation, point out spelling mistakes and suggest better wording.
+    
+    I recommned asking the contributor to include a bullet point in `NEWS.md`, 
+    briefly describing the improvement and thanking themselves with their github 
+    username. More details to follow in  [post release](#post-release)).
+
+After discussion is complete, you can incorporate the changes by clicking the merge button. If the button doesn't work, github provides some instructions to do it from the command line. You've seen all the pieces before, so it's useful to read through just so you understand exactly what's happening.
+
+```bash
+# Create a new branch, and sync it with the pull request
+git checkout -b <branch> master
+git pull https://github.com/<user>/<branch>.git patch-3
+
+# Merge the changes into the main line of development
+git checkout master
+git merge --no-ff <branch>
+# Resolve conflicts, stage and add.
+
+# Sync your local changes with github
+git push origin master
+```
+
 ## Learning more
 
-There's a lot to learn, so the goal of this chapter is to give you the absolute minimum you need to know. After working with git and github for a while, you'll probably want to learn more. Some good resources are:
+Git and github are a rich and powerful set of tools, and there's no way this chapter has taught you everything you need to know. However, you should now have the minimum knowledge to be effective, and you're in a good place to learn more. Some good resources are:
   
 * Github help, <https://help.github.com>, not only teaches you about
   github, but also has good tutorials on many git features.
@@ -703,8 +725,7 @@ There's a lot to learn, so the goal of this chapter is to give you the absolute 
 * If you'd like to learn more about the details of git, read 
   [Pro Git](http://git-scm.com/book/en/v2) by Scott Chacon and Ben Straub.
 
-StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first resource. It's highly likely that some one has had exactly the same problem as you, and there will be a variety of approaches to choose from.
-
+Finally, StackOverflow is a vital part of git - when you have a problem that you don't know how to solve, SO should be your first resource. It's highly likely that some one has had exactly the same problem as you, and there will be a variety of approaches to choose from.
 
 [gh-issues]:https://guides.github.com/features/issues/
 [gh-pr]: https://help.github.com/articles/using-pull-requests/
