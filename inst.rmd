@@ -6,30 +6,30 @@ output: bookdown::html_chapter
 
 # Installed files {#inst}
 
-When a package is installed, everything in `inst/` is into the installed directory. In some sense `inst/` is the opposite of `.Rbuildignore` - where`.Rbuildignore` lets you remove arbitrary files and directories to the top level, `inst/` lets you add them. You are free to put anything you like in `inst/` with one caution: because `inst/` is copied into the top-level directory, you should never use a subdirectory with the same name as an existing directory. This means that you should avoid `inst/build`, `inst/data`, `inst/demo`, `inst/exec`, `inst/help`, `inst/html`, `inst/inst`, `inst/libs`, `inst/Meta`, `inst/man`, `inst/po`, `inst/R`, `inst/src`, `inst/tests`, `inst/tools` and `inst/vignettes`.
+When a package is installed, everything in `inst/` is copied to the installed directory. In some sense `inst/` is the opposite of `.Rbuildignore` - where`.Rbuildignore` lets you remove arbitrary files and directories from the top-level, `inst/` lets you add them. You are free to put anything you like in `inst/` with one exception: because `inst/` is copied to the top-level directory, you should never use a subdirectory with the same name as an existing directory. This means that you should avoid `inst/build`, `inst/data`, `inst/demo`, `inst/exec`, `inst/help`, `inst/html`, `inst/inst`, `inst/libs`, `inst/Meta`, `inst/man`, `inst/po`, `inst/R`, `inst/src`, `inst/tests`, `inst/tools` and `inst/vignettes`.
 
 This chapter discusses the most common files found in `inst/`:
 
 * `inst/AUTHOR` and `inst/COPYRIGHT`. If the copyright and authorship of a 
-  package is particularly complex, you can use plain text files 
-  `inst/COPYRIGHTS` and `inst/AUTHORS` to provide more information.
+  package is particularly complex, you can use plain text files, 
+  `inst/COPYRIGHTS` and `inst/AUTHORS`, to provide more information.
 
-* `inst/CITATION`: how to cite the package, see 
+* `inst/CITATION`: description of how to cite the package, see 
   [package citation](#inst-citation) for details.
 
-* `inst/docs`: This is an older convention for vignettes, and should be avoided 
-   in modern packages.
+* `inst/docs`: an older convention for the location of vignettes.
+  It should be avoided in modern packages.
 
-* `inst/extdata`: additional external data for examples and vignettes. 
-  See [external data](#data-extdata) for more detail.
+* `inst/extdata`: location for additional external data for examples and 
+  vignettes. See [external data](#data-extdata) for more details.
 
 * `inst/java`, `inst/python` etc. See [other languages](#inst-other-langs).
 
-To find a file in `inst/` in R code, use `system.file()`. For example, to find `inst/extdata/mydata.csv`, you'd call `system.file("extdata", "mydata.csv", package = "mypackage")`. Note that you omit the `inst/` directory from the path. This will work if the package is installed, or if it's been loaded with `devtools::load_all()`.
+To find a file in `inst/` with R code, use `system.file()`. For example, to find `inst/extdata/mydata.csv`, you'd call `system.file("extdata", "mydata.csv", package = "mypackage")`. Note that you omit the `inst/` directory from the path. This will work if the package is installed, or if it's been loaded with `devtools::load_all()`.
 
 ## Package citation {#inst-citation}
 
-The `CITATION` file lives in the `inst` directory and is intimately connected to the `citation()` function which tells you how to cite R and R packages.  Calling `citation()` without any arguments tells you how to cite base R:
+The `CITATION` file lives in the `inst` directory and is linked to the `citation()` function which tells you how to cite R and R packages. Calling `citation()` without any arguments tells you how to cite base R:
 
 ```{r}
 citation()
@@ -41,7 +41,7 @@ Calling it with a package name tells you how to cite that package:
 citation("lubridate")
 ```
 
-To customise the citation for your package, add a `inst/CITATION` that looks like this:
+To customise how your package gets cited, add a `inst/CITATION` file. It'll looks like this:
 
 ```{r, echo = FALSE, comment = ""}
 citation <- readLines(system.file("CITATION", package = "lubridate"))
@@ -61,8 +61,8 @@ Use `citHeader()` and `citFooter()` to add additional exhortations.
 
 ## Other languages {#inst-other-langs}
 
-Sometimes a package contains useful supplementary scripts in other programming languages. Generally, you should avoid these, because it adds an additional extra dependency, but it may be useful when wrapping substantial amounts of code from another language. For example, [gdata](http://cran.r-project.org/web/packages/gdata/index.html) provides wraps the Perl module [Spreadsheet::ParseExcel](http://search.cpan.org/~dougw/Spreadsheet-ParseExcel-0.65/) to read excel files into R.
+Sometimes a package contains useful supplementary scripts in other programming languages. Generally, you should avoid this because it adds an additional dependency. But it may be useful when wrapping substantial amounts of code from another language. For example, [gdata](http://cran.r-project.org/web/packages/gdata/index.html)wraps the Perl module [Spreadsheet::ParseExcel](http://search.cpan.org/~dougw/Spreadsheet-ParseExcel-0.65/) that allows you to read Excel files into R.
 
 The convention is to put scripts of this nature into a subdirectory of `inst/`, `inst/python`, `inst/perl`, `inst/ruby` etc. If these scripts are essential to your package, make sure you also add the appropriate programming language to the `SystemRequirements` field in the `DESCRIPTION`. (This field is for human reading so don't worry about exactly how you specify it.)
 
-Java is a special case because you need to include both the source code (which should go in `java/` and be listed in `.Rinstignore`), and the compiled jar files (which should go in `inst/java`). Make sure to add `rJava` to `Imports`.
+Java is a special case because you need to include both the source code (it should go in `java/` and be listed in `.Rinstignore`), and the compiled jar files (they should go in `inst/java`). Make sure to add `rJava` to `Imports`.
