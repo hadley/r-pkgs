@@ -6,9 +6,9 @@ output: bookdown::html_chapter
 
 # Automated checking {#check}
 
-An import part of the package development process is `R CMD check`. `R CMD check` automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not: it automatically detects many commons problems that you'd otherwise discover the hard way.
+An important part of the package development process is `devtools::check()` which calls the base R command-line function `R CMD check`. This automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not: it automatically detects many commons problems that you'd otherwise discover the hard way.
 
-`R CMD check` will be frustrating the first time you run it - you'll discover many problems that you need to fix. The key to making `R CMD check` less frustrating is to run it more often. The sooner you find out about a problem, the easier it is to fix. The limit of this approach is to run `R CMD check` every time you make a change, and if you use github you'll learn how to do that in [Travis-CI](#travis).
+`devtools::check()` will be frustrating the first time you run it - you'll discover many problems that you need to fix. The key to making the checks less frustrating is to run them more often: the sooner you find out about a problem, the easier it is to fix. The limit of this approach is to check every time you make a change, and if you use github you'll learn how to do that in [Travis-CI](#travis).
 
 ## Workflow {#check-workflow}
 
@@ -57,7 +57,7 @@ The checking workflow is simple, but tedious:
 
 ## Checks {#check-checks}
 
-`R CMD check` is composed of over 50 individual checks, described in the following sections. For each check, I briefly describe what it does, what the most common problems are, and how to fix them. When you have a problem with `R CMD check` and can't understand how to fix it, use this list to help. To make it easier to understand how the checks fit together, I've organised them into sections roughly corresponding to the chapters in this book. This means they will be in a somewhat different order to what you'll see when you run `check()`.
+`R CMD check` is composed of over 50 individual checks, described in the following sections. For each check, I briefly describe what it does, what the most common problems are, and how to fix them. When you have a problem with `R CMD check` and can't understand how to fix it, use this list to help figure out what you need to do. To make it easier to understand how the checks fit together, I've organised them into sections roughly corresponding to the chapters in this book. This means they will be in a somewhat different order to what you'll see when you run `check()`.
 
 This list includes every check run in R 3.1.1. If you're using a more recent version, you may want to consult the most recent online version of this chapter: <http://r-pkgs.had.co.nz/check.html>. Please [let me know](mailto:hadley@rstudio.com) if you encounter a problem that this chapter doesn't help with.
 
@@ -448,7 +448,7 @@ tools:::.check_package_compact_sysdata
 
 ### Documentation
 
-You can run the most common of these outside `R CMD check` with `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`, rather than running the full `R CMD check` each time. 
+You can run the most common of these outside `devtools::check()` with `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`, rather than running the full check each time. 
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1527 -->
 * __Checking Rd files__. This checks that all `man/*.Rd` files use the correct
@@ -646,7 +646,7 @@ bookdown::embed_png("screenshots/project-options-build.png", dpi = 220)
 
 ## Checking after every commit with Travis {#travis}
 
-If you use [git and github](#git), I highly recommend learning about [Travis](https://travis-ci.org/). Travis is continuous integration service, which means that it runs automated testing code everytime you push to github. For open source projects, travis provides 50 minutes of free computation on a ubuntu server. For an R package, the most useful code to run is `R CMD check`. 
+If you use [git and github](#git), I highly recommend learning about [Travis](https://travis-ci.org/). Travis is continuous integration service, which means that it runs automated testing code everytime you push to github. For open source projects, travis provides 50 minutes of free computation on a ubuntu server. For an R package, the most useful code to run is `devtools::check()`. 
 
 To use travis:
 
@@ -659,7 +659,7 @@ To use travis:
 
 1.  Wait a few minutes to see the results in your email.
 
-With this setup in place, every time you push to github, and every time someone submits a pull request, `R CMD check` will be automatically run. You'll find out about failures right away, which makes them easier to fix. Using travis also encourages me to run `R CMD check` more often locally, because I know if it fails I'll find out about it a few minutes later, often once I've moved on to a new problem.
+With this setup in place, every time you push to github, and every time someone submits a pull request, `devtools::check()` will be automatically run. You'll find out about failures right away, which makes them easier to fix. Using travis also encourages me to check more often locally, because I know if it fails I'll find out about it a few minutes later, often once I've moved on to a new problem.
 
 ### Basic config
 
@@ -690,7 +690,7 @@ Travis doesn't currently support R as a top-level language, so we need to instal
 
 * `./travis-tool.sh install_deps`: installs all packages needed to run tests.
 
-* `./travis-tool.sh run_tests`: builds the package and runs `R CMD check` on it.
+* `./travis-tool.sh run_tests`: builds the package and checks it
 
 * `./travis-tool.sh dump_logs`: on failure, print out all relevant logs so
   you can easily read online.
