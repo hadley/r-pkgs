@@ -164,6 +164,8 @@ I don't recommend writing these directives by hand. Instead, in this chapter you
   particularly important if you're using git, as it minimises unimportant
   differences.
 
+Note that you can choose to use roxygen2 to generate just `NAMESPACE`, just `man/*.Rd`, or both. If you don't use any namespace related tags, roxygen2 won't touch `NAMESPACE`. If you don't use any documentation related tags, roxygen2 won't touch `man/`.
+
 ## Workflow {#namespace-workflow}
 
 Generating the namespace with roxygen2 is just like generating function documentation with roxygen2. You use roxygen2 blocks (starting with `#'`) and tags (starting with `@`). The workflow is also similar:
@@ -242,7 +244,7 @@ If you want others to create instances of your class but not to extend it,
 `@export` the constructor function, not the class.
 
 ```{r, eval = FALSE}
-# Can extend and create
+# Can extend and create with new("A", ...)
 #' @export
 setClass("A")
 
@@ -254,7 +256,7 @@ B <- setClass("B")
 #' @export C
 C <- setClass("C")
 
-# Can create and extend
+# Can extend and create with D(...)
 #' @export D
 #' @exportClass D
 D <- setClass("D")
@@ -270,7 +272,7 @@ The principles used for S4 classes apply here. Note that due to the way that RC 
 
 ### Data {#export-data}
 
-Package data don't use the namespace mechanism and should never be exported. 
+As you'll learn about in [data](#data), files that lives in `data/` doesn't use the usual namespace mechanism and don't need exported. 
 
 ## Imports {#imports}
 
@@ -305,7 +307,7 @@ To use classes defined in another package, place`@importClassesFrom package Clas
 
 To use generics defined in another package, place `@importMethodsFrom package GenericA GenericB ...` next to the methods that use the imported generics.
 
-Since S4 is implemented in the methods package, you need to make sure it's available. This is easy to overlook because while the method package is always avaialble in the search path when you're working interactively, it's not automatically loaded by `Rscript`, the tool used to run R from the command line.
+Since S4 is implemented in the methods package, you need to make sure it's available. This is easy to overlook because while the method package is always available in the search path when you're working interactively, it's not automatically loaded by `Rscript`, the tool often used to run R from the command line.
 
   * Pre R 3.2.0: `Depends: methods` in `DESCRIPTION`.  \
     Post R 3.2.0: `Imports: methods` in `DESCRIPTION`.
@@ -313,17 +315,18 @@ Since S4 is implemented in the methods package, you need to make sure it's avail
   * Since you'll being using a lot of functions from `methods`, 
     you'll probably also want to import the complete package with:
     
-    ```{r}
+    ```{r, eval = FALSE}
     #' @imports methods
     NULL
     ```
     
     Or you might just want to import the most commonly used functions:
     
-    ```{r}
+    ```{r, eval = FALSE}
     #' @importFrom methods setClass setGeneric setMethod setRefClass
     NULL
     ```
   
-    It doesn't matter where these import definitions go, but if you have
-    package level docs, that's a natural place to put them.
+    Here I'm documenting "NULL" to make it clear that these directives don't
+    apply to just one function. It doesn't matter where they go, but if you have
+    package docs, that's a natural place to put them.

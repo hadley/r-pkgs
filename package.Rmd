@@ -84,9 +84,7 @@ Alternatively, you can create a new package from inside R by running
 devtools::create("path/to/package/pkgname")
 ```
     
-Either route gets you to the same place: the smallest usable package, which has four components:
-
-1. An RStudio project file, `pkgname.Rproj`, described below.
+Either route gets you to the same place: the smallest usable package, which has three components:
 
 1. An `R/` directory, which you'll learn about in [R code](#r).
 
@@ -96,7 +94,9 @@ Either route gets you to the same place: the smallest usable package, which has 
 1. A basic `NAMESPACE` file, which you'll learn about in 
    [the namespace](#namespace).
 
-__Never__ use `package.skeleton()` to create a package. It creates many additional files that you'll have to create or modify before you have a valid working package.
+It also include an an RStudio project file, `pkgname.Rproj`, that makes your package easy to use with RStudio, as described below.
+
+Don't use `package.skeleton()` to create a package. If you follow the workflow described in this work it creates more work you because it creates extra files that you'll have to delete or modify before you have a working package.
 
 ## RStudio projects {#projects}
 
@@ -151,7 +151,7 @@ bookdown::embed_png("screenshots/project-options-2.png", dpi = 220)
 
 ## What is a package? {#package}
 
-To make your first package, all you need to know is what you've learnt above. To master package development, particularly when you're distributing a package to others,  The five states of an in-development package. you'll need to understand the differences between the five types of packages: source, bundled, binary, installed and in memory. Doing so will help you understand existing CRAN packages, and exactly what happens when you install a package with `install.packages()` or with `devtools::install_github()`.
+To make your first package, all you need to know is what you've learnt above. To master package development, particularly when you're distributing a package to others, it really helps to understand the five states of a package in its lifecyle: source, bundled, binary, installed and in-memory. Understanding the differences will help you form a better mental model of what `install.packages()` and `devtools::install_github()` do, making it easier to debug problems when they arise.
 
 ### Source packages
 
@@ -174,7 +174,7 @@ If you decompress a bundle, you'll see it looks almost the same as your source p
 
 `.Rbuildignore` prevents files in the source package appearing in the bundled package. It allows you to have additional directories in your source package that are not included in the package bundle. This is particularly useful when you generate package contents (e.g. data) from other files. Those files should be included in the source package, but only the results need to be distributed. This is particularly important for CRAN packages (where the set of allowed top-level directories is fixed). Each line gives a Perl-compatible regular expression that is matched case-insensitively against the path to each file (i.e. `dir(full.names = TRUE)` run from the package root directory) - if the regular expression matches, the file is excluded. 
 
-If you wish to exclude a specific file or directory (which is the most common use case), you __MUST__ escape the regular expression. For example, to exclude a directory called notes, use `$notes^`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. The safest way to exclude a specific file or directory is to use `devtools::use_build_ignore("notes")`, which will do the escaping for you.
+If you wish to exclude a specific file or directory (which is the most common use case), you __MUST__ anchor the regular expression. For example, to exclude a directory called notes, use `$notes^`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. The safest way to exclude a specific file or directory is to use `devtools::use_build_ignore("notes")`, which will do the escaping for you.
 
 Here's a typical `.Rbuildignore` file from one of my packages:
 
@@ -229,7 +229,7 @@ An __installed__ package is just a binary package that's been decompressed into 
 bookdown::embed_png("diagrams/installation.png")
 ```
 
-The tool that powers all package installations is the command line tool `R CMD install` - it can install a source, bundle or a binary package. Devtools functions provide wrappers which allow you to access this tool from R rather than from the command line. `install()` is effectively a wrapper for `R CMD install`. `build()` is a wrapper for `R CMD build` that turns source packages into bundles. `install_github()` downloads a source package from GitHub, runs `build()` to make vignettes, and then uses `R CMD install` to do the install. `install_url()`, `install_gitorious()`, `install_bitbucket()` work similarly for packages found elsewhere on the internet.
+The tool that powers all package installations is the command line tool `R CMD INSTALL` - it can install a source, bundle or a binary package. Devtools functions provide wrappers which allow you to access this tool from R rather than from the command line. `devtools::install()` is effectively a wrapper for `R CMD INSTALL`. `devtools::build()` is a wrapper for `R CMD build` that turns source packages into bundles. `devtools::install_github()` downloads a source package from GitHub, runs `build()` to make vignettes, and then uses `R CMD INSTALL` to do the install. `devtools::install_url()`, `devtools::install_gitorious()`, `devtools::install_bitbucket()` work similarly for packages found elsewhere on the internet.
 
 `install.packages()` and `devtools::install_github()` allow you to install a remote package. They both work by first downloading the package. `install.packages()` normally downloads a binary package built by CRAN. This makes installation very speedy. `install_github()` has to work a little differently - it first downloads a source package, builds it and then installs it.
 
@@ -237,9 +237,20 @@ You can prevent files in the package bundle from being included in the installed
 
 ### In memory packages
 
-To use a package, you must load it into memory. When you're not developing a package, you load it into memory with `library()`. When you are developing a package, you can either use `devtools::load_all()` or RStudio's "Build and reload". You now know enough about packages to understand the difference between the two: `load_all()` skips the installation step and goes directly from on-disk to in-memory.
+To use a package, you must load it into memory. To use it without providing the package name (e.g. `install()` instead of `devtools::install()`), you need to attach it to the search path. R loads packages automatically when you use then. `library()` and `require()` load, then attach, an installed package.
 
-The following diagram summarises the three ways of loading a package into memory:
+```{r, eval = FALSE}
+# Automatically loads devtools
+devtools::install()
+    
+# Loads and _attaches_ devtools to the search path
+library(devtools)
+install()
+```
+
+The distinction between loading and attaching packages is not important when you're writing scripts, but it's very important when you're writing packages. You'll learn more about the difference and why it's important in [search path](#search-path).
+
+The only difference between `library()` and `require()` is what happens if the package isn't installed: `library()` will throw an error, where `require()` returns `FALSE` with a warning. Neither is useful when you're developing a package, because you have to install the package first. In the next chapter you'll learn about `devtools::load_all()` and RStudio's "Build and reload", which allow you to skip install and load a source package into memory:
 
 ```{r, echo = FALSE}
 bookdown::embed_png("diagrams/loading.png")
@@ -247,7 +258,7 @@ bookdown::embed_png("diagrams/loading.png")
 
 ## What is a library? {#library}
 
-A library is simply a directory containing installed packages. You can have multiple libraries on your computer and almost every one has at least two: one for packages you’ve installed, and one for the recommended packages that come with every R installation (like base, stats, etc). Normally, that first directory varies based on the version of R that you’re using. That's why it seems like you lose all of your packages when you reinstall R --- they're still on your hard drive, but R can't find them. 
+A library is simply a directory containing installed packages. You can have multiple libraries on your computer and almost every one has at least two: one for packages you’ve installed, and one for the packages that come with every R installation (like base, stats, etc). Normally, that first directory varies based on the version of R that you’re using. That's why it seems like you lose all of your packages when you reinstall R --- they're still on your hard drive, but R can't find them. 
 
 You can use `.libPaths()` to see which libraries are currently active. Here are mine:
 

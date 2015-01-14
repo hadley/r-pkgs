@@ -25,10 +25,11 @@ LazyData: true
 
 `DESCRIPTION` uses a simple file format called DCF, the Debian control format. You can see most of the structure in the simple example below. Each line consists of a __field__ name and a value, separated by a colon. When values span multiple lines, they need to be indented:
 
-    Description: The description of a package is usually long,
-        spanning multiple lines. The second and subsequent lines
-        should be indented, usually with four spaces.
-
+```yaml
+Description: The description of a package is usually long,
+    spanning multiple lines. The second and subsequent lines
+    should be indented, usually with four spaces.
+```
 
 The minimal `DESCRIPTION` file only provides the bare necessities. It doesn't include the two most useful fields: `Imports` and `Suggests`. `Imports` tells R what packages you need to make the functions in your package work. `Suggests` tells R what packages you want to be available. The other fields are described in the remainder of the chapter, and include:
 
@@ -144,36 +145,29 @@ Generally, it's always better to specify the version and to be conservative abou
 
 The are three other fields that allow you to express more specialised dependencies:
 
-* `Depends`: packages listed here require a specific version of R.
-  For example, `Depends: R (>= 3.0.1)`. As with packages, it's a good idea to 
-  play it safe and require a version greater than or equal to the version you're currently using. 
-  `devtools::create()` will do this for you.
-  
-  Prior to the rollout of namespaces in R 2.14.0, `Depends` was the only way to 
-  "depend" on another package. Now, despite the name, you should almost always 
-  use `Imports`, not `Depends`. You'll learn why, and when you should still
-  use `Depends`, in [namespaces](#namespace).
-
-  In R 3.1.1 and earlier you'll also need to use `Depends: methods` if 
-  you use S4. This bug is fixed in R 3.2.0, so methods can go back to
-  `Imports`.
-  
-* `LinkingTo`: packages listed here rely on C or C++ code in another package. 
-  Confusingly, this has nothing to do with linking but instead affects the 
-  include path. You'll learn more about `LinkingTo` in [compiled code](#src).
-  
-* `Enhances`: packages listed here are "enhanced" by your package. Typically, 
-  this means you provide methods for classes defined in another packags (a 
-  sort of reverse `Suggests`). But it's hard to define what that means, so I 
-  don't recommend using `Enhances`.
-  
+  * `Depends`: Prior to the rollout of namespaces in R 2.14.0, `Depends` was 
+    the only way to "depend" on another package. Now, despite the name, you 
+    should almost always use `Imports`, not `Depends`. You'll learn why, and 
+    when you should still use `Depends`, in [namespaces](#namespace).
+    
+    You can use also use `Depends` to require a specific version of R, e.g.
+    `Depends: R (>= 3.0.1)`. As with packages, it's a good idea to 
+    play it safe and require a version greater than or equal to the version 
+    you're currently using. `devtools::create()` will do this for you.
+    
+    In R 3.1.1 and earlier you'll also need to use `Depends: methods` if 
+    you use S4. This bug is fixed in R 3.2.0, so methods can go back to
+    `Imports` where they belong.
+    
+  * `LinkingTo`: packages listed here rely on C or C++ code in another package. 
+    You'll learn more about `LinkingTo` in [compiled code](#src).
+    
+  * `Enhances`: packages listed here are "enhanced" by your package. Typically, 
+    this means you provide methods for classes defined in another packags (a 
+    sort of reverse `Suggests`). But it's hard to define what that means, so I 
+    don't recommend using `Enhances`.
+    
 You can also list things that your package needs outside of R in the in `SystemRequirements` field. But this is just a plain text field and is not automatically checked. Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
-
-### Exercises
-
-* What are the dependencies of ggplot2?
-
-* What does `devtools::revdep()` do? Why might you use it?
 
 ## What does the package do? {#pkg-description}
 
@@ -209,11 +203,6 @@ bookdown::embed_png("diagrams/cran-package.png")
 ```
 
 Because `Description` only gives you a small amount of space to describe what your package does, I also recommend including a `README.md` file that goes into much more depth and shows a few examples. You'll learn about that in [README.md](#readme).
-
-### Exercises
-
-* Read the title and description of the packages that you use most frequently.
-  What works well? What could be done better?
 
 ## Who wrote the package? {#author}
 
@@ -354,9 +343,7 @@ knitr::kable(has_abbrev[c("Name", "Version", "Abbrev")], row.names = FALSE)
 
 ## Version {#version}
 
-Formally, an R package version is a sequence of at least two integers separated by either `.` or `-`. For example, `1.0` and `0.9.1-10` are valid versions, but `1` or `1.0-devel` are not. 
-
-You can parse a version number with `numeric_version`.
+Formally, an R package version is a sequence of at least two integers separated by either `.` or `-`. For example, `1.0` and `0.9.1-10` are valid versions, but `1` or `1.0-devel` are not. You can parse a version number with `numeric_version`.
 
 ```{r}
 numeric_version("1.9") == numeric_version("1.9.0")
@@ -385,6 +372,9 @@ I don't recommend taking full advantage of R's flexiblity. Instead always use `.
     Increment the development version, e.g. from `9000` to `9001` if you've
     added an important feature that another development package needs to depend 
     on.
+    
+    If you're using svn, instead of using the arbitrary `9000`, you can
+    embed the sequential revision identifier.
 
 This advice here is inspired in part by [Semantic Versioning](http://semver.org) and by the [X.Org](http://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes. Read them if you'd like to understand more about the standards of versioning used by many open source projects.
 

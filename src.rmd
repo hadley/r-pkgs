@@ -187,14 +187,18 @@ To use C++ code from another package:
 
 * Use `clang` instead of `gcc` to compile your C++ code: it gives much 
   better error messages. You can make `clang` the default by creating a
-  `~/.R/Makevars` that contains:
+  `.R/Makevars` (linux and mac) or `.R/Makevars.win` (windows) file in 
+  your home directory that contains:
 
     ```bash
     CXX=clang++
     ```
+    
+    (If you don't know where your home directory is `path.expand("~")` will
+    tell you.)
 
-* To speed up compilation, install `ccache`, then replace `~/.R/Makevars`
-  with:
+* To speed up compilation on linux or mac, install `ccache`, then replace 
+  `~/.R/Makevars` with:
 
     ```bash
     CC=ccache clang -Qunused-arguments
@@ -209,7 +213,9 @@ If you're writing new compiled code, it's almost always better to use Rcpp. It's
 * You're working with an older package that already uses the C API.
 * You're binding to an existing C library.
 
-### Getting started
+There are two ways to call C functions from R: `.C()` and `.Call()`. `.C()` is a quick and dirty way to call an C function that doesn't know anything about R because `.C()` automatically converts between R vectors and the corresponding C types. `.Call()` is more flexible, but more work: your C function needs to use the R API to convert its inputs to standard C data types.
+
+### Getting started with `.Call()`
 
 To call a C function from R, you first need a C function! In an R package, C code lives in `.c` files in `src/`. You'll need to include two header files:
 
@@ -247,7 +253,7 @@ SEXP add_(SEXP x_, SEXP y_) {
 }
 ```
 
-There are two ways to call C functions from R: `.C()` and `.Call()`. `.C()` is an older interface and should not be used for new code. If you want to learn about it, you'll need to read [Interface .C and .Fortran functions](http://cran.r-project.org/doc/manuals/R-exts.html#Interface-functions-_002eC-and-_002eFortran) in "Writing R extensions". All modern code should use `.Call()`: 
+We call this from R with `.Call()`: 
 
 ```{r}
 #' @useDynLib mypackage add_
@@ -278,6 +284,43 @@ add_
 
 `.Call()` takes the pointer to a C function and calls it. It does not check the arguments, so you need to do that in the R function, in the C function, or just accept that R will crash every time you accidentally supply the wrong type of input.
 
+The most complicated part of working with the `.Call()` interface is memory-management. Whenever you create an R-level data structure, you must `PROTECT()` it so the garbage collector doesn't try and free it, then `UNPROTECT()` it at the end of the function. This topic is beyond the scope of this chapter, but you can learn more about it at <http://adv-r.had.co.nz/C-interface.html#c-vectors>.
+
+### Getting starting with `.C()`
+
+`.C()` is simpler than `.Call()` and can be useful if you already have standard C code. Since you never create R object in `.C()`, you never need to worry about memory management. To use it, you first write a void C function, using in-place modification of function parameters to return values:
+
+```c
+void add_(double* x, double* y, double* out) {
+  out[0] = x[0] + y[0];
+}
+```
+
+Then like `.Call()` you create an R wrapper:
+
+```{r, eval = FALSE}
+#' @mypackage src.c add_
+add <- function(x, y) {
+  .C(add_, x, y, numeric(1))[[3]]
+}
+```
+
+(Here we extract the 3rd element of the result because that corresponds to the out parameter.)
+
+`.C()` automatically converts back and forth between R vectors and their C equivalents:
+
+R type      | C type   
+------------|----------
+logical     | `int*`
+integer     | `int*`
+double	    | `double*`
+character	  | `char**`
+raw	        | `unsigned char*`
+
+Note that `.C()` assumes your function doesn't know how to deal with missing values and will throw an error if any arguments contain an NA. If it can correctly handle missing values, set `NAOK = TRUE` in the call to `.C()`. 
+
+You can learn more about `.C()` in its help, `?.C` and in [R-extensions](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Interface-functions-_002eC-and-_002eFortran).
+
 ### Workflow {#c-workflow}
 
 The usual workflow still applies:
@@ -294,7 +337,7 @@ R packages need to provide DLLs that can be relocated; DLLs that work regardless
 
 R solves this problem using __function registration__. To export a C function, you register it with `R_RegisterCCallable()`. To import a C function, you get a pointer to it with `R_GetCCallable()`. As we'll see below, a user-friendly package will do both these tasks, so users of the package can ignore the details and simply include a header a file.
 
-[Sidebar: Confusingly, there's another type of function registration. Instead of registering C functions using the namespace (i.e. `@useDynLib pkg fun`), you can register them with `R_registerRoutines()` and `@useDynLib mypackage, .registration = TRUE`. This is only useful if useful if you're using the older `.C` interface, or the more esoteric `.Fortran` and `.External` interfaces. To learn the details read [Registering native extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in "Writing R extensions".]
+[Sidebar: Confusingly, there's another type of function registration. Instead of registering C functions using the namespace (i.e. `@useDynLib pkg fun`), you can register them with `R_registerRoutines()` and `@useDynLib mypackage, .registration = TRUE`. To learn the details read [Registering native extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in "Writing R extensions".]
 
 To register a function, call `R_RegisterCCallable()`, defined in `<R_ext/Rdynload.h>`. Function registration should be done in a function called `R_init_<mypackage>`. This function is called automatically when the "mypackage" DLL is loaded. `R_RegisterCCallable()` has three arguments:
 
