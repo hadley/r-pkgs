@@ -8,7 +8,7 @@ output: bookdown::html_chapter
 
 An important part of the package development process is `devtools::check()` which calls the base R command-line function `R CMD check`. This automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not: it automatically detects many commons problems that you'd otherwise discover the hard way.
 
-`devtools::check()` will be frustrating the first time you run it - you'll discover many problems that you need to fix. The key to making the checks less frustrating is to run them more often: the sooner you find out about a problem, the easier it is to fix. The limit of this approach is to check every time you make a change, and if you use github you'll learn how to do that in [Travis-CI](#travis).
+`devtools::check()` will be frustrating the first time you run it - you'll discover many problems that you need to fix. The key to making the checks less frustrating is to run them more often: the sooner you find out about a problem, the easier it is to fix. The limit of this approach is to check every time you make a change, and if you use GitHub you'll learn how to do that in [Travis-CI](#travis).
 
 ## Workflow {#check-workflow}
 
@@ -95,15 +95,15 @@ Next the description is parsed and the package version is printed. Here I'm chec
   each executable file in `BinaryFiles` field in your `DESCRIPTION`.)
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3103 -->
-* __Checking for hidden files and directories__. On linux and OS X, files with
+* __Checking for hidden files and directories__. On Linux and OS X, files with
   a name starting with `.` are hidden by default, and you've probably included
   them in your package by mistake. Either delete them, or if they are important, 
   use `.Rbuildignore` to remove them from the package bundle. R automatically 
   removes some common directories like `.git` and `.svn`.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L381 -->
-* __Checking for portable file names__.  R packages must work on windows, 
-  linux and OS X, so you can only use file names that work on all platforms. 
+* __Checking for portable file names__.  R packages must work on Windows, 
+  Linux and OS X, so you can only use file names that work on all platforms. 
   The easiest way to do this is to stick to letters, numbers, underscores 
   and dashes. Avoid non-English letters and spaces. Fix this check by renaming
   the listed files.
@@ -194,9 +194,9 @@ tools:::.check_package_depends -->
     * All packages listed in `Depends`, `Imports` and `LinkingTo` must be 
       installed, and their version requirements must be met, otherwise your 
       package can't be checked. An easy way to install any missing or outdated
-      dependencies is to run `devtools::install_deps(deps = T)`.
+      dependencies is to run `devtools::install_deps(deps = TRUE)`.
   
-    * Packages listed in `Suggest` must be installed, unless you've set 
+    * Packages listed in `Suggests` must be installed, unless you've set 
       the environment variable `_R_CHECK_FORCE_SUGGESTS_` to a false value
       (e.g. with `check(force_suggests = FALSE)`. This is useful if some of 
       the suggested packages are not available on all platforms.
@@ -364,7 +364,9 @@ tools:::.check_package_CRAN_incoming
     * Similarly you are not allowed to use `:::` to access non-exported
       functions from other packages. Either ask the package maintainer to
       export the function you need, or write your own version of it using
-      exported functions.
+      exported functions. Alternatively, if the licenses are compatible you
+      can copy and paste the exported function into your own package. If
+      you do this, remember to update `Authors@R`.
 
     * Don't use `assign()` to modify objects in the global environment. If 
       you need to maintain state across function calls, create your own
@@ -646,24 +648,24 @@ bookdown::embed_png("screenshots/project-options-build.png", dpi = 220)
 
 ## Checking after every commit with Travis {#travis}
 
-If you use [git and github](#git), I highly recommend learning about [Travis](https://travis-ci.org/). Travis is continuous integration service, which means that it runs automated testing code everytime you push to github. For open source projects, travis provides 50 minutes of free computation on a ubuntu server. For an R package, the most useful code to run is `devtools::check()`. 
+If you use [git and GitHub](#git), I highly recommend learning about [Travis](https://travis-ci.org/). Travis is continuous integration service, which means that it runs automated testing code everytime you push to GitHub. For open source projects, Travis provides 50 minutes of free computation on a ubuntu server. For an R package, the most useful code to run is `devtools::check()`. 
 
-To use travis:
+To use Travis:
 
 1.  Run `devtools::use_travis()` to set up a basic `.travis.yml` config file. 
 
-1.  Navigate to your [travis account](https://travis-ci.org/profile) and enable
-    travis for the repo you want to test.
+1.  Navigate to your [Travis account](https://travis-ci.org/profile) and enable
+    Travis for the repo you want to test.
 
-1.  Commit and push to github.
+1.  Commit and push to GitHub.
 
 1.  Wait a few minutes to see the results in your email.
 
-With this setup in place, every time you push to github, and every time someone submits a pull request, `devtools::check()` will be automatically run. You'll find out about failures right away, which makes them easier to fix. Using travis also encourages me to check more often locally, because I know if it fails I'll find out about it a few minutes later, often once I've moved on to a new problem.
+With this setup in place, every time you push to GitHub, and every time someone submits a pull request, `devtools::check()` will be automatically run. You'll find out about failures right away, which makes them easier to fix. Using Travis also encourages me to check more often locally, because I know if it fails I'll find out about it a few minutes later, often once I've moved on to a new problem.
 
 ### Basic config
 
-The travis config is stored in yaml file called `.travis.yml`. The default config created by devtools looks like this:
+The Travis config is stored in yaml file called `.travis.yml`. The default config created by devtools looks like this:
 
 ```yaml
 # Sample .travis.yml for R projects from https://github.com/craigcitro/r-travis
@@ -684,7 +686,7 @@ after_failure:
   - ./travis-tool.sh dump_logs
 ```
 
-Travis doesn't currently support R as a top-level language, so we need to install it. We start with an image designed for testing C projects, then download the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis). It starts downloads from github that provides a number of useful tools:
+Travis doesn't currently support R as a top-level language, so we need to install it. We start with an image designed for testing C projects, then download the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis). It starts downloads from GitHub that provides a number of useful tools:
 
 * `./travis-tool.sh bootstrap`: installs R.
 
@@ -698,7 +700,7 @@ Travis doesn't currently support R as a top-level language, so we need to instal
 There are two ways to install packages not included in the basic script:
 
 * `./travis-tool.sh install_github user/repo`: installs a package from
-  github. 
+  GitHub. 
 
 * `./travis-tool.sh r_binary_install package`: installs an precompiled R 
   package from ubuntu. You can see if a binary version of a package is 
@@ -737,7 +739,7 @@ env:
   
 ### Other uses
 
-Since travis allows you to run arbitrary code, there are many other things that you can use it for:
+Since Travis allows you to run arbitrary code, there are many other things that you can use it for:
 
 * Re-publishing a book website every time you make a change to the source.
   (Like this book!)
@@ -746,4 +748,4 @@ Since travis allows you to run arbitrary code, there are many other things that 
 
 * Automatically building a documentation website for your package.
 
-To learn more, read about the many [deployment options](http://docs.travis-ci.com/user/deployment/) provided by travis.
+To learn more, read about the many [deployment options](http://docs.travis-ci.com/user/deployment/) provided by Travis.
