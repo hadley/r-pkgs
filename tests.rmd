@@ -23,7 +23,7 @@ While you _are_ testing your code in this workflow, you're only doing it informa
 
 I started using automated tests because I discovered I was spending too much time fixing bugs that I'd realized I'd fixed once before. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those tests so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that you don't test your code, it's that you don't automate your tests.
 
-The goal of this chapter is to help you graduate from using informal ad hoc testing, done at the command line, to formal automated testing. While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:
+The goal of this chapter is to help you graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing). While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:
 
 * Fewer bugs. Because you're explicit about how your code should behave
   you will have fewer bugs. The reason why is a bit like the reason double 
@@ -49,7 +49,7 @@ The goal of this chapter is to help you graduate from using informal ad hoc test
   when I think I have a simpler way to accomplish a task (usually the reason my 
   solution is simpler is that I've forgotten an important use case!).
 
-If you're familiar with unit testing in other languages, you should note that there are some fundamental differences with testthat. This because R is, at heart, more a functional programming language than an object oriented programming language. For instance, because R's main OO systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
+If you're familiar with unit testing in other languages, you should note that there are some fundamental differences with testthat. This because R is, at heart, more a functional programming language than an object oriented programming language. For instance, because R's main OO systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), so testing approaches built around objects and methods don't make much sense.
 
 ## Test workflow {#test-workflow}
 
@@ -122,7 +122,7 @@ test_that("str_length of missing is missing", {
 })
 ```
 
-Test files are made up of three components: expectations, tests and contexts. Expectations give you the tools to convert your visual, interactive experiments into reproducible scripts. Tests and contexts are ways of organising your expectations so that when something goes wrong you can easily track down the source of the problem.
+Tests are organised hierarchically: __expectations__ are grouped into __tests__ which are organised in __files__:
 
 * An __expectation__ is the atom of testing. It describes the expected result 
   of a computation: Does it have the right value and right class? Does it 
@@ -132,16 +132,16 @@ Test files are made up of three components: expectations, tests and contexts. Ex
 * A __test__ groups together multiple expectations to test the output
   from a simple function, a range of possibilities for a single parameter
   from a more complicated function, or tightly related functionality from 
-  across multiple functions. A test is created with the `test_that()` function.
+  across multiple functions. A test is created with `test_that()` .
 
-* A __context__ groups together multiple tests that test related
-  functionality. Contexts are defined with the `context()` function.
+* A __file__ groups together multiple related tests. Files are given a human 
+  readable name with `context()`.
 
 These are described in detail below. 
 
 ### Expectations
 
-An expectation is the finest level of testing. It makes a binary assertion about whether or not a value is what you expect. All expectations have a similar structure:
+An expectation is the finest level of testing. It makes a binary assertion about whether or not a function call does what you expect. All expectations have a similar structure:
 
 * They start with `expect_`.
 
@@ -150,7 +150,7 @@ An expectation is the finest level of testing. It makes a binary assertion about
   
 * If the actual and expected results don't agree, testthat throws an error.
 
-While you'll normally put expectations inside tests inside contexts, you can also run them directly. This makes it easy to explore expectations interactively. There are almost 20 expectations in the testthat package. The most important are discussed below.
+While you'll normally put expectations inside tests inside files, you can also run them directly. This makes it easy to explore expectations interactively. There are almost 20 expectations in the testthat package. The most important are discussed below.
 
 *   There are two basic ways to test for equality: `expect_equal()`, 
     and `expect_identical()`. `expect_equal()` is the most commonly used: it 
@@ -239,7 +239,7 @@ While you'll normally put expectations inside tests inside contexts, you can als
 
 Running a sequence of expectations is useful because it ensures that your code behaves as expected. You could even use an expectation within a function to check that the inputs are what you expect. However, they're not so useful when something goes wrong. All you know is that something is not as expected. You don't know anything about where the problem lies. Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.
 
-## Tests {#test-tests}
+## Writing tests {#test-tests}
 
 Each test should have an informative name and cover a single item of functionality. The idea is that when a test fails, you'll know what's wrong and where in your code to look for the problem. You create a new test using `test_that()`, with parameter names and code block as arguments. The test name should complete the sentence "Test that ...". The code block should be a collection of expectations.
 
@@ -291,7 +291,7 @@ test_that("foo api returns bar when given baz", {
 
 ### Refactoring common behaviour
 
-The following code shows one test of the `floor_date()` function from `library(lubridate)`. There are 7 expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. There's a lot of duplication in these tests, so we might want to extract common behaviour into a new function.
+As you start to write more tests, you might notice duplication in your code. For example, the following code shows one test of the `floor_date()` function from `library(lubridate)`. There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. There's a lot of duplication (and duplication increases the chance of bugs), so we might want to extract common behaviour into a new function.
 
 ```{r}
 library(lubridate)
@@ -315,7 +315,7 @@ test_that("floor_date works for different units", {
 })
 ```
 
-Note how we've defined a couple of helper functions to make the test more concise so you can easily see what changes in each expectation.
+I'd start by defining a couple of helper functions to make each expectation more concise. Then each test can fit on one line, and you can line up actual and expected values to make it easier to see the differences:
 
 ```{r}
 test_that("floor_date works for different units", {
@@ -350,7 +350,7 @@ However, if the expectation fails this doesn't give very informative output:
 expect_floor_equal("year", "2008-01-01 00:00:00")
 ```
 
-Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce something more informative. The key is to use `bquote()` and `eval()`. In the `bquote()` call below, note the use of `.(x)` - the value of anything inside that argument will be inserted into the call.
+Instead you can use a little [non-standard evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html) to produce something more informative. The key is to use `bquote()` and `eval()`. In the `bquote()` call below, note the use of `.(x)` - the contents of `()` will be inserted into the call.
 
 ```{r, error = TRUE}
 expect_floor_equal <- function(unit, time) {
@@ -360,7 +360,7 @@ expect_floor_equal <- function(unit, time) {
 expect_floor_equal("year", "2008-01-01 00:00:00")
 ```
 
-This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what's changing. More importantly, readable tests give you more confidence that they're correct.
+This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what's changing. Readable tests give you more confidence that they're correct.
 
 ```{r}
 test_that("floor_date works for different units", {
