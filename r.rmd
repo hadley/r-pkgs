@@ -237,21 +237,95 @@ Use commented lines of `-` and `=` to break up your file into easily readable ch
 
 ## Differences between functions in scripts and in packages {#r-differences}
 
-Code in a package should not have side effects. Your code should only create objects (mostly functions), and you should not call functions that affect the global state. This means:
+Up until now, you've probably been writing __scripts__, R code saved in a file. There are two main differences between code in scripts and packages:
 
-* __Don't use `library()` or `require()`__. Use the [DESCRIPTION](description.html) 
-  to specify your package's requirements.
+* In a script, code is run when it is loaded. In a package, code is run when it
+  is built.
   
-* __Never use `source()`__ to load code from a file. Rely on 
-  `devtools::load_all()` to automatically source all files in `R/`.
-  
-* __Don't modify global `options()` or graphics `par()`__. Put state changing 
-  operations in functions that the user can call when they want.
-  
-* __Don't save files to disk with `write()`, `write.csv()`, or `saveRDS()`__. 
-  Use [data/](data.html) to cache important data files.
+* Functions in package might be used in situations that you didn't imagine.
+  This means your functions need to be very careful in the way that they 
+  interact with the outside world.
 
-There are two reasons to avoid side-effects. The first reason is pragmatic: while functions with side-effects will work while you're developing a package locally with `devtools::load_all()`, they won't work when you're using a package. This is because your R code is only run once when the package is built, and not every time it's loaded. The second reason is principled: you shouldn't change global states behind your users' backs.
+The next two sections expand on these important differences.
+
+### Loading code
+
+When you load a script with `source()`, every line of code is executed and the results are immediately made available. Things are different in a package, because it is loaded in two steps. When the package is built (e.g. by CRAN) all the code in `R/` is executed and the results are saved. When you attach a package, with `library()` or `require()`, the cached results are made available to you. If you loaded scripts in the same way as packages, your code would look like this:
+
+```{r, eval = FALSE}
+# Load a script into a new environment and save it
+env <- new.env(parent = emptyenv())
+source("my-script.R", local = env)
+save(envir = env, "my-script.Rdata")
+
+# Later, in another R session
+load("my-script.Rdata")
+```
+
+For example, take `x <- Sys.time()`. If you put this in a script, `x` would tell you when the script was `source()`d. But if you put that same code in a package, `x` would tell you when the package was _built_. 
+
+This means that you should never execute functions at the top-level of a package. The following code won't work because ggplot2 will be loaded when your package is built, but not when it's attached.
+
+```{r, eval = FALSE}
+library(ggplot2)
+
+show_mtcars <- function() {
+  qplot(mpg, wt, data = mtcars)
+}
+```
+
+To get around this problem you might be tempted to do:
+
+```{r, eval = FALSE}
+show_mtcars <- function() {
+  library(ggplot2)
+  qplot(mpg, wt, data = mtcars)
+}
+```
+
+That's also problematic, as you'll see below.
+
+### Avoiding side-effects
+
+Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined. To make your code robust, your functions should avoid relying on or changing the global settings. Technically, this means that functions like `read.csv()` are dangerous because the value of `stringAsFactors` argument comes from the global option `stringsAsFactors`. If you expect it to be `TRUE` (the default), and the user has overridden it to be `FALSE`, your code might fail.
+
+There are some functions that modify global settings that you should never use because there are better alternatives:
+
+* __Don't use `library()` or `require()`__. These modify the search path, 
+  affecting what functions are available from the global environment. 
+  It's better to use the `DESCRIPTION` to specify your package's requirements, 
+  as described in the next chapter. This also makes sure those packages are 
+  installed when your package is installed.
+  
+* __Never use `source()`__ to load code from a file. `source()` modifies the
+  current environment, inserting the results of executing the code. Instead, rely 
+  on `devtools::load_all()` which automatically sources all files in `R/`.
+
+Other functions need to be used with caution. If you use them, make sure to clean up after yourself with `on.exit()`:
+
+* If you modify global `options()` or graphics `par()`, save the old values 
+  and reset when you're done:
+  
+    ```{r, eval = FALSE}
+    old <- options(stringsAsFactors = FALSE)
+    on.exit(options(old), add = TRUE)
+    ```
+
+* Avoid modifying the working directory. If you do have to change it, make sure
+  to change it back when you're done:
+
+    ```{r, eval = FALSE}
+    old <- setwd(tempdir())
+    on.exit(setwd(old), add = TRUE)
+    ```
+
+* Creating plots and printing output to the console are two others ways of
+  affecting the global R environment. Often you can't avoid these (because 
+  they're important!) but it's good practice to isolate them in functions that
+  __only__ produce output. This also makes it easier for other people to 
+  repurpose your work for new uses. For example, if separate data preparation
+  and plotting into two functions, others can use your data prep work (which
+  is often the hardest part!) to create new visualisations.
 
 ### When you __do__ need side-effects
 
