@@ -6,29 +6,28 @@ output: bookdown::html_chapter
 
 # Automated checking {#check}
 
-An important part of the package development process is `devtools::check()` which calls the base R command-line function `R CMD check`. This automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not: it automatically detects many commons problems that you'd otherwise discover the hard way.
+An import part of the package development process is `R CMD check`. `R CMD check` automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not because it automatically detects many commons problems that you'd otherwise discover the hard way.
 
-`devtools::check()` will be frustrating the first time you run it - you'll discover many problems that you need to fix. The key to making the checks less frustrating is to run them more often: the sooner you find out about a problem, the easier it is to fix. The limit of this approach is to check every time you make a change, and if you use GitHub you'll learn how to do that in [Travis-CI](#travis).
+`R CMD check` will be frustrating the first time you run it - you'll discover many problems that need to be fixed. The key to making `R CMD check` less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix. The upper limit of this approach is to run `R CMD check` every time you make a change. If you use GitHub, you'll learn precisely how to do that with [Travis-CI](#travis).
 
 ## Workflow {#check-workflow}
 
-`R CMD check` is the name of the command you run from the terminal. I don't recommend calling it directly, instead run `devtools::check()`, or press Cmd + Shift + E in RStudio. Compared to `R CMD check`, `devtools::check()`:
+`R CMD check` is the name of the command you run from the terminal. I don't recommend calling it directly. Instead, run `devtools::check()`, or press Cmd + Shift + E in RStudio. In contrast to `R CMD check`, `devtools::check()`:
 
-* Ensures that the documentation is up-to-date by first running 
+* Ensures that the documentation is up-to-date by running 
   `devtools::document()`.
 
 * Bundles the package before checking it. This is the best practice for checking 
-  packages because it makes sure the check starts from a clean slate: a package 
-  bundle doesn't contain any of the temporary files that might have accumulated in
-  your source package. For example, if you have compiled code, the source 
-  package will include compilation artefacts like `.so` and `.o` files. These
-  will cause spurious warnings, so should be avoided.
+  packages because it makes sure the check starts with a clean slate. Because a 
+  package bundle doesn't contain any of the temporary files that can  accumulate 
+  in your source package, e.g. artefacts like `.so` and `.o` files which 
+  accompany compiled code, you can avoid the spurious warnings such files will 
+  generate.
+  
+* Sets the `NOT_CRAN` environment variable to `TRUE`. This allows you to 
+  selectively skip tests on CRAN. (See `?testthat::skip_on_cran` for details.)
 
-* Sets the `NOT_CRAN` environment variable to `true`. This allows you to 
-  selectively skip tests on CRAN. (See `?testthat::skip_on_cran` for more
-  details.)
-
-The checking workflow is simple, but tedious:
+The workflow for checking a package is simple, but tedious:
 
 1. Run `devtools::check()`, or press Cmd + Shift + E.
 
@@ -36,24 +35,22 @@ The checking workflow is simple, but tedious:
 
 1. Repeat until there are no more problems.
 
-`R CMD check` emits three types of message:
+`R CMD check` returns three types of messages:
 
-  * `ERROR`s: These are severe problems and you should fix them regardless of whether
+  * `ERROR`s: Severe problems that you should fix regardless of whether
     or not you're submitting to CRAN.
     
-  * `WARNING`s: These are likely problems. You must fix these if you're planning to 
-    submit to CRAN, and it's a good idea to look into them even if you're not.
+  * `WARNING`s: Likely problems that you must fix if you're planning to 
+    submit to CRAN (and a good idea to look into even if you're not).
     
-  * `NOTE`s: These are the mildest of the `R CMD check` messages. 
-  
-    If you are submitting to CRAN, you should strive to eliminate all NOTEs, 
-    even if they are false positives. If you have no NOTEs, human intervention 
-    is not required, and the package submission process is easier.  If
-    it's not possible to eliminate a `NOTE`, you'll need describe why it's ok
-    in your submission comments, as described in [release notes](#release-check). 
-    
-    If you're not submitting to CRAN, carefully read each NOTE, but don't 
-    go out of your way to fix things that you don't think are problems.
+  * `NOTE`s: Mild problems. If you are submitting to CRAN, you should strive to 
+    eliminate all NOTEs, even if they are false positives. If you have no NOTEs, 
+    human intervention is not required, and the package submission process will 
+    be easier. If it's not possible to eliminate a `NOTE`, you'll need describe 
+    why it's OK in your submission comments, as described in [release 
+    notes](#release-check). If you're not submitting to CRAN, carefully read 
+    each NOTE, but don't go out of your way to fix things that you don't think 
+    are problems.
 
 ## Checks {#check-checks}
 
