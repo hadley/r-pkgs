@@ -54,7 +54,7 @@ The workflow for checking a package is simple, but tedious:
 
 ## Checks {#check-checks}
 
-`R CMD check` performs over 50 individual checks, described in the following sections. For each check, I briefly describe what it does, what the most common problems are, and how to fix them. When you have a problem with `R CMD check` and can't fix it, use this list to help. To make it easier to understand how the checks fit together, I've organised them into sections roughly corresponding to the chapters in this book. This means they will be in a somewhat different order to what you'll actually see when you run `check()`.
+`R CMD check` performs over 50 individual checks, described in the following sections. For each check, I briefly describe what it does, what are its most commonly observed problems, and how to fix those problems. When you have a problem with `R CMD check` that you ust can't fix, use this list to help. To make it easier to understand how the checks fit together, I've organised them into sections roughly corresponding to the chapters in this book. This means they will be in a somewhat different order to what you'll actually see when you run `check()`.
 
 This list includes every check run in R 3.1.1. If you're using a more recent version, you may want to consult the most recent online version of this chapter: <http://r-pkgs.had.co.nz/check.html>. Please [let me know](mailto:hadley@rstudio.com) if you encounter a problem that this chapter doesn't address.
 
@@ -81,7 +81,7 @@ Next the package description is parsed and the package version number is printed
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3720 -->
 * __Checking if this is a source package__. You must check a source package, not 
-  a binary or installed package. if you use `devtools::check()`, you won't fail 
+  a binary or installed package. If you use `devtools::check()`, you won't fail 
   this test.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3015 -->
@@ -102,14 +102,14 @@ Next the package description is parsed and the package version number is printed
 * __Checking for portable file names__.  Because R packages must work on
   Linux, Mac OS X and Windows, you can only use file names that work on all 
   platforms. The easiest way to do this is to stick to letters, numbers, 
-  underscores and dashes. Avoid non-English letters and spaces. Fix any reported 
-  problems by renaming the listed files.
+  underscores and dashes. You shoul also avoid non-English letters and spaces. 
+  Fix any reported problems by renaming the listed files.
   
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L541 -->
 * __Checking for sufficient/correct file permissions__. If you can't read a 
   file, you can't check it. This check detects the unlikely occurence that 
-  you have files in the package that you don't have permission to read. Fix this
-  by fixing the file permissions as needed.
+  you have files in the package that you don't have permission to read. Fix these 
+  permissions as needed.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3141 -->
 * __Checking whether package ‘XYZ’ can be installed__. `R CMD check` runs
@@ -127,7 +127,7 @@ Next the package description is parsed and the package version number is printed
     If submitting to CRAN, you'll need to justify the size of your package. 
     First, make sure the package is as small as it can possibly be: try 
     recompressing the data (see [data CRAN notes](#data-cran)), and minimising 
-    vignettes (see [vignette CRAN notes](#vignette-cran) for more details).
+    vignettes (see [vignette CRAN notes](#vignette-cran)).
     If it's still too large, consider moving data into its own package.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L746 -->
@@ -147,7 +147,7 @@ Next the package description is parsed and the package version number is printed
 
     * Don't include empty directories. These are usually automatically removed  
       by `R CMD build` so you shouldn't see this error. If you do, however, just 
-      delete the directory.
+      delete the directories.
       
     * The letter case of files and directories is important. All sub-directories 
       should be lower-case, except for `R/`. A citation file, if present, 
@@ -226,7 +226,7 @@ tools:::.check_package_CRAN_incoming
       than the current CRAN version. Update the `Version` field in 
       `DESCRIPTION`.
         
-    * If the maintainer of the package has changed (even if it's just the
+    * If the maintainer of the package has changed (even if it's just an
       e-mail address), the new maintainer needs to submit it to CRAN, and the
       old maintainer should send a confirmation e-mail.
 
@@ -427,7 +427,7 @@ tools:::.check_package_compact_sysdata
 -->
 * __Checking contents of 'data' directory__.
 
-    ** The data directory can only contain file types described in 
+    * The data directory can only contain file types described in 
       [exported data](#data-data).
       
     * Data files can only contain non-ASCII character if the encoding is 
@@ -445,7 +445,7 @@ tools:::.check_package_compact_sysdata
 
 ### Documentation
 
-You can run the most common of these tests without going to `R CMD check` by using `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`, rather than running the full `R CMD check` each time. 
+You can run the most common of these tests without resorting to `R CMD check` by using `devtools::check_doc()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_doc()`, rather than running the full `R CMD check` each time. 
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1527 -->
 * __Checking Rd files__. This checks that all `man/*.Rd` files use the correct
@@ -511,9 +511,9 @@ You can run the most common of these tests without going to `R CMD check` by usi
     Examples are one of the last checks run, so fixing problems can be painful 
     if you have to run `devtools::check()` each time. Instead, use 
     `devtools::run_examples()`: it only checks the examples, and has an optional 
-    parameter which tells it which function to start from. That way, once you've 
-    discovered an error, you can rerun starting from just that file, not all the 
-    files that lead up to it.
+    parameter which tells it which function to start from. This way, once you've 
+    discovered an error, you can rerun the check starting from just that file and 
+    not all the files that lead up to it.
     
     NB: you can't use unexported functions and you shouldn't open new 
     graphics devices or use more than two cores. Individual examples shouldn't
@@ -523,7 +523,7 @@ You can run the most common of these tests without going to `R CMD check` by usi
 * __Checking PDF version of manual__. Occasionally you'll get an error when 
   building the PDF manual. This is usually because the PDF is built by LaTex and 
   you've forgotten to escape something. Debugging this is painful - your best 
-  bet is to look up the LaTex logs and combined Tex file and work back from 
+  bet is to look up the LaTex logs and associated Tex file and work back from 
   there to `.Rd` files then back to a roxygen comment. I consider any such
   failure to be a bug in roxygen2, so please let me know.
 
@@ -652,7 +652,7 @@ To use Travis:
 
 1.  Wait a few minutes to see the results in your e-mail.
 
-With this setup in place, every time you push to GitHub, and every time someone submits a pull request, `R CMD check` will be automatically run. You'll find out about failures right away. This makes them easier to fix. Using Travis also encourages me to run `R CMD check` locally more often, because I know if it fails I'll find out about it a few minutes later (often once I've moved on to a new problem).
+With this in place, every time you push to GitHub or someone submits a pull request, `R CMD check` is automatically run and you'll find out about failures right away, which makes them easier to fix. Using Travis also encourages me to run `R CMD check` locally more often, because I know if it fails I'll find out about it a few minutes later (often once I've moved on to a new problem).
 
 ### Basic config
 
@@ -677,16 +677,16 @@ after_failure:
   - ./travis-tool.sh dump_logs
 ```
 
-Travis doesn't currently support R as a top-level language, so we need to install it. To do so, we start with an image designed for testing C projects; then we download the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis) that downloads a number of useful tools from GitHub:
+Travis doesn't currently support R as a top-level language, so you'll need to install it. To do so, start with an image designed for testing C projects and download the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis). The script downloads a number of useful tools from GitHub:
 
 * `./travis-tool.sh bootstrap`: installs R.
 
 * `./travis-tool.sh install_deps`: installs all packages needed to run tests.
 
-* `./travis-tool.sh run_tests`: builds the package and runs `R CMD check` on it.
+* `./travis-tool.sh run_tests`: builds the package and checks it.
 
 * `./travis-tool.sh dump_logs`: reports failures by printing out all relevant 
-  logs (easily readable online).
+  logs in a form that is easily readable online.
 
 There are two ways to install packages not included in the basic script:
 
@@ -697,7 +697,7 @@ There are two ways to install packages not included in the basic script:
   package from Ubuntu. You can see if a binary version of a package is 
   available by searching for `r-cran-lowercasename` on 
   <http://packages.ubuntu.com>. For example, searching for `r-cran-xml` reveals 
-  that you can get a binary version of XML package.
+  that there's a binary version of XML package available.
   
 These commands should be included in the `install` block, before `./travis-tool.sh install_deps`:
 
@@ -718,7 +718,7 @@ env:
 ```
 
 * `BOOTSTRAP_LATEX=1`: also install LaTex. This is useful if you want to 
-  check the PDF manual or PDF vignettes. It's not a default setting because it 
+  check the PDF manual or PDF vignettes. It's not the default setting because it 
   adds substantially to the check time.
 
 * `WARNINGS_ARE_ERRORS=1`: make the build fail if there are any `ERROR`s or 
@@ -732,7 +732,7 @@ env:
 
 Since Travis allows you to run arbitrary code, it has many other uses:
 
-* Re-publishing a book website every time you make a change to its source code.
+* Re-publishing a book website every time you make a change to the source code.
   (Like this book!)
 
 * Building vignettes and publishing them to a website.
