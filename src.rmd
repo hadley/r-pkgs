@@ -450,7 +450,7 @@ R --debugger=gdb
 
 This will start either [lldb](http://lldb.llvm.org) or [gdb](http://www.gnu.org/software/gdb/), the debuggers that work with code produced by `clang` or `gcc` respectively. Like R, `lldb` and `gdb` provide a REPL, a run-eval-print loop where you enter commands and then look at the results. In the examples below I'll show the results of `lldb`, which is what I use (the output from `gdb` is similar). For each interactive command I'll tell you the explicit, but long, `lldb` command and the short, but cryptic, `gdb` command. Because `lldb` understand all `gdb` commands, you can use choose to be explicit of terse.
 
-Once you've started the debugger, start R by typing `process start` or `run`. Now when your C/C++ code crashes you'll be dumped into an interactive debugger instead of getting a cryptic error message and a crash. 
+Once you've started the debugger, start R by typing `process start` (lldb) or `run` (gdb). Now when your C/C++ code crashes you'll be dumped into an interactive debugger instead of getting a cryptic error message and a crash. 
 
 Let's start with a simple C++ function that writes to memory it doesn't "own":
 
@@ -482,39 +482,34 @@ Process 32743 stopped
    57
 ```
 
-It tells us that the crash occurred because of a `EXC_BAD_ACCESS` - this is one of the most common types of crash in C/C++ code. Helpfully, lldb shows exactly which line of C++ code caused the problem: `vw-distance.cpp:54`. 
+It tells us that the crash occurred because of a `EXC_BAD_ACCESS` - this is one of the most common types of crash in C/C++ code. Helpfully, lldb shows exactly which line of C++ code caused the problem: `vw-distance.cpp:54`. Often just knowing where the problem occurs is enough to fix it. But we're also now at an interactive prompt. There are many commands you can run here to explore what's going on. The most useful are listed below:
 
-We're now at an interactive prompt can run the following commands:
+* See a list of all commands: `help`.
 
-* `help`: see a list of all commands. 
+* Show your location on the callstack with `thread backtrace`/`bt`. This
+  will print a list of calls leading up to the error, much like `traceback()`
+  does in R. Navigate the callstack with `frame select <n>`/`frame <n>`, or 
+  `up` and `down`.
 
-* `p cmd`: evaluate a C/C++ command in the current context
+* Evaluate the next expression with `thread step-over`/`next`, or step into it
+  with `thread step-in`/`step`. Continue executing the rest of the code with
+  `thread step-out`/`finish`
 
-* `bt`
+* Show all variables defined in the current frame with `frame variable`/
+  `info locals`, or print the value of a single variable with 
+  `frame variable <var>`/`p <var>`.
 
-* `thread continue`, `thread step-in`, `thread step-over`, `thread step-out`
-
-* `thread backtrace`
-
-* `frame select`, `up`, `down`
-
-* `frame variable`, `frame variable var`
-
-(int) idx = <no location, value may have been optimized out>
-
-Instead of waiting for a crash to occur you can also set breakpoints in your code.
-
-Setting breakpoints
+Instead of waiting for a crash to occur you can also set breakpoints in your code. To do so, start the debugger, run R, then:
 
 1. Press `Ctrl + C`
 
-1. Type `breakpoint set --file foo.c --line 12 `
+1. Type `breakpoint set --file foo.c --line 12`/`break foo.c:12`.
 
-1. `c` to continue running.
+1. `process continue`/`c` to go back to the R console. Now run the C code
+   you're interested in, and the debugger will stop when it gets to the 
+   specified line.
 
-This is also useful if your code is stuck in an infinite loop. Press `Ctrl + C` to break into the debugger and see which line of code is causing the problem.
-
-
+Finally, you can also use the debugger if your code is stuck in an infinite loop. Press `Ctrl + C` to break into the debugger and you'll see which line of code is causing the problem.
 
 ## Makefiles {#make}
 
