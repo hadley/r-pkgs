@@ -242,22 +242,23 @@ Use commented lines of `-` and `=` to break up your file into easily readable ch
 # Plot data ---------------------------
 ```
 
-## Differences between functions in scripts and in packages {#r-differences}
+## Top-level code {#r-differences}
 
 Up until now, you've probably been writing __scripts__, R code saved in a file. There are two main differences between code in scripts and packages:
 
 * In a script, code is run when it is loaded. In a package, code is run when it
-  is built.
+  is built. This means your package code should only create objects, the
+  vast majority of which will be functions.
   
-* Functions in package might be used in situations that you didn't imagine.
-  This means your functions need to be very careful in the way that they 
+* Functions in your package will be used in situations that you didn't imagine.
+  This means your functions need to be thoughtful in the way that they 
   interact with the outside world.
 
 The next two sections expand on these important differences.
 
 ### Loading code
 
-When you load a script with `source()`, every line of code is executed and the results are immediately made available. Things are different in a package, because it is loaded in two steps. When the package is built (e.g. by CRAN) all the code in `R/` is executed and the results are saved. When you attach a package, with `library()` or `require()`, the cached results are made available to you. If you loaded scripts in the same way as packages, your code would look like this:
+When you load a script with `source()`, every line of code is executed and the results are immediately made available. Things are different in a package, because it is loaded in two steps. When the package is built (e.g. by CRAN) all the code in `R/` is executed and the results are saved. When you load a package, with `library()` or `require()`, the cached results are made available to you. If you loaded scripts in the same way as packages, your code would look like this:
 
 ```{r, eval = FALSE}
 # Load a script into a new environment and save it
@@ -271,7 +272,7 @@ load("my-script.Rdata")
 
 For example, take `x <- Sys.time()`. If you put this in a script, `x` would tell you when the script was `source()`d. But if you put that same code in a package, `x` would tell you when the package was _built_. 
 
-This means that you should never execute functions at the top-level of a package. The following code won't work because ggplot2 will be loaded when your package is built, but not when it's attached.
+This means that you should never run code at the top-level of a package: package code should only create objects, mostly functions. For example, imagine your foo package contains this code:
 
 ```{r, eval = FALSE}
 library(ggplot2)
@@ -280,6 +281,15 @@ show_mtcars <- function() {
   qplot(mpg, wt, data = mtcars)
 }
 ```
+
+If someone tries to use it:
+
+```{r}
+library(foo)
+show_mtcars()
+```
+
+The code won't work because ggplot2's `qplot()` function won't be available: `library(foo)` doesn't re-execute `library(gpplot2)`. The top-level R code in a package is only executed when the package is built, not when it's loaded.
 
 To get around this problem you might be tempted to do:
 
@@ -290,11 +300,11 @@ show_mtcars <- function() {
 }
 ```
 
-That's also problematic, as you'll see below.
+That's also problematic, as you'll see below. Instead, describe the packages your code needs in the `DESCRIPTION` file, as you'll learn in [package dependencies](#dependencies).
 
-### Avoiding side-effects
+### The R landscape
 
-Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined. To make your code robust, your functions should avoid relying on or changing the global settings. Technically, this means that functions like `read.csv()` are dangerous because the value of `stringAsFactors` argument comes from the global option `stringsAsFactors`. If you expect it to be `TRUE` (the default), and the user has overridden it to be `FALSE`, your code might fail.
+Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined. This means you need to pay attention to the R landscape, which includes not just the available functions and objects, but all the global settings. You have changed the R landscape if you've loaded a package with `library()`, or changed a global option with `options()`, or modified the working directory with `setwd()`. If the behaviour of _other_ functions differ before and after running your function, you've modified the landscape. Changing the landscape is bad because it makes code much harder to understand. 
 
 There are some functions that modify global settings that you should never use because there are better alternatives:
 
@@ -307,6 +317,8 @@ There are some functions that modify global settings that you should never use b
 * __Never use `source()`__ to load code from a file. `source()` modifies the
   current environment, inserting the results of executing the code. Instead, rely 
   on `devtools::load_all()` which automatically sources all files in `R/`.
+  If you're using `source()` to create a dataset, instead switch to `data/`
+  as described in [datasets](#data).
 
 Other functions need to be used with caution. If you use them, make sure to clean up after yourself with `on.exit()`:
 
@@ -333,6 +345,8 @@ Other functions need to be used with caution. If you use them, make sure to clea
   repurpose your work for new uses. For example, if separate data preparation
   and plotting into two functions, others can use your data prep work (which
   is often the hardest part!) to create new visualisations.
+
+The flip side of the coin is that you should avoid relying on the users landscape, which might be different to yours. For example, functions like `read.csv()` are dangerous because the value of `stringAsFactors` argument comes from the global option `stringsAsFactors`. If you expect it to be `TRUE` (the default), and the user has set it to be `FALSE`, your code might fail. 
 
 ### When you __do__ need side-effects
 
@@ -389,6 +403,10 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
       invisible()
     }
     ```
+    
+    Then devtools functions can use (e.g.) `getOption("devtools.name")` to 
+    get the name of the package author, and know that a sensible default value
+    has already been set.
     
 As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`. They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code). They give the path where the package is installed (the "library"), and the name of the package.
 
