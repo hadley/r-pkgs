@@ -16,7 +16,7 @@ As the name suggests, namespaces provide "spaces" for "names". They provide a co
 
 Without knowing it, you've probably already used namespaces. For example, have you ever used the `::` operator? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a `summarize()` function. If you load plyr, then Hmisc, `summarize()` will refer to the HMisc version. But if you load the packages in the opposite order, `summarize()` will refer to the plyr version. This can be confusing. Instead, you can explicitly refer to specific functions: `Hmisc::summarize()` and `plyr::summarize()`. Then the order in which the packages are loaded won't matter.
 
-Namespaces make your packages self-contained in two ways: __imports__ and __exports__. The __imports__ namespace defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple `nrow()` function in base R:
+Namespaces make your packages self-contained in two ways: the __imports__ and the __exports__. The __imports__ defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple `nrow()` function in base R:
   
 ```{r}
 nrow
@@ -35,7 +35,7 @@ Surprisingly, it does not! That's because when `nrow()` looks for an object
 called `dim()`, it uses the package namespace, so it finds `dim()` in 
 the base environment, not the `dim()` we created in the global environment.
 
-The __exports__ namespaces helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can't easily be used by another package). Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. (While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible because it makes the lives of your users easier.)
+The __exports__ helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can't easily be used by another package). Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible because it makes the lives of your users easier.)
 
 ## Search path {#search-path}
 
@@ -47,22 +47,24 @@ search()
 
 There's an important difference between loading and attaching a package. Normally when you talk about loading a package you think of `library()`, but that actually attaches the package. 
 
-If a package is present,
+If a package is installed,
 
 * __Loading__ will load code, data and any DLLs; register S3 and 
   S4 methods; and run the `.onLoad()` function. After loading, the 
   package is available in memory, but because it's not in the search 
-  path, you won't be able access its components without using `::`. 
-  `::` implicitly loads a package. To do so explicitly use 
-  `requireNamespace()` or `loadNamespace()`.
+  path, you won't be able to access its components without using `::`. 
+  Confusingly, `::` will also load a package automatically if it 
+  isn't already loaded. It's rare to load a package explicitly, but you
+  can do so with `requireNamespace()` or `loadNamespace()`.
   
-* __Attaching__ puts the package in the search path. You can attach
-  a package with either `library()` or `require()`. Doing so loads 
-  the package, adds it to the search path and runs the `.onAttach()` 
-  function. Every attached package will be in the search path and will
-  be listed by `search()`.
+* __Attaching__ puts the package in the search path. You can't attach a 
+  package without first loading it, so both `library()` or `require()`, load
+  then attach the package. You can see the currently attached packages with 
+  `search()`.
 
-For example, consider the differences between two ways of running `expect_that()` from the testthat package. If we use `library()`, testthat is attached to the search path. If we use `::`, testthat it's not.
+If a package isn't installed, loading (and hence attaching) will fail with an error.
+
+To see the differences more clearly, consider two ways of running `expect_that()` from the testthat package. If we use `library()`, testthat is attached to the search path. If we use `::`, it's not.
 
 ```{r, error = TRUE}
 old <- search()
@@ -78,10 +80,10 @@ expect_true(TRUE)
 
 There are four functions that make a package available. They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).
 
-|        | Returns `FALSE`                           | Throws error         |
-|--------|-------------------------------------------|----------------------|
-| Load   | `requireNamespace("x", quietly = TRUE)`   | `loadNamespace("x")` |
-| Attach | `require(x, quietly = TRUE)`              | `library(x)`         |
+|        | Throws error         | Returns `FALSE`                           |
+|--------|----------------------|-------------------------------------------|
+| Load   | `loadNamespace("x")` | `requireNamespace("x", quietly = TRUE)`   |
+| Attach | `library(x)`         | `require(x, quietly = TRUE)`              |
 
 Of the four, you should only ever use two:
 
@@ -99,20 +101,7 @@ Now's a good time to come back to an important issue which we glossed over earli
 
 Listing a package in either `Depends` or `Imports` ensures that it's installed when needed. The main difference is that where `Imports` just _loads_ the package, `Depends` _attaches_ it. There are no other differences. The rest of the advice in this chapter applies whether or not the package is in `Depends` or `Imports`.
 
-Unless there is a good reason otherwise, you should alway list packages in `Imports` not `Depends`. That's because a good package is self-contained, and minimises changes to the global environment (including the search path). There are a few exceptions:
-
-* Your package is designed to be used in conjunction with another package. For
-  example, the [analogue](https://github.com/gavinsimpson/analogue) package 
-  builds on top of [vegan](https://github.com/vegandevs/vegan). It's not useful
-  without vegan, so it has vegan in `Depends` instead of `Imports`. ggplot2
-  should really `Depend` on scales, rather than `Import`ing it.
-
-* The DBI package provides a common set of S4 classes and generics that are used
-  by any package that talks to a database. A new database backend for DBI 
-  doesn't actually implement any functions, it just creates new classes and
-  provides methods. So if DBI is not attached, the backend is useless. That
-  means packages that implement backends should have DBI in `Depends`, not
-  in `Imports`.
+Unless there is a good reason otherwise, you should alway list packages in `Imports` not `Depends`. That's because a good package is self-contained, and minimises changes to the global environment (including the search path). The only exception is if you package is designed to be used in conjunction with another package. For example, the [analogue](https://github.com/gavinsimpson/analogue) package builds on top of [vegan](https://github.com/vegandevs/vegan). It's not useful without vegan, so it has vegan in `Depends` instead of `Imports`. Similarly, ggplot2 should really `Depend` on scales, rather than `Import`ing it.
 
 Now that you understand the importance of the namespace, let's dive into the nitty gritty details. The two sides of the package namespace, imports and exports, are both described by the `NAMESPACE`. You'll learn what this file looks like in the next section. In the section after that, you'll learn the details of exporting and importing functions and other objects.
 
@@ -145,7 +134,7 @@ In total, there are eight namespace directives. Four describe exports:
 And four describe imports:
 
 * `import()`: import all functions from a package.
-* `importFrom()`: import selected functions.
+* `importFrom()`: import selected functions (including S4 generics).
 * `importClassesFrom()`, `importMethodsFrom()`: import S4 classes and methods.
 * `useDynLib()`: import a function from C. This is described in more
    detail in [compiled code](#src).
@@ -159,16 +148,16 @@ I don't recommend writing these directives by hand. Instead, in this chapter you
   need to learn one tag, `@export`, which will automatically generate the right 
   directive for functions, S3 methods, S4 methods and S4 classes.
 
-* Roxygen2 makes `NAMESPACE` tidy. It only uses unique directives (so
-  you can repeat them as needed), and it sorts them alphabetically. This is 
-  particularly important if you're using git, as it minimises unimportant
-  differences.
+* Roxygen2 makes `NAMESPACE` tidy. No matter how many times you use 
+  `@importFrom foo bar` you'll only get one `importFrom(foo, bar)` in your 
+  `NAMESPACE`. This makes it easy to attach import directives to every function
+  that need them, rather than trying to manage in one central place.
 
 Note that you can choose to use roxygen2 to generate just `NAMESPACE`, just `man/*.Rd`, or both. If you don't use any namespace related tags, roxygen2 won't touch `NAMESPACE`. If you don't use any documentation related tags, roxygen2 won't touch `man/`.
 
 ## Workflow {#namespace-workflow}
 
-Generating the namespace with roxygen2 is just like generating function documentation with roxygen2. You use roxygen2 blocks (starting with `#'`) and tags (starting with `@`). The workflow is also similar:
+Generating the namespace with roxygen2 is just like generating function documentation with roxygen2. You use roxygen2 blocks (starting with `#'`) and tags (starting with `@`). The workflow is the same:
 
 1. Add roxygen comments to your `.R` files.
 
@@ -266,7 +255,7 @@ D <- setClass("D")
 
 S4 generics: `@export` if you want the generic to be publicly usable.
 
-S4 methods: you only need to `@export` methods for generics that you did not define. But `@export`ing every method is a good idea as it will not cause problems and prevents you from forgetting to export an important method.
+S4 methods: you only need to `@export` methods for generics that you did not define. But I think it's a good idea to `@export`ing every method: that way you don't need to remember whether or not you created the generic.
 
 ### RC {#export-rc}
 
@@ -281,7 +270,7 @@ As you'll learn about in [data](#data), files that lives in `data/` doesn't use 
 `NAMESPACE` also controls which external functions can be used by your package without having to use `::`.
 
 It's confusing that both `DESCRIPTION` (through the `Imports` field) and 
-`NAMESPACE` (through import directives) seem to be involved in imports. This is just an unfortunate choice of names. The `Imports` field really has nothing to do with imports: it just makes sure the package is installed and loaded. It doesn't make functions available. You need to import functions in exactly the same way regardless of whether or not the package is loaded.
+`NAMESPACE` (through import directives) seem to be involved in imports. This is just an unfortunate choice of names. The `Imports` field really has nothing to do with functions imported into the namespace: it just makes sure the package is installed when your package is. It doesn't make functions available. You need to import functions in exactly the same way regardless of whether or not the package is attached.
 
 `Depends` is just a convenience for the user: if your package is attached, it also attaches all packages listed in `Depends`. If your package is loaded, packages in `Depends` are loaded, but not attached, so you need to qualify function names with `::` or specifically import them.  
 
@@ -293,15 +282,11 @@ If you are using just a few functions from another package, my recommendation is
 
 If you are using functions repeatedly, you can avoid `::` by importing the function with `@importFrom pgk fun`. This also has a small performance benefit, because `::` adds approximately 5 µs to function evaluation time.
 
-Alternatively, if you are repeatedly using many functions from another package, you can import them using `@import package`. This is the least recommended solution because it makes your code harder to read (you can't tell where a function is coming from), and if you `@import` many packages, it increases the chance of conflicting function names.
-
-### Compiled functions {#import-src}
-
-To make C/C++ functions available in R, see [compiled code](#src).
+Alternatively, if you are repeatedly using many functions from another package, you can import all of them using `@import package`. This is the least recommended solution because it makes your code harder to read (you can't tell where a function is coming from), and if you `@import` many packages, it increases the chance of conflicting function names.
 
 ### S3 {#import-s3}
 
-S3 generics are just functions, so the same rules for functions apply. S3 methods always accompany the generic, so as long as you can access the generic (either implicitly or explicitly), the methods will also be available.
+S3 generics are just functions, so the same rules for functions apply. S3 methods always accompany the generic, so as long as you can access the generic (either implicitly or explicitly), the methods will also be available. In other words, you don't need to do anything special for S3 methods. As long as you've imported the generic, all the methods will also be available.
 
 ### S4 {#import-s4}
 
@@ -331,4 +316,9 @@ Since S4 is implemented in the methods package, you need to make sure it's avail
   
     Here I'm documenting "NULL" to make it clear that these directives don't
     apply to just one function. It doesn't matter where they go, but if you have
-    package docs, that's a natural place to put them.
+    package docs, as described in [documenting packages](#man-packages), that's
+    a natural place to put them.
+
+### Compiled functions {#import-src}
+
+To make C/C++ functions available in R, see [compiled code](#src).

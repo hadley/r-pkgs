@@ -10,7 +10,7 @@ Documentation is one of the most important aspects of a good package. Without it
 
 There are multiple forms of documentation. In this chapter, you'll learn about object documentation, as accessed by `?` or `help()`. Object documentation is a type of reference documentation. It works like a dictionary: while a dictionary is helpful if you want to know what a word means, it won't help you find the right word for a new situation. Similarly, object documentation is helpful if you already know the name of the object, but it doesn't help you find the object you need to solve a given problem. That's one of the jobs of vignettes, which you'll learn about in the next chapter.
 
-R provides a standard way of documenting the objects in a package: you write `.Rd` files in the `man/` directory. These files use a custom syntax, loosely based on LaTeX, and are rendered to HTML for viewing. Instead of writing these files by hand, we're going to use roxygen2 which turns specially formatted comments into `.Rd` files. The goal of roxygen2 is to make documenting your code as easy as possible. It has a number of advantages over writing `.Rd` files by hand:
+R provides a standard way of documenting the objects in a package: you write `.Rd` files in the `man/` directory. These files use a custom syntax, loosely based on LaTeX, and are rendered to HTML, plain text and pdf for viewing. Instead of writing these files by hand, we're going to use roxygen2 which turns specially formatted comments into `.Rd` files. The goal of roxygen2 is to make documenting your code as easy as possible. It has a number of advantages over writing `.Rd` files by hand:
 
 * Code and documentation are intermingled so that when you modify your code, 
   you're reminded to also update your documentation.
@@ -30,7 +30,8 @@ In this section, we'll first go over a rough outline of the complete documentati
 1. Add roxygen comments to your `.R` files.
 
 1. Run `devtools::document()` (or press Ctrl/Cmd + Shift + D in RStudio) to 
-   convert roxygen comments to `.Rd` files.
+   convert roxygen comments to `.Rd` files. (`devtools::document()` calls 
+   `roxygen2::roxygenise()` to do the hard work.)
 
 1. Preview documentation with `?`.
 
@@ -87,7 +88,7 @@ When you use `?add`, `help("add")`, or `example("add")`, R looks for an `.Rd` fi
 bookdown::embed_png("screenshots/man-add.png", dpi = 220)
 ```
 
-(Note that this works because devtools overrides the usual help functions to teach them how to work with source packages. If the documentation doesn't appear, make sure that you're using devtools and that you've loaded the package with `devtools::load_all()`.)
+(Note you can preview development documentation because devtools overrides the usual help functions to teach them how to work with source packages. If the documentation doesn't appear, make sure that you're using devtools and that you've loaded the package with `devtools::load_all()`.)
 
 ## Alternative documentation workflow {#man-workflow-2}
 
@@ -176,10 +177,8 @@ For sum, these components might look like:
 
 Three other tags make it easier for the user to find documentation:
 
-*   `@aliases space separated aliases` adds additional aliases to the topic.
+*   `@aliases alias1 alias2 ...` adds additional aliases to the topic.
     An alias is another name for the topic that can be used with `?`.
-
-*   `@concepts` adds extra keywords that will be found with `help.search()`.
 
 *   `@keywords keyword1 keyword2 ...` adds standardised keywords. Keywords are
     optional, but if present, must be taken from a predefined list found in 
@@ -217,18 +216,9 @@ Functions are the most commonly documented object. As well as the introduction b
 
     For the purpose of illustration, it's often useful to include code
     that causes an error. `\dontrun{}` allows you to include code in the
-    example that is never used. There are two other special commands.
-    `\dontshow{}` is run, but not shown in the help page: this can
-    be useful for informal tests. `\donttest{}` is run in examples,
-    but not run automatically in `R CMD check`. This is useful if you
-    have examples that take a long time to run. The options are summarised
-    below.
-
-    Command      | example   | help   | R CMD check
-    ------------ | --------- | ------ | -----------
-    `\dontrun{}` |           | •      | 
-    `\dontshow{}`| •         |        | •
-    `\donttest{}`| •         | •      | 
+    example that is not run. (You use be able to use `\donttest{}` for
+    a similar purpose, but it's no longer recommended because it actually
+    __is__ tested.)
 
     Instead of including examples directly in the documentation, you can
     put them in separate files and use `@example path/relative/to/packge/root`
@@ -310,9 +300,9 @@ It's relatively straightforward to document classes, generics and methods. The d
 
 ### S3 {#man-s3}
 
-S3 __generics__ are regular functions, so document them as such. S3 __classes__ have no formal definition, so document the constructor function. It is your choice whether or not to document S3 __methods__. You don't need to document methods for simple generics like `print()`. But if your method is more complicated, you should document it so people know what the parameters do. In base R, you can see examples of documentation for more complex methods like `predict.lm()`, `predict.glm()`, and `anova.glm()`.
+S3 __generics__ are regular functions, so document them as such. S3 __classes__ have no formal definition, so document the constructor function. It is your choice whether or not to document S3 __methods__. You don't need to document methods for simple generics like `print()`. But if your method is more complicated or includes additional arguments, you should document it so people know how it works. In base R, you can see examples of documentation for more complex methods like `predict.lm()`, `predict.glm()`, and `anova.glm()`.
 
-Older versions of roxygen required explicit `@method generic class` tags for all S3 methods. From 3.0.0 onward, this is no longer needed as roxygen2 will figure it out automatically. If you are upgrading, make sure to remove these old tags. Automatic method detection will only fail if the generic and class are ambiguous. For example is `all.equal.data.frame()` the `equal.data.frame` method for `all`, or the `data.frame` method for `all.equal`?. If this happens, you can disambiguate with (e.g.) `@method all.equal data.frame`.
+Older versions of roxygen required explicit `@method generic class` tags for all S3 methods. From version 3.0.0 onward, this is no longer needed as roxygen2 will figure it out automatically. If you are upgrading, make sure to remove these old tags. Automatic method detection will only fail if the generic and class are ambiguous. For example is `all.equal.data.frame()` the `equal.data.frame` method for `all`, or the `data.frame` method for `all.equal`?. If this happens, you can disambiguate with (e.g.) `@method all.equal data.frame`.
 
 ### S4 {#man-s4}
 
@@ -358,11 +348,11 @@ setMethod("foo", c("bar", "baz"), ...)
 
 Roxygen uses the `@include` tags to compute a topological sort which ensures that dependencies are loaded before they're needed. It then sets the `Collate` field in `DESCRIPTION`, which overrides the default alphabetic ordering. A simpler alternative to `@include` is to define all classes and methods in `aaa-classes.R` and `aaa-generics.R`, and rely on these coming first since they're in alphabetical order. The main disadvantage is that you can't organise components into files as naturally as you might want.
 
-Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` tags to correctly document S4 objects. But as of version 3.0.0, roxyen2 generates correct metadata automatically. If you're upgrading from an old version, make sure to remove these tags.
+Older versions of roxyen2 required explicit `@usage`, `@alias` and `@docType` tags for document S4 objects. However, as of version 3.0.0, roxyen2 generates the correct values automatically so you know longer need to use them. If you're upgrading from an old version, you can delete these tags.
 
 ### RC {#man-rc}
 
-Reference classes are different to S3 and S4 because methods are associated with classes, not generics. RC also has a special convention for documenting methods: the docstring. This makes documenting RC simpler than S4 because you only need one roxygen block per class.
+Reference classes are different to S3 and S4 because methods are associated with classes, not generics. RC also has a special convention for documenting methods: the __docstring__. The docstring is a string placed inside the definition of the method which briefly describes what it does. This makes documenting RC simpler than S4 because you only need one roxygen block per class.
 
 ```{r}
 #' A Reference Class to represent a bank account.
@@ -494,13 +484,12 @@ Note that `\` and `%` are special characters in the Rd format. To insert a liter
 
 ### Character formatting
 
-* `\emph{italics}`.
+* `\emph{italics}`: _italics_.
 
-* `\strong{bold}`.
+* `\strong{bold}`: __bold__.
 
-* `\code{r_function_call(with = "arguments")}`, `\code{NULL}`, `\code{TRUE}`.
-
-* `\pkg{package_name}`.
+* `\code{r_function_call(with = "arguments")}`: 
+  `r_function_call(with = "arguments")`
 
 ### Links
 
@@ -508,7 +497,7 @@ To other documentation:
 
 * `\code{\link{function}}`: function in this package.
 
-* `\code{\link[MASS]{stats}}`: function in another package.
+* `\code{\link[MASS]{abbey}}`: function in another package.
 
 * `\link[=dest]{name}`: link to dest, but show name.
 
@@ -516,11 +505,11 @@ To other documentation:
 
 To the web:
 
-* `\url{http://rstudio.com}`.
+* `\url{http://rstudio.com}`: a url.
 
-* `\href{http://rstudio.com}{Rstudio}`.
+* `\href{http://rstudio.com}{Rstudio}`:, a url with custom link text.
 
-* `\email{hadley@@rstudio.com}` (note the doubled `@`).
+* `\email{hadley@@rstudio.com}` (note the doubled `@`): an email address.
 
 ### Lists
 
@@ -568,7 +557,7 @@ Tables are created with `\tabular{}`. It has two arguments:
 
 2. Table contents, with columns separated by `\tab` and rows by `\cr`.
 
-The following function turns an R data frame into into the correct format. It ignores column and row names, but should get you started.
+The following function turns an R data frame into the correct format. It ignores column and row names, but should get you started.
 
 ```{r}
 tabular <- function(df, ...) {

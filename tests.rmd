@@ -12,7 +12,7 @@ library(testthat)
 
 Testing is a vital part of package development. It ensures that your code does what you want it to do. Testing, however, adds an additional step to your development workflow. The goal of this chapter is to show you how to make this task easier and more effective by doing formal automated testing using the testthat package.
 
-Up till now, your workflow probably looks like this:
+Up until now, your workflow probably looks like this:
 
 1. Write a function.
 1. Load it with Ctrl/Cmd + Shift + L or `devtools::load_all()`.
@@ -21,9 +21,9 @@ Up till now, your workflow probably looks like this:
 
 While you _are_ testing your code in this workflow, you're only doing it informally. The problem with this approach is that when you come back to this code in 3 months time to add a new feature, you've probably forgotten some of the informal tests you ran the first time around. This makes it very easy to break code that used to work. 
 
-I started using automated tests because I discovered I was spending too much time fixing bugs that I'd realized I'd fixed once before. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those tests so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that you don't test your code, it's that you don't automate your tests.
+I started using automated tests because I discovered I was spending too much time re-fixing bugs that I'd already fixed before. While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked. But I never had a system which could store those tests so I could re-run them as needed. I think that this is a common practice among R programmers. It's not that you don't test your code, it's that you don't automate your tests.
 
-The goal of this chapter is to help you graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing). While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:
+In this chapter you'll learn how to graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing). While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:
 
 * Fewer bugs. Because you're explicit about how your code should behave
   you will have fewer bugs. The reason why is a bit like the reason double 
@@ -63,11 +63,11 @@ This will:
 
 1.  Create a `tests/testthat` directory.
 
-1.  Add necessary dependencies to `DESCRIPTION` (i.e., it adds testthat to 
-    the `Suggests` field).
+1.  Adds testthat to the `Suggests` field in the `DESCRIPTION`.
 
-1.  Creates a file `tests/testthat.R` that ensures your tests are automatically 
-    run by `R CMD check`.
+1.  Creates a file `tests/testthat.R` that runs all your tests are when
+    `R CMD check` runs. (You'll learn more about that in 
+    [automated checking](#check).)
 
 Once you're set up the workflow is simple:
 
@@ -83,7 +83,7 @@ The testing output looks like this:
     rv : ...
     Variance : ....123.45.
 
-Each line represents a file of tests. Each `.` represents a passed test. Each number represents a failed test. The numbers index into a list of failures that provides more details:
+Each line represents a test file. Each `.` represents a passed test. Each number represents a failed test. The numbers index into a list of failures that provides more details:
 
     1. Failure(@test-variance.R#22): Variance correct for discrete uniform rvs -----
     VAR(dunif(0, 10)) not equal to var_dunif(0, 10)
@@ -127,12 +127,14 @@ Tests are organised hierarchically: __expectations__ are grouped into __tests__ 
 * An __expectation__ is the atom of testing. It describes the expected result 
   of a computation: Does it have the right value and right class? Does it 
   produce error messages when it should? An expectation automates visual
-  checking of results in the console.
+  checking of results in the console. Expectations are functions that start 
+  with `expect_`.
 
 * A __test__ groups together multiple expectations to test the output
   from a simple function, a range of possibilities for a single parameter
   from a more complicated function, or tightly related functionality from 
-  across multiple functions. A test is created with `test_that()` .
+  across multiple functions. This is why they are sometimes called __unit__
+  as they test one unit of functionality. A test is created with `test_that()` .
 
 * A __file__ groups together multiple related tests. Files are given a human 
   readable name with `context()`.
@@ -187,10 +189,9 @@ While you'll normally put expectations inside tests inside files, you can also r
     expect_match(string, "testing", ignore.case = TRUE)
     ```
 
-*   `expect_match()` is used by three expectations that check for various 
-    types of output: `expect_output()`, for printed output; `expect_message()`
-    for messages; `expect_warning()` for warnings; and `expect_error()` for
-    errors.
+*   Three variations of `expect_match()` let you check for other types of 
+    result: `expect_output()`, inspects printed output; `expect_message()`,
+    messages; `expect_warning()`, warnings; and `expect_error()` errors.
     
     ```{r, error = TRUE}
     a <- list(1:10, letters)
@@ -228,24 +229,24 @@ While you'll normally put expectations inside tests inside files, you can also r
     ```
 
 *   `expect_true()` and `expect_false()` are useful catchalls if none of the 
-    other expectations do what need.
+    other expectations do what you need.
 
 *   Sometimes you don't know exactly what the result should be, or it's too 
     complicated to easily recreate in code. In that case the best you can do is 
     check that the result is the same as last time. `expect_equal_to_reference()` 
-    caches the result of the first test, and then compares it to subsequent 
+    caches the result the first time its run, and then compares it to subsequent 
     runs. If for some reason the result does change, just delete the cache (*)
     file and re-test.
 
-Running a sequence of expectations is useful because it ensures that your code behaves as expected. You could even use an expectation within a function to check that the inputs are what you expect. However, they're not so useful when something goes wrong. All you know is that something is not as expected. You don't know anything about where the problem lies. Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.
+Running a sequence of expectations is useful because it ensures that your code behaves as expected. You could even use an expectation within a function to check that the inputs are what you expect. However, they're not so useful when something goes wrong. All you know is that something is not as expected. You don't know the goal of the expectation. Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.
 
 ## Writing tests {#test-tests}
 
-Each test should have an informative name and cover a single item of functionality. The idea is that when a test fails, you'll know what's wrong and where in your code to look for the problem. You create a new test using `test_that()`, with parameter names and code block as arguments. The test name should complete the sentence "Test that ...". The code block should be a collection of expectations.
+Each test should have an informative name and cover a single unit of functionality. The idea is that when a test fails, you'll know what's wrong and where in your code to look for the problem. You create a new test using `test_that()`, with test name and code block as arguments. The test name should complete the sentence "Test that ...". The code block should be a collection of expectations.
 
 It's up to you how to organise your expectations into tests. The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem. Try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer larger tests.
 
-Each test is run in its own environment and is self-contained. The exception are actions which have effects outside the local environment. These include things like:
+Each test is run in its own environment and is self-contained. However, testthat doesn't know how to cleanup after actions affect the R landscape: 
 
 * The filesystem: creating and deleting files, changing the working directory,
   etc.
@@ -262,15 +263,26 @@ When you use these actions in tests, you'll need to clean up after yourself. Whi
 > debugger expression, write it as a test instead.
 > --- Martin Fowler
 
-There is a fine balance to writing tests. Each test that you write makes your code less likely to change inadvertently; but it also can make it harder to change your code on purpose. Focus on testing the external interface to your functions - if you test the internal interface, then it's harder to change the implementation in the future because as well as modifying the code, you'll also need to update all the tests.
+There is a fine balance to writing tests. Each test that you write makes your code less likely to change inadvertently; but it also can make it harder to change your code on purpose. It's hard to give good general advice about writing tests, but you might find these points helpful:
 
-Generally, avoid testing simple code that you're confident will work. Instead focus your time on code that you're not sure about, is fragile, or has complicated interdependencies. That said, I often find I make the most mistakes when I falsely assume that the problem is simple and doesn't need any tests.
+* Focus on testing the external interface to your functions - if you test the 
+  internal interface, then it's harder to change the implementation in the 
+  future because as well as modifying the code, you'll also need to update all 
+  the tests.
 
-Always write a test when you discover a bug.
+* Strive to test each behaviour in one and only one test. Then if that 
+  behaviour later changes you only need to update a single test.
 
-DRY principle - strive to test each behaviour in one and only one test. Then if that behaviour later changes you only need to update a single test.
+* Avoid testing simple code that you're confident will work. Instead focus your 
+  time on code that you're not sure about, is fragile, or has complicated 
+  interdependencies. That said, I often find I make the most mistakes when I 
+  falsely assume that the problem is simple and doesn't need any tests.
 
-You may find it helpful to adopt the test first philosphy. There you always start by writing the tests, and then write the code that implements them. This reflects an important way of solving problems: when setting out to solve a problem, you should always first establish how to tell if your solution is correct: "How do you know if you've solved the problem?".
+* Always write a test when you discover a bug. You may find it helpful to adopt 
+  the test-first philosphy. There you always start by writing the tests, and 
+  then write the code that makes them pass. This reflects an important problem
+  solving strategy: start by establishing your success critieria, how you
+  know if you've solved the problem.
 
 ### Skipping a test
 
@@ -289,9 +301,9 @@ test_that("foo api returns bar when given baz", {
 })
 ```
 
-### Refactoring common behaviour
+### Building your own testing tools
 
-As you start to write more tests, you might notice duplication in your code. For example, the following code shows one test of the `floor_date()` function from `library(lubridate)`. There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. There's a lot of duplication (and duplication increases the chance of bugs), so we might want to extract common behaviour into a new function.
+As you start to write more tests, you might notice duplication in your code. For example, the following code shows one test of the `floor_date()` function from `library(lubridate)`. There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. There's a lot of duplication (which increases the chance of bugs), so we might want to extract common behaviour into a new function.
 
 ```{r}
 library(lubridate)
@@ -315,7 +327,7 @@ test_that("floor_date works for different units", {
 })
 ```
 
-I'd start by defining a couple of helper functions to make each expectation more concise. Then each test can fit on one line, and you can line up actual and expected values to make it easier to see the differences:
+I'd start by defining a couple of helper functions to make each expectation more concise. That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:
 
 ```{r}
 test_that("floor_date works for different units", {
@@ -380,7 +392,7 @@ test_that("floor_date works for different units", {
 })
 ```
 
-## Files {#test-files}
+## Test files {#test-files}
 
 The highest-level structure of tests is the file. Each file should contain a single `context()` call that provides a brief description of its contents. Just like the files in the `R/` directory, you are free to organise your tests any way that you like. But again, the two extremes are clearly bad (all tests in one file, one file per test). You need to find a happy medium that works for you. A good starting place is to have one file of tests for each complicated function.
 

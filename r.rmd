@@ -10,7 +10,7 @@ The first principle of using a package is that all R code goes in `R/`. In this 
 
 ## R code workflow {#r-workflow}
 
-The first advantage to using a package is that it's easy to re-load your code. You can either run `devtools::load_all()`, or in RStudio press __Ctrl/Cmd + Shift + L__,  which also saves all open files, saving you a keystroke.
+The first practical advantage to using a package is that it's easy to re-load your code. You can either run `devtools::load_all()`, or in RStudio press __Ctrl/Cmd + Shift + L__,  which also saves all open files, saving you a keystroke.
 
 These keyboard shortcut leads to a fluid development workflow:
 
@@ -244,7 +244,7 @@ Use commented lines of `-` and `=` to break up your file into easily readable ch
 
 ## Top-level code {#r-differences}
 
-Up until now, you've probably been writing __scripts__, R code saved in a file. There are two main differences between code in scripts and packages:
+Up until now, you've probably been writing __scripts__, R code saved in a file that you load with `source()`. There are two main differences between code in scripts and packages:
 
 * In a script, code is run when it is loaded. In a package, code is run when it
   is built. This means your package code should only create objects, the
@@ -354,10 +354,6 @@ Occasionally, packages do need side-effects. This is most common if your package
 
 Some common uses of `.onLoad()` and `.onAttach()` are:
 
-*   To dynamically load a compiled DLL. In most cases, you won't need to 
-    use `.onLoad()` to do this. Instead, you'll use a special namespace 
-    construct; see [namespaces](#namespace) for details. 
-
 *   To display an informative message when the package loads. This might make 
     usage conditions clear, or display useful tips. Startup messages is one 
     place where you should use `.onAttach()` instead of `.onLoad()`. To display 
@@ -371,13 +367,6 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
     }
     ```
     
-*   To connect R to another programming language. For example, if you use rJava
-    to talk to a `.jar` file, you need to call `rJava::.jpackage()`. To
-    make C++ classes available as reference classes in R with Rcpp modules,
-    you call `Rcpp::loadRcppModules()`.
-
-*   To register vignette engines with `tools::vignetteEngine()`.
-
 *   To set custom options for your package with `options()`. To avoid conflicts
     with other packages, ensure that you prefix option names with the name
     of your package. Also be careful not to override options that the user
@@ -408,6 +397,14 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
     get the name of the package author, and know that a sensible default value
     has already been set.
     
+*   To connect R to another programming language. For example, if you use rJava
+    to talk to a `.jar` file, you need to call `rJava::.jpackage()`. To
+    make C++ classes available as reference classes in R with Rcpp modules,
+    you call `Rcpp::loadRcppModules()`. 
+
+*   To register vignette engines with `tools::vignetteEngine()`.
+
+
 As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`. They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code). They give the path where the package is installed (the "library"), and the name of the package.
 
 If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects. By convention, `.onLoad()` and friends are usually saved in a file called `zzz.R`. (Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should no longer be used.)
@@ -429,5 +426,3 @@ identical(x, y)
 
 cat(stringi::stri_escape_unicode(x))
 ```
-
-Your R directory should not include any files other than R code. Subdirectories will be silently ignored.

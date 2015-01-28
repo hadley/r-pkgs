@@ -64,7 +64,7 @@ Once you're set up, the basic workflow should now be familiar:
     ```
     
     It includes a basic function and some instructions to get started. The
-    two most important parts are the header includes, and the special
+    two most important parts are the header `#includes`, and the special
     attribute `// [[Rcpp::export]]`.
 
 1.  Generate the necessary modifications to your `NAMESPACE` by documenting
@@ -150,8 +150,9 @@ This will generate a header file, `inst/include/mypackage.h` that can be include
 To use C++ code from another package:
 
 1. In `DESCRIPTION`, add `LinkingTo: otherPackage`. Confusingly this has nothing
-   to do with linking, but instead adds `otherPackage/include` to the include 
-   path.
+   to do with the linker. It's called `LinkingTo` because it adds 
+   `otherPackage/include` to the include path, allowing you to dynamically
+   "link to" other code via the headers.
 
 1. In the C++ file, add:
 
@@ -159,7 +160,7 @@ To use C++ code from another package:
     #include <otherPackage.h>
     ```
 
-1. Functions from otherPackage will be included in the `otherPackage` C++
+1. C++ functions from otherPackage will be included in the `otherPackage`
    namespace. Use `otherPackage::foo()` to access functions, or make 
    them available globally with `using namespace otherPackage`.
 
@@ -231,7 +232,7 @@ To call a C function from R, you first need a C function! In an R package, C cod
 
 These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read "[The R API](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#The-R-API)" in "Writing R Extensions". A number of exported functions are not documented, so you'll also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
 
-Here's the bare minimum you need to know: C functions that talk to R must use the `SEXP` type for both inputs and outputs. `SEXP`, short for S expression, is the C struct used to represent every type of object in R. A C function typically starts by converting `SEXP`s to C objects, and ends by converting C objects back to a `SEXP`. (The R API is designed so that these conversions often don't require copying.) The following table lists the functions that convert length one R vectors to and from C scalars:
+Here's the bare minimum you need to know: C functions that talk to R must use the `SEXP` type for both inputs and outputs. `SEXP`, short for S expression, is the C struct used to represent every type of object in R. A C function typically starts by converting `SEXP`s to atomic C objects, and ends by converting C objects back to a `SEXP`. (The R API is designed so that these conversions often don't require copying.) The following table lists the functions that convert length one R vectors to and from C scalars:
 
 R type      | C type      | R -> C            |  C -> R 
 ------------|-------------|-------------------|-------------------
@@ -272,7 +273,7 @@ useDynLib(mypackage, add_)
 This directive instructs R to create an object called `add_` which describes a C function pointer:
 
 ```{r, eval = FALSE}
-add_
+mypackage:::add_
 #> $name
 #> [1] "add_"
 #> 
@@ -285,7 +286,7 @@ add_
 #> [1] "NativeSymbolInfo"
 ```
 
-`.Call()` takes the pointer to a C function and calls it. It does not check the arguments, so you need to do that in the R function, in the C function, or just accept that R will crash every time you accidentally supply the wrong type of input.
+`.Call()` takes the pointer to a C function and calls it. All R objects have the same C type (the `SEXP`) you need to make sure the arguments are of the type you expect. Either do that in the R function, in the C function, or just accept that R will crash every time you accidentally supply the wrong type of input.
 
 The most complicated part of working with the `.Call()` interface is memory-management. Whenever you create an R-level data structure, you must `PROTECT()` it so the garbage collector doesn't try and free it, then `UNPROTECT()` it at the end of the function. This topic is beyond the scope of this chapter, but you can learn more about it at <http://adv-r.had.co.nz/C-interface.html#c-vectors>.
 
@@ -384,8 +385,8 @@ Rather than relying on each package that imports your C code to do this correctl
 Using C code from another package varies based on how the package is implemented:
 
 * If it uses the system described above, all you need is `LinkingTo: otherPackage` 
-  in the `DESCRIPTION`, and `#include mypackageAPI.h` in the C file. (Remember 
-  `LinkingTo` is not about linking, but actually affects the include path).
+  in the `DESCRIPTION`, and `#include otherPackageAPI.h` in the C file. (Remember 
+  `LinkingTo` is not about the linker, but actually affects the include path).
    
 * If it registers the functions, but doesn't provide a header file, you'll
   need to write the wrapper yourself. Since you're not using any header
@@ -471,8 +472,8 @@ Use `devtools::load_all()` to load the current package. Then copy and paste the 
 
 ```
 Process 32743 stopped
-* thread #1: tid = 0x1f79f6, 0x0000000106a874e3 gggeom.so`vw_distance(x=0x00007fff5fbfcc50, y=0x00007fff5fbfcc40) + 499 at vw-distance.cpp:54, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=2, address=0x106a9cffc)
-    frame #0: 0x0000000106a874e3 gggeom.so`vw_distance(x=0x00007fff5fbfcc50, y=0x00007fff5fbfcc40) + 499 at vw-distance.cpp:54
+* thread #1: tid = 0x1f79f6, 0x... gggeom.so...`
+   frame #0: 0x0.. gggeom.so`vw_distance(x=..., y=...) + ... at vw-distance.cpp:54
    51        int prev_idx = prev[idx];
    52  	
    53  	    next[prev[idx]] = next_idx;
@@ -587,14 +588,14 @@ Packages with compiled code are much more likely to have difficulties getting on
 
 The interface between CRAN's automated and manual checking can be particularly frustrating for compiled code. Requirements vary from submission to submission, based on which maintainer you get and how much free time they have. The rules are inconsistently applied, but if your package doesn't pass, it's better to bite the bullet and make the change rather than trying to argue about it:
 
-* Sometimes you will need to list all authors and copyright holders of included 
-  code in the DESCRIPTION. 
-
-* Sometimes your package will need to work on Solaris. But due to the difficulty 
-  of accessing a computer running Solaris, fixing Solaris issues can be hard. 
-  However, you will be in a stronger negotiating position if the package has no 
-  problems on other platforms. 
+  * Sometimes you will need to list all authors and copyright holders of included 
+    code in the DESCRIPTION. 
   
-  One common gotcha: gcc/clang flags `-Wall`, `-pedantic` and `-O0` do not work 
-  with the default compiler on Solaris.
+  * Sometimes your package will need to work on Solaris. But due to the difficulty 
+    of accessing a computer running Solaris, fixing Solaris issues can be hard. 
+    However, you will be in a stronger negotiating position if the package has no 
+    problems on other platforms. 
+  
+    One common gotcha: gcc/clang flags `-Wall`, `-pedantic` and `-O0` do not work 
+    with the default compiler on Solaris.
 

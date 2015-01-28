@@ -46,7 +46,7 @@ If you've been following the advice in [versioning](#version), the version numbe
     
 ## Backward compatibility
 
-The big different between major and minor versions is whether or not the code is backward compatible. This difference is be a bit academic in the R community because the way most people update packages is by running `update.packages()`, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code. While more R users are becoming familiar with tools like [packrat](http://rstudio.github.io/packrat/), which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number. 
+The big difference between major and minor versions is whether or not the code is backward compatible. This difference is be a bit academic in the R community because the way most people update packages is by running `update.packages()`, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code. While more R users are becoming familiar with tools like [packrat](http://rstudio.github.io/packrat/), which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number. 
 
 The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time for your users' time. The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes. Backward compatible code also tends to be harder to read because of the need to maintain multiple paths to support functionality from previous versions. Be concerned about backward compatibility, but don't let it paralyse you. 
 
@@ -63,6 +63,8 @@ There are good reasons to make backward incompatible changes - if you made a des
       .Deprecated("sum")
       x + y + z
     }
+    
+    fun(1, 2, 3)
     ```
     
     Then, remove the function once you got to `0.7.0` (or if you are
@@ -79,6 +81,8 @@ There are good reasons to make backward incompatible changes - if you made a des
         z <- y
       }
     }
+    
+    bar(1, 2, 3)
     ```
 
   * If you're deprecating a lot of code, it can be useful to add a helper 
@@ -146,40 +150,13 @@ There are good reasons to make backward incompatible changes - if you made a des
     it doesn't exist in foo's namespace. Just explain that you're working 
     around a difference between versions in your submission to CRAN.
     
-## The check process {#release-check}
+## The submission process {#release-check}
 
-You've already learned how to use `R CMD check` and why it's important in [automated checking](#check). Compared to running `R CMD check` locally, there are a few important differences when running it for a CRAN submission:
+To manually submit your package to CRAN, you create a package bundle (with `devtools::build()`) then upload it to <http://cran.r-project.org/submit.html>, along with some comments which describe the process you followed. This section shows you how to make submission as easy as possible by providing a standard structure for those comments. Later, in [submission](#release-submission), you'll see how to actually submit the package with `devtools::release()`.
 
-* You __must__ eliminate all `ERROR`s and `WARNING`s. You __should__ eliminate 
-  as many `NOTE`s as possible. Each `NOTE` requires human oversight, which is a
-  precious commodity. If there are notes that you do not believe are important, 
-  it is almost always easier to fix them (even if the fix is a bit of a hack) 
-  than to persuade CRAN that they're OK. See [check descriptions](#check-checks)
-  for details on how to fix individual problems.
-  
-    The will always be one `NOTE` when your first submit your package. This
-    reminds CRAN that this is a new submission and that they'll need to do
-    some extra checks. Obviously you don't need to eliminate this note.
-  
-* You need to document your process and clearly communicate the results to CRAN.
-  Your comments should be easy to scan, and easy to match up with `R CMD 
-  check`. Provide the CRAN maintainers with everything they need in one place, 
-  even if it means repeating yourself. I recommend that you do this in 
-  `cran-comments.md`, as described below.
-    
-* You need to check the package with R-devel, and on at least two platforms.
-  See [R-devel](#release-r-devel) and [Cross platform](#release-cross-platform)
-  for more details.
+When submitting to CRAN, remember that CRAN is staffed by volunteers, all of whom have other full-time jobs. In a typical week, there over 100 submissions and only three volunteers to process them all. The less work you make for them the more likely you are to have a pleasant submission experience.
 
-* If there are CRAN packages that use your package, you need to run 
-  `R CMD check` on all those packages as well, and summarise the results. See
-  [reverse dependency checks](#release-deps) for the details.
-
-CRAN is staffed by volunteers, all of whom have other full-time jobs. In a typical week, there are only three volunteers to process 130 packages. The less work you make for them the more likely you are to have a pleasant submission experience.
-
-I recommend that you use `cran-comments.md` file to document your process. `cran-comments.md` should be checked into git (so you can track it over time), and listed in `.Rbuildignore` (so it's not included in the package). As the extension suggests, I recommend using Markdown because it gives a standard way of laying out plain text. However, because the contents will never be rendered to another format, you don't need to worry about sticking to it too closely.
-
-Here are the `cran-comments.md` from a recent version of httr:
+I recommend that you store your submission comments in a file called `cran-comments.md`. `cran-comments.md` should be checked into git (so you can track it over time), and listed in `.Rbuildignore` (so it's not included in the package). As the extension suggests, I recommend using Markdown because it gives a standard way of laying out plain text. However, because the contents will never be rendered to another format, you don't need to worry about sticking to it too closely. Here are the `cran-comments.md` from a recent version of httr:
 
 ```md
 ## Test environments
@@ -199,15 +176,16 @@ There was 1 NOTE:
 
 ## Downstream dependencies
 I have also run R CMD check on downstream dependencies of httr 
-(https://github.com/wch/checkresults/blob/master/httr/r-release). All packages 
-that I could install passed except:
+(https://github.com/wch/checkresults/blob/master/httr/r-release). 
+All packages that I could install passed except:
 
-* Ecoengine: this appears to be a failure related to config on that machine,
-  I couldn't reproduce locally, and it doesn't seem to be related to changes 
-  in httr (the same problem exists with httr 0.4).
+* Ecoengine: this appears to be a failure related to config on 
+  that machine. I couldn't reproduce it locally, and it doesn't 
+  seem to be related to changes in httr (the same problem exists 
+  with httr 0.4).
 ```
 
-It's designed to be easy to skim, and easy to match up to the local `R CMD check` results seen by CRAN maintainers. I always include three sections:
+This layout is designed to be easy to skim, and easy to match up to the `R CMD check` results seen by CRAN maintainers. It includes three sections:
 
 1.  Test environments: this describes where I checked the package. I always 
     check on three platforms: my mac, [travis-ci](#travis) and win-builder. 
@@ -216,15 +194,17 @@ It's designed to be easy to skim, and easy to match up to the local `R CMD check
     Any `NOTE`s go in a bulleted list. For each `NOTE`, I include the message 
     from `R CMD check` and a brief description of why I think it's OK.
     If there were no `NOTE`s, I'd say "There were no ERRORs, WARNINGs or NOTEs"
-   
+
 1.  Downstream dependencies: If there are downstream dependencies, I run 
     `R CMD check` on each package and summarise the results. If there are
     no downstream dependencies, keep this section, but say: "There are currently
     no downstream dependencies for this package".
 
-### R-devel {#release-r-devel}
+These are described in more detail below.
 
-`R CMD check` is continuously evolving, so it's a good idea to check your package with the latest development version, __R-devel__. You can install R-devel on your own machine:
+### Test environments {#release-test-env}
+
+When checking your package to need to make sure that it passed with the current development version of R and it works on at least two platforms. `R CMD check` is continuously evolving, so it's a good idea to check your package with the latest development version, __R-devel__. You can install R-devel on your own machine:
 
 * Mac: install from <http://r.research.att.com>.
 
@@ -233,21 +213,43 @@ It's designed to be easy to skim, and easy to match up to the local `R CMD check
 * Linux: either build it from source, or better, learn about Docker containers
   and run the R-devel container from <https://github.com/rocker-org/rocker>.
 
-It's painful to manage multiple R versions, especially since you'll need to reinstall all your packages. Instead, you can run `R CMD check` on CRAN's servers, as described below.
+It's painful to manage multiple R versions, especially since you'll need to reinstall all your packages. Instead, you can run `R CMD check` on CRAN's servers with `devtools::build_win()`.  This builds your package and submits it to the CRAN win-builder. 10-20 minutes after submission, you'll receive an e-mail telling you the check results.
 
-### Cross-platform checking {#release-cross-platform}
+CRAN runs on multiple platforms: Windows, Mac OS X, Linux and Solaris. You don't need to run `R CMD check` on every one of these platforms, but it's a really good idea to do it on at least two. This increases your chances of spotting code that relies on the idiosyncrasies of specific platform. If you're on linux or the mac, use `devtools::build_win()` to check on windows. If you're on windows, use Travis, as described in [continuous integration with Travis](#travis), to run checks on linux.
 
-As well as running R-devel, CRAN runs R on multiple platforms: Windows, Mac OS X, Linux and Solaris. Generally, you don't need to run `R CMD check` yourself on every one of these platforms, but it's a really good idea to do it on at least two to increase your chances of spotting code that relies on a specific platform's idiosyncrasies.
+Debugging code that works on your computer but fails elsewhere is painful. If that happens to you, either installing a virtualisation tool so that you can run another operating system locally, or find a friend to help you figure out the problem. Don't submit the package and hope CRAN will help you figure out the problem.
 
-To run checks on Windows, use `devtools::build_win()`. This builds your package and submits it to the CRAN win-builder. 10-20 minutes after submission, you'll receive an e-mail telling you the check results. This will run `R CMD check` on both released and development versions of R. It's a good way to check that your package works with the latest R-devel, without having to install it locally.
+### Check results {#release-check}
 
-To run checks on Linux, I recommend using Travis, as described in [continuous integration with Travis](#travis).
+You've already learned how to use `R CMD check` and why it's important in [automated checking](#check). Compared to running `R CMD check` locally, there are a few important differences when running it for a CRAN submission:
 
-Debugging code that works on your computer but fails elsewhere is painful. I recommend either installing a virtualisation tool so that you can run another operating system locally, or find a friend to help you figure out the problem.
+  * You must fix all `ERROR`s and `WARNING`s. A package that contains any errors 
+    or warnings will not be accepted by CRAN.
+  
+  * Elimiate as many `NOTE`s as possible. Each `NOTE` requires human oversight, 
+    which is a precious commodity. If there are notes that you do 
+    not believe are important, it is almost always easier to fix them (even if 
+    the fix is a bit of a hack) than to persuade CRAN that they're OK. See 
+    [check descriptions](#check-checks) for details on how to fix individual 
+    problems.
+    
+    If you have no `NOTE`s it is less likely that your package will be 
+    flagged for additional human checks. These are time consuming for both
+    you and CRAN, so are best avoided if possible. 
+  
+  * If you can't eliminate a `NOTE`, document it in `cran-comments.md`, 
+    describing why you think it is spurious. Your comments should be easy to 
+    scan, and easy to match up with `R CMD check`. Provide the CRAN maintainers 
+    with everything they need in one place, even if it means repeating yourself.
+    
+    NB: There will always be one `NOTE` when you first submit your package. 
+    This reminds CRAN that this is a new submission and that they'll need to 
+    do some extra checks. You can't eliminate this, so just mention in
+    `cran-comments.md` that this is your first submission.
 
-### Checking dependencies {#release-deps}
+### Reverse dependencies {#release-deps}
 
-If you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work. To help you do this, devtools provides `devtools::revdep_check()`. This:
+Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work. To help you do this, devtools provides `devtools::revdep_check()`. This:
 
 1. Sets up a temporary library so it doesn't clobber any existing packages you
    have installed.
@@ -257,6 +259,8 @@ If you're releasing a new version of an existing package, it's your responsibili
 1. Runs `R CMD check` on each package.
 
 1. Summarises the results in a single file.
+
+Run `use_revdep()` to set up your package with a useful template.
 
 If any packages fail `R CMD check`, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN (you can easily get all maintainer e-mail addresses with `revdep_maintainers()`). After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`. Each package should be accompanied by a brief explanation that either tells CRAN that it's a false positive in `R CMD check` (e.g. you couldn't install a dependency locally) or that it's a legitimate change in the API (which the maintainer hasn't fixed yet). 
 
@@ -268,9 +272,7 @@ https://github.com/wch/checkresults/tree/master/dplyr/r-release);
 
 * COPASutils, freqweights, qdap, simPH: fail for various reasons. All package 
   authors were informed of the upcoming release and shown R CMD check issues 
-  over a week ago.
-
-* ecoengine: same problem as always on our test machine.
+  over two weeks ago.
 
 * ggvis: You'll be recieving a submission that fixes these issues very shortly
   from Winston.
@@ -373,15 +375,15 @@ if [[ README.Rmd -nt README.md ]]; then
 fi 
 ```
 
-This prevents `git commit` from succeeding unless `README.md` is more recent than `README.Rmd`. If you get a false positive, you can ignore the check with `git commit --no-verify`.  Note that git commit hooks are not stored in the repository, so every time you check out the repo, you'll need to run `devtools::use_readme_rmd()` to set it up again.
+This prevents `git commit` from succeeding unless `README.md` is more recent than `README.Rmd`. If you get a false positive, you can ignore the check with `git commit --no-verify`.  Note that git commit hooks are not stored in the repository, so every time you clone the repo, you'll need to run `devtools::use_readme_rmd()` to set it up again.
 
 ### NEWS.md {#news}
 
-The `README.md` is aimed at new users. The `NEWS.md` is aimed at existing users: it should list all changes in each release. There are a number of formats you can use for package news, but I recommend `NEWS.md`. It's not supported by CRAN (so you'll need to run `devtools::use_build_ignore("NEWS.md")`), but it's well supported by GitHub and is easy to re-purpose for other formats.
+The `README.md` is aimed at new users. The `NEWS.md` is aimed at existing users: it should list all the API changes in each release. There are a number of formats you can use for package news, but I recommend `NEWS.md`. It's not supported by CRAN (so you'll need to run `devtools::use_build_ignore("NEWS.md")`), but it's well supported by GitHub and is easy to re-purpose for other formats.
 
 Organise your `NEWS.md` as follows:
 
-* Use a top-level heading for each version: e.g. `# mypage 1.0`. The most
+* Use a top-level heading for each version: e.g. `# mypackage 1.0`. The most
   recent version should go at the top.
 
 * Each change should be included in a bulleted list. If you have a lot of 
@@ -407,7 +409,7 @@ You're now ready to submit your package to CRAN. The easiest way to do this is t
   most common best practices.
   
 * Allows you to add your own questions to the check process by including an
-  unexpected `release_questions()` function in your package. This should
+  unexported `release_questions()` function in your package. This should
   return a character vector of questions to ask. For example, httr has:
   
     ```{r}
@@ -422,7 +424,7 @@ You're now ready to submit your package to CRAN. The easiest way to do this is t
     This is useful for reminding you to do any manual tasks that 
     can't otherwise be automated.
   
-* Submits the package to the 
+* Uploads the package bundle to the 
   [CRAN submission form](http://cran.r-project.org/submit.html) including the
   comments in `cran-comments.md`.
 
@@ -493,13 +495,13 @@ Once your package has been accepted by CRAN, you have a couple of technical task
 * If you use git, but not GitHub, tag the release with `git tag -a v1.2.3`.
 
 * Add the `.9000` suffix to the `Version` field in the DESCRIPTION to indicate
-  that this is a development version. Create a new heading in `NEWS.md`.
+  that this is a development version. Create a new heading in `NEWS.md` and commit the changes.
 
-## Promotion {#promotion}
+## Publicising your package {#promotion}
 
 Now you're ready for the fun part: publicising your package. This is really important. No one will use your helpful new package if they don't know that it exists.
 
-Start by writing a release announcement. This should be an R Markdown document that briefly describes what the package does (so people who haven't used it before can understand why they should care), and what's new in this version. Start with the contents of `NEWS.md`, but you'll need to modify it considerably. The goal of `NEWS.md` is to be comprehensive; the goal of the release announcement is to highlight the most important changes. Include a link at the end of the announcement to the full release notes so people can see all the changes. Where possible, I recommend showing examples of new features: it's much easier to understand the benefit of a new feature if you can see it in action. 
+Start by writing a release announcement. This should be an R Markdown document that briefly describes what the package does (so people who haven't used it before can understand why they should care), and what's new in this version. Start with the contents of `NEWS.md`, but you'll need to modify it. The goal of `NEWS.md` is to be comprehensive; the goal of the release announcement is to highlight the most important changes. Include a link at the end of the announcement to the full release notes so people can see all the changes. Where possible, I recommend showing examples of new features: it's much easier to understand the benefit of a new feature if you can see it in action. 
 
 There are a number of places you can include the announcement:
 
