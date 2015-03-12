@@ -665,75 +665,25 @@ With this setup in place, every time you push to GitHub, and every time someone 
 The Travis config is stored in yaml file called `.travis.yml`. The default config created by devtools looks like this:
 
 ```yaml
-# Sample .travis.yml for R projects from https://github.com/craigcitro/r-travis
-language: c
-
-before_install:
-  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
-  - chmod 755 ./travis-tool.sh
-  - ./travis-tool.sh bootstrap
-
-install:
-  - ./travis-tool.sh install_deps
-
-script: 
-  - ./travis-tool.sh run_tests
-
-after_failure:
-  - ./travis-tool.sh dump_logs
+language: r
+warnings_are_errors: true
 ```
 
-Travis doesn't currently support R as a top-level language, so we need to install it. We start with an image designed for testing C projects, then download the `travis-tool` script written by [Craig Citro](https://github.com/craigcitro/r-travis). It starts downloads from GitHub that provides a number of useful tools:
+R has recently become a community supported language on Travis and you can read the documentation at  <http://docs.travis-ci.com/user/languages/r/>.
 
-* `./travis-tool.sh bootstrap`: installs R.
+There are two particularly useful options:
 
-* `./travis-tool.sh install_deps`: installs all packages needed to run tests.
+`r_github_packages`
+ : A list of R packages to install from github. This allows you to test
+   against the development version of your depedencies.
+ 
+`r_binary_packages`
+ : A list of precompiled R packages to install from ubuntu. This allows 
+   you to reduce your the build time. You can see if a binary version of a 
+   package is available by searching on <http://packages.ubuntu.com> for 
+   `r-cran-lowercasename`. For example, searching for `r-cran-xml` reveals that 
+   you can get a binary version of XML package.
 
-* `./travis-tool.sh run_tests`: builds the package and checks it
-
-* `./travis-tool.sh dump_logs`: on failure, print out all relevant logs so
-  you can easily read online.
-
-There are two ways to install packages not included in the basic script:
-
-* `./travis-tool.sh install_github user/repo`: installs a package from
-  GitHub. 
-
-* `./travis-tool.sh r_binary_install package`: installs an precompiled R 
-  package from ubuntu. You can see if a binary version of a package is 
-  available by searching on <http://packages.ubuntu.com> for 
-  `r-cran-lowercasename`. For example, searching for `r-cran-xml` reveals that 
-  you can get a binary version of XML package.
-  
-These commands should be included in the `install` block, before `./travis-tool.sh install_deps`:
-
-```yaml
-install:
-  - ./travis-tool.sh r_binary_install XML`
-  - ./travis-tool.sh install_github hadley/pryr
-  - ./travis-tool.sh install_deps
-```
-
-You can set environment variables using the `env` field. Here are three useful flags:
-
-```yaml
-env:
-  - BOOTSTRAP_LATEX=1
-  - _R_CHECK_FORCE_SUGGESTS_=0
-  - WARNINGS_ARE_ERRORS=1
-```
-
-* `BOOTSTRAP_LATEX=1`: also install latex. This is useful if you want to 
-  check the pdf manual or pdf vignettes. It's not the default because it adds 
-  substantially to the check time.
-
-* `WARNINGS_ARE_ERRORS=1`: make the build fail if there are any `ERROR`s or 
-  any `WARNING`s. The default is to fail only on errors. I recommending using
-  this if you plan to submit to CRAN.
-
-* `_R_CHECK_FORCE_SUGGESTS_=0`: run check even if all suggested packages can't 
-  be installed.
-  
 ### Other uses
 
 Since Travis allows you to run arbitrary code, there are many other things that you can use it for:
