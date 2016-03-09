@@ -1,3 +1,3 @@
 source 'https://rubygems.org'
-gem 'mime-types'
-gem 'jekyll', '~>2.5.3'
+gem 'mime-types', '~>2.99'
+gem 'jekyll', '~>2.5'
