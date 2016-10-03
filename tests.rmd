@@ -396,6 +396,80 @@ test_that("floor_date works for different units", {
 
 The highest-level structure of tests is the file. Each file should contain a single `context()` call that provides a brief description of its contents. Just like the files in the `R/` directory, you are free to organise your tests any way that you like. But again, the two extremes are clearly bad (all tests in one file, one file per test). You need to find a happy medium that works for you. A good starting place is to have one file of tests for each complicated function.
 
+## With Helper Files
+
+ - **tests** are kept inside a file which is prefixed with ***'test_'*** 
+ - **data** are kept inside files prefixed with ***'helper_'***
+
+Package Directory and File Structure:
+
+    └──pkg_name/
+        ├── DESCRIPTION
+        ├── NAMESPACE
+        ├──.Rbuildignore
+        ├── data/
+        ├── man/
+        ├── R/
+        ├── vignettes/
+        └── tests/
+            ├── testthat.R
+            └── testthat/
+                 └── helper_myfunc1.R
+                 └── helper_myfunc2.R
+                 └── test_pkg_name.R
+
+**testthat.R**
+
+    library(testthat)
+    library(pkg_name)
+    test_check("pkg_name")
+
+**helper_myfunc1.R** contains data for testing myfunc1 function
+
+    a1 <- 2
+    a2 <- 2
+    b1 <- 2*3
+    b2 <- 6
+
+**helper_myfunc2.R** contains data for testing myfunc2 function
+
+    c1 <- 50/2
+    c2 <- 25
+    d1 <- c(2,3)
+    d2 <- c(2,3)
+
+**test_pkg_name.R** contains tests for functions and other objects in the package
+
+    context('pkg_name_functions')
+    
+    test_that('myfunc1',
+              {
+                expect_identical(a1, a2)
+                expect_identical(b1, b2)
+              })
+    
+    test_that('myfunc2',
+              {
+                expect_identical(c1, c2)
+                expect_identical(d1, d2)
+              })
+
+Conduct unit testing
+
+    library("devtools")
+    
+    devtools::load_all()
+    # Loading pkg_name
+    
+    devtools::test()
+    # Loading pkg_name
+    # Testing pkg_name
+    # pkg_name_functions: ....
+    
+    # DONE ================================================================
+
+
+
 ## CRAN notes {#test-cran}
 
 CRAN will run your tests on all CRAN platforms: Windows, Mac, Linux and Solaris. There are a few things to bear in mind:
