@@ -10,7 +10,7 @@ Good coding style is like using correct punctuation. You can manage without it, 
 
 Good style is important because while your code only has one author, it'll usually have multiple readers. This is especially true when you're writing code with others. In that case, it's a good idea to agree on a common style up-front. Since no style is strictly better than another, working with others may mean that you'll need to sacrifice some preferred aspects of your style.
 
-The formatR package, by Yihui Xie, makes it easier to clean up poorly formatted code. It can't do everything, but it can quickly get your code from terrible to pretty good. Make sure to read [the notes on the wiki](https://github.com/yihui/formatR/wiki) before using it.
+The formatR package, by Yihui Xie, makes it easier to clean up poorly formatted code. It can't do everything, but it can quickly get your code from terrible to pretty good. Make sure to read [the notes](https://yihui.name/formatR/) before using it.
 
 ## Notation and naming {#style-notnam}
 
@@ -96,11 +96,11 @@ Place a space before left parentheses, except in a function call.
 
 ```{r, eval = FALSE}
 # Good
-if (debug) do(x)
+if (debug) show(x)
 plot(x, y)
 
 # Bad
-if(debug)do(x)
+if(debug)show(x)
 plot (x, y)
 ```
 
@@ -128,34 +128,40 @@ x[1 ,]  # Space goes after comma not before
 
 ### Curly braces
 
-An opening curly brace should never go on its own line and should always be followed by a new line. A closing curly brace should always go on its own line, unless it's followed by `else`.
+An opening curly brace should never go on its own line and should always be followed by a new line. A closing curly brace should always go on its own line, unless it's followed by `else` (or a closing parenthesis).
 
-Always indent the code inside curly braces.
+Always indent the code inside curly braces. When indenting your code, use two spaces. Never use tabs or mix tabs and spaces.
+
 
 ```{r, eval = FALSE}
 # Good
-
 if (y < 0 && debug) {
-  message("Y is negative")
+  message("y is negative")
 }
 
 if (y == 0) {
-  log(x)
+  if (x > 0) {
+    log(x)
+  } else {
+    message("x is negative or zero")
+  }
 } else {
   y ^ x
 }
 
 # Bad
-
 if (y < 0 && debug)
 message("Y is negative")
 
-if (y == 0) {
-  log(x)
+if (y == 0)
+{
+    if (x > 0) {
+⇥       log(x)
+    } else {
+⇥       message("x is negative or zero")
+    }
 } 
-else {
-  y ^ x
-}
+else { y ^ x }
 ```
 
 It's ok to leave very short statements on the same line:
@@ -164,22 +170,75 @@ It's ok to leave very short statements on the same line:
 if (y < 0 && debug) message("Y is negative")
 ```
 
+### Pipes
+
+If you use the `%>%` operator from the tidyverse, put each verb on its own line.  This makes it simpler to rearrange them later, and makes it harder to overlook a step. It is ok to keep a one-step pipe in one line.
+
+```{r, eval = FALSE}
+# Good
+iris %>%
+  group_by(Species) %>%
+  summarize_all(mean) %>%
+  ungroup %>%
+  gather(measure, value, -Species) %>%
+  arrange(value)
+
+iris %>% arrange(Petal.Width)
+
+# Bad
+iris %>% group_by(Species) %>% summarize_all(mean) %>%
+  ungroup %>% gather(measure, value, -Species) %>%
+  arrange(value)
+```
+
+
 ### Line length
 
 Strive to limit your code to 80 characters per line. This fits comfortably on a printed page with a reasonably sized font. If you find yourself running out of room, this is a good indication that you should encapsulate some of the work in a separate function.
 
 ### Indentation
 
-When indenting your code, use two spaces. Never use tabs or mix tabs and spaces.
-
-The only exception is if a function definition runs over multiple lines. In that case, indent the second line to where the definition starts:
+If a function definition runs over multiple lines, indent the second line to where the definition starts.
 
 ```{r, eval = FALSE}
+# Good
 long_function_name <- function(a = "a long argument", 
                                b = "another argument",
                                c = "another long argument") {
   # As usual code is indented by two spaces.
 }
+
+# Bad
+long_function_name <- function(a = "a long argument",
+  b = "another argument",
+  c = "another long argument") {
+}
+```
+
+If a function call is too long, put the function name, each argument, and the closing parenthesis on a separate line. This makes the code easier to read and to change later. You may also place several arguments on the same line if they are closely related to each other, e.g., strings in calls to `paste()` or `stop()`:
+
+```{r, eval = FALSE}
+# Good
+do_something_very_complicated(
+  "that",
+  requires = many,
+  arguments = "some of which may be long"
+)
+
+paste0(
+  "Requirement: ", requires, "\n",
+  "Result: ", result, "\n"
+)
+
+# Bad
+do_something_very_complicated("that", requires, many, arguments,
+                              "some of which may be long"
+                              )
+
+paste0(
+  "Requirement: ", requires,
+  "\n", "Result: ",
+  result, "\n")
 ```
 
 ### Assignment
@@ -189,8 +248,23 @@ Use `<-`, not `=`, for assignment. \index{assignment}
 ```{r}
 # Good
 x <- 5
+
 # Bad
 x = 5
+```
+
+### Quotes
+
+Use `"`, not `'`, for quoting text. The only exception is when the text already contains double quotes and no single quotes.
+
+```{r}
+# Good
+"Text"
+'Text with "quotes"'
+
+# Bad
+'Text'
+'Text with "double" and \'single\' quotes'
 ```
 
 ## Functions {#style-fun}
@@ -198,7 +272,8 @@ x = 5
 * Should be verbs, where possible.
 * Only use `return()` for early returns. 
 * Strive to keep blocks within a function on one screen, so around 
-  20-30 lines maximum.
+  20-30 lines maximum.  Some even argue that if a *function* has 20 lines it
+  should be split into smaller functions.
 
 ## Organisation {#style-org}
 
