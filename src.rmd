@@ -350,20 +350,20 @@ To register a function, call `R_RegisterCCallable()`, defined in `<R_ext/Rdynloa
 * A pointer to the function, cast as `DL_FUNC` (i.e. a **d**ynamically 
   **l**oaded **func**tion).
 
-The following code registers the `add()` function defined above:
+The following code registers the `add_()` function defined above:
 
 ```c
 #include "add.h"
 #include <R_ext/Rdynload.h>
 
 void R_init_mypackage(DllInfo *info) {
-  R_RegisterCCallable(info, "add_",  (DL_FUNC) &add_);
+  R_RegisterCCallable("mypackage", "add",  (DL_FUNC) &add_);
 }
 ```
 
 It doesn't matter where this code lives, but it's usually put in a file called `src/mypackage-init.c`. 
 
-To access a registered function from another package, call `R_GetCCallable()`. It has two arguments, the function name and the package name. It returns a function pointer. The function pointer has no type information, so it should always be wrapped in a helper function that defines the inputs:
+To access a registered function from another package, call `R_GetCCallable()`. It has two arguments, the package name and the function name. It returns a function pointer. The function pointer has no type information, so it should always be wrapped in a helper function that defines the inputs:
 
 ```c
 #include <R_ext/Rdynload.h>
@@ -371,9 +371,9 @@ To access a registered function from another package, call `R_GetCCallable()`. I
 #include <Rinternals.h>
 
 SEXP add_(SEXP x, SEXP y) {
-  static SEXP(fun*)(SEXP, SEXP) = NULL;
+  static SEXP(*fun)(SEXP, SEXP) = NULL;
   if (fun == NULL)
-    fun = (SEXP(*)(SEXP, SEXP)) R_GetCCallable("add", "mypackage");
+    fun = (SEXP(*)(SEXP, SEXP)) R_GetCCallable("mypackage", "add");
   return fun(x, y);
 }
 ```
