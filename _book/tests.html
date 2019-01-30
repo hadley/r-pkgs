@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html >
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Chapter 7 Testing | R packages</title>
+  <meta name="description" content="This is the book site for “R packages”.">
+  <meta name="generator" content="bookdown  and GitBook 2.6.7">
+
+  <meta property="og:title" content="Chapter 7 Testing | R packages" />
+  <meta property="og:type" content="book" />
+  <meta property="og:url" content="https://r-pkgs.xiaosongz.com" />
+  <meta property="og:image" content="https://r-pkgs.xiaosongz.comimages/cover.png" />
+  <meta property="og:description" content="This is the book site for “R packages”." />
+  <meta name="github-repo" content="hadley/r-pkgs" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 7 Testing | R packages" />
+  
+  <meta name="twitter:description" content="This is the book site for “R packages”." />
+  <meta name="twitter:image" content="https://r-pkgs.xiaosongz.comimages/cover.png" />
+
+<meta name="author" content="Hadley Wickham">
+
+
+<meta name="date" content="2019-01-29">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  
+  
+<link rel="prev" href="vignettes.html">
+<link rel="next" href="namespace.html">
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">R packages by Hadley Wickham</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>R packages</a></li>
+<li class="chapter" data-level="1" data-path="intro-why.html"><a href="intro-why.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="intro-why.html"><a href="intro-why.html#intro-phil"><i class="fa fa-check"></i><b>1.1</b> Philosophy</a></li>
+<li class="chapter" data-level="1.2" data-path="intro-why.html"><a href="intro-why.html#intro-outline"><i class="fa fa-check"></i><b>1.2</b> In this book</a></li>
+<li class="chapter" data-level="1.3" data-path="intro-why.html"><a href="intro-why.html#intro-get"><i class="fa fa-check"></i><b>1.3</b> Getting started</a></li>
+<li class="chapter" data-level="1.4" data-path="intro-why.html"><a href="intro-why.html#intro-ack"><i class="fa fa-check"></i><b>1.4</b> Acknowledgments</a></li>
+<li class="chapter" data-level="1.5" data-path="intro-why.html"><a href="intro-why.html#intro-conventions"><i class="fa fa-check"></i><b>1.5</b> Conventions</a></li>
+<li class="chapter" data-level="1.6" data-path="intro-why.html"><a href="intro-why.html#intro-colophon"><i class="fa fa-check"></i><b>1.6</b> Colophon</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="package-structure.html"><a href="package-structure.html"><i class="fa fa-check"></i><b>2</b> Package structure</a><ul>
+<li class="chapter" data-level="2.1" data-path="package-structure.html"><a href="package-structure.html#naming"><i class="fa fa-check"></i><b>2.1</b> Naming your package</a><ul>
+<li class="chapter" data-level="2.1.1" data-path="package-structure.html"><a href="package-structure.html#requirements-for-a-name"><i class="fa fa-check"></i><b>2.1.1</b> Requirements for a name</a></li>
+<li class="chapter" data-level="2.1.2" data-path="package-structure.html"><a href="package-structure.html#strategies-for-creating-a-name"><i class="fa fa-check"></i><b>2.1.2</b> Strategies for creating a name</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="package-structure.html"><a href="package-structure.html#getting-started"><i class="fa fa-check"></i><b>2.2</b> Creating a package</a></li>
+<li class="chapter" data-level="2.3" data-path="package-structure.html"><a href="package-structure.html#projects"><i class="fa fa-check"></i><b>2.3</b> RStudio projects</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="package-structure.html"><a href="package-structure.html#what-is-an-rstudio-project-file"><i class="fa fa-check"></i><b>2.3.1</b> What is an RStudio project file?</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="package-structure.html"><a href="package-structure.html#package"><i class="fa fa-check"></i><b>2.4</b> What is a package?</a><ul>
+<li class="chapter" data-level="2.4.1" data-path="package-structure.html"><a href="package-structure.html#source-packages"><i class="fa fa-check"></i><b>2.4.1</b> Source packages</a></li>
+<li class="chapter" data-level="2.4.2" data-path="package-structure.html"><a href="package-structure.html#bundled-packages"><i class="fa fa-check"></i><b>2.4.2</b> Bundled packages</a></li>
+<li class="chapter" data-level="2.4.3" data-path="package-structure.html"><a href="package-structure.html#binary-packages"><i class="fa fa-check"></i><b>2.4.3</b> Binary packages</a></li>
+<li class="chapter" data-level="2.4.4" data-path="package-structure.html"><a href="package-structure.html#install"><i class="fa fa-check"></i><b>2.4.4</b> Installed packages</a></li>
+<li class="chapter" data-level="2.4.5" data-path="package-structure.html"><a href="package-structure.html#in-memory-packages"><i class="fa fa-check"></i><b>2.4.5</b> In memory packages</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="package-structure.html"><a href="package-structure.html#library"><i class="fa fa-check"></i><b>2.5</b> What is a library?</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="r.html"><a href="r.html"><i class="fa fa-check"></i><b>3</b> R code</a><ul>
+<li class="chapter" data-level="3.1" data-path="r.html"><a href="r.html#r-workflow"><i class="fa fa-check"></i><b>3.1</b> R code workflow</a></li>
+<li class="chapter" data-level="3.2" data-path="r.html"><a href="r.html#r-organising"><i class="fa fa-check"></i><b>3.2</b> Organising your functions</a></li>
+<li class="chapter" data-level="3.3" data-path="r.html"><a href="r.html#style"><i class="fa fa-check"></i><b>3.3</b> Code style</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="r.html"><a href="r.html#object-names"><i class="fa fa-check"></i><b>3.3.1</b> Object names</a></li>
+<li class="chapter" data-level="3.3.2" data-path="r.html"><a href="r.html#spacing"><i class="fa fa-check"></i><b>3.3.2</b> Spacing</a></li>
+<li class="chapter" data-level="3.3.3" data-path="r.html"><a href="r.html#curly-braces"><i class="fa fa-check"></i><b>3.3.3</b> Curly braces</a></li>
+<li class="chapter" data-level="3.3.4" data-path="r.html"><a href="r.html#line-length"><i class="fa fa-check"></i><b>3.3.4</b> Line length</a></li>
+<li class="chapter" data-level="3.3.5" data-path="r.html"><a href="r.html#indentation"><i class="fa fa-check"></i><b>3.3.5</b> Indentation</a></li>
+<li class="chapter" data-level="3.3.6" data-path="r.html"><a href="r.html#assignment"><i class="fa fa-check"></i><b>3.3.6</b> Assignment</a></li>
+<li class="chapter" data-level="3.3.7" data-path="r.html"><a href="r.html#commenting-guidelines"><i class="fa fa-check"></i><b>3.3.7</b> Commenting guidelines</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="r.html"><a href="r.html#r-differences"><i class="fa fa-check"></i><b>3.4</b> Top-level code</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="r.html"><a href="r.html#loading-code"><i class="fa fa-check"></i><b>3.4.1</b> Loading code</a></li>
+<li class="chapter" data-level="3.4.2" data-path="r.html"><a href="r.html#the-r-landscape"><i class="fa fa-check"></i><b>3.4.2</b> The R landscape</a></li>
+<li class="chapter" data-level="3.4.3" data-path="r.html"><a href="r.html#when-you-do-need-side-effects"><i class="fa fa-check"></i><b>3.4.3</b> When you <strong>do</strong> need side-effects</a></li>
+<li class="chapter" data-level="3.4.4" data-path="r.html"><a href="r.html#s4-classes-generics-and-methods"><i class="fa fa-check"></i><b>3.4.4</b> S4 classes, generics and methods</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="r.html"><a href="r.html#r-cran"><i class="fa fa-check"></i><b>3.5</b> CRAN notes</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="description.html"><a href="description.html"><i class="fa fa-check"></i><b>4</b> Package metadata</a><ul>
+<li class="chapter" data-level="4.1" data-path="description.html"><a href="description.html#dependencies"><i class="fa fa-check"></i><b>4.1</b> Dependencies: What does your package need?</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="description.html"><a href="description.html#versioning"><i class="fa fa-check"></i><b>4.1.1</b> Versioning</a></li>
+<li class="chapter" data-level="4.1.2" data-path="description.html"><a href="description.html#other-dependencies"><i class="fa fa-check"></i><b>4.1.2</b> Other dependencies</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="description.html"><a href="description.html#pkg-description"><i class="fa fa-check"></i><b>4.2</b> Title and description: What does your package do?</a></li>
+<li class="chapter" data-level="4.3" data-path="description.html"><a href="description.html#author"><i class="fa fa-check"></i><b>4.3</b> Author: who are you?</a><ul>
+<li class="chapter" data-level="4.3.1" data-path="description.html"><a href="description.html#on-cran"><i class="fa fa-check"></i><b>4.3.1</b> On CRAN</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="description.html"><a href="description.html#license"><i class="fa fa-check"></i><b>4.4</b> License: Who can use your package?</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="description.html"><a href="description.html#on-cran-1"><i class="fa fa-check"></i><b>4.4.1</b> On CRAN</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="description.html"><a href="description.html#version"><i class="fa fa-check"></i><b>4.5</b> Version</a></li>
+<li class="chapter" data-level="4.6" data-path="description.html"><a href="description.html#description-misc"><i class="fa fa-check"></i><b>4.6</b> Other components</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="man.html"><a href="man.html"><i class="fa fa-check"></i><b>5</b> Object documentation</a><ul>
+<li class="chapter" data-level="5.1" data-path="man.html"><a href="man.html#man-workflow"><i class="fa fa-check"></i><b>5.1</b> The documentation workflow</a></li>
+<li class="chapter" data-level="5.2" data-path="man.html"><a href="man.html#man-workflow-2"><i class="fa fa-check"></i><b>5.2</b> Alternative documentation workflow</a></li>
+<li class="chapter" data-level="5.3" data-path="man.html"><a href="man.html#roxygen-comments"><i class="fa fa-check"></i><b>5.3</b> Roxygen comments</a></li>
+<li class="chapter" data-level="5.4" data-path="man.html"><a href="man.html#man-functions"><i class="fa fa-check"></i><b>5.4</b> Documenting functions</a></li>
+<li class="chapter" data-level="5.5" data-path="man.html"><a href="man.html#man-data"><i class="fa fa-check"></i><b>5.5</b> Documenting datasets</a></li>
+<li class="chapter" data-level="5.6" data-path="man.html"><a href="man.html#man-packages"><i class="fa fa-check"></i><b>5.6</b> Documenting packages</a></li>
+<li class="chapter" data-level="5.7" data-path="man.html"><a href="man.html#man-classes"><i class="fa fa-check"></i><b>5.7</b> Documenting classes, generics and methods</a><ul>
+<li class="chapter" data-level="5.7.1" data-path="man.html"><a href="man.html#man-s3"><i class="fa fa-check"></i><b>5.7.1</b> S3</a></li>
+<li class="chapter" data-level="5.7.2" data-path="man.html"><a href="man.html#man-s4"><i class="fa fa-check"></i><b>5.7.2</b> S4</a></li>
+<li class="chapter" data-level="5.7.3" data-path="man.html"><a href="man.html#man-rc"><i class="fa fa-check"></i><b>5.7.3</b> RC</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="man.html"><a href="man.html#man-special"><i class="fa fa-check"></i><b>5.8</b> Special characters</a></li>
+<li class="chapter" data-level="5.9" data-path="man.html"><a href="man.html#dry2"><i class="fa fa-check"></i><b>5.9</b> Do repeat yourself</a><ul>
+<li class="chapter" data-level="5.9.1" data-path="man.html"><a href="man.html#inheriting-parameters-from-other-functions"><i class="fa fa-check"></i><b>5.9.1</b> Inheriting parameters from other functions</a></li>
+<li class="chapter" data-level="5.9.2" data-path="man.html"><a href="man.html#multiple-man"><i class="fa fa-check"></i><b>5.9.2</b> Documenting multiple functions in the same file</a></li>
+</ul></li>
+<li class="chapter" data-level="5.10" data-path="man.html"><a href="man.html#text-formatting"><i class="fa fa-check"></i><b>5.10</b> Text formatting reference sheet</a><ul>
+<li class="chapter" data-level="5.10.1" data-path="man.html"><a href="man.html#character-formatting"><i class="fa fa-check"></i><b>5.10.1</b> Character formatting</a></li>
+<li class="chapter" data-level="5.10.2" data-path="man.html"><a href="man.html#links"><i class="fa fa-check"></i><b>5.10.2</b> Links</a></li>
+<li class="chapter" data-level="5.10.3" data-path="man.html"><a href="man.html#lists"><i class="fa fa-check"></i><b>5.10.3</b> Lists</a></li>
+<li class="chapter" data-level="5.10.4" data-path="man.html"><a href="man.html#mathematics"><i class="fa fa-check"></i><b>5.10.4</b> Mathematics</a></li>
+<li class="chapter" data-level="5.10.5" data-path="man.html"><a href="man.html#tables"><i class="fa fa-check"></i><b>5.10.5</b> Tables</a></li>
+<li class="chapter" data-level="5.10.6" data-path="man.html"><a href="man.html#notes"><i class="fa fa-check"></i><b>5.10.6</b> Notes</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="vignettes.html"><a href="vignettes.html"><i class="fa fa-check"></i><b>6</b> Vignettes: long-form documentation</a><ul>
+<li class="chapter" data-level="6.1" data-path="vignettes.html"><a href="vignettes.html#vignette-workflow"><i class="fa fa-check"></i><b>6.1</b> Vignette workflow</a></li>
+<li class="chapter" data-level="6.2" data-path="vignettes.html"><a href="vignettes.html#vignette-metadata"><i class="fa fa-check"></i><b>6.2</b> Metadata</a></li>
+<li class="chapter" data-level="6.3" data-path="vignettes.html"><a href="vignettes.html#markdown"><i class="fa fa-check"></i><b>6.3</b> Markdown</a><ul>
+<li class="chapter" data-level="6.3.1" data-path="vignettes.html"><a href="vignettes.html#sections"><i class="fa fa-check"></i><b>6.3.1</b> Sections</a></li>
+<li class="chapter" data-level="6.3.2" data-path="vignettes.html"><a href="vignettes.html#lists-1"><i class="fa fa-check"></i><b>6.3.2</b> Lists</a></li>
+<li class="chapter" data-level="6.3.3" data-path="vignettes.html"><a href="vignettes.html#inline-formatting"><i class="fa fa-check"></i><b>6.3.3</b> Inline formatting</a></li>
+<li class="chapter" data-level="6.3.4" data-path="vignettes.html"><a href="vignettes.html#tables-1"><i class="fa fa-check"></i><b>6.3.4</b> Tables</a></li>
+<li class="chapter" data-level="6.3.5" data-path="vignettes.html"><a href="vignettes.html#code"><i class="fa fa-check"></i><b>6.3.5</b> Code</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="vignettes.html"><a href="vignettes.html#knitr"><i class="fa fa-check"></i><b>6.4</b> Knitr</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="vignettes.html"><a href="vignettes.html#options"><i class="fa fa-check"></i><b>6.4.1</b> Options</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="vignettes.html"><a href="vignettes.html#vignette-workflow-2"><i class="fa fa-check"></i><b>6.5</b> Development cycle</a></li>
+<li class="chapter" data-level="6.6" data-path="vignettes.html"><a href="vignettes.html#vignette-advice"><i class="fa fa-check"></i><b>6.6</b> Advice for writing vignettes</a><ul>
+<li class="chapter" data-level="6.6.1" data-path="vignettes.html"><a href="vignettes.html#organisation"><i class="fa fa-check"></i><b>6.6.1</b> Organisation</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="vignettes.html"><a href="vignettes.html#vignette-cran"><i class="fa fa-check"></i><b>6.7</b> CRAN notes</a></li>
+<li class="chapter" data-level="6.8" data-path="vignettes.html"><a href="vignettes.html#where-next"><i class="fa fa-check"></i><b>6.8</b> Where next</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="tests.html"><a href="tests.html"><i class="fa fa-check"></i><b>7</b> Testing</a><ul>
+<li class="chapter" data-level="7.1" data-path="tests.html"><a href="tests.html#test-workflow"><i class="fa fa-check"></i><b>7.1</b> Test workflow</a></li>
+<li class="chapter" data-level="7.2" data-path="tests.html"><a href="tests.html#test-structure"><i class="fa fa-check"></i><b>7.2</b> Test structure</a><ul>
+<li class="chapter" data-level="7.2.1" data-path="tests.html"><a href="tests.html#expectations"><i class="fa fa-check"></i><b>7.2.1</b> Expectations</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="tests.html"><a href="tests.html#test-tests"><i class="fa fa-check"></i><b>7.3</b> Writing tests</a><ul>
+<li class="chapter" data-level="7.3.1" data-path="tests.html"><a href="tests.html#what-to-test"><i class="fa fa-check"></i><b>7.3.1</b> What to test</a></li>
+<li class="chapter" data-level="7.3.2" data-path="tests.html"><a href="tests.html#skipping-a-test"><i class="fa fa-check"></i><b>7.3.2</b> Skipping a test</a></li>
+<li class="chapter" data-level="7.3.3" data-path="tests.html"><a href="tests.html#building-your-own-testing-tools"><i class="fa fa-check"></i><b>7.3.3</b> Building your own testing tools</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="tests.html"><a href="tests.html#test-files"><i class="fa fa-check"></i><b>7.4</b> Test files</a></li>
+<li class="chapter" data-level="7.5" data-path="tests.html"><a href="tests.html#test-cran"><i class="fa fa-check"></i><b>7.5</b> CRAN notes</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="namespace.html"><a href="namespace.html"><i class="fa fa-check"></i><b>8</b> Namespace</a><ul>
+<li class="chapter" data-level="8.1" data-path="namespace.html"><a href="namespace.html#namespace-motivation"><i class="fa fa-check"></i><b>8.1</b> Motivation</a></li>
+<li class="chapter" data-level="8.2" data-path="namespace.html"><a href="namespace.html#search-path"><i class="fa fa-check"></i><b>8.2</b> Search path</a></li>
+<li class="chapter" data-level="8.3" data-path="namespace.html"><a href="namespace.html#namespace-NAMESPACE"><i class="fa fa-check"></i><b>8.3</b> The <code>NAMESPACE</code></a></li>
+<li class="chapter" data-level="8.4" data-path="namespace.html"><a href="namespace.html#namespace-workflow"><i class="fa fa-check"></i><b>8.4</b> Workflow</a></li>
+<li class="chapter" data-level="8.5" data-path="namespace.html"><a href="namespace.html#exports"><i class="fa fa-check"></i><b>8.5</b> Exports</a><ul>
+<li class="chapter" data-level="8.5.1" data-path="namespace.html"><a href="namespace.html#export-s3"><i class="fa fa-check"></i><b>8.5.1</b> S3</a></li>
+<li class="chapter" data-level="8.5.2" data-path="namespace.html"><a href="namespace.html#export-s4"><i class="fa fa-check"></i><b>8.5.2</b> S4</a></li>
+<li class="chapter" data-level="8.5.3" data-path="namespace.html"><a href="namespace.html#export-rc"><i class="fa fa-check"></i><b>8.5.3</b> RC</a></li>
+<li class="chapter" data-level="8.5.4" data-path="namespace.html"><a href="namespace.html#export-data"><i class="fa fa-check"></i><b>8.5.4</b> Data</a></li>
+</ul></li>
+<li class="chapter" data-level="8.6" data-path="namespace.html"><a href="namespace.html#imports"><i class="fa fa-check"></i><b>8.6</b> Imports</a><ul>
+<li class="chapter" data-level="8.6.1" data-path="namespace.html"><a href="namespace.html#import-r"><i class="fa fa-check"></i><b>8.6.1</b> R functions</a></li>
+<li class="chapter" data-level="8.6.2" data-path="namespace.html"><a href="namespace.html#import-s3"><i class="fa fa-check"></i><b>8.6.2</b> S3</a></li>
+<li class="chapter" data-level="8.6.3" data-path="namespace.html"><a href="namespace.html#import-s4"><i class="fa fa-check"></i><b>8.6.3</b> S4</a></li>
+<li class="chapter" data-level="8.6.4" data-path="namespace.html"><a href="namespace.html#import-src"><i class="fa fa-check"></i><b>8.6.4</b> Compiled functions</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="data.html"><a href="data.html"><i class="fa fa-check"></i><b>9</b> External data</a><ul>
+<li class="chapter" data-level="9.1" data-path="data.html"><a href="data.html#data-data"><i class="fa fa-check"></i><b>9.1</b> Exported data</a><ul>
+<li class="chapter" data-level="9.1.1" data-path="data.html"><a href="data.html#documenting-data"><i class="fa fa-check"></i><b>9.1.1</b> Documenting datasets</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="data.html"><a href="data.html#data-sysdata"><i class="fa fa-check"></i><b>9.2</b> Internal data</a></li>
+<li class="chapter" data-level="9.3" data-path="data.html"><a href="data.html#data-extdata"><i class="fa fa-check"></i><b>9.3</b> Raw data</a></li>
+<li class="chapter" data-level="9.4" data-path="data.html"><a href="data.html#other-data"><i class="fa fa-check"></i><b>9.4</b> Other data</a></li>
+<li class="chapter" data-level="9.5" data-path="data.html"><a href="data.html#data-cran"><i class="fa fa-check"></i><b>9.5</b> CRAN notes</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="src.html"><a href="src.html"><i class="fa fa-check"></i><b>10</b> Compiled code</a><ul>
+<li class="chapter" data-level="10.1" data-path="src.html"><a href="src.html#cpp"><i class="fa fa-check"></i><b>10.1</b> C++</a><ul>
+<li class="chapter" data-level="10.1.1" data-path="src.html"><a href="src.html#cpp-workflow"><i class="fa fa-check"></i><b>10.1.1</b> Workflow</a></li>
+<li class="chapter" data-level="10.1.2" data-path="src.html"><a href="src.html#cpp-man"><i class="fa fa-check"></i><b>10.1.2</b> Documentation</a></li>
+<li class="chapter" data-level="10.1.3" data-path="src.html"><a href="src.html#cpp-export"><i class="fa fa-check"></i><b>10.1.3</b> Exporting C++ code</a></li>
+<li class="chapter" data-level="10.1.4" data-path="src.html"><a href="src.html#cpp-import"><i class="fa fa-check"></i><b>10.1.4</b> Importing C++ code</a></li>
+<li class="chapter" data-level="10.1.5" data-path="src.html"><a href="src.html#cpp-best-practices"><i class="fa fa-check"></i><b>10.1.5</b> Best practices</a></li>
+</ul></li>
+<li class="chapter" data-level="10.2" data-path="src.html"><a href="src.html#clang"><i class="fa fa-check"></i><b>10.2</b> C</a><ul>
+<li class="chapter" data-level="10.2.1" data-path="src.html"><a href="src.html#getting-started-with-.call"><i class="fa fa-check"></i><b>10.2.1</b> Getting started with <code>.Call()</code></a></li>
+<li class="chapter" data-level="10.2.2" data-path="src.html"><a href="src.html#getting-started-with-.c"><i class="fa fa-check"></i><b>10.2.2</b> Getting started with <code>.C()</code></a></li>
+<li class="chapter" data-level="10.2.3" data-path="src.html"><a href="src.html#c-workflow"><i class="fa fa-check"></i><b>10.2.3</b> Workflow</a></li>
+<li class="chapter" data-level="10.2.4" data-path="src.html"><a href="src.html#c-export"><i class="fa fa-check"></i><b>10.2.4</b> Exporting C code</a></li>
+<li class="chapter" data-level="10.2.5" data-path="src.html"><a href="src.html#c-import"><i class="fa fa-check"></i><b>10.2.5</b> Importing C code</a></li>
+<li class="chapter" data-level="10.2.6" data-path="src.html"><a href="src.html#c-best-practices"><i class="fa fa-check"></i><b>10.2.6</b> Best practices</a></li>
+</ul></li>
+<li class="chapter" data-level="10.3" data-path="src.html"><a href="src.html#src-debugging"><i class="fa fa-check"></i><b>10.3</b> Debugging compiled code</a></li>
+<li class="chapter" data-level="10.4" data-path="src.html"><a href="src.html#make"><i class="fa fa-check"></i><b>10.4</b> Makefiles</a></li>
+<li class="chapter" data-level="10.5" data-path="src.html"><a href="src.html#src-other"><i class="fa fa-check"></i><b>10.5</b> Other languages</a></li>
+<li class="chapter" data-level="10.6" data-path="src.html"><a href="src.html#src-licensing"><i class="fa fa-check"></i><b>10.6</b> Licensing</a></li>
+<li class="chapter" data-level="10.7" data-path="src.html"><a href="src.html#src-workflow"><i class="fa fa-check"></i><b>10.7</b> Development workflow</a></li>
+<li class="chapter" data-level="10.8" data-path="src.html"><a href="src.html#src-cran"><i class="fa fa-check"></i><b>10.8</b> CRAN issues</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="inst.html"><a href="inst.html"><i class="fa fa-check"></i><b>11</b> Installed files</a><ul>
+<li class="chapter" data-level="11.1" data-path="inst.html"><a href="inst.html#inst-citation"><i class="fa fa-check"></i><b>11.1</b> Package citation</a></li>
+<li class="chapter" data-level="11.2" data-path="inst.html"><a href="inst.html#inst-other-langs"><i class="fa fa-check"></i><b>11.2</b> Other languages</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="misc.html"><a href="misc.html"><i class="fa fa-check"></i><b>12</b> Other components</a><ul>
+<li class="chapter" data-level="12.1" data-path="misc.html"><a href="misc.html#demo"><i class="fa fa-check"></i><b>12.1</b> Demos</a></li>
+</ul></li>
+<li class="chapter" data-level="13" data-path="git.html"><a href="git.html"><i class="fa fa-check"></i><b>13</b> Git and GitHub</a><ul>
+<li class="chapter" data-level="13.1" data-path="git.html"><a href="git.html#git-rstudio"><i class="fa fa-check"></i><b>13.1</b> RStudio, Git and GitHub</a></li>
+<li class="chapter" data-level="13.2" data-path="git.html"><a href="git.html#git-setup"><i class="fa fa-check"></i><b>13.2</b> Initial set up</a></li>
+<li class="chapter" data-level="13.3" data-path="git.html"><a href="git.html#git-init"><i class="fa fa-check"></i><b>13.3</b> Create a local Git repository</a></li>
+<li class="chapter" data-level="13.4" data-path="git.html"><a href="git.html#git-status"><i class="fa fa-check"></i><b>13.4</b> See what’s changed</a></li>
+<li class="chapter" data-level="13.5" data-path="git.html"><a href="git.html#git-commit"><i class="fa fa-check"></i><b>13.5</b> Record changes</a></li>
+<li class="chapter" data-level="13.6" data-path="git.html"><a href="git.html#commit-best-practices"><i class="fa fa-check"></i><b>13.6</b> Commit best practices</a></li>
+<li class="chapter" data-level="13.7" data-path="git.html"><a href="git.html#git-ignore"><i class="fa fa-check"></i><b>13.7</b> Ignoring files</a></li>
+<li class="chapter" data-level="13.8" data-path="git.html"><a href="git.html#git-undo"><i class="fa fa-check"></i><b>13.8</b> Undo a mistake</a></li>
+<li class="chapter" data-level="13.9" data-path="git.html"><a href="git.html#github-init"><i class="fa fa-check"></i><b>13.9</b> Synchronising with GitHub</a></li>
+<li class="chapter" data-level="13.10" data-path="git.html"><a href="git.html#github-benefit"><i class="fa fa-check"></i><b>13.10</b> Benefits of using GitHub</a></li>
+<li class="chapter" data-level="13.11" data-path="git.html"><a href="git.html#git-pull"><i class="fa fa-check"></i><b>13.11</b> Working with others</a></li>
+<li class="chapter" data-level="13.12" data-path="git.html"><a href="git.html#github-issues"><i class="fa fa-check"></i><b>13.12</b> Issues</a></li>
+<li class="chapter" data-level="13.13" data-path="git.html"><a href="git.html#git-branch"><i class="fa fa-check"></i><b>13.13</b> Branches</a></li>
+<li class="chapter" data-level="13.14" data-path="git.html"><a href="git.html#git-pullreq"><i class="fa fa-check"></i><b>13.14</b> Making a pull request</a></li>
+<li class="chapter" data-level="13.15" data-path="git.html"><a href="git.html#pr-make"><i class="fa fa-check"></i><b>13.15</b> Submitting a pull request to another repo</a></li>
+<li class="chapter" data-level="13.16" data-path="git.html"><a href="git.html#pr-accept"><i class="fa fa-check"></i><b>13.16</b> Reviewing and accepting pull requests</a></li>
+<li class="chapter" data-level="13.17" data-path="git.html"><a href="git.html#git-learning"><i class="fa fa-check"></i><b>13.17</b> Learning more</a></li>
+</ul></li>
+<li class="chapter" data-level="14" data-path="check.html"><a href="check.html"><i class="fa fa-check"></i><b>14</b> Automated checking</a><ul>
+<li class="chapter" data-level="14.1" data-path="check.html"><a href="check.html#check-workflow"><i class="fa fa-check"></i><b>14.1</b> Workflow</a></li>
+<li class="chapter" data-level="14.2" data-path="check.html"><a href="check.html#check-checks"><i class="fa fa-check"></i><b>14.2</b> Checks</a><ul>
+<li class="chapter" data-level="14.2.1" data-path="check.html"><a href="check.html#check-metadata"><i class="fa fa-check"></i><b>14.2.1</b> Check metadata</a></li>
+<li class="chapter" data-level="14.2.2" data-path="check.html"><a href="check.html#package-structure-1"><i class="fa fa-check"></i><b>14.2.2</b> Package structure</a></li>
+<li class="chapter" data-level="14.2.3" data-path="check.html"><a href="check.html#description-1"><i class="fa fa-check"></i><b>14.2.3</b> Description</a></li>
+<li class="chapter" data-level="14.2.4" data-path="check.html"><a href="check.html#namespace-1"><i class="fa fa-check"></i><b>14.2.4</b> Namespace</a></li>
+<li class="chapter" data-level="14.2.5" data-path="check.html"><a href="check.html#r-code"><i class="fa fa-check"></i><b>14.2.5</b> R code</a></li>
+<li class="chapter" data-level="14.2.6" data-path="check.html"><a href="check.html#data-1"><i class="fa fa-check"></i><b>14.2.6</b> Data</a></li>
+<li class="chapter" data-level="14.2.7" data-path="check.html"><a href="check.html#documentation"><i class="fa fa-check"></i><b>14.2.7</b> Documentation</a></li>
+<li class="chapter" data-level="14.2.8" data-path="check.html"><a href="check.html#demos"><i class="fa fa-check"></i><b>14.2.8</b> Demos</a></li>
+<li class="chapter" data-level="14.2.9" data-path="check.html"><a href="check.html#compiled-code"><i class="fa fa-check"></i><b>14.2.9</b> Compiled code</a></li>
+<li class="chapter" data-level="14.2.10" data-path="check.html"><a href="check.html#tests-1"><i class="fa fa-check"></i><b>14.2.10</b> Tests</a></li>
+<li class="chapter" data-level="14.2.11" data-path="check.html"><a href="check.html#vignettes-1"><i class="fa fa-check"></i><b>14.2.11</b> Vignettes</a></li>
+</ul></li>
+<li class="chapter" data-level="14.3" data-path="check.html"><a href="check.html#travis"><i class="fa fa-check"></i><b>14.3</b> Checking after every commit with Travis</a><ul>
+<li class="chapter" data-level="14.3.1" data-path="check.html"><a href="check.html#basic-config"><i class="fa fa-check"></i><b>14.3.1</b> Basic config</a></li>
+<li class="chapter" data-level="14.3.2" data-path="check.html"><a href="check.html#other-uses"><i class="fa fa-check"></i><b>14.3.2</b> Other uses</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="15" data-path="release.html"><a href="release.html"><i class="fa fa-check"></i><b>15</b> Releasing a package</a><ul>
+<li class="chapter" data-level="15.1" data-path="release.html"><a href="release.html#release-version"><i class="fa fa-check"></i><b>15.1</b> Version number</a></li>
+<li class="chapter" data-level="15.2" data-path="release.html"><a href="release.html#compatibility"><i class="fa fa-check"></i><b>15.2</b> Backward compatibility</a></li>
+<li class="chapter" data-level="15.3" data-path="release.html"><a href="release.html#release-check"><i class="fa fa-check"></i><b>15.3</b> The submission process</a><ul>
+<li class="chapter" data-level="15.3.1" data-path="release.html"><a href="release.html#release-test-env"><i class="fa fa-check"></i><b>15.3.1</b> Test environments</a></li>
+<li class="chapter" data-level="15.3.2" data-path="release.html"><a href="release.html#release-check"><i class="fa fa-check"></i><b>15.3.2</b> Check results</a></li>
+<li class="chapter" data-level="15.3.3" data-path="release.html"><a href="release.html#release-deps"><i class="fa fa-check"></i><b>15.3.3</b> Reverse dependencies</a></li>
+</ul></li>
+<li class="chapter" data-level="15.4" data-path="release.html"><a href="release.html#cran-policies"><i class="fa fa-check"></i><b>15.4</b> CRAN policies</a></li>
+<li class="chapter" data-level="15.5" data-path="release.html"><a href="release.html#important-files"><i class="fa fa-check"></i><b>15.5</b> Important files</a><ul>
+<li class="chapter" data-level="15.5.1" data-path="release.html"><a href="release.html#readme"><i class="fa fa-check"></i><b>15.5.1</b> README.md</a></li>
+<li class="chapter" data-level="15.5.2" data-path="release.html"><a href="release.html#readme-rmd"><i class="fa fa-check"></i><b>15.5.2</b> README.Rmd</a></li>
+<li class="chapter" data-level="15.5.3" data-path="release.html"><a href="release.html#news"><i class="fa fa-check"></i><b>15.5.3</b> NEWS.md</a></li>
+</ul></li>
+<li class="chapter" data-level="15.6" data-path="release.html"><a href="release.html#release-submission"><i class="fa fa-check"></i><b>15.6</b> Release</a><ul>
+<li class="chapter" data-level="15.6.1" data-path="release.html"><a href="release.html#on-failure"><i class="fa fa-check"></i><b>15.6.1</b> On failure</a></li>
+<li class="chapter" data-level="15.6.2" data-path="release.html"><a href="release.html#binary-builds"><i class="fa fa-check"></i><b>15.6.2</b> Binary builds</a></li>
+</ul></li>
+<li class="chapter" data-level="15.7" data-path="release.html"><a href="release.html#post-release"><i class="fa fa-check"></i><b>15.7</b> Prepare for next version</a></li>
+<li class="chapter" data-level="15.8" data-path="release.html"><a href="release.html#promotion"><i class="fa fa-check"></i><b>15.8</b> Publicising your package</a></li>
+<li class="chapter" data-level="15.9" data-path="release.html"><a href="release.html#congratulations"><i class="fa fa-check"></i><b>15.9</b> Congratulations!</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/hadley/r-pkgs/" target="blank">PBuilding R package - Hadley Wickham</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">R packages</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="tests" class="section level1">
+<h1><span class="header-section-number">Chapter 7</span> Testing</h1>
+<p>Testing is a vital part of package development. It ensures that your code does what you want it to do. Testing, however, adds an additional step to your development workflow. The goal of this chapter is to show you how to make this task easier and more effective by doing formal automated testing using the testthat package.</p>
+<p>Up until now, your workflow probably looks like this:</p>
+<ol style="list-style-type: decimal">
+<li>Write a function.</li>
+<li>Load it with Ctrl/Cmd + Shift + L or <code>devtools::load_all()</code>.</li>
+<li>Experiment with it in the console to see if it works.</li>
+<li>Rinse and repeat.</li>
+</ol>
+<p>While you <em>are</em> testing your code in this workflow, you’re only doing it informally. The problem with this approach is that when you come back to this code in 3 months time to add a new feature, you’ve probably forgotten some of the informal tests you ran the first time around. This makes it very easy to break code that used to work.</p>
+<p>I started using automated tests because I discovered I was spending too much time re-fixing bugs that I’d already fixed before. While writing code or fixing bugs, I’d perform interactive tests to make sure the code worked. But I never had a system which could store those tests so I could re-run them as needed. I think that this is a common practice among R programmers. It’s not that you don’t test your code, it’s that you don’t automate your tests.</p>
+<p>In this chapter you’ll learn how to graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing). While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:</p>
+<ul>
+<li><p>Fewer bugs. Because you’re explicit about how your code should behave
+you will have fewer bugs. The reason why is a bit like the reason double
+entry book-keeping works: because you describe the behaviour of your code in
+two places, both in your code and in your tests, you are able to check one against
+the other. By following this approach to testing, you can be sure that bugs
+that you’ve fixed in the past will never come back to haunt you.</p></li>
+<li><p>Better code structure. Code that’s easy to test is usually better designed.
+This is because writing tests forces you to break up complicated parts of
+your code into separate functions that can work in isolation. This reduces
+duplication in your code. As a result, functions will be easier to test,
+understand and work with (it’ll be easier to combine them in new ways).</p></li>
+<li><p>Easier restarts. If you always finish a coding session by creating a failing
+test (e.g. for the next feature you want to implement), testing makes it
+easier for you to pick up where you left off: your tests will let you know
+what to do next.</p></li>
+<li><p>Robust code. If you know that all the major functionality of your package has
+an associated test, you can confidently make big changes without worrying
+about accidentally breaking something. For me, this is particularly useful
+when I think I have a simpler way to accomplish a task (usually the reason my
+solution is simpler is that I’ve forgotten an important use case!).</p></li>
+</ul>
+<p>If you’re familiar with unit testing in other languages, you should note that there are some fundamental differences with testthat. This is because R is, at heart, more a functional programming language than an object oriented programming language. For instance, because R’s main OO systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don’t make much sense.</p>
+<div id="test-workflow" class="section level2">
+<h2><span class="header-section-number">7.1</span> Test workflow</h2>
+<p>To set up your package to use testthat, run:</p>
+<pre class="sourceCode r"><code class="sourceCode r">devtools<span class="op">::</span><span class="kw">use_testthat</span>()</code></pre>
+<p>This will:</p>
+<ol style="list-style-type: decimal">
+<li><p>Create a <code>tests/testthat</code> directory.</p></li>
+<li><p>Adds testthat to the <code>Suggests</code> field in the <code>DESCRIPTION</code>.</p></li>
+<li><p>Creates a file <code>tests/testthat.R</code> that runs all your tests when
+<code>R CMD check</code> runs. (You’ll learn more about that in
+<a href="check.html#check">automated checking</a>.)</p></li>
+</ol>
+<p>Once you’re set up the workflow is simple:</p>
+<ol style="list-style-type: decimal">
+<li><p>Modify your code or tests.</p></li>
+<li><p>Test your package with Ctrl/Cmd + Shift + T or <code>devtools::test()</code>.</p></li>
+<li><p>Repeat until all tests pass.</p></li>
+</ol>
+<p>The testing output looks like this:</p>
+<pre><code>Expectation : ...........
+rv : ...
+Variance : ....123.45.</code></pre>
+<p>Each line represents a test file. Each <code>.</code> represents a passed test. Each number represents a failed test. The numbers index into a list of failures that provides more details:</p>
+<pre><code>1. Failure(@test-variance.R#22): Variance correct for discrete uniform rvs -----
+VAR(dunif(0, 10)) not equal to var_dunif(0, 10)
+Mean relative difference: 3
+
+2. Failure(@test-variance.R#23): Variance correct for discrete uniform rvs -----
+VAR(dunif(0, 100)) not equal to var_dunif(0, 100)
+Mean relative difference: 3.882353</code></pre>
+<p>Each failure gives a description of the test (e.g., “Variance correct for discrete uniform rvs”), its location (e.g., “@test-variance.R#22”), and the reason for the failure (e.g., “VAR(dunif(0, 10)) not equal to var_dunif(0, 10)”). The goal is to pass all the tests.</p>
+</div>
+<div id="test-structure" class="section level2">
+<h2><span class="header-section-number">7.2</span> Test structure</h2>
+<p>A test file lives in <code>tests/testthat/</code>. Its name must start with <code>test</code>. Here’s an example of a test file from the stringr package:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">context</span>(<span class="st">&quot;String length&quot;</span>)
+<span class="kw">library</span>(stringr)
+
+<span class="kw">test_that</span>(<span class="st">&quot;str_length is number of characters&quot;</span>, {
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="st">&quot;a&quot;</span>), <span class="dv">1</span>)
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="st">&quot;ab&quot;</span>), <span class="dv">2</span>)
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="st">&quot;abc&quot;</span>), <span class="dv">3</span>)
+})
+
+<span class="kw">test_that</span>(<span class="st">&quot;str_length of factor is length of level&quot;</span>, {
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="kw">factor</span>(<span class="st">&quot;a&quot;</span>)), <span class="dv">1</span>)
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="kw">factor</span>(<span class="st">&quot;ab&quot;</span>)), <span class="dv">2</span>)
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="kw">factor</span>(<span class="st">&quot;abc&quot;</span>)), <span class="dv">3</span>)
+})
+
+<span class="kw">test_that</span>(<span class="st">&quot;str_length of missing is missing&quot;</span>, {
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="ot">NA</span>), <span class="ot">NA_integer_</span>)
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>)), <span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">str_length</span>(<span class="st">&quot;NA&quot;</span>), <span class="dv">2</span>)
+})</code></pre>
+<p>Tests are organised hierarchically: <strong>expectations</strong> are grouped into <strong>tests</strong> which are organised in <strong>files</strong>:</p>
+<ul>
+<li><p>An <strong>expectation</strong> is the atom of testing. It describes the expected result
+of a computation: Does it have the right value and right class? Does it
+produce error messages when it should? An expectation automates visual
+checking of results in the console. Expectations are functions that start
+with <code>expect_</code>.</p></li>
+<li><p>A <strong>test</strong> groups together multiple expectations to test the output
+from a simple function, a range of possibilities for a single parameter
+from a more complicated function, or tightly related functionality from
+across multiple functions. This is why they are sometimes called <strong>unit</strong>
+as they test one unit of functionality. A test is created with <code>test_that()</code> .</p></li>
+<li><p>A <strong>file</strong> groups together multiple related tests. Files are given a human
+readable name with <code>context()</code>.</p></li>
+</ul>
+<p>These are described in detail below.</p>
+<div id="expectations" class="section level3">
+<h3><span class="header-section-number">7.2.1</span> Expectations</h3>
+<p>An expectation is the finest level of testing. It makes a binary assertion about whether or not a function call does what you expect. All expectations have a similar structure:</p>
+<ul>
+<li><p>They start with <code>expect_</code>.</p></li>
+<li><p>They have two arguments: the first is the actual result, the second is what
+you expect.</p></li>
+<li><p>If the actual and expected results don’t agree, testthat throws an error.</p></li>
+</ul>
+<p>While you’ll normally put expectations inside tests inside files, you can also run them directly. This makes it easy to explore expectations interactively. There are almost 20 expectations in the testthat package. The most important are discussed below.</p>
+<ul>
+<li><p>There are two basic ways to test for equality: <code>expect_equal()</code>,
+and <code>expect_identical()</code>. <code>expect_equal()</code> is the most commonly used: it
+uses <code>all.equal()</code> to check for equality within a numerical tolerance:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">expect_equal</span>(<span class="dv">10</span>, <span class="dv">10</span>)
+<span class="kw">expect_equal</span>(<span class="dv">10</span>, <span class="dv">10</span> <span class="op">+</span><span class="st"> </span><span class="fl">1e-7</span>)
+<span class="kw">expect_equal</span>(<span class="dv">10</span>, <span class="dv">11</span>)</code></pre>
+<p>If you want to test for exact equivalence, or need to compare a more
+exotic object like an environment, use <code>expect_identical()</code>. It’s built
+on top of <code>identical()</code>:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">expect_equal</span>(<span class="dv">10</span>, <span class="dv">10</span> <span class="op">+</span><span class="st"> </span><span class="fl">1e-7</span>)
+<span class="kw">expect_identical</span>(<span class="dv">10</span>, <span class="dv">10</span> <span class="op">+</span><span class="st"> </span><span class="fl">1e-7</span>)</code></pre></li>
+<li><p><code>expect_match()</code> matches a character vector against a regular expression.
+The optional <code>all</code> argument controls whether all elements or just one
+element needs to match. This is powered by <code>grepl()</code> (additional arguments
+like <code>ignore.case = FALSE</code> or <code>fixed = TRUE</code> are passed on down).</p>
+<pre class="sourceCode r"><code class="sourceCode r">string &lt;-<span class="st"> &quot;Testing is fun!&quot;</span>
+
+<span class="kw">expect_match</span>(string, <span class="st">&quot;Testing&quot;</span>) 
+
+<span class="co"># Fails, match is case-sensitive</span>
+<span class="kw">expect_match</span>(string, <span class="st">&quot;testing&quot;</span>)
+
+<span class="co"># Additional arguments are passed to grepl:</span>
+<span class="kw">expect_match</span>(string, <span class="st">&quot;testing&quot;</span>, <span class="dt">ignore.case =</span> <span class="ot">TRUE</span>)</code></pre></li>
+<li><p>Four variations of <code>expect_match()</code> let you check for other types of
+result: <code>expect_output()</code>, inspects printed output; <code>expect_message()</code>,
+messages; <code>expect_warning()</code>, warnings; and <code>expect_error()</code> errors.</p>
+<pre class="sourceCode r"><code class="sourceCode r">a &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, letters)
+
+<span class="kw">expect_output</span>(<span class="kw">str</span>(a), <span class="st">&quot;List of 2&quot;</span>)
+<span class="kw">expect_output</span>(<span class="kw">str</span>(a), <span class="st">&quot;int [1:10]&quot;</span>, <span class="dt">fixed =</span> <span class="ot">TRUE</span>)
+
+<span class="kw">expect_message</span>(<span class="kw">library</span>(mgcv), <span class="st">&quot;This is mgcv&quot;</span>)</code></pre>
+<p>With <code>expect_message()</code>, <code>expect_warning()</code>, <code>expect_error()</code> you can
+leave the second argument blank if you just want to see if a message,
+warning or error is created. However, it’s normally better to be explicit,
+and provide some text from the message.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">expect_warning</span>(<span class="kw">log</span>(<span class="op">-</span><span class="dv">1</span>))
+<span class="kw">expect_error</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> &quot;a&quot;</span>) 
+
+<span class="co"># But always better to be explicit</span>
+<span class="kw">expect_warning</span>(<span class="kw">log</span>(<span class="op">-</span><span class="dv">1</span>), <span class="st">&quot;NaNs produced&quot;</span>)
+<span class="kw">expect_error</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> &quot;a&quot;</span>, <span class="st">&quot;non-numeric argument&quot;</span>)
+
+<span class="co"># Failure to produce a warning or error when an error is expected</span>
+<span class="kw">expect_warning</span>(<span class="kw">log</span>(<span class="dv">0</span>))
+<span class="kw">expect_error</span>(<span class="dv">1</span> <span class="op">/</span><span class="st"> </span><span class="dv">2</span>) </code></pre></li>
+<li><p><code>expect_is()</code> checks that an object <code>inherit()</code>s from a specified class.</p>
+<pre class="sourceCode r"><code class="sourceCode r">model &lt;-<span class="st"> </span><span class="kw">lm</span>(mpg <span class="op">~</span><span class="st"> </span>wt, <span class="dt">data =</span> mtcars)
+<span class="kw">expect_is</span>(model, <span class="st">&quot;lm&quot;</span>)
+<span class="kw">expect_is</span>(model, <span class="st">&quot;glm&quot;</span>)</code></pre></li>
+<li><p><code>expect_true()</code> and <code>expect_false()</code> are useful catchalls if none of the
+other expectations do what you need.</p></li>
+<li><p>Sometimes you don’t know exactly what the result should be, or it’s too
+complicated to easily recreate in code. In that case the best you can do is
+check that the result is the same as last time. <code>expect_equal_to_reference()</code>
+caches the result the first time its run, and then compares it to subsequent
+runs. If for some reason the result does change, just delete the cache (*)
+file and re-test.</p></li>
+</ul>
+<p>Running a sequence of expectations is useful because it ensures that your code behaves as expected. You could even use an expectation within a function to check that the inputs are what you expect. However, they’re not so useful when something goes wrong. All you know is that something is not as expected. You don’t know the goal of the expectation. Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.</p>
+</div>
+</div>
+<div id="test-tests" class="section level2">
+<h2><span class="header-section-number">7.3</span> Writing tests</h2>
+<p>Each test should have an informative name and cover a single unit of functionality. The idea is that when a test fails, you’ll know what’s wrong and where in your code to look for the problem. You create a new test using <code>test_that()</code>, with test name and code block as arguments. The test name should complete the sentence “Test that …”. The code block should be a collection of expectations.</p>
+<p>It’s up to you how to organise your expectations into tests. The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem. Try to avoid putting too many expectations in one test - it’s better to have more smaller tests than fewer larger tests.</p>
+<p>Each test is run in its own environment and is self-contained. However, testthat doesn’t know how to cleanup after actions that affect the R landscape:</p>
+<ul>
+<li><p>The filesystem: creating and deleting files, changing the working directory,
+etc.</p></li>
+<li><p>The search path: <code>library()</code>, <code>attach()</code>.</p></li>
+<li><p>Global options, like <code>options()</code> and <code>par()</code>.</p></li>
+</ul>
+<p>When you use these actions in tests, you’ll need to clean up after yourself. While many other testing packages have set-up and teardown methods that are run automatically before and after each test, these are not so important with testthat because you can create objects outside of the tests and you can rely on R’s copy-on-modify semantics to keep them unchanged between test runs. To clean up other actions you can use regular R functions.</p>
+<div id="what-to-test" class="section level3">
+<h3><span class="header-section-number">7.3.1</span> What to test</h3>
+<blockquote>
+<p>Whenever you are tempted to type something into a print statement or a
+debugger expression, write it as a test instead.
+— Martin Fowler</p>
+</blockquote>
+<p>There is a fine balance to writing tests. Each test that you write makes your code less likely to change inadvertently; but it also can make it harder to change your code on purpose. It’s hard to give good general advice about writing tests, but you might find these points helpful:</p>
+<ul>
+<li><p>Focus on testing the external interface to your functions - if you test the
+internal interface, then it’s harder to change the implementation in the
+future because as well as modifying the code, you’ll also need to update all
+the tests.</p></li>
+<li><p>Strive to test each behaviour in one and only one test. Then if that
+behaviour later changes you only need to update a single test.</p></li>
+<li><p>Avoid testing simple code that you’re confident will work. Instead focus your
+time on code that you’re not sure about, is fragile, or has complicated
+interdependencies. That said, I often find I make the most mistakes when I
+falsely assume that the problem is simple and doesn’t need any tests.</p></li>
+<li><p>Always write a test when you discover a bug. You may find it helpful to adopt
+the test-first philosophy. There you always start by writing the tests, and
+then write the code that makes them pass. This reflects an important problem
+solving strategy: start by establishing your success criteria, how you
+know if you’ve solved the problem.</p></li>
+</ul>
+</div>
+<div id="skipping-a-test" class="section level3">
+<h3><span class="header-section-number">7.3.2</span> Skipping a test</h3>
+<p>Sometimes it’s impossible to perform a test - you may not have an internet connection or you may be missing an important file. Unfortunately, another likely reason follows from this simple rule: the more machines you use to write your code, the more likely it is that you won’t be able to run all of your tests. In short, there are times when, instead of getting a failure, you just want to skip a test. To do that, you can use the <code>skip()</code> function - rather than throwing an error it simply prints an <code>S</code> in the output.</p>
+<pre class="sourceCode r"><code class="sourceCode r">check_api &lt;-<span class="st"> </span><span class="cf">function</span>() {
+  <span class="cf">if</span> (<span class="kw">not_working</span>()) {
+    <span class="kw">skip</span>(<span class="st">&quot;API not available&quot;</span>)
+  }
+}
+
+<span class="kw">test_that</span>(<span class="st">&quot;foo api returns bar when given baz&quot;</span>, {
+  <span class="kw">check_api</span>()
+  ...
+})</code></pre>
+</div>
+<div id="building-your-own-testing-tools" class="section level3">
+<h3><span class="header-section-number">7.3.3</span> Building your own testing tools</h3>
+<p>As you start to write more tests, you might notice duplication in your code. For example, the following code shows one test of the <code>floor_date()</code> function from <code>library(lubridate)</code>. There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc. There’s a lot of duplication (which increases the chance of bugs), so we might want to extract common behaviour into a new function.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(lubridate)
+<span class="kw">test_that</span>(<span class="st">&quot;floor_date works for different units&quot;</span>, {
+  base &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 12:01:59.23&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)
+
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;second&quot;</span>), 
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 12:01:59&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;minute&quot;</span>), 
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 12:01:00&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;hour&quot;</span>),   
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 12:00:00&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;day&quot;</span>),    
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 00:00:00&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;week&quot;</span>),   
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-02 00:00:00&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;month&quot;</span>),  
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-01 00:00:00&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, <span class="st">&quot;year&quot;</span>),   
+    <span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-01-01 00:00:00&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+})</code></pre>
+<p>I’d start by defining a couple of helper functions to make each expectation more concise. That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">test_that</span>(<span class="st">&quot;floor_date works for different units&quot;</span>, {
+  base &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 12:01:59.23&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)
+  floor_base &lt;-<span class="st"> </span><span class="cf">function</span>(unit) <span class="kw">floor_date</span>(base, unit)
+  as_time &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="kw">as.POSIXct</span>(x, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)
+
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;second&quot;</span>), <span class="kw">as_time</span>(<span class="st">&quot;2009-08-03 12:01:59&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;minute&quot;</span>), <span class="kw">as_time</span>(<span class="st">&quot;2009-08-03 12:01:00&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;hour&quot;</span>),   <span class="kw">as_time</span>(<span class="st">&quot;2009-08-03 12:00:00&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;day&quot;</span>),    <span class="kw">as_time</span>(<span class="st">&quot;2009-08-03 00:00:00&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;week&quot;</span>),   <span class="kw">as_time</span>(<span class="st">&quot;2009-08-02 00:00:00&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;month&quot;</span>),  <span class="kw">as_time</span>(<span class="st">&quot;2009-08-01 00:00:00&quot;</span>))
+  <span class="kw">expect_equal</span>(<span class="kw">floor_base</span>(<span class="st">&quot;year&quot;</span>),   <span class="kw">as_time</span>(<span class="st">&quot;2009-01-01 00:00:00&quot;</span>))
+})</code></pre>
+<p>We could go a step further and create a custom expectation function:</p>
+<pre class="sourceCode r"><code class="sourceCode r">base &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2009-08-03 12:01:59.23&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)
+
+expect_floor_equal &lt;-<span class="st"> </span><span class="cf">function</span>(unit, time) {
+  <span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, unit), <span class="kw">as.POSIXct</span>(time, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>))
+}
+<span class="kw">expect_floor_equal</span>(<span class="st">&quot;year&quot;</span>, <span class="st">&quot;2009-01-01 00:00:00&quot;</span>)</code></pre>
+<p>However, if the expectation fails this doesn’t give very informative output:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">expect_floor_equal</span>(<span class="st">&quot;year&quot;</span>, <span class="st">&quot;2008-01-01 00:00:00&quot;</span>)</code></pre>
+<p>Instead you can use a little <a href="http://adv-r.had.co.nz/Computing-on-the-language.html">non-standard evaluation</a> to produce something more informative. The key is to use <code>bquote()</code> and <code>eval()</code>. In the <code>bquote()</code> call below, note the use of <code>.(x)</code> - the contents of <code>()</code> will be inserted into the call.</p>
+<pre class="sourceCode r"><code class="sourceCode r">expect_floor_equal &lt;-<span class="st"> </span><span class="cf">function</span>(unit, time) {
+  as_time &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="kw">as.POSIXct</span>(x, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)
+  <span class="kw">eval</span>(<span class="kw">bquote</span>(<span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, .(unit)), <span class="kw">as_time</span>(.(time)))))
+}
+<span class="kw">expect_floor_equal</span>(<span class="st">&quot;year&quot;</span>, <span class="st">&quot;2008-01-01 00:00:00&quot;</span>)</code></pre>
+<p>This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what’s changing. Readable tests give you more confidence that they’re correct.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">test_that</span>(<span class="st">&quot;floor_date works for different units&quot;</span>, {
+  as_time &lt;-<span class="st"> </span><span class="cf">function</span>(x) <span class="kw">as.POSIXct</span>(x, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)
+  expect_floor_equal &lt;-<span class="st"> </span><span class="cf">function</span>(unit, time) {
+    <span class="kw">eval</span>(<span class="kw">bquote</span>(<span class="kw">expect_equal</span>(<span class="kw">floor_date</span>(base, .(unit)), <span class="kw">as_time</span>(.(time)))))
+  }
+
+  base &lt;-<span class="st"> </span><span class="kw">as_time</span>(<span class="st">&quot;2009-08-03 12:01:59.23&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;second&quot;</span>, <span class="st">&quot;2009-08-03 12:01:59&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;minute&quot;</span>, <span class="st">&quot;2009-08-03 12:01:00&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;hour&quot;</span>,   <span class="st">&quot;2009-08-03 12:00:00&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;day&quot;</span>,    <span class="st">&quot;2009-08-03 00:00:00&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;week&quot;</span>,   <span class="st">&quot;2009-08-02 00:00:00&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;month&quot;</span>,  <span class="st">&quot;2009-08-01 00:00:00&quot;</span>)
+  <span class="kw">expect_floor_equal</span>(<span class="st">&quot;year&quot;</span>,   <span class="st">&quot;2009-01-01 00:00:00&quot;</span>)
+})</code></pre>
+</div>
+</div>
+<div id="test-files" class="section level2">
+<h2><span class="header-section-number">7.4</span> Test files</h2>
+<p>The highest-level structure of tests is the file. Each file should contain a single <code>context()</code> call that provides a brief description of its contents. Just like the files in the <code>R/</code> directory, you are free to organise your tests any way that you like. But again, the two extremes are clearly bad (all tests in one file, one file per test). You need to find a happy medium that works for you. A good starting place is to have one file of tests for each complicated function.</p>
+</div>
+<div id="test-cran" class="section level2">
+<h2><span class="header-section-number">7.5</span> CRAN notes</h2>
+<p>CRAN will run your tests on all CRAN platforms: Windows, Mac, Linux and Solaris. There are a few things to bear in mind:</p>
+<ul>
+<li><p>Tests need to run relatively quickly - aim for under a minute. Place
+<code>skip_on_cran()</code> at the beginning of long-running tests that shouldn’t be run
+on CRAN - they’ll still be run locally, but not on CRAN.</p></li>
+<li><p>Note that tests are always run in the English language (<code>LANGUAGE=EN</code>) and
+with C sort order (<code>LC_COLLATE=C</code>). This minimises spurious differences
+between platforms.</p></li>
+<li><p>Be careful about testing things that are likely to be variable on CRAN
+machines. It’s risky to test how long something takes (because CRAN machines
+are often heavily loaded) or to test parallel code (because CRAN runs multiple
+package tests in parallel, multiple cores will not always be available).
+Numerical precision can also vary across platforms (it’s often less precise on
+32-bit versions of R) so use <code>expect_equal()</code> rather than <code>expect_identical()</code>.</p></li>
+</ul>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="vignettes.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="namespace.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": true,
+"facebook": false,
+"twitter": true,
+"google": false,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/hadley/r-pkgs/edit/master/07-testing.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"download": null,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>
