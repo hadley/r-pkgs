@@ -1,0 +1,693 @@
+# Automated checking {#check}
+
+An important part of the package development process is `R CMD check`. `R CMD check` automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not because it automatically detects many common problems that you'd otherwise discover the hard way.
+
+`R CMD check` will be frustrating the first time you run it - you'll discover many problems that need to be fixed. The key to making `R CMD check` less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix. The upper limit of this approach is to run `R CMD check` every time you make a change. If you use GitHub, you'll learn precisely how to do that with [Travis-CI](#travis).
+
+## Workflow {#check-workflow}
+
+`R CMD check` is the name of the command you run from the terminal. I don't recommend calling it directly. Instead, run `devtools::check()`, or press Ctrl/Cmd + Shift + E in RStudio. In contrast to `R CMD check`, `devtools::check()`:
+
+* Ensures that the documentation is up-to-date by running 
+  `devtools::document()`.
+
+* Bundles the package before checking it. This is the best practice for checking 
+  packages because it makes sure the check starts with a clean slate: because a 
+  package bundle doesn't contain any of the temporary files that can accumulate 
+  in your source package, e.g. artifacts like `.so` and `.o` files which 
+  accompany compiled code, you can avoid the spurious warnings such files will 
+  generate.
+  
+* Sets the `NOT_CRAN` environment variable to `TRUE`. This allows you to 
+  selectively skip tests on CRAN. (See `?testthat::skip_on_cran` for details.)
+
+The workflow for checking a package is simple, but tedious:
+
+1. Run `devtools::check()`, or press Ctrl/Cmd + Shift + E.
+
+1. Fix the first problem.
+
+1. Repeat until there are no more problems.
+
+`R CMD check` returns three types of messages:
+
+  * `ERROR`s: Severe problems that you should fix regardless of whether
+    or not you're submitting to CRAN.
+    
+  * `WARNING`s: Likely problems that you must fix if you're planning to 
+    submit to CRAN (and a good idea to look into even if you're not).
+    
+  * `NOTE`s: Mild problems. If you are submitting to CRAN, you should strive to 
+    eliminate all NOTEs, even if they are false positives. If you have no NOTEs, 
+    human intervention is not required, and the package submission process will 
+    be easier. If it's not possible to eliminate a `NOTE`, you'll need describe 
+    why it's OK in your submission comments, as described in [release 
+    notes](#release-check). If you're not submitting to CRAN, carefully read 
+    each NOTE, but don't go out of your way to fix things that you don't think 
+    are problems.
+
+## Checks {#check-checks}
+
+`R CMD check` is composed of over 50 individual checks, described in the following sections. For each check, I briefly describe what it does, what the most common problems are, and how to fix them. When you have a problem with `R CMD check` and can't understand how to fix it, use this list to help figure out what you need to do. To make it easier to understand how the checks fit together, I've organised them into sections roughly corresponding to the chapters in this book. This means they will be in a somewhat different order to what you'll see when you run `check()`.
+
+This list includes every check run in R 3.1.1. If you're using a more recent version, you may want to consult the most recent online version of this chapter: <http://r-pkgs.had.co.nz/check.html>. Please [let me know](mailto:hadley@rstudio.com) if you encounter a problem that this chapter doesn't help with.
+
+### Check metadata
+
+`R CMD check` always starts by describing your current environment. I'm running R 3.1.1 on OS X with a UTF-8 charset:
+
+* __Using log directory__ ‘/Users/hadley/Documents/web/httr.Rcheck’
+* __Using R version__ 3.1.1 (2014-07-10)
+* __Using platform__: x86_64-apple-darwin13.1.0 (64-bit)
+* __Using session charset__: UTF-8
+
+Next the description is parsed and the package version is printed. Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird version number in [versioning](#version)).
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
+* __Checking for file__ ‘httr/DESCRIPTION’
+* __This is package__ ‘httr’ __version__ ‘0.5.0.9000’
+
+### Package structure
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L257 -->
+* __Checking package directory__. The directory you're checking must exist - 
+  `devtools::check()` protects you against this problem.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3720 -->
+* __Checking if this is a source package__. You must check a source package, not 
+  a binary or installed package. This should never fail if you use  
+  `devtools::check()`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3015 -->
+* __Checking for executable files__. You must not have executable files in
+  your package: they're not portable, they're not open source, and they are a
+  security risk. Delete any executable files from your package. 
+  (If you're not submitting to CRAN, you can silence this warning by listing 
+  each executable file in the `BinaryFiles` field in your `DESCRIPTION`.)
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3103 -->
+* __Checking for hidden files and directories__. On Linux and OS X, files with
+  a name starting with `.` are hidden by default, and you've probably included
+  them in your package by mistake. Either delete them, or if they are important, 
+  use `.Rbuildignore` to remove them from the package bundle. R automatically 
+  removes some common directories like `.git` and `.svn`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L381 -->
+* __Checking for portable file names__.  R packages must work on Windows, 
+  Linux and OS X, so you can only use file names that work on all platforms. 
+  The easiest way to do this is to stick to letters, numbers, underscores 
+  and dashes. Avoid non-English letters and spaces. Fix this check by renaming
+  the listed files.
+  
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L541 -->
+* __Checking for sufficient/correct file permissions__. If you can't read a 
+  file, you can't check it. This check detects the unlikely occurence that 
+  you have files in the package that you don't have permission to read. Fix this
+  problem by fixing the file permissions.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3141 -->
+* __Checking whether package ‘XYZ’ can be installed__. `R CMD check` runs
+  `R CMD install` to make sure that it's possible to install your package. If 
+  this fails, you should run `devtools::install()` or RStudio's Build & Reload
+  and debug any problems before continuing.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
+* __Checking installed package size__. It's easy to accidentally include large
+  files that blow up the size of your package. This check ensures that the
+  whole package is less than 5 MB and each subdirectory is less than 1 MB. 
+  If you see this message, check that you haven't accidentally included a 
+  large file. 
+  
+    If submitting to CRAN, you'll need to justify the size of your package. 
+    First, make sure the package is as small as it possibly can be: try 
+    recompressing the data, [data CRAN notes](#data-cran); and minimising 
+    vignettes, [vignette CRAN notes](#vignette-cran).
+    If it's still too large, consider moving data into its own package.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L746 -->
+* __Checking top-level files__. Only specified files and directories are 
+  allowed at the top level of the package (e.g. `DESCRIPTION`, `R/`, `src/`). 
+  To include other files, you have two choices:
+  
+    * If they don't need to be installed (i.e. they're only used in the 
+      source package): add them to `.Rbuildignore` with 
+      `devtools::use_build_ignore()`.
+      
+    * If they need to be installed: move them into `inst/`. They'll be moved back to 
+      the top-level package directory when installed.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L924 -->
+* __Checking package subdirectories__. 
+
+    * Don't include any empty directories. These are usually removed 
+      automatically by `R CMD build` so you shouldn't see this error. If you do,
+      just delete the directory.
+      
+    * The case of files and directories is important. All sub-directories 
+      should be lower-case, except for `R/`. A citation file, if present, 
+      should be in `inst/CITATION`. Rename as needed.
+      
+    * The contents of `inst/` shouldn't clash with top-level contents 
+      of the package (like `build/`, `R/` etc). If they do, rename your 
+      files/directories.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L859 -->
+* __Checking for left-over files__. Remove any files listed here. They've 
+  been included in your package by accident.
+
+### Description
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L597 -->
+* __Checking DESCRIPTION meta-information__. 
+
+    * The `DESCRIPTION` must be valid. You are unlikely to see this error,
+      because `devtools::load_all()` runs the same check each time you re-load
+      the package.
+    
+    * If you use any non-ASCII characters in the DESCRIPTION, you must also
+      specify an encoding. There are only three encodings that work on all
+      platforms: latin1, latin2 and UTF-8. I strongly recommend UTF-8:
+      `Encoding: UTF-8`.
+    
+    * The `License` must refer to either a known license (a complete list can 
+      be found at <https://svn.r-project.org/R/trunk/share/licenses/license.db>),
+      or it must use `file LICENSE` and that file must exist. Errors here are 
+      most likely to be typos.
+      
+    * You should either provide `Authors@R` or `Authors` and `Maintainer`. 
+      You'll get an error if you've specified both, which you can fix by 
+      removing the one you didn't want.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3683
+tools:::.check_package_depends -->
+* __Checking package dependencies__. 
+
+    * All packages listed in `Depends`, `Imports` and `LinkingTo` must be 
+      installed, and their version requirements must be met, otherwise your 
+      package can't be checked. An easy way to install any missing or outdated
+      dependencies is to run `devtools::install_deps(dependencies = TRUE)`.
+  
+    * Packages listed in `Suggests` must be installed, unless you've set 
+      the environment variable `_R_CHECK_FORCE_SUGGESTS_` to a false value
+      (e.g. with `check(force_suggests = FALSE)`). This is useful if some of 
+      the suggested packages are not available on all platforms.
+    
+    * R packages can not have a cycle of dependencies: i.e. if package A 
+      requires B, then B can not require A (otherwise which one would you load
+      first?). If you see this error, you'll need to rethink the design of 
+      your package. One easy fix is to move the conflicting package from 
+      `Imports` or `Depends` to `Suggests`.
+
+    * Any packages used in the `NAMESPACE` must be listed in one of 
+      `Imports` (most commonly) or `Depends` (only in special cases).
+      See [search path](#search-path) for more details.
+      
+    * Every package listed in `Depends` must also be imported in the 
+      `NAMESPACE` or accessed with `pkg::foo`. If you don't do this, your
+      package will work when attached to the search path (with 
+      `library(mypackage)`) but will not work when only loaded (e.g. 
+      `mypackage::foo()`)
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3561 
+tools:::.check_package_CRAN_incoming
+-->
+* __Checking CRAN incoming feasibility__. These checks only apply if you're 
+  submitting to CRAN.
+  
+    * If you're submitting a new package, you can't use the same name as an
+      existing package. You'll need to come up with a new name.
+    
+    * If you're submitting an update, the version number must be higher 
+      than the current CRAN version. Update the `Version` field in 
+      `DESCRIPTION`.
+        
+    * If the maintainer of the package has changed (even if it's just a change 
+      in email address), the new maintainer should submit to CRAN, and the
+      old maintainer should send a confirmation email.
+
+    * You must use a standard open source license, as listed in 
+      <https://svn.r-project.org/R/trunk/share/licenses/license.db>.
+      You can not use a custom license as CRAN does not have the legal 
+      resources to review custom agreements.
+    
+    * The `Title` and `Description` must be free from spelling mistakes. The 
+      title of the package must be in title case. Neither title nor description
+      should include either the name of your package or the word "package".
+      Reword your title and description as needed.
+    
+    * If you're submitting a new package, you'll always get a `NOTE`. This 
+      reminds the CRAN maintainers to do some extra manual checks.
+      
+    * Avoid submitting multiple versions of the same package in a short
+      period of time. CRAN prefers at most one submission per month. If you
+      need to fix a major bug, be apologetic.
+
+### Namespace
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L4433 -->
+* __Checking if there is a namespace__. You must have a `NAMESPACE` file.
+  Roxygen2 will create this for you as described in [namespaces](#namespace).
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3620 -->
+* __Checking package namespace information__. The `NAMESPACE` should be 
+  parseable by `parseNamespaceFile()` and valid. If this check fails, it's
+  a bug in roxygen2.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2234 -->
+* __Checking whether the package can be loaded with stated dependencies__.
+  Runs `library(pkg)` with `R_DEFAULT_PACKAGES=NULL`, so the search path 
+  is empty (i.e. stats, graphics, grDevices, utils, datasets and methods are not
+  attached like usual). Failure here typically indicates that you're missing a 
+  dependency on one of those packages.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2264 -->
+* __Checking whether the namespace can be loaded with stated dependencies__.
+  Runs `loadNamespace(pkg)` with `R_DEFAULT_PACKAGES=NULL`. Failure usually 
+  indicates a problem with the namespace.
+
+### R code
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1226 -->
+* __Checking R files for non-ASCII characters__. For maximum portability (i.e.
+  so people can use your package on Windows) you should avoid using non-ASCII
+  characters in R files. It's ok to use them in comments, but object names 
+  shouldn't use them, and in strings you should use unicode escapes. See 
+  [`R/` CRAN notes](#r-cran) for more details.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1258 -->
+* __Checking R files for syntax errors__. Obviously your R code must be valid.
+  You're unlikely to see this error if you've been regularly using 
+  `devtools::load_all()`.
+
+<!--- tools:::.check_packages_used --->
+* __Checking dependencies in R code__. Errors here often indicate that you've 
+  forgotten to declare a needed package in the `DESCRIPTION`. Remember that you 
+  should never use `require()` or `library()` inside a package - see 
+  [namespace imports](#imports) for more details on best practices.
+  
+    Alternatively, you may have accidentally used `:::` to access an exported
+    function from a package. Switch to `::` instead.
+
+<!--- tools::checkS3methods --->
+* __Checking S3 generic/method consistency__. S3 methods must have a compatible 
+  function signature with their generic. This means that the method must have the 
+  same arguments as its generic, with one exception: if the generic includes 
+  `...` the method can have additional arguments. 
+  
+    A common cause of this error is defining print methods, because the 
+    `print()` generic contains`...`:
+  
+    ```{r}
+    # BAD
+    print.my_class <- function(x) cat("Hi")
+    
+    # GOOD
+    print.my_class <- function(x, ...) cat("Hi")
+    
+    # Also ok
+    print.my_class <- function(x, ..., my_arg = TRUE) cat("Hi")
+    ```
+
+<!-- tools::checkReplaceFuns -->
+* __Checking replacement functions__. Replacement functions (e.g. functions that
+  are called like `foo(x) <- y`), must have `value` as the last argument.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1373
+     tools:::.check_package_code_shlib
+     tools:::.check_package_code_startup_functions
+     tools:::.check_package_code_unload_functions
+     tools:::.check_package_code_tampers
+     tools:::.check_code_usage_in_package
+     tools:::.check_dotInternal
+     tools:::.check_package_code_assign_to_globalenv
+     tools:::.check_package_code_attach
+     tools:::.check_package_code_data_into_globalenv
+     tools:::.check_depdef
+     -->
+* __Checking R code for possible problems__. This is a compound check for 
+    a wide range of problems:
+
+    * Calls to `library.dynam()` (and `library.dynam.unload()`) should look
+      like `library.dynam("name")`, not `library.dynam("name.dll")`. Remove
+      the extension to fix this error.
+      
+    * Put `library.dynam()` in `.onLoad()`, not `.onAttach()`;
+      put `packageStartupMessage()` in `.onAttach()`, not `.onLoad()`.
+      Put `library.dynam.unload()` in `.onUnload()`. If you use any of 
+      these functions, make sure they're in the right place.
+  
+    * Don't use `unlockBinding()` or `assignInNamespace()` to modify objects
+      that don't belong to you. 
+      
+    * `codetools::checkUsagePackage()` is called to check that your functions
+      don't use variables that don't exist. This sometimes raises false 
+      positives with functions that use non-standard evaluation (NSE),
+      like `subset()` or `with()`. Generally, I think you should avoid NSE in 
+      package functions, and hence avoid this NOTE, but if you can not, see 
+      `?globalVariables` for how to suppress this NOTE.
+      
+    * You are not allowed to use `.Internal()` in a package. Either call 
+      the R wrapper function, or write your own C function. (If you copy and 
+      paste the C function from base R, make sure to maintain the copyright 
+      notice, use a GPL-2 compatible license, and list R-core in the `Author` 
+      field.)
+    
+    * Similarly you are not allowed to use `:::` to access non-exported
+      functions from other packages. Either ask the package maintainer to
+      export the function you need, or write your own version of it using
+      exported functions. Alternatively, if the licenses are compatible you
+      can copy and paste the exported function into your own package. If
+      you do this, remember to update `Authors@R`.
+
+    * Don't use `assign()` to modify objects in the global environment. If 
+      you need to maintain state across function calls, create your own
+      environment with `e <- new.env(parent = emptyenv())` and set and 
+      get values in it:
+      
+        ```{r}
+        e <- new.env(parent = emptyenv())
+        
+        add_up <- function(x) {
+          if (is.null(e$last_x)) {
+            old <- 0
+          } else {
+            old <- e$last_x
+          }
+          
+          new <- old + x
+          e$last_x <- new
+          new
+        }
+        add_up(10)
+        add_up(20)
+        ```      
+  
+    * Don't use `attach()` in your code. Instead refer to variables 
+      explicitly.
+  
+    * Don't use `data()` without specifying the `envir` argument. Otherwise
+      the data will be loaded in the global environment.
+      
+    * Don't use deprecated or defunct functions. Update your code to use 
+      the latest versions.
+  
+    * You must use `TRUE` and `FALSE` in your code (and examples), not `T` and 
+      `F`.
+    
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2209 -->
+* __Checking whether the package can be loaded__. R loads your package with
+  `library()`. Failure here typically indicates a problem with 
+  `.onLoad()` or `.onAttach()`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2247 -->
+* __Checking whether the package can be unloaded cleanly__. Loads with 
+  `library()` and then `detach()`es. If this fails, check `.onUnload()` and 
+  `.onDetach()`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2279 -->
+* __Checking whether the namespace can be unloaded cleanly__.
+  Runs `loadNamespace("pkg"); unloadNamespace("pkg")`. Check `.onUnload()` for 
+  problems.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2300 -->
+* __Checking loading without being on the library search path__.
+  Calls `library(x, lib.loc = ...)`. Failure here indicates that you are 
+  making a false assumption in `.onLoad()` or `.onAttach()`.
+
+### Data
+
+<!-- 
+https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1782 
+tools:::.check_package_datasets
+tools:::.check_package_compact_datasets
+tools:::.check_package_compact_sysdata
+-->
+* __Checking contents of 'data' directory__.
+
+    * The data directory can only contain file types described in 
+      [exported data](#data-data).
+      
+    * Data files can contain non-ASCII characters only if the encoding is 
+      correctly set. This usually shouldn't be a problem if you're saving
+      `.Rdata` files. If you do see this error, look at the `Encoding()` of
+      each column in the data frame, and ensure none are "unknown". (You'll 
+      typically need to fix this somewhere in the import process).
+      
+    * If you've compressed a data file with `bzip2` or `xz` you need to declare
+      at least `Depends: R (>= 2.10)` in your `DESCRIPTION`.
+      
+    * If you've used a sub-optimal compression algorithm for your data, 
+      re-compress with the suggested algorithm.
+
+### Documentation
+
+You can run the most common of these outside `devtools::check()` with `devtools::check_man()` (which automatically calls `devtools::document()` for you). If you have documentation problems, it's best to iterate quickly with `check_man()`, rather than running the full check each time. 
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1527 -->
+* __Checking Rd files__. This checks that all `man/*.Rd` files use the correct
+  Rd syntax. If this fails, it indicates a bug in roxygen2.
+
+<!-- tools:::.check_Rd_metadata -->
+* __Checking Rd metadata__. Names and aliases must be unique across all 
+  documentation files in a package. If you encounter this problem you've 
+  accidentally used the same `@name` or `@aliases` in multiple places; make 
+  sure they're unique.
+
+<!-- tools:::.check_Rd_line_widths -->
+* __Checking Rd line widths__.  Lines in Rd files must be less than 90 
+  characters wide. This is unlikely to occur if you wrap your R code,
+  and hence roxygen comments, to 80 characters. For very long urls, use a 
+  link-shortening service like [bit.ly](http://bit.ly).
+
+<!-- tools:::.check_Rd_xrefs -->
+* __Checking Rd cross-references__. Errors here usually represent typos.
+  Recall the syntax for linking to functions in other packages: 
+  `\link[package_name]{function_name}`. Sometimes I accidentally switch the
+  order of `\code{}` and `\link{}`: `\link{\code{function}}` will not work.
+
+<!-- tools::undoc -->
+* __Checking for missing documentation entries__. All exported objects must 
+  be documented. See `?tools::undoc` for more details.
+
+<!-- tools::codoc, tools::codocData, tools::codocClasses -->
+* __Checking for code/documentation mismatches__. This check ensures that the
+  documentation matches the code. This should never fail because you're using
+  roxygen2 which automatically keeps them in sync.
+
+<!-- tools::checkDocFiles, tools::checkDocStyle -->
+* __Checking Rd `\usage` sections__.  All arguments must be documented, and 
+  all `@params` must document an existing argument. You may have forgotten to
+  document an argument, forgotten to remove the documentation for an argument
+  that you've removed, or misspelled an argument name.
+  
+    S3 and S4 methods need to use special `\S3method{}` and `\S4method{}` 
+    markup in the Rd file. Roxygen2 will generate this for you automatically.
+
+<!-- tools:::.check_Rd_contents -->
+* __Checking Rd contents__. This checks for autogenerated content made by
+  `package.skeleton()`. Since you're not using `package.skeleton()` you should
+  never have a problem here.
+
+<!-- tools:::.check_packages_used_in_examples -->
+* __Checking for unstated dependencies in examples__. If you use a package 
+  only for an example, make sure it's listed in the `Suggests` field. Before
+  running example code that depends on it, test to see if it's available with
+  `requireNamespace("pkg", quietly = TRUE)`:
+  
+    ```{r}
+    #' @examples
+    #' if (requireNamespace("dplyr", quietly = TRUE)) {
+    #'   ...
+    #' }
+    ```
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2317 -->
+* __Checking examples__. Every documentation example must run without errors,
+  and must not take too long. Exclude failing or slow tests with `\donttest{}`.
+  See [documenting functions](#man-functions) for more details.
+  
+    Examples are one of the last checks run, so fixing problems can be painful 
+    if you have to run `devtools::check()` each time. Instead, use 
+    `devtools::run_examples()`: it only checks the examples, and has an optional 
+    parameter which tells it which function to start at. That way once you've 
+    discovered an error, you can rerun from just that file, not all the 
+    files that lead up to it.
+    
+    NB: you can't use unexported functions and you shouldn't open new 
+    graphics devices or use more than two cores. Individual examples shouldn't
+    take more than 5s.
+    
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2925 -->
+* __Checking PDF version of manual__. Occassionally you'll get an error when 
+  building the PDF manual. This is usually because the pdf is built by latex and 
+  you've forgotten to escape something. Debugging this is painful - your best 
+  bet is to look up the latex logs and combined tex file and work back from 
+  there to `.Rd` files then back to a roxygen comment. I consider any such
+  failure to be a bug in roxygen2, so please let me know.
+
+### Demos
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L877 -->
+* __Checking index information__. If you've written demos, each demo must be 
+  listed in `demo/00Index`. The file should look like:
+    
+    ```
+    demo-name-without-extension  Demo description
+    another-demo-name            Another description
+    ```
+
+### Compiled code
+
+<!-- tools::checkFF -->
+* __Checking foreign function calls__. `.Call()`, `.C()`, `.Fortran()`, 
+  `.External()` must always be called either with a `NativeSymbolInfo` object
+  (as created with `@useDynLib`) or use the `.package` argument. See
+  `?tools::checkFF` for more details.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2065 -->
+* __Checking line endings in C/C++/Fortran sources/headers__. Always
+  use LF as a line ending.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2084 -->
+* __Checking line endings in Makefiles__. As above.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2120 -->
+* __Checking for portable use of `$(BLAS_LIBS)` and `$(LAPACK_LIBS)`__. 
+  Errors here indicate an issue with your use of BLAS and LAPACK.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2159 
+ tools:::check_compiled_code
+ -->
+* __Checking compiled code__. Checks that you're not using any C functions
+  that you shouldn't. See details in [C best practices](#c-best-practices).
+
+### Tests
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2514 -->
+* __Checking for unstated dependencies in tests__. Every package used by tests 
+  must be included in the dependencies.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2526 -->
+* __Checking tests__.  Each file in `tests/` is run. If you've followed the 
+  instructions in [testing](#tests) you'll have at least one file: 
+  `testthat.R`. The output from `R CMD check` is not usually that helpful, 
+  so you may need to look at the logfile `package.Rcheck/tests/testthat.Rout`.
+  Fix any failing tests by iterating with `devtools::test()`. 
+  
+    Occasionally you may have a problem where the tests pass when run 
+    interactively with `devtools::test()`, but fail when in `R CMD check`. This
+    usually indicates that you've made a faulty assumption about the testing
+    environment, and it's often hard to figure it out. 
+
+### Vignettes
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L718 -->
+* __Checking ‘build’ directory__. `build/` is used to track vignette builds. 
+  I'm not sure how this check could fail unless you've accidentally 
+  `.Rbuildignore`d the `build/` directory.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1846 -->
+* __Checking installed files from ‘inst/doc’__.  Don't put files in `inst/doc` -
+  vignettes now live in `vignettes/`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1941 -->
+* __Checking files in ‘vignettes’__. 
+  Problems here are usually straightforward - you've included files that are
+  already included in R (like `jss.cls`, `jss.bst`, or `Sweave.sty`), or 
+  you have leftover latex compilation files. Delete these files.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2008 -->
+* __Checking for sizes of PDF files under 'inst/doc'__. If you're making PDF
+  vignettes, you can make them as small as possible by running 
+  `tools::compactPDF()`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2619 -->
+* __Checking for unstated dependencies in vignettes__. As with tests, every
+  package that you use in a vignette must be listed in the `DESCRIPTION`. 
+  If a package is used only for a vignette, and not elsewhere, make sure 
+  it's listed in `Suggests`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2629 -->
+* __Checking package vignettes in ‘inst/doc’__. This checks that every source
+  vignette (i.e. `.Rmd`) has a built equivalent (i.e. `.html`) in `inst/doc`. 
+  This shouldn't fail if you've used the standard process outlined in 
+  [vignettes](#vignettes). If there is a problem, start by checking your
+  `.Rbuildignore`.
+  
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2763 -->
+* __Checking running R code from vignettes__. The R code from each vignette 
+  is run. If you want to deliberately execute errors (to show the user what 
+  failure looks like), make sure the chunk has `error = TRUE, purl = FALSE`.
+
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2856 -->
+* __Checking re-building of vignette outputs__. Each vignette is re-knit to
+  make sure that the output corresponds to the input. Again, this shouldn't
+  fail in normal circumstances.
+  
+To run vignettes, the package first must be installed. That means `check()`:
+
+1. Builds the package.
+1. Installs the package without vignettes.
+1. Builds all the vignettes.
+1. Re-installs the package with vignettes.
+
+If you have a lot of compiled code, this can be rather slow. You may want to add `--no-build-vignettes` to the commands list in "Build Source Packages" field in the project options:
+
+```{r, echo = FALSE}
+knitr::include_graphics("images/project-options-build.png")
+```
+
+## Checking after every commit with Travis {#travis}
+
+If you use git and GitHub, as described in [git and GitHub](#git), I highly recommend learning about [Travis](https://travis-ci.org/). Travis is a continuous integration service, which means that it runs automated testing code everytime you push to GitHub. For open source projects, Travis provides 50 minutes of free computation on a Ubuntu server for every push. For an R package, the most useful code to run is `devtools::check()`. 
+
+To use Travis:
+
+1.  Run `devtools::use_travis()` to set up a basic `.travis.yml` config file. 
+
+1.  Navigate to your [Travis account](https://travis-ci.org/profile) and enable
+    Travis for the repo you want to test.
+
+1.  Commit and push to GitHub.
+
+1.  Wait a few minutes to see the results in your email.
+
+With this setup in place, every time you push to GitHub, and every time someone submits a pull request, `devtools::check()` will be automatically run. You'll find out about failures right away, which makes them easier to fix. Using Travis also encourages me to check more often locally, because I know if it fails I'll find out about it a few minutes later, often once I've moved on to a new problem.
+
+### Basic config
+
+The Travis config is stored in a yaml file called `.travis.yml`. The default config created by devtools looks like this:
+
+```yaml
+language: r
+warnings_are_errors: true
+sudo: required
+```
+
+R has recently become a community supported language on Travis and you can read the documentation at  <http://docs.travis-ci.com/user/languages/r/>.
+
+There are two particularly useful options:
+
+`r_github_packages`
+ : A list of R packages to install from github. This allows you to test
+   against the development version of your dependencies.
+ 
+`r_binary_packages`
+ : A list of precompiled R packages to install from Ubuntu. This allows 
+   you to reduce the build time. You can see if a binary version of a 
+   package is available by searching on <http://packages.ubuntu.com> for 
+   `r-cran-lowercasename`. For example, searching for `r-cran-xml` reveals that 
+   you can get a binary version of XML package.
+
+### Other uses
+
+Since Travis allows you to run arbitrary code, there are many other things that you can use it for:
+
+* Re-publishing a book website every time you make a change to the source.
+  (Like this book!)
+
+* Building vignettes and publishing them to a website.
+
+* Automatically building a documentation website for your package.
+
+To learn more, read about the many [deployment options](http://docs.travis-ci.com/user/deployment/) provided by Travis.

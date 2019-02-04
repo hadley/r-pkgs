@@ -1,24 +1,16 @@
 language: R
+sudo: false
 cache:
   packages: true
   directories:
-  - vendor
-sudo: false
+  - _bookdown_files
+  - $HOME/.npm
 
-before_install:
-- bundle install --deployment
+pandoc_version: 2.1.1
 
-script: bundle exec jekyll build
+script:
+- Rscript -e 'bookdown::render_book("index.Rmd")'
 
 after_success:
-  - cp -r figures/ _site/figures
-
-deploy:
-  provider: s3
-  access_key_id: AKIAJRIHBGWIWAZYFUFQ
-  secret_access_key:
-    secure: "c+2fsBiv47OpL/t7H4AKWB4zpNVNeZZ0Q/41ha48BlqZlgyoINcM1n2D4e0eWixpfSdxT0Uwtccv1rfb6eQj7lTvbz5aniPISobOa6+I4uRSNoAjCYh3BttBL55RFX8NXn9gL/H09kG3SyQ4Eu4By4FFUaPPa3zs5oiNIDYnRN0="
-  bucket: r-pkgs.had.co.nz
-  endpoint: r-pkgs.had.co.nz.s3-website-us-east-1.amazonaws.com
-  local-dir: _site
-  skip_cleanup: true
+- nvm install stable
+- npm install netlify-cli -g
