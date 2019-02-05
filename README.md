@@ -1,13 +1,10 @@
-# R packages
+# R Packages
 
-This is code and text behind the [R packages](http://r-pkgs.had.co.nz)
-book. 
+[![Build Status](https://travis-ci.org/hadley/r-pkgs.svg?branch=master)](https://travis-ci.org/hadley/r-pkgs)
 
-*Status as of 2018-11: Work on a second edition of this book is planned for 2019 and at the moment this repo is "resting". Issues and PRs are still welcome but may not be addressed until that revision begins. This is especially true for any updates related to changes in devtools and related packages.* 
+This repo holds the code and text behind the **R Packages** book. The site is built with [bookdown](https://bookdown.org/yihui/bookdown/).
 
-The site is built using [bookdown](https://github.com/rstudio/bookdown) package.
- To create the site, you need:
+  * The first edition is available at <http://r-pkgs.had.co.nz>.
+  * A second edition is under development and available at <https://r-pkgs.org>.
 
-* bookdown: `install_github("rstudio/bookdown")`
-* [pandoc](http://johnmacfarlane.net/pandoc/)
-* [knitr](http://yihui.name/knitr/): `install.packages("knitr")`
+*Status as of 2019-02: Work on a second edition is starting and this repo is coming out of hibernation. Issues and PRs are welcome. There will be big updates subsequent to the [recent changes in devtools and related packages](https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/). We may need to implement those changes systematically ourselves vs. piecemeal, so consider that when deciding between opening an issue or a PR.* 
