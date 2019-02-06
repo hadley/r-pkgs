@@ -1,5 +1,27 @@
 # The Whole Game {#whole-game}
 
+```{r configure}
+dest <- "tmp_user"
+
+dest <- match.arg(
+  dest,
+  choices = c(NA, "tmp_user", "tmp_session")
+)
+create <- !is.na(dest)
+destdir <- switch(
+  dest,
+  tmp_user = fs::path_home("tmp", "foofactors"),
+  tmp_session = fs::path_temp("foofactors"),
+  NULL
+)
+if (!is.null(destdir)) {
+  if (fs::dir_exists(destdir)) {
+    fs::dir_delete(destdir)
+  }
+  fs::dir_create(destdir)
+}
+```
+
 *Spoiler alert!*
 
 This chapter runs through the development of a small toy package, from beginning to end. It's meant to give you a sense of the Big Picture, before we delve into the details for each of the key components of an R package.
@@ -12,13 +34,14 @@ This chapter runs through the development of a small toy package, from beginning
 params <- list(debug = FALSE, github = FALSE)
 ```
 
-
 ## Load devtools
 
-Load the devtools package.
+Load the devtools package. Incidentally, we will also use fs, for filesystem work, and the tidyverse, for data wrangling.
 
 ```{r}
 library(devtools)
+library(fs)
+library(tidyverse)
 ```
 
 Since devtools is a workflow package, you may consider loading it automatically in all of your interactive R sessions. In general, it's not a great idea to load packages this way, as it invites you to create R scripts that don't reflect all of their dependencies via explicit calls to `library(foo)`. But devtools is meant to smooth the process of package development and is, therefore, unlikely to get baked into any analysis scripts. The pros may outweigh the cons in this case.
@@ -48,7 +71,7 @@ The foofactors package itself is not the only purpose of this vignette. It is al
 
 The foofactors package is tracked during its development with the Git version control system. This is purely optional and you can certainly follow along without implementing this. A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting foofactors on GitHub: <https://github.com/jennybc/foofactors>. By inspecting the [commit history](https://github.com/jennybc/foofactors/commits/master) and especially the diffs, you can see exactly what changes at each step of the process laid out below.
 
- *Obviously some similar repo could exist under the [r-pkgs](https://github.com/r-pkgs) GitHub Organization.*
+*Obviously some similar repo could exist under the [r-pkgs](https://github.com/r-pkgs) GitHub Organization.*
 
 ## System prep
 
@@ -60,40 +83,24 @@ In the past, I link out to a page that gives instructions for:
 
 Maybe this can be skipped if the immediate goal is to build a pure R package? Or an internal link to similar content within the book?
 
-## `create()` the package
+## `create_package()`
 
-The `create()` function initializes a new package in a new directory on your computer. The new package will comply with all devtools conventions and will immediately pass `R CMD check`. Ideally, your package will always be in this happy state and it is something you should verify often.
+The `create_package()` function initializes a new package in a directory on your computer and creates the directory, if necessary. The new package will comply with all devtools conventions and will immediately pass `R CMD check`. Ideally, your package will always be in this happy state and it is something you should verify often.
 
-Make a deliberate choice about where to create this package on your computer. It should probably be in your home directory, alongside your other R projects. It should not be in, for example, an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don't try to do devtools' job for it.
+Make a deliberate choice about where to create this package on your computer. It should probably be somewhere within your home directory, alongside your other R projects. It should not be in, for example, an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don't try to do devtools' job for it.
 
-```{r delete-previous-ff, include = FALSE}
-## Plan A: let's put the package in session temp file!
-#ff_path <- normalizePath(tempfile("foofactors-"), mustWork = FALSE)
-#dir.create(ff_path)
-## nope ... it is useful for it to be less perishable, for post mortem
-## inspection
-## NOTE: for devtools / CRAN, however, this might be the best bet
+Here we create a new package in a new directory with `create_package()`. We'll have to work in a temp directory, but if you're following along, you should substitute the correct path for **your** system here.
 
-## Plan B: let's put the package in this repo!
-#ff_path <- "packages99"
-## nope ... devtools::use_git() detects the enclosing git repo and doesn't
-## operate normally
-
-## Plan C: let's put the package in my own tmp dir!
-## this appears to be the least awful choice
-ff_path <-
-  normalizePath(file.path("~", "tmp", "foofactors"), mustWork = FALSE)
-## delete any previous version
-unlink(ff_path, recursive = TRUE)
-if (!dir.exists(file.path("~", "tmp"))) {
-  dir.create(file.path("~", "tmp"))
-}
+```{r create-package-fake, eval = FALSE}
+create_package("path/to/foofactors")
 ```
 
-Create a new package in a new directory with `create()`:
+```{r create-package, eval = create}
+create_package(destdir, open = FALSE, rstudio = TRUE)
+```
 
-```{r create, eval = FALSE}
-create("~/tmp/foofactors")
+```{r activate-package, echo = FALSE, eval = create}
+usethis::proj_set(destdir)
 ```
 
 ```{r set-root-dir, include = params$debug, eval = FALSE}
@@ -117,20 +124,29 @@ knitr::opts_knit$get("root.dir")
 getwd()
 ```
 
-If you use RStudio, navigate to this directory and double click on `foofactors.Rproj` to launch a new instance of RStudio in the Project that is also your foofactors package. RStudio has special handling for packages and you should now see a *Build* tab in the same pane as *Environment* and *History*.
+If you use RStudio, you should find yourself in a new instance of RStudio, opened into your new foofactors package (and Project). If you somehow need to do this manually, navigate to the directory and double click on `foofactors.Rproj`. RStudio has special handling for packages and you should now see a *Build* tab in the same pane as *Environment* and *History*.
 
-What files are in this new directory? Here's a listing (locally, you can consult your file browser):
+*good place for a screenshot*
 
-```{r init-list-files, eval = FALSE}
-cbind(listing_1 <- list.files(all.files = TRUE, no.. = TRUE))
+What's in this new directory that is also an R package and, possibly, an RStudio Project? Here's a listing (locally, you can consult your file browser):
+
+```{r init-show-files, eval = create}
+proj_get() %>% 
+  dir_info(all = TRUE) %>% 
+  select(path, type)
 ```
 
+  * `.Rbuildignore` lists files that we need to have around but that should not be included when building the R package from source.
+  * `Rproj.user`, if you have it, is a directory used internally by RStudio.
   * `.gitignore` anticipates Git usage and ignores some standard, behind-the-scenes files created by R and RStudio. Even if you do not plan to use Git, this is harmless.
-  * `.Rbuildignore` lists files that we need to have around but that should not be included when building the R package from this source.
-  * `DESCRIPTION` provides [metadata about your package](http://r-pkgs.had.co.nz/description.html). We edit this shortly.
-  * `foofactors.Rproj` is the file that makes this directory an RStudio Project. Even if you don't use RStudio, this file is harmless. Or you can suppress its creation with `create(..., rstudio = FALSE)`.
-  * [`NAMESPACE`](http://r-pkgs.had.co.nz/namespace.html) declares the functions your package exports for external use and the external functions your package imports from other packages. At the moment, it holds temporary-yet-functional placeholder content.
-  * The `R/` directory is the ["business end" of your package](http://r-pkgs.had.co.nz/r.html). It will soon contain `.R` files with function definitions.
+  * `DESCRIPTION` provides [metadata about your package](#description). We edit this shortly.
+  * [`NAMESPACE`](#namespace) declares the functions your package exports for external use and the external functions your package imports from other packages. At the moment, it holds temporary-yet-functional placeholder content.
+  * The `R/` directory is the ["business end" of your package](#r). It will soon contain `.R` files with function definitions.
+  * `foofactors.Rproj` is the file that makes this directory an RStudio Project. Even if you don't use RStudio, this file is harmless. Or you can suppress its creation with `create_package(..., rstudio = FALSE)`.
+
+```{r init-list-files, include = FALSE, eval = create}
+listing_1 <- dir_ls(proj_get(), all = TRUE)
+```
 
 ## `use_git()` for version control
 
@@ -138,27 +154,30 @@ cbind(listing_1 <- list.files(all.files = TRUE, no.. = TRUE))
 
 The foofactors directory is an R source package and an RStudio Project. Now we make it also a Git repository, with `devtools::use_git()`.
 
-```{r use-git, eval = FALSE}
+```{r use-git, eval = create}
 use_git()
 ```
 
-```{r git2r-begin, include = params$debug, eval = FALSE}
+*In an interactive session, you might be asked if you want to commit some files here.*
+
+```{r git2r-begin, include = params$debug, eval = create}
 library(git2r)
-#dir.exists(ff_path)
-discover_repository(ff_path)
+discover_repository(destdir)
 ```
 
 What's new? Only the creation of a `.git` directory, which is hidden in most contexts, including the RStudio file browser. Its existence is evidence that we have indeed initialized a Git repo here.
 
-```{r post-git-init-list-files, eval = FALSE}
-listing_2 <- dir(all.files = TRUE, no.. = TRUE)
-cbind(setdiff(listing_2, listing_1))
+```{r post-git-init-list-files, eval = create}
+listing_2 <- dir_ls(proj_get(), all = TRUE)
+setdiff(listing_2, listing_1)
 ```
 
-If you use RStudio, quit and relaunch this Project, by double clicking on `foofactors.Rproj`. Now, in addition to package development support, you have access to a basic Git client in the *Git* tab of the *Environment/History/Build* pane. Click on History (the clock icon) and you should see the initial commit made by `use_git()`:
+If you're using RStudio, it probably requested permission to relaunch itself in this Project. You can do so manually by quitting and relaunching by double clicking on `foofactors.Rproj`. Now, in addition to package development support, you have access to a basic Git client in the *Git* tab of the *Environment/History/Build* pane. Click on History (the clock icon) and, if you consented, you might see an initial commit made via `use_git()`:
 
 ```{r inspect-first-commit, echo = FALSE, eval = FALSE}
-repo <- repository(getwd())
+## now that use_git() does not necessarily commit, we can't assume there is
+## a history
+repo <- repository(proj_get())
 commits(repo)[[1]]
 ```
 
@@ -178,13 +197,13 @@ Huh? Many people do not expect the result of catenating two factors to be an int
 
 Here's `fbind()`, a function that creates a new factor from two factors, a potentially less surprising result:
 
-```{r fbind-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
+```{r fbind-fodder, asis = TRUE, echo = FALSE, comment = NA}
 fbind_fodder <- c(
   "fbind <- function(a, b) {",
   "  factor(c(as.character(a), as.character(b)))",
   "}"
 )
-writeLines(fbind_fodder, file.path("R", "fbind.R"))
+writeLines(fbind_fodder, proj_path("R", "fbind.R"))
 cat(fbind_fodder, sep = "\n")
 ```
 
@@ -196,21 +215,25 @@ How do we test drive `fbind()`? If this were a regular R script, we might use Rs
 
 Call `devtools::load_all()`:
 
-```{r load-all, eval = FALSE}
+```{r load-all-fake, eval = FALSE}
 load_all()
+```
+
+```{r load-all, include = FALSE, eval = create}
+load_all(proj_get())
 ```
 
 This simulates the process of building, installing, and loading the foofactors package. In the long run, as your package accumulates more functions, some exported, some not, some of which call each other, `load_all()` gives you the most accurate sense of how the package is developing.
 
 Call `fbind(a, b)` to see how it works.
 
-```{r, eval = FALSE}
+```{r, eval = create}
 fbind(a, b)
 ```
 
 Note that `load_all()` has made the `fbind()` function available, although it does not exist in the global workspace:
 
-```{r, eval = FALSE}
+```{r, eval = create}
 exists("fbind", where = ".GlobalEnv", inherits = FALSE)
 ```
 
