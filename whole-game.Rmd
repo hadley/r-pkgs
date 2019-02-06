@@ -255,7 +255,7 @@ You may want to learn the RStudio keyboard and menu shortcuts for `load_all()`:
 
 If you're using Git, use your preferred method to commit the new `R/fbind.R` file.
 
-```{r fbind-init, echo = params$debug, comment = NA, eval = FALSE}
+```{r fbind-init, echo = params$debug, comment = NA, include = FALSE, eval = FALSE}
 add(repo, path = file.path("R", "fbind.R"))
 commit(repo, message = "Add fbind()")
 ## tags might be useful for making stable links to the package at specific
@@ -271,7 +271,7 @@ commit(repo, message = "Add fbind()")
 The diff associated with this commit should look something like this, though you may have a nicer way of inspecting it:
 -->
 
-```{r ugly-diff, include = FALSE, eval = FALSE, asis = TRUE, eval = FALSE}
+```{r ugly-diff, include = FALSE, eval = FALSE, asis = TRUE}
 commits(repo)[[1]]
 tree_1 <- tree(commits(repo)[[2]])
 tree_2 <- tree(commits(repo)[[1]])
@@ -284,7 +284,7 @@ From this point on, we make commits after each step, indicated by a brief messag
 
 We have solid evidence that `fbind()` works. But how can we be sure that all the moving parts of the package still work? This may seem silly to check, after such a small addition, but it's good to establish the habit of checking this often.
 
-How do we move our local source package through the necessary stages to get it properly installed? (Figure from [R Packages](http://r-pkgs.had.co.nz/package.html#package).)
+How do we move our local source package through the necessary stages to get it properly installed?
 
 ```{r pkg-installation-diagram, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("diagrams/installation.png")
@@ -300,7 +300,7 @@ devtools wraps the base utilities for package management, but in a way favorable
 
 In a shell, with working directory set to the parent of `foofactors`, here's what usage might look like:
 
-``` shell
+``` bash
 R CMD build foofactors
 R CMD check foofactors_0.0.0.9000.tar.gz
 R CMD INSTALL foofactors_0.0.0.9000.tar.gz
@@ -314,13 +314,16 @@ At intermediate milestones, you should check your package:
 
   * In R Console
     - `devtools::check()`
-  * From RStudio
-    - *Build > Check*
+  * From RStudio's *Build* pane:
+    - *Check*
+    - *More > Check package*
+    - Windows & Linux: Ctrl + Shift + E (*check this*)
+    - Mac: Cmd + Shift + E
 
 **Just this once, run `check()` with `document = FALSE`**, so we don't get ahead of ourselves. Specifically, I don't want to mess with our `NAMESPACE` file yet.
 
-```{r check-no-document, eval = FALSE}
-check(document = FALSE)
+```{r check-no-document, eval = create, warning = TRUE}
+check(proj_get(), document = FALSE, error_on = "never")
 ```
 
 **Read the output of the check!** Deal with problems early and often. It's just like incremental development of `.R` and `.Rmd`. The longer you go between full checks that everything works, the harder it is to pinpoint and solve your problems.
@@ -334,8 +337,8 @@ We'll address both soon.
 
 Since we've already made respectable interim progress, let's install the foofactors package into your library and load it via `devtools::install()`:
 
-```{r first-install, eval = FALSE}
-install()
+```{r first-install, eval = create}
+install(proj_get())
 ```
 
 Now we can load and use foofactors like any other package.
@@ -350,13 +353,13 @@ Now that we've installed foofactors properly, let's revisit our small example fr
 
 Is foofactors indeed available for loading?
 
-```{r, eval = FALSE}
+```{r, eval = create}
 grep("foofactors", installed.packages()[ , "Package"], value = TRUE)
 ```
 
 Yes! Load and use it.
 
-```{r, eval = FALSE}
+```{r, eval = create}
 library(foofactors)
 a <- factor(c("character", "hits", "your", "eyeballs"))
 b <- factor(c("but", "integer", "where it", "counts"))
@@ -369,18 +372,17 @@ Success!
 
 Before we tackle the warnings about the license and documentation, we replace some of the boilerplate content in `DESCRIPTION`. The `DESCRIPTION` file provides metadata about your package:
 
-  * read more from [R Packages](http://r-pkgs.had.co.nz/description.html)
+  * Full coverage is in [Package metadata](#description).
   * read more from [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file)
 
 Make these edits:
 
   * Make yourself the author.
-  * Write some descriptive text in the `Title` and `Description` fields. Note that CRAN is very particular about these fields, so if you want to keep passing `check()`, read [this section](http://r-pkgs.had.co.nz/description.html#pkg-description) of R Packages.
-  * Specify a license. We opted for MIT here, which requires a bit more work to complete (see next section).
+  * Write some descriptive text in the `Title` and `Description` fields. Note that CRAN is very particular about these fields, so if you want to keep passing `check()`, there is deeper coverage [later in this book](#pkg-description).
 
 When you're done, `DESCRIPTION` should look similar to this:
 
-```{r description-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
+```{r description-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = create}
 DESCRIPTION_fodder <- c(
   "Package: foofactors",
   "Title: Make Factors Less Annoying",
@@ -391,12 +393,9 @@ DESCRIPTION_fodder <- c(
     "    custom conference ribbons and laptop stickers to express how HELLNO we",
     "    feel about stringsAsFactors. And yet, sometimes you need them. Can they",
     "    be made less maddening? Let's find out.",
-  "Depends:",
-  "    R (>= 3.2.2)",
-  "License: MIT + file LICENSE",
   "LazyData: true"
 )
-writeLines(DESCRIPTION_fodder, "DESCRIPTION")
+writeLines(DESCRIPTION_fodder, proj_path("DESCRIPTION"))
 cat(DESCRIPTION_fodder, sep = "\n")
 ```
 
@@ -409,22 +408,24 @@ commit(repo, message = "Edit DESCRIPTION")
 
 > [Pick a License, Any License. -- Jeff Atwood](http://blog.codinghorror.com/pick-a-license-any-license/)
 
-For foofactors, we use the MIT license. This requires specification in `DESCRIPTION`, done above, and a file called `LICENSE`. We create that now via the helper function `devtools::use_mit_license()`.
+For foofactors, we use the MIT license. This requires specification in `DESCRIPTION` and a file called `LICENSE`. We do this now via the helper function `devtools::use_mit_license()`.
 
-```{r use-mit-license, eval = FALSE}
-use_mit_license()
+```{r use-mit-license, eval = create}
+use_mit_license("Jennifer Bryan")
 ```
 
-Open the newly created `LICENSE` file and, if necessary, edit it to make sure it has the current year and your name:
+Open the newly created `LICENSE` file and confirm it has the current year and your name.
 
 ```{r license-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
 LICENSE_fodder <- trimws("
-YEAR: 2016
+YEAR: 2019
 COPYRIGHT HOLDER: Jennifer Bryan
 ")
 writeLines(LICENSE_fodder, "LICENSE")
 cat(LICENSE_fodder, sep = "\n")
 ```
+
+*mention LICENSE vs LICENSE.md here?*
 
 ```{r commit-license, echo = params$debug, comment = NA, eval = FALSE}
 add(repo, path = "LICENSE")
@@ -433,7 +434,7 @@ commit(repo, message = "Add LICENSE")
 
 For future projects, there is more guidance on licenses in these sources:
 
-  * [R Packages](http://r-pkgs.had.co.nz/description.html#license)
+  * The [License section of this book](#license)
   * [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Licensing)
   * GitHub's guide at <http://choosealicense.com>
 
@@ -441,13 +442,13 @@ For future projects, there is more guidance on licenses in these sources:
 
 Wouldn't it be nice to get help on `fbind()`, just like we do with other R functions? This requires that your package have a special R documentation file, `man/fbind.Rd`, written in an R-specific markup language that is sort of like LaTeX. Luckily we don't necessarily have to author that directly.
 
-We write a specially formatted comment right above `fbind()`, in its source file, and then let a package called [roxygen2](https://CRAN.R-project.org/package=roxygen2) handle the creation of `man/fbind.Rd`.  To read more about the motivation and mechanics of roxygen2, read [the documentation chapter](http://r-pkgs.had.co.nz/man.html) of R Packages.
+We write a specially formatted comment right above `fbind()`, in its source file, and then let a package called [roxygen2](https://CRAN.R-project.org/package=roxygen2) handle the creation of `man/fbind.Rd`.  To read more about the motivation and mechanics of roxygen2, read [the documentation chapter](#man) here.
 
 If you use RStudio, open `R/fbind.R` in the source editor and put the cursor somewhere in the `fbind()` function definition. Now do *Code > Insert roxygen skeleton*. A very special comment should appear above your function, in which each line begins with `#'`. RStudio only inserts a barebones template, so you will need to edit it to look something like that below.
 
 If you don't use RStudio, create the comment yourself along these lines:
 
-```{r fbind-roxygen-header, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
+```{r fbind-roxygen-header, asis = TRUE, echo = FALSE, comment = NA, eval = create}
 fbind_roxygen_header <- c(
   "#' Bind two factors",
   "#'",
@@ -462,9 +463,9 @@ fbind_roxygen_header <- c(
   "#' @examples",
   "#' fbind(iris$Species[c(1, 51, 101)], PlantGrowth$group[c(1, 11, 21)])"
 )
-fbind_safe <- readLines(file.path("R", "fbind.R"))
+fbind_safe <- readLines(proj_path("R", "fbind.R"))
 writeLines(c(fbind_roxygen_header, paste(fbind_safe, collapse = "\n")),
-           file.path("R", "fbind.R"))
+           proj_path("R", "fbind.R"))
 cat(fbind_roxygen_header, sep = "\n")
 ```
 
@@ -481,8 +482,8 @@ But we're not done yet! We still need to trigger the conversion of the roxygen c
     - `document()`, which is a wrapper function provided by devtools.
     Under the hood, it's calling the roxygen2 package.
 
-```{r document-fbind, eval = FALSE}
-document()
+```{r document-fbind, eval = create}
+document(proj_get())
 ```
 
 You should now be able to preview your help file like so:
@@ -501,8 +502,8 @@ The RStudio [Package Development with devtools Cheat Sheet](https://www.rstudio.
 
 In addition to converting `fbind()`'s special comment into `man/fbind.Rd`, by default, `devtools::document()` updates the `NAMESPACE` file, based on `@export` directives found in roxygen comments. Open `NAMESPACE` for inspection. It should look like so:
 
-```{r asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
-cat(readLines("NAMESPACE"), sep = "\n")
+```{r asis = TRUE, echo = FALSE, comment = NA, eval = create}
+cat(readLines(proj_path("NAMESPACE")), sep = "\n")
 ```
 
 It no longer has the placeholder content saying "export everything". Instead, there is now an explicit directive to export the `fbind()` function.
@@ -520,8 +521,8 @@ tag(repo, "pass-check", "first pass R CMD check")
 
 foofactors should pass `R CMD check` cleanly now and forever more: 0 errors, 0 warnings, 0 notes.
 
-```{r first-check-success, eval = FALSE}
-check()
+```{r first-check-success, eval = create}
+check(proj_get())
 ```
 
 ## `use_testthat()`
