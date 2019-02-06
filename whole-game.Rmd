@@ -597,42 +597,41 @@ For much more guidance, read the [testing chapter](#tests).
 
 You will inevitably want to use a function from another package in your own package. Just as we needed to **export** `fbind()`, we need to **import** functions from the namespace of other packages. If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as "always available", such as `stats::median()` or `utils::head()`.
 
-There is more than one way to go about this. We use the approach recommended in the [namespace chapter](http://r-pkgs.had.co.nz/namespace.html) of R Packages and in the [rOpenSci Packaging Guide](https://github.com/ropensci/packaging_guide#deps).  The general usage pattern is this: give the name of the external package, then two colons, then the function to call.
+There is more than one way to go about this. We use the approach recommended in the [namespace chapter](#namespace). The general usage pattern is this: give the name of the external package, then two colons, then the function to call.
 
-First, declare your general intent to use some functions from the dplyr namespace with `devtools::use_package()`:
+First, declare your general intent to use some functions from the forcats namespace with `devtools::use_package()`:
 
-```{r use-dplyr, eval = FALSE}
-use_package("dplyr")
+```{r use-forcats, eval = create}
+use_package("forcats")
 ```
 
-```{r commit-dplyr-imports, echo = params$debug, comment = NA, eval = FALSE}
+```{r commit-forcats-imports, echo = params$debug, comment = NA, eval = FALSE}
 paths <- unlist(status(repo))
 add(repo, path = paths)
 commit(repo, message = "Declare we will use dplyr")
 ```
 
-This adds the dplyr package to the "Imports" section of `DESCRIPTION`. And that is all.
+This adds the forcats package to the "Imports" section of `DESCRIPTION`. And that is all.
 
-Now we add a new function to foofactors that does, indeed, use a function from dplyr. Imagine we want a frequency table for a factor, as a regular data frame with nice variable names, versus as an object of class `table` or something with odd names. Preface your calls to dplyr functions with `dplyr::`.
+Now we add a new function to foofactors that does, indeed, use a function from forcats. Imagine we want a frequency table for a factor, as a regular data frame with nice variable names, versus as an object of class `table` or something with odd names. Preface your calls to forcats functions with `forcats::`.
 
 Create a new file `R/freq_out.R` with this function definition:
 
-```{r freq-out-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
+```{r freq-out-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = create}
 freq_out_fodder <- c(
-  "#' Make a frequency table for a factor",
+  "#' Make a sorted frequency table for a factor",
   "#'",
   "#' @param x factor",
   "#'",
-  "#' @return tbl_df",
+  "#' @return A tibble",
   "#' @export",
   "#' @examples",
   "#' freq_out(iris$Species)",
   "freq_out <- function(x) {",
-  "  xdf <- dplyr::data_frame(x)",
-  "  dplyr::count(xdf, x)",
+  "  forcats::fct_count(x, sort = TRUE)",
   "}"
 )
-writeLines(freq_out_fodder, file.path("R", "freq_out.R"))
+writeLines(freq_out_fodder, proj_path("R", "freq_out.R"))
 cat(freq_out_fodder, sep = "\n")
 ```
 
@@ -644,15 +643,15 @@ commit(repo, message = "Add freq_out()")
 
 Try out the new function.
 
-```{r freq-out-test-drive, eval = FALSE}
-load_all()
+```{r freq-out-test-drive, eval = create}
+load_all(proj_get())
 freq_out(iris$Species)
 ```
 
 Generate the associated help file via `document()` or *Build > Document*.
 
-```{r document-freq-out, eval = FALSE}
-document()
+```{r document-freq-out, eval = create}
+document(proj_get())
 ```
 
 ```{r commit-freq-out-rd, echo = params$debug, comment = NA, eval = FALSE}
@@ -663,21 +662,21 @@ commit(repo, message = "Document freq_out()")
 
 ## `use_package_doc()`
 
-*Update to use the new sentinel and describe it accurately? Maybe devtools should be updated to do that too?*
-
-Let's start adding package-level documentation. Your package as a whole can have its own `.Rd` file. You can see an example by entering `package?dplyr` in R Console. Read more about the uses of package-level documentation in [R Packages](http://r-pkgs.had.co.nz/man.html#man-packages).
+Let's start adding package-level documentation. Your package as a whole can have its own `.Rd` file. You can see an example by entering `package?tibble` in R Console. Read more about the uses of package-level documentation [later in this book](#man-packages).
 
 Set this up with `devtools::use_package_doc()`:
 
-```{r use-package-doc, eval = FALSE}
+```{r use-package-doc, eval = create}
 use_package_doc()
 ```
 
-This creates a peculiar dummy file `R/foofactors-package.R` with a roxygen header, that is documenting just ... `NULL`. The purpose of this is simply to trigger the generation of a package-level `.Rd` file.
+This creates a peculiar dummy file `R/foofactors-package.R` with a roxygen header, that is just documenting `NULL`. The purpose of this is simply to trigger the generation of a package-level `.Rd` file.
 
+<!--
 Edit `R/foofactors-package.R` to look something like this. I just copied info from `DESCRIPTION` but you can add more info here and possibly should in real life.  This file isn't subject to the same CRAN checks as `DESCRIPTION`, so you have much more freedom.
+-->
 
-```{r pkg-doc-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE}
+```{r pkg-doc-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = FALSE, include = FALSE}
 pkg_doc_fodder <- trimws("
 #' foofactors: Make factors less annoying
 #'
@@ -702,8 +701,8 @@ commit(repo, message = "Add package-level doc")
 
 Don't forget to run `document()`!
 
-```{r document-package, eval = FALSE}
-document()
+```{r document-package, eval = create}
+document(proj_get())
 ```
 
 ```{r commit-package-Rd, echo = params$debug, comment = NA, eval = FALSE}
@@ -714,17 +713,17 @@ commit(repo, message = "Run document()")
 
 Have a look at your new package-level docs:
 
-```{r eval = FALSE, eval = FALSE}
+```{r eval = FALSE}
 ?foofactors
 ```
 
 ## `use_vignette()`
 
-A piece of package-level documentation that's probably familiar to you is the vignette. This is a great place to put a fully developed example that calls multiple functions from your package to do something useful and realistic. See the [vignettes chapter](http://r-pkgs.had.co.nz/vignettes.html) of R Packages for more.
+A piece of package-level documentation that's probably familiar to you is the vignette. This is a great place to put a fully developed example that calls multiple functions from your package to do something useful and realistic. See the [vignettes chapter](#vignettes) for more.
 
 Use `devtools::use_vignette()` to initialize a new vignette:
 
-```{r use-vignette, eval = FALSE}
+```{r use-vignette, eval = create}
 use_vignette("hello-foofactors")
 ```
 
@@ -750,9 +749,10 @@ Now you need to edit `vignettes/hello-foofactors.Rmd`. At the very least, do thi
 The vignette source can be seen here: [vignettes/hello-foofactors.Rmd](https://raw.githubusercontent.com/jennybc/foofactors/master/vignettes/hello-foofactors.Rmd)
 
 ```{r copy-vignette, asis = TRUE, echo = FALSE, comment = NA, include = params$debug, eval = FALSE}
-vignette_path <- file.path("vignettes", "hello-foofactors.Rmd")
-file.copy(file.path(owd, "foofactors-vignette.Rmd"),
-          vignette_path, overwrite = TRUE)
+vignette_path <- proj_path("vignettes", "hello-foofactors.Rmd")
+# FIXME: bring here or download from web?
+# file.copy(file.path(owd, "foofactors-vignette.Rmd"),
+#           vignette_path, overwrite = TRUE)
 #cat(readLines(vignette_path), sep = "\n")
 ```
 
@@ -764,6 +764,7 @@ commit(repo, message = "Write vignette")
 
 How to see your compiled vignette? For a quick preview, just use RStudio's "Knit HTML" button. Problem is, the downstream products aren't saved anywhere in your package, so you'll need to redo this every time you want to look at the vignette.
 
+<!--
 If you want to hold on to a compiled vignette, for your own sake or to push to GitHub, it's a little fiddly. I'm not executing any of these for real, so don't expect to see the result in the foofactors repo on GitHub.
 
 Option 1:
@@ -791,6 +792,8 @@ output:
 Which means vignette `.md` would be left behind in `vignettes/` and therefore potentially available on GitHub.
 
 *I'm really not sure what to advise here?*
+
+-->
 
 ## `use_github()`
 
@@ -828,7 +831,6 @@ use_github()
 
 ## private repo using ssh
 use_github(private = TRUE)
-
 ```
 
 ```{r use-github, echo = FALSE, eval = params$github, eval = FALSE}
@@ -844,7 +846,7 @@ Now that your package is on GitHub, the `README.md` file matters. It is the pack
 
 The `devtools::use_readme_rmd()` function initializes a basic, executable `README.Rmd` ready for you to edit:
 
-```{r use-readme-rmd, eval = FALSE}
+```{r use-readme-rmd, eval = create}
 use_readme_rmd()
 ```
 
@@ -860,8 +862,8 @@ How to populate this skeleton? Copy stuff liberally from `DESCRIPTION`, `R/foofa
 
 We write the `README` in R markdown, so it can feature actual usage. It will load the currently installed version of your package, so this is a good time to do "Build & Reload" in RStudio. Or do this in R Console:
 
-```{r pre-readme-install, eval = FALSE}
-install()
+```{r pre-readme-install, eval = create}
+install(proj_get())
 ```
 
 If RStudio has not already done so, open `README.Rmd` for editing. Make sure it shows some usage of `fbind()` and/or `freq_out()`, for example.
@@ -875,12 +877,14 @@ commit(repo, message = "Set up README.Rmd")
 The `README.Rmd` we use can be seen here: [README.Rmd](https://raw.githubusercontent.com/jennybc/foofactors/master/README.Rmd).
 
 ```{r copy-readme-rmd, include = params$debug, eval = FALSE}
-file.copy(file.path(owd, "foofactors-README.Rmd"),
-          "README.Rmd", overwrite = TRUE)
+# FIXME
+# file.copy(file.path(owd, "foofactors-README.Rmd"),
+#           "README.Rmd", overwrite = TRUE)
 ```
 
-```{r cat-readme-rmd, asis = TRUE, echo = FALSE, comment = NA, include = FALSE, eval = FALSE}
-cat(readLines("README.Rmd"), sep = "\n")
+```{r cat-readme-rmd, asis = TRUE, echo = FALSE, comment = NA, include = FALSE, eval = create}
+# FIXME
+# cat(readLines("README.Rmd"), sep = "\n")
 ```
 
 Don't forget to render it to make `README.md`! The pre-commit hook should remind you if you try to commit `README.Rmd` but not `README.md` and also when `README.md` appears to be out-of-date.
@@ -889,9 +893,10 @@ Don't forget to render it to make `README.md`! The pre-commit hook should remind
 rmarkdown::render("README.Rmd") ## or use "Knit HTML"
 ```
 
-```{r render-readme-rmd, include = params$debug, eval = FALSE}
-callr::r(function(.input) rmarkdown::render(input = .input, quiet = TRUE),
-         args = list(.input = "README.Rmd"))
+```{r render-readme-rmd, include = params$debug, eval = create}
+# FIXME
+# callr::r(function(.input) rmarkdown::render(input = .input, quiet = TRUE),
+#         args = list(.input = "README.Rmd"))
 ```
 
 You can see the rendered `README.md` simply by [visiting foofactors on GitHub](https://github.com/jennybc/foofactors#readme).
@@ -918,32 +923,18 @@ push(repo, credentials = cred_user_pass("EMAIL",
 
 Let's run `check()` again to make sure all is still well.
 
-```{r final-check, eval = FALSE}
-check()
+```{r final-check, eval = create}
+check(proj_get())
 ```
 
 foofactors should have no errors, warnings or notes. This would be a good time to do "Build and reload" to celebrate.
 
-```{r final-install, eval = FALSE}
-install()
+```{r final-install, eval = create}
+install(proj_get())
 ```
 
 Feel free to visit the [foofactors package](https://github.com/jennybc/foofactors) on GitHub, which is exactly as developed in this vignette. The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved.
 
-```{r teardown, include = params$debug, eval = FALSE}
+```{r teardown, include = params$debug, eval = create}
 remove.packages("foofactors")
-## interactive dev
-setwd(owd)
-knitr::opts_knit$set(root.dir = owd)
-knitr::opts_knit$get("root.dir")
-```
-
-```{r include = params$debug, eval = FALSE}
-## FUTURE JENNY! don't move this into the previous chunk!
-## you can't remove current working directory and the root.dir change
-## doesn't take effect until you enter the next chunk
-getwd()
-
-## for now, I like leaving this for inspection
-#unlink(ff_path, recursive = TRUE)
 ```
