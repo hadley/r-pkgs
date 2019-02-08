@@ -1,6 +1,7 @@
 # R Packages
 
-[![Build Status](https://travis-ci.org/hadley/r-pkgs.svg?branch=master)](https://travis-ci.org/hadley/r-pkgs)
+[![Travis Status](https://travis-ci.org/hadley/r-pkgs.svg?branch=master)](https://travis-ci.org/hadley/r-pkgs)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/a5dbbee9-7396-4e7f-8ce7-6abd362d9752/deploy-status)](https://app.netlify.com/sites/r-pkgs/deploys)
 
 This repo holds the code and text behind the **R Packages** book. The site is built with [bookdown](https://bookdown.org/yihui/bookdown/).
 
