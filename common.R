@@ -62,13 +62,13 @@ error_wrap <- function(x, width = getOption("width")) {
   paste(strwrap(lines, width = width), collapse = "\n")
 }
 
-knitr::knit_hooks$set(local_opts = function(before, options, envir) {
-  if (before) {
-    if (!is.null(options$local_opts)) {
-      old_opts <<- options(options$local_opts)
-    }
+knitr::knit_hooks$set(chunk_envvar = function(before, options, envir) {
+  envvar <- options$chunk_envvar
+  if (before && !is.null(envvar)) {
+    old_envvar <<- Sys.getenv(names(envvar), names = TRUE, unset = NA)
+    do.call("Sys.setenv", as.list(envvar))
     #print(str(options))
   } else {
-    options(old_opts)
+    do.call("Sys.setenv", as.list(old_envvar))
   }
 })
