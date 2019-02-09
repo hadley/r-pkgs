@@ -61,3 +61,14 @@ error_wrap <- function(x, width = getOption("width")) {
   lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
   paste(strwrap(lines, width = width), collapse = "\n")
 }
+
+knitr::knit_hooks$set(local_opts = function(before, options, envir) {
+  if (before) {
+    if (!is.null(options$local_opts)) {
+      old_opts <<- options(options$local_opts)
+    }
+    #print(str(options))
+  } else {
+    options(old_opts)
+  }
+})
