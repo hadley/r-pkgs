@@ -74,9 +74,17 @@ knitr::knit_hooks$set(chunk_envvar = function(before, options, envir) {
 })
 
 check_quietly <- purrr::quietly(devtools::check)
+install_quietly <- purrr::quietly(devtools::install)
 
 shhh_check <- function(..., quiet = TRUE) {
   out <- check_quietly(..., quiet = quiet)
   out$result
+}
+
+pretty_install <- function(...) {
+  out <- install_quietly(...)
+  output <- strsplit(out$output, split = "\n")[[1]]
+  output <- grep("^(\\s*|[-|])$", output, value = TRUE, invert = TRUE)
+  c(output, out$messages)
 }
 
