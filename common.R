@@ -72,3 +72,11 @@ knitr::knit_hooks$set(chunk_envvar = function(before, options, envir) {
     do.call("Sys.setenv", as.list(old_envvar))
   }
 })
+
+check_quietly <- purrr::quietly(devtools::check)
+
+shhh_check <- function(..., quiet = TRUE) {
+  out <- check_quietly(..., quiet = quiet)
+  out$result
+}
+
