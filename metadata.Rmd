@@ -142,13 +142,21 @@ There are three other fields that allow you to express more specialised dependen
     when you should still use `Depends`, in [namespaces](#namespace).
     
     You can also use `Depends` to require a specific version of R, e.g.
-    `Depends: R (>= 3.0.1)`. As with packages, it's a good idea to 
-    play it safe and require a version greater than or equal to the version 
-    you're currently using. `devtools::create()` will do this for you.
-    
-    In R 3.1.1 and earlier you'll also need to use `Depends: methods` if 
-    you use S4. This bug is fixed in R 3.2.0, so methods can go back to
-    `Imports` where they belong.
+    `Depends: R (>= 3.4.0)`. Think carefully if you do this. On one hand,
+    the safest thing to do is to require a version greater than or equal to
+    your current R version. On the other hand, this prevents everyone with an
+    older version of R from using your package and may be unnecessarily
+    conservative. The stakes are even higher if other packages depend on yours.
+
+      - The [backports package](https://cran.r-project.org/package=backports)
+      is useful if you want to use a function like `trimws()`, which was
+      introduced in 3.3.0, while still supporting older R versions.
+      - The tidyverse packages officially support the current R version, the
+      devel version, and four previous versions. We proactively test this 
+      support in the standard build matrix we use for continuous integration.
+      - Packages with a lower level of use may not need this level of rigour.
+      The main takeaway is: if you state a minimum, you should have a reason and
+      you should take reasonable measures to test your claim regularly.      
     
   * `LinkingTo`: packages listed here rely on C or C++ code in another package. 
     You'll learn more about `LinkingTo` in [compiled code](#src).
