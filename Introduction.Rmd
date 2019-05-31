@@ -46,14 +46,6 @@ Devtools works hand-in-hand with RStudio, which we believe is the best developme
 
 Together, devtools and RStudio insulate you from the low-level details of how packages are built. As you start to develop more packages, we highly recommend that you learn more about those details. The best resource for the official details of package development is always the official [writing R extensions][r-ext] manual. However, this manual can be hard to understand if you're not already familiar with the basics of packages. It's also exhaustive, covering every possible package component, rather than focussing on the most common and useful components, as this book does. Writing R extensions is a useful resource once you've mastered the basics and want to learn what's going on under the hood.
 
-## Something something something
-
-Version 2.0.0 of devtools is the first major release since Jim Hester assumed the role of devtools' maintainer in February 2018.
-
-TODO: describe the conscious uncoupling (https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/).
-
-TODO: possibly in its own section (?), say what we want people to do re: attaching devtools at startup and calling functions in devtools and usethis. Make sure we have a definitive and linkable statement of the preferred approach.
-
 ## In this book {#intro-outline}
 
 You'll start by learning about the basic structure of a package, and the forms it can take, in [R packages](#package-structure). Then each of the next ten chapters of the book goes into more details about each component. They're roughly organised in order of importance:
@@ -125,65 +117,112 @@ The final three chapters describe general best practices not specifically tied t
 
 This is a lot to learn, but don't feel overwhelmed. Start with a minimal subset of useful features (e.g. just an `R/` directory!) and build up over time. To paraphrase the Zen monk Shunryu Suzuki: "Each package is perfect the way it is --- and it can use a little improvement".
 
-## Getting started {#intro-get}
+## devtools, usethis, and you {#intro-usage}
 
-To get started, make sure you have the latest version of R (at least `r paste0(version$major, ".", version$minor)`, which is the version that the code in this book uses), then run the following code to get the packages you'll need:
+> "I am large, I contain multitudes."
+>
+> --- Walt Whitman, Song of Myself
+
+After 7 years of development, devtools had grown into a rather unwieldy package, making maintenance difficult. Version 2.0.0, released in late 2018, marked the [conscious uncoupling](https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/) of devtools, with most functionality moving into seven smaller packages. Through re-exports and wrapper functions, devtools continues to expose all its usual functionality, although it is mostly maintained elsewhere. devtools might provide a wrapper function in order to set more user-friendly defaults, introduce helpful interactive behaviour, or to combine functionality from multiple sub-packages.
+
+Our recommended approach to devtools and its constituent packages:
+
+  * For interactive use, useRs should attach devtools and think of it as the provider of your favorite functions for package development.
+  * For programmatic use, such as in other packages, developeRs should NOT depend on devtools, but should instead access functions via the package that is their primary home.
+    - devtools should rarely appear in the role of `foo` in a qualified call of the form `foo::fcn()`. Instead, `foo` should be the package where `fcn()` is defined.
+  * Try to report bugs on the package that is a function's primary home.
+    
+Example of how to simulate installing and loading a package, during interactive development:
+
+```{r eval = FALSE}
+library(devtools)
+load_all()
+```
+
+If that same functionality is used inside an R package, this is the preferred call:
+
+```{r eval = FALSE}
+pkgload::load_all()
+```
+
+The usethis package is the one constituent package that more people may be aware of and that they may use directly. It now holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package. All functions in usethis are re-exported by devtools. So, once you attach devtools, the functions in usethis are automatically available in your session. Just call them! For programmatic use, however, use the `usethis::use_testthat()` style.
+
+## Prepare your system {#intro-prep}
+
+To get started, make sure you have the latest version of R (at least `r paste0(version$major, ".", version$minor)`, which is the version being used to render this book), then run the following code to get the packages you'll need:
 
 ```{r, eval = FALSE}
 install.packages(c("devtools", "roxygen2", "testthat", "knitr"))
 ```
 
-Make sure you have a recent version of RStudio. You can check you have the right version by running:
+Make sure you have a recent version of the RStudio integrated development environment (IDE). In fact, consider using the preview version and updating regularly. Compared to the official released version, the preview gives you access to the latest and greatest features and only slightly increases your chances of finding a bug. It is distinct from the more volatile daily build.
 
-```{r, eval = FALSE}
-install.packages("rstudioapi")
-rstudioapi::isAvailable("0.99.149")
-```
+  * Preview version: <https://www.rstudio.com/products/rstudio/download/preview/>
+  * Released version: <https://www.rstudio.com/products/rstudio/download/>
+    - Most readers can use the free, open source version of RStudio Desktop.
 
-If not, you may need to install the preview version from <http://www.rstudio.com/products/rstudio/download/preview/>. This gives you access to the latest and greatest features, and only slightly increases your chances of finding a bug. 
-
-Use the following code to install the development versions of devtools and usethis. This is particularly important during the development of the book.
+The following code installs the development versions of devtools and usethis, which may be important during the revision of the book.
 
 ```{r, eval = FALSE}
 devtools::install_github("r-lib/devtools")
 devtools::install_github("r-lib/usethis")
 ```
 
-You'll also need a C compiler and a few other command line tools. If you're on Windows or Mac and you don't already have them, RStudio will install them for you. Otherwise:
+To be fully capable of building R packages from source, you'll also need a compiler and a few other command line tools. This may not be strictly necessary until you want to build packages containing C or C++ code (the topic of chapter \@ref(src)). Especially if you are using RStudio, you can set this aside for now. The IDE will alert you and provide support once you try to do something that requires you to setup your development environment. Read on for advice on doing this yourself.
 
-* On Windows, download and install [Rtools](http://cran.r-project.org/bin/windows/Rtools/). 
-  NB: this is not an R package!
+### Windows
 
-* On Mac, make sure you have either XCode (available for free in the App Store)
-  or the ["Command Line Tools for Xcode"](http://developer.apple.com/downloads).
-  You'll need to have a (free) Apple ID.
+On Windows the collection of tools needed for building packages from source
+is called Rtools.
 
-* On Linux, make sure you've installed not only R, but also the R development
-  tools. For example, on Ubuntu (and Debian) you need to install the 
-  `r-base-dev` package.
+Rtools is NOT an R package. It is NOT installed with
+`install.packages()`. Instead, download it from
+<https://cran.r-project.org/bin/windows/Rtools/> and run the installer.
+
+During the Rtools installation you may see a window asking you to "Select
+Additional Tasks".
+
+- Do _not_ select the box for "Edit the system PATH". devtools and RStudio should put Rtools on the `PATH` automatically when it is needed.
+- Do select the box for "Save version information to registry". It should be selected by default.
+
+### macOS
+
+You need to install the Xcode command line tools, which requires that you [register as an Apple developer](https://developer.apple.com/programs/register/) (don't worry, it's free).
+
+Then, in the shell, do:
+
+```shell
+xcode-select --install
+```
+
+Alternatively, you can install the current release of full [Xcode from the Mac App Store](https://itunes.apple.com/ca/app/xcode/id497799835?mt=12). This includes a very great deal that you do not need, but it offers the advantage of App Store convenience.
+
+### Linux
+
+Make sure you've installed not only R, but also the R development tools. For example, on Ubuntu (and Debian) you need to install the `r-base-dev` package.
+
+### Verify system prep
 
 You can check that you have everything installed and working by running the following code:
 
 ```{r, eval = FALSE}
+# TODO: replace with whatever results from https://github.com/r-lib/devtools/issues/1970
 library(devtools)
 has_devel()
-#> '/Library/Frameworks/R.framework/Resources/bin/R' --vanilla CMD SHLIB foo.c 
-#> 
-#> clang -I/Library/Frameworks/R.framework/Resources/include -DNDEBUG 
-#>   -I/usr/local/include -I/usr/local/include/freetype2 -I/opt/X11/include
-#>   -fPIC  -Wall -mtune=core2 -g -O2  -c foo.c -o foo.o
-#> clang -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup
-#>   -single_module -multiply_defined suppress -L/usr/local/lib -o foo.so foo.o 
-#>   -F/Library/Frameworks/R.framework/.. -framework R -Wl,-framework 
-#>   -Wl,CoreFoundation
-[1] TRUE
+#> [1] TRUE
 ```
 
-This will print out some code which I use to help diagnose problems. If everything is ok, it will return `TRUE`. Otherwise, it will throw an error and you'll need to investigate what the problem is.
+If everything is ok, it returns `TRUE`. Otherwise, it will reveal some diagnostic info about the problem.
 
-Since devtools is a workflow package, you may consider making it available automatically in all of your interactive R sessions. In general, it's not a great idea to load packages this way, as it invites you to create R scripts that don't reflect all of their dependencies via explicit calls to `library(foo)`. But devtools smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts. The pros may outweigh the cons for workflow packages you use often.
+### Personal startup configuration
 
-You can attach devtools in all of your interactive session by putting these lines `.Rprofile`:
+You can attach devtools like so:
+
+```{r, eval = FALSE}
+library(devtools)
+```
+
+But it soon grows aggravating to repeatedly attach devtools in every R session. Therefore, we strongly recommend that useRs attach devtools in their `.Rprofile` startup file, like so:
 
 ```{r eval = FALSE}
 if (interactive()) {
@@ -191,9 +230,15 @@ if (interactive()) {
 }
 ```
 
-The helper `use_devtools()` creates this file, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen. Another package you may want to handle this way is testthat.
+For convenience, the function `use_devtools()` creates `.Rprofile`, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen. Another package you may want to handle this way is testthat.
+
+:::tip
+In general, it's a bad idea to attach packages in `.Rprofile`, as it invites you to create R scripts that don't reflect all of their dependencies via explicit calls to `library(foo)`. But devtools is a workflow package that smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts.
+:::
 
 ## Acknowledgments {#intro-ack}
+
+TODO: when updating this, cover conscious uncoupling in version 2.0.0 and Jim Hester taking over as maintainer in February 2018.
 
 The tools in this book wouldn't be possible without many open source contributors. [Winston Chang](https://github.com/wch/), my co-author on devtools, spent hours debugging painful S4 and compiled code problems so that devtools can quickly reload code for the vast majority of packages. [Kirill Müller](https://github.com/krlmlr) contributed great patches to many of my package development packages including devtools, testthat, and roxygen2. [Kevin Ushey](http://github.com/kevinushey), [JJ Allaire](https://github.com/jjallaire) and [Dirk Eddelbuettel](http://dirk.eddelbuettel.com) tirelessly answered all my basic C, C++ and Rcpp questions. [Peter Danenburg](https://github.com/klutometis) and [Manuel Eugster](http://www.statistik.lmu.de/~eugster/) wrote the first version of roxygen2 during a Google Summer of Code. [Craig Citro](https://github.com/craigcitro) wrote much of the code to allow travis to work with R packages.
 
@@ -217,7 +262,7 @@ cat(paste0(contribs$uname, collapse = ", "))
 cat(".\n")
 ```
 
-The lightbulb image used for workflow tips comes from [www.vecteezy.com](https://www.vecteezy.com/vector-art/139644-ampoule-icons-vector).
+The light bulb image used for workflow tips comes from [www.vecteezy.com](https://www.vecteezy.com/vector-art/139644-ampoule-icons-vector).
 
 ## Conventions {#intro-conventions}
 
