@@ -130,7 +130,11 @@ You almost always want to specify a minimum version rather than an exact version
 
 Versioning is most important when you release your package. Usually people don't have exactly the same versions of packages installed that you do. If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message. However, if you supply the version number, they'll get a error message that tells them exactly what the problem is: an out of date package. 
 
-Generally, it's always better to specify the version and to be conservative about which version to require. Unless you know otherwise, always require a version greater than or equal to the version you're currently using.
+Think carefully if you declare a minimum version. In some sense, the safest thing to do is to require a version greater than or equal to the package's current version. For public work, this is most naturally defined as the current CRAN version of a package; private or personal projects may adopt some other convention. But it's important to appreciate the implications for people who try to install your package: if their local installation doesn't fulfill all of your requirements around versions, installation will either fail or force upgrades of these dependencies. This is desirable if your minimum version requirements are genuine, i.e. your package would be broken otherwise. But if your stated requirements have a less solid rationale, this may be unnecessarily conservative and inconvenient.
+
+In the absence of clear, hard requirements, you should set minimum versions (or not) based on your expected user base, the package versions they are likely to have, and a cost-benefit analysis of being too lax versus too conservative.
+
+TODO: return here and insert concrete details closer to publication. Thing 1: mention relevant usethis function(s). Today that is `use_tidy_version()` but it needs some work (https://github.com/r-lib/usethis/issues/771). Thing 2: See if Kirill's prototype of studying minimum version has matured into anything we can recommend for general use (https://github.com/r-lib/pillar/tree/c017f20476fce431ceee18cc3a637f7ed2884d3a/minver#readme)
 
 ### Other dependencies
 
@@ -142,12 +146,12 @@ There are three other fields that allow you to express more specialised dependen
     when you should still use `Depends`, in [namespaces](#namespace).
     
     You can also use `Depends` to require a specific version of R, e.g.
-    `Depends: R (>= 3.4.0)`. Think carefully if you do this. On one hand,
-    the safest thing to do is to require a version greater than or equal to
-    your current R version. On the other hand, this prevents everyone with an
-    older version of R from installing your package and may be unnecessarily
-    conservative. The stakes are even higher if other packages depend on yours,
-    because this causes a cascade of package installation failures.
+    `Depends: R (>= 3.4.0)`. Again, think carefully if you do this. This raises
+    the same issues as setting minimum version for a package you depend on,
+    except the stakes are much higher when it comes R itself. Users can't simply
+    consent to the necessary upgrade, so, if other packages depend on yours,
+    your minimum version requirement for R can cause a cascade of package
+    installation failures.
 
       - The [backports package](https://cran.r-project.org/package=backports)
       is useful if you want to use a function like `trimws()`, which was
