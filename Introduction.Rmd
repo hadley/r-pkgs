@@ -126,14 +126,58 @@ This is a lot to learn, but don't feel overwhelmed. Start with a minimal subset 
 
 ## Acknowledgments {#intro-ack}
 
-TODO: when updating this, cover conscious uncoupling in version 2.0.0 and Jim Hester taking over as maintainer in February 2018.
+```{r eval = FALSE, include = FALSE}
+# code generates fodder for the prose below
+library(desc)
 
-The tools in this book wouldn't be possible without many open source contributors. [Winston Chang](https://github.com/wch/), my co-author on devtools, spent hours debugging painful S4 and compiled code problems so that devtools can quickly reload code for the vast majority of packages. [Kirill Müller](https://github.com/krlmlr) contributed great patches to many of my package development packages including devtools, testthat, and roxygen2. [Kevin Ushey](http://github.com/kevinushey), [JJ Allaire](https://github.com/jjallaire) and [Dirk Eddelbuettel](http://dirk.eddelbuettel.com) tirelessly answered all my basic C, C++ and Rcpp questions. [Peter Danenburg](https://github.com/klutometis) and [Manuel Eugster](http://www.statistik.lmu.de/~eugster/) wrote the first version of roxygen2 during a Google Summer of Code. [Craig Citro](https://github.com/craigcitro) wrote much of the code to allow travis to work with R packages.
+get_contributors <- function(pkg = "devtools") {
+  desc_get_authors(system.file("DESCRIPTION", package = pkg))
+}
+# using packages represented by hex stickers in 2019 usethis useR! talk
+# team agreed that was the "right" set of packages
+get_contributors("devtools")
+get_contributors("usethis")
+get_contributors("testthat")
+get_contributors("pkgload")
+
+get_contributors("rcmdcheck")
+get_contributors("sessioninfo")
+get_contributors("remotes")
+get_contributors("revdepcheck")
+
+get_contributors("pkgbuild")
+get_contributors("roxygen2")
+get_contributors("desc")
+get_contributors("withr")
+```
+
+Since the first edition of R Packages was published, the packages supporting the workflows described here have undergone extensive development. The original trio of devtools, roxygen2, and testthat has expanded to include the packages created by the ["conscious uncoupling" of devtools](#setup-usage). Most of these packages originate with Hadley Wickham (HW), because of their devtools roots. There are many other significant contributors, many of whom now serve as maintainers:
+
+  * devtools: HW, [Winston Chang][winston], [Jim Hester][jim] (maintainer, >= v1.13.5)
+  * usethis: HW, [Jennifer Bryan][jenny] (maintainer >= v1.5.0)
+  * roxygen2: HW (maintainer), [Peter Danenburg][klutometis], [Manuel Eugster][mjaeugster]
+  * testthat: HW (maintainer)
+  * desc: [Gábor Csárdi][gabor] (maintainer), [Kirill Müller][kirill], [Jim Hester][jim]
+  * pkgbuild: HW, [Jim Hester][jim] (maintainer)
+  * pkgload: HW, [Jim Hester][jim] (maintainer), [Winston Chang][winston]
+  * rcmdcheck: [Gábor Csárdi][gabor] (maintainer)
+  * remotes: HW, [Jim Hester][jim] (maintainer), [Gábor Csárdi][gabor], [Winston Chang][winston], [Martin Morgan][mtmorgan], [Dan Tenenbaum][dtenenba]
+  * revdepcheck: HW, [Gábor Csárdi][gabor] (maintainer)
+  * sessioninfo: HW, [Gábor Csárdi][gabor] (maintainer), [Winston Chang][winston], [Robert Flight][rmflight], [Kirill Müller][kirill], [Jim Hester][jim]
+
+This book and the R package development community benefit tremendously from experts who smooth over specific pain points:
+
+  * [Kevin Ushey][kevin], [JJ Allaire](https://github.com/jjallaire), and [Dirk Eddelbuettel](http://dirk.eddelbuettel.com) tirelessly answered all sorts of C, C++, and Rcpp questions.
+  * [Craig Citro](https://github.com/craigcitro) wrote much of the initial code to facilitate using Travis-CI with R packages.
+  * [Jeroen Ooms](https://github.com/jeroen) also helps to maintain R community infrastructure, such as the current R support for Travis-CI (along with Jim Hester), and the Windows toolchain.
+
+*TODO: revisit rest of this section when 2nd edition nears completion. Currently applies to and worded for 1st edition.*
 
 Often the only way I learn how to do it the right way is by doing it the wrong way first. For suffering through many package development errors, I'd like to thank all the CRAN maintainers, especially Brian Ripley, Uwe Ligges and Kurt Hornik. 
 
-This book was [written in the open](https://github.com/hadley/r-pkgs/) and it is truly a community effort: many people read drafts, fixed typos, suggested improvements, and contributed content. Without those contributors, the book wouldn't be nearly as good as it is, and I'm deeply grateful for their help. A special thanks goes to Peter Li, who read the book from cover-to-cover and provided many fixes. I also deeply appreciate the time the reviewers ([Duncan Murdoch](http://www.stats.uwo.ca/faculty/murdoch/), [Karthik Ram](http://karthik.io), [Vitalie Spinu](http://vitalie.spinu.info) and [Ramnath Vaidyanathan](https://ramnathv.github.io)) spent reading the book and giving me thorough feedback.
+This book was [written and revised in the open](https://github.com/hadley/r-pkgs/) and it is truly a community effort: many people read drafts, fix typos, suggest improvements, and contribute content. Without those contributors, the book wouldn't be nearly as good as it is, and we are deeply grateful for their help.
 
+A special thanks goes to Peter Li, who read the book from cover-to-cover and provided many fixes. I also deeply appreciate the time the reviewers ([Duncan Murdoch](http://www.stats.uwo.ca/faculty/murdoch/), [Karthik Ram](http://karthik.io), [Vitalie Spinu](http://vitalie.spinu.info) and [Ramnath Vaidyanathan](https://ramnathv.github.io)) spent reading the book and giving me thorough feedback.
 
 ```{r, results = "asis", echo = FALSE, eval = TRUE}
 # git --no-pager shortlog -ns > contribs.txt
@@ -154,20 +198,32 @@ The light bulb image used for workflow tips comes from [www.vecteezy.com](https:
 
 ## Conventions {#intro-conventions}
 
-Throughout this book, I write `foo()` to refer to functions, `bar` to refer to variables and function parameters, and `baz/` to paths. 
+Throughout this book, we write `foo()` to refer to functions, `bar` to refer to variables and function parameters, and `baz/` for paths. 
 
-Larger code blocks intermingle input and output. Output is commented so that if you have an electronic version of the book, e.g., <http://r-pkgs.had.co.nz>, you can easily copy and paste examples into R. Output comments look like `#>` to distinguish them from regular comments.
+Larger code blocks intermingle input and output. Output is commented so that if you have an electronic version of the book, e.g., <https://r-pkgs.org>, you can easily copy and paste examples into R. Output comments look like `#>` to distinguish them from regular comments.
 
 ## Colophon {#intro-colophon}
 
-This book was written in [Rmarkdown](http://rmarkdown.rstudio.com/) inside [RStudio](http://www.rstudio.com/ide/). [knitr](http://yihui.name/knitr/) and [pandoc](http://johnmacfarlane.net/pandoc/) converted the raw Rmarkdown to html and pdf. The [website](http://r-pkgs.had.co.nz) was made with [jekyll](http://jekyllrb.com/), styled with [bootstrap](http://getbootstrap.com/), and automatically published to Amazon's [S3](http://aws.amazon.com/s3/) by [travis-ci](https://travis-ci.org/). The complete source is available from [github](https://github.com/hadley/r-pkgs).
+This book was authored using [R Markdown](https://rmarkdown.rstudio.com), using [bookdown](https://bookdown.org), inside [RStudio](https://www.rstudio.com/products/rstudio/). The [website](https://r-pkgs.org) is hosted with [Netlify](https://www.netlify.com), and automatically updated after every commit by [Travis-CI](https://travis-ci.org). The complete source is available from [GitHub](https://github.com/hadley/r-pkgs).
 
 This version of the book was built with:
 
 ```{r}
+library(devtools)
 library(roxygen2)
 library(testthat)
 devtools::session_info()
 ```
 
-[r-ext]:http://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages
+[r-ext]:https://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages
+[winston]:https://github.com/wch
+[jim]:https://github.com/jimhester
+[jenny]:https://github.com/jennybc
+[klutometis]:https://github.com/klutometis
+[mjaeugster]:https://github.com/mjaeugster
+[gabor]:https://github.com/gaborcsardi
+[mtmorgan]:https://github.com/mtmorgan
+[dtenenba]:https://github.com/dtenenba
+[kirill]:https://github.com/krlmlr
+[rmflight]:https://github.com/rmflight
+[kevin]:https://github.com/kevinushey
