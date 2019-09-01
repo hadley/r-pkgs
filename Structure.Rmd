@@ -55,7 +55,7 @@ tar xvf forcats_0.4.0.tar.gz
 
 If you decompress a bundle, you'll see it looks almost the same as a source package. This diagram summarises the files present in the top-level directory for source, bundled, and binary versions of devtools.
 
-*TODO: Remake this, possibly with a different (fictional or deliberately crafted?) package. Things I want to address: README.Rmd, .github/, CI config, pkgdown, LICENSE.md, data-raw/, updated treatment of NEWS.md, existence of vignettes/ in tarball, presence of build/ in tarball.*
+*TODO: Remake this, possibly with a different (fictional or deliberately crafted?) package. Things I want to address: README.Rmd, .github/, CI config, pkgdown, LICENSE.md, data-raw/, updated treatment of NEWS.md, existence of vignettes/ in tarball, presence of build/ in tarball, absence of README.md in binary form.*
 
 ```{r, echo = FALSE}
 knitr::include_graphics("diagrams/package-files.png")
@@ -115,9 +115,20 @@ Note that the comments above are not generally present in `.Rbuildignore`; they 
 
 We'll mention when you need to add files to `.Rbuildignore` whenever it's important. Remember that `usethis::use_build_ignore()` is an attractive way to manage this file.
 
-### Binary packages
+### Binary package
 
-If you want to distribute your package to an R user who doesn't have package development tools, you'll need to make a __binary__ package. Like a package bundle, a binary package is a single file. But if you uncompress it, you'll see that the internal structure is rather different from a source package: 
+If you want to distribute your package to an R user who doesn't have package development tools, you'll need to make a __binary__ package. Like a package bundle, a binary package is a single file. Unlike a bundled package, a binary package is platform specific and there are two basic flavors: Windows and macOS. (Linux users are generally required to have the tools necessary to install from `.tar.gz` files.)
+
+Binary packages for macOS are stored as `.tgz`, whereas Windows binary packages end in `.zip`. If you need to make a binary package, use `devtools::build(binary = TRUE)` on the relevant operating system. Under the hood, this calls `pkgbuild::build(binary = TRUE)` and, ultimately, `R CMD INSTALL --build`, which is described further in the [Building binary packages][wre-binary] secion of [Writing R Extensions][wre].
+
+CRAN packages are usually available in binary form, for both macOS and Windows, for the current, previous, and (possibly) development versions of R. Continuing our examples from above, you could download binary packages such as:
+
+  * forcats for macOS: `forcats_0.4.0.tgz`
+  * stringr for Windows: `stringr_1.4.0.zip`
+
+and this is, indeed, part of what's usually going on behind the scenes when you call `install.packages()`.
+
+If you uncompress a binary package, you'll see that the internal structure is rather different from a source or bundled package. Here are some of the most notable differences:
 
 * There are no `.R` files in the `R/` directory - instead there are three
   files that store the parsed functions in an efficient file format. This is
@@ -125,21 +136,26 @@ If you want to distribute your package to an R user who doesn't have package dev
   functions with `save()`. (In the process, this adds a little extra metadata to 
   make things as fast as possible).
 
-* A `Meta/` directory contains a number of `Rds` files. These files contain 
+* A `Meta/` directory contains a number of `.rds` files. These files contain 
   cached metadata about the package, like what topics the help files cover and
-  parsed versions of the `DESCRIPTION` files. (You can use `readRDS()` to see 
+  a parsed version of the `DESCRIPTION` file. (You can use `readRDS()` to see 
   exactly what's in those files). These files make package loading faster
   by caching costly computations.
 
-* An `html/` directory contains files needed for HTML help.
+* The actual help content appears in `help/` and `html/` (no longer in `man/`).
 
-* If you had any code in the `src/` directory there will now be a `libs/`
-  directory that contains the results of compiling 32 bit (`i386/`) and 64 bit 
-  (`x64/`) code.
+* If you had any code in the `src/` directory, there will now be a `libs/`
+  directory that contains the results of compiling the code. On Windows, there
+  are subdirectories for 32 bit (`i386/`) and 64 bit (`x64/`) environments.
+
+* If you had any objects in `data/`, they have now been converted into a more
+  efficient form.
   
-* The contents of `inst/` are moved to the top-level directory.
+* The contents of `inst/` are moved to the top-level directory. For example,
+  vignette files are now in `doc/`.
 
-Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. Also, while Mac binary packages end in `.tgz`, Windows binary packages end in `.zip`. You can use `devtools::build(binary = TRUE)` to make a binary package. 
+* Some files and folders have been dropped, such as `README`, `build/`, `tests/`,
+  and `vignettes/`.
 
 ### Installed packages {#install}
 
@@ -362,6 +378,6 @@ knitr::include_graphics("images/project-options-2.png")
 ```
     
 
-[wre-tarball]:https://cran.r-project.org/doc/manuals/R-exts.html
-[wre]:https://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages
-
+[wre]:https://cran.r-project.org/doc/manuals/R-exts.html
+[wre-tarball]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-package-tarballs
+[wre-binary]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-binary-packages
