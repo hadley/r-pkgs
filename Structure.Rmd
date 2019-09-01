@@ -29,7 +29,7 @@ Many R packages are developed in the open on GitHub (or GitLab or similar). The 
   - forcats: <https://cran.r-project.org/package=forcats>
   - stringr: <https://cran.r-project.org/package=stringr>
     
-and one of its URLs links to a public hosting service, e.g.:
+and one of its URLs links to a repository on a public hosting service, e.g.:
 
   - forcats: <https://github.com/tidyverse/forcats>
   - stringr: <https://github.com/tidyverse/stringr>
@@ -43,17 +43,27 @@ Even if a package is not developed on a public platform, you can visit its sourc
 
 ### Bundled package
 
-A __bundled__ package is a package that's been compressed into a single file. By convention (from Linux), package bundles in R use the extension `.tar.gz` and are sometimes referred to as "source tarballs". This means that multiple files have been reduced to a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it's a useful platform-agnostic intermediary between the other states. In the rare case that you need to make a bundle from a package you're developing locally, use `devtools::build()`. Under the hood, this calls `pkgbuild::build()` and, ultimately, `R CMD build`.
+A __bundled__ package is a package that's been compressed into a single file. By convention (from Linux), package bundles in R use the extension `.tar.gz` and are sometimes referred to as "source tarballs". This means that multiple files have been reduced to a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it's a useful platform-agnostic intermediary between the other states.
 
-CRAN offers each package in this form via the "Package source" on the package's landing page. Continuing our examples from above, you could download the bundles `forcats_0.4.0.tar.gz` and `stringr_1.4.0.tar.gz`. You can unpack such a bundle in the shell (not the R console) like so:
+In the rare case that you need to make a bundle from a package you're developing locally, use `devtools::build()`. Under the hood, this calls `pkgbuild::build()` and, ultimately, `R CMD build`, which is described further in the [Building package tarballs][wre-tarball] secion of [Writing R Extensions][wre].
+
+Every CRAN package is available in this form, via the "Package source" field of individual landing pages. Continuing our examples from above, you could download the bundles `forcats_0.4.0.tar.gz` and `stringr_1.4.0.tar.gz` (or whatever the current versions may be). You could unpack such a bundle in the shell (not the R console) like so:
 
 ```bash
 tar xvf forcats_0.4.0.tar.gz
 ```
 
-If you decompress a bundle, you'll see it looks almost the same as a source package. The main differences between an uncompressed bundle and a source package are:
+If you decompress a bundle, you'll see it looks almost the same as a source package. This diagram summarises the files present in the top-level directory for source, bundled, and binary versions of devtools.
 
-* Vignettes are built, so rendered outputs, such as HTML, appear below
+*TODO: Remake this, possibly with a different (fictional or deliberately crafted?) package. Things I want to address: README.Rmd, .github/, CI config, pkgdown, LICENSE.md, data-raw/, updated treatment of NEWS.md, existence of vignettes/ in tarball, presence of build/ in tarball.*
+
+```{r, echo = FALSE}
+knitr::include_graphics("diagrams/package-files.png")
+```
+
+The main differences between a source package and an uncompressed bundle are:
+
+* Vignettes have been built, so rendered outputs, such as HTML, appear below
   `inst/doc/` and a vignette index appears in the `build/` directory, usually
   alongside a PDF package manual.
 
@@ -65,7 +75,11 @@ If you decompress a bundle, you'll see it looks almost the same as a source pack
   typically files that facilitate your development process, but that should be
   excluded from the distributed product.
 
-Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package, i.e. the result of `dir(full.names = TRUE)` run from the package's top-level directory. If the regular expression matches, that file or directory is excluded.
+#### `.Rbuildignore` {#rbuildignore}
+
+You won't need to contemplate the exact structure of package `.tar.gz` files very often, but you do need to understand the `.Rbuildignore` file. It controls which files from the source package make it into the downstream forms.
+
+Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package, i.e. the result of `dir(full.names = TRUE, recursive = TRUE, include.dirs = TRUE, all.files = TRUE)` run from the package's top-level directory. If the regular expression matches, that file or directory is excluded. Note there are some default exclusions implemented by R itself, mostly relating to classic version control systems and editors, such as SVN, Git, and Emacs.
 
 To exclude a specific file or directory (the most common use case), you __MUST__ anchor the regular expression. For example, to exclude a directory called "notes", use `^notes$`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. The safest way to exclude a specific file or directory is to use `usethis::use_build_ignore("notes")`, which does the escaping for you.
 
@@ -73,25 +87,25 @@ To exclude a specific file or directory (the most common use case), you __MUST__
 
   * Files that help you generate package contents programmatically. Examples:
     - Using `README.Rmd` to generate an informative and current `README.md`.
+    - Storing `.R` scripts to create and update internal or exported data.
+  * Files that drive package development, checking, and documentation, outside
+    of CRAN's purview. Examples:
+    - Files relating to the RStudio IDE.
     - Using the [pkgdown package](https://pkgdown.r-lib.org) to generate a
-      package website.
-    - Storing `.R` scripts to create and update internal or exported data that
-      ships in a package.
-  * Files that drive package checking and documentation, outside of CRAN's
-    purview. Examples:
-    - Files consulted by your preferred development environment.
+      website.
     - Configuration files related to continuous integration/deployment and 
       monitoring test coverage.
 
-Here is a non-exhaustive selection of typical entries in the `.Rbuildignore` file for a package in the tidyverse:
+Here is a non-exhaustive list of typical entries in the `.Rbuildignore` file for a package in the tidyverse:
 
 ```
 ^.*\.Rproj$         # Designates the directory as an RStudio Project
 ^\.Rproj\.user$     # Used by RStudio for temporary files
 ^README\.Rmd$       # An Rmd file used to generate README.md
+^LICENSE\.md$       # Full text of the license
 ^cran-comments\.md$ # Comments for CRAN submission
 ^\.travis\.yml$     # Used by Travis-CI for continuous integration testing
-^data-raw$          # Code used to create any data included in the package
+^data-raw$          # Code used to create data included in the package
 ^pkgdown$           # Resources used for the package website
 ^_pkgdown\.yml$     # Configuration info for the package website
 ^\.github$          # Contributing guidelines, CoC, issue templates, etc.
@@ -126,12 +140,6 @@ If you want to distribute your package to an R user who doesn't have package dev
 * The contents of `inst/` are moved to the top-level directory.
 
 Binary packages are platform specific: you can't install a Windows binary package on a Mac or vice versa. Also, while Mac binary packages end in `.tgz`, Windows binary packages end in `.zip`. You can use `devtools::build(binary = TRUE)` to make a binary package. 
-
-The following diagram summarises the files present in the root directory for source, bundled and binary versions of devtools.
-
-```{r, echo = FALSE}
-knitr::include_graphics("diagrams/package-files.png")
-```
 
 ### Installed packages {#install}
 
@@ -353,3 +361,7 @@ knitr::include_graphics("images/project-options-1.png")
 knitr::include_graphics("images/project-options-2.png")
 ```
     
+
+[wre-tarball]:https://cran.r-project.org/doc/manuals/R-exts.html
+[wre]:https://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages
+
