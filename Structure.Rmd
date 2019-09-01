@@ -41,37 +41,65 @@ Even if a package is not developed on a public platform, you can visit its sourc
   - MASS: <https://github.com/cran/MASS>
   - car: <https://github.com/cran/car>
 
-### Bundled packages
+### Bundled package
 
-A __bundled__ package is a package that's been compressed into a single file. By convention (from Linux), package bundles in R use the extension `.tar.gz`. This means that multiple files have been reduced to a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it's a useful intermediary between the other states. In the rare case that you do need a bundle, call `devtools::build()` to make it. 
+A __bundled__ package is a package that's been compressed into a single file. By convention (from Linux), package bundles in R use the extension `.tar.gz` and are sometimes referred to as "source tarballs". This means that multiple files have been reduced to a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it's a useful platform-agnostic intermediary between the other states. In the rare case that you need to make a bundle from a package you're developing locally, use `devtools::build()`. Under the hood, this calls `pkgbuild::build()` and, ultimately, `R CMD build`.
 
-If you decompress a bundle, you'll see it looks almost the same as your source package. The main differences between an uncompressed bundle and a source package are:
+CRAN offers each package in this form via the "Package source" on the package's landing page. Continuing our examples from above, you could download the bundles `forcats_0.4.0.tar.gz` and `stringr_1.4.0.tar.gz`. You can unpack such a bundle in the shell (not the R console) like so:
 
-* Vignettes are built so that you get HTML and PDF output instead of 
-  Markdown or LaTeX input.
+```bash
+tar xvf forcats_0.4.0.tar.gz
+```
 
-* Your source package might contain temporary files used to save time during
+If you decompress a bundle, you'll see it looks almost the same as a source package. The main differences between an uncompressed bundle and a source package are:
+
+* Vignettes are built, so rendered outputs, such as HTML, appear below
+  `inst/doc/` and a vignette index appears in the `build/` directory, usually
+  alongside a PDF package manual.
+
+* A local source package might contain temporary files used to save time during
   development, like compilation artefacts in `src/`. These are never found in 
   a bundle.
-  
-* Any files listed in `.Rbuildignore` are not included in the bundle.
 
-`.Rbuildignore` prevents files in the source package from appearing in the bundled package. It allows you to have additional directories in your source package that will not be included in the package bundle. This is particularly useful when you generate package contents (e.g. data) from other files. Those files should be included in the source package, but only the results need to be distributed. This is particularly important for CRAN packages (where the set of allowed top-level directories is fixed). Each line gives a Perl-compatible regular expression that is matched, without regard to case, against the path to each file (i.e. `dir(full.names = TRUE)` run from the package root directory) - if the regular expression matches, the file is excluded. 
+* Any files listed in `.Rbuildignore` are not included in the bundle. These are
+  typically files that facilitate your development process, but that should be
+  excluded from the distributed product.
 
-If you wish to exclude a specific file or directory (the most common use case), you __MUST__ anchor the regular expression. For example, to exclude a directory called notes, use `^notes$`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. The safest way to exclude a specific file or directory is to use `usethis::use_build_ignore("notes")`, which does the escaping for you.
+Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package, i.e. the result of `dir(full.names = TRUE)` run from the package's top-level directory. If the regular expression matches, that file or directory is excluded.
 
-Here's a typical `.Rbuildignore` file from one of my packages:
+To exclude a specific file or directory (the most common use case), you __MUST__ anchor the regular expression. For example, to exclude a directory called "notes", use `^notes$`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. The safest way to exclude a specific file or directory is to use `usethis::use_build_ignore("notes")`, which does the escaping for you.
+
+`.Rbuildignore` is a way to resolve some of the tension between the practices that support your development process and CRAN's requirements for submission and distribution. The affected files fall into two broad, semi-overlapping classes:
+
+  * Files that help you generate package contents programmatically. Examples:
+    - Using `README.Rmd` to generate an informative and current `README.md`.
+    - Using the [pkgdown package](https://pkgdown.r-lib.org) to generate a
+      package website.
+    - Storing `.R` scripts to create and update internal or exported data that
+      ships in a package.
+  * Files that drive package checking and documentation, outside of CRAN's
+    purview. Examples:
+    - Files consulted by your preferred development environment.
+    - Configuration files related to continuous integration/deployment and 
+      monitoring test coverage.
+
+Here is a non-exhaustive selection of typical entries in the `.Rbuildignore` file for a package in the tidyverse:
 
 ```
-^.*\.Rproj$         # Automatically added by RStudio,
-^\.Rproj\.user$     # used for temporary files. 
-^README\.Rmd$       # An Rmarkdown file used to generate README.md
+^.*\.Rproj$         # Designates the directory as an RStudio Project
+^\.Rproj\.user$     # Used by RStudio for temporary files
+^README\.Rmd$       # An Rmd file used to generate README.md
 ^cran-comments\.md$ # Comments for CRAN submission
-^NEWS\.md$          # A news file written in Markdown
-^\.travis\.yml$     # Used for continuous integration testing with travis
+^\.travis\.yml$     # Used by Travis-CI for continuous integration testing
+^data-raw$          # Code used to create any data included in the package
+^pkgdown$           # Resources used for the package website
+^_pkgdown\.yml$     # Configuration info for the package website
+^\.github$          # Contributing guidelines, CoC, issue templates, etc.
 ```
 
-I'll mention when you need to add files to `.Rbuildignore` whenever it's important.
+Note that the comments above are not generally present in `.Rbuildignore`; they are included here only for exposition.
+
+We'll mention when you need to add files to `.Rbuildignore` whenever it's important. Remember that `usethis::use_build_ignore()` is an attractive way to manage this file.
 
 ### Binary packages
 
