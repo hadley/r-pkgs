@@ -157,19 +157,30 @@ If you uncompress a binary package, you'll see that the internal structure is ra
 * Some files and folders have been dropped, such as `README`, `build/`, `tests/`,
   and `vignettes/`.
 
-### Installed packages {#install}
+### Installed package
 
-An __installed__ package is just a binary package that's been decompressed into a package library (described below). The following diagram illustrates the many ways a package can be installed. This diagram is complicated! In an ideal world, installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed. In the real world, it's not this simple because there are often (faster) shortcuts available.
+An __installed__ package is a binary package that's been decompressed into a package library (described in \@ref(library)). The following diagram illustrates the many ways a package can be installed. This diagram is complicated! In an ideal world, installing a package would involve stringing together a set of simple steps: source -> bundle, bundle -> binary, binary -> installed. In the real world, it's not this simple because there are often (faster) shortcuts available.
 
 ```{r, echo = FALSE}
 knitr::include_graphics("diagrams/installation.png")
 ```
 
-The tool that powers all package installation is the command line tool `R CMD INSTALL` - it can install a source, bundle or a binary package. Devtools functions provide wrappers that allow you to access this tool from R rather than from the command line. `devtools::install()` is effectively a wrapper for `R CMD INSTALL`. `devtools::build()` is a wrapper for `R CMD build` that turns source packages into bundles. `devtools::install_github()` downloads a source package from GitHub, runs `build()` to make vignettes, and then uses `R CMD INSTALL` to do the install. `devtools::install_url()`, `devtools::install_gitorious()`, `devtools::install_bitbucket()` work similarly for packages found elsewhere on the internet.
+The built-in command line tool `R CMD INSTALL` powers all package installation. It can install a package from source files, a bundle (a.k.a. a source tarball), or a binary package. Details are available in the [Installing packages section][ria-install] of [R Installation and Administration][ria]. Just like with `devtools::build()`, devtools provides a wrapper function, `devtools::install()`, that makes this tool available from within an R session.
 
-`install.packages()` and `devtools::install_github()` allow you to install a remote package. Both work by downloading and then installing the package. This makes installation very speedy. `install.packages()` is used to download and install binary packages built by CRAN. `install_github()` works a little differently - it downloads a source package, builds it and then installs it.
+Most useRs understandably like to install packages from the comfort of an R session and directly from CRAN. The built-in function `install.packages()` meets this need. It can download the package, in various forms, install it, and optionally attend to the installation of dependencies.
 
-You can prevent files in the package bundle from being included in the installed package using `.Rinstignore`. This works the same way as `.Rbuildignore`, described above. It's rarely needed.
+Devtools offers a family of `install_*()` functions to address some needs beyond the reach of `install.packages()` or to make existing capabilities easier to access:
+
+```{r}
+library(devtools)
+
+funs <- as.character(lsf.str("package:devtools"))
+grep("^install_.+", funs, value = TRUE)
+```
+
+`devtools::install_github()` is the flagship example of a sub-family of functions that can download a package from a remote location that is not CRAN and do whatever is necessary to install it. `install_github()` and friends are actually provided by the [remotes package](https://remotes.r-lib.org) and are re-exported by devtools. The rest of the devtools/remotes `install_*()` functions are aimed at making things that are technically possible with base tooling a bit easier or more explicit, such as `install_version()` which installs a specific version of a CRAN package.
+
+ Analogous to `.Rbuildignore`, described in section \@ref(rbuildignore), `.Rinstignore` lets you keep files present in a package bundle out of the installed package. However, in contrast to `.Rbuildignore`, this is rather obscure and rarely needed.
 
 ### In memory packages
 
@@ -381,3 +392,5 @@ knitr::include_graphics("images/project-options-2.png")
 [wre]:https://cran.r-project.org/doc/manuals/R-exts.html
 [wre-tarball]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-package-tarballs
 [wre-binary]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-binary-packages
+[ria]:https://cran.r-project.org/doc/manuals/R-admin.html
+[ria-install]:https://cran.r-project.org/doc/manuals/R-admin.html#Installing-packages
