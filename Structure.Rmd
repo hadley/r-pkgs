@@ -45,11 +45,13 @@ Note that this is not the same as exploring the package's true development venue
 
 ### Bundled package
 
-A __bundled__ package is a package that's been compressed into a single file. By convention (from Linux), package bundles in R use the extension `.tar.gz` and are sometimes referred to as "source tarballs". This means that multiple files have been reduced to a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it's a useful platform-agnostic intermediary between the other states.
+A __bundled__ package is a package that's been compressed into a single file. By convention (from Linux), package bundles in R use the extension `.tar.gz` and are sometimes referred to as "source tarballs". This means that multiple files have been reduced to a single file (`.tar`) and then compressed using gzip (`.gz`). While a bundle is not that useful on its own, it's a platform-agnostic, transportation-friendly intermediary between a source package and an installed package.
 
 In the rare case that you need to make a bundle from a package you're developing locally, use `devtools::build()`. Under the hood, this calls `pkgbuild::build()` and, ultimately, `R CMD build`, which is described further in the [Building package tarballs][wre-tarball] secion of [Writing R Extensions][wre].
 
-Every CRAN package is available in this form, via the "Package source" field of individual landing pages. Continuing our examples from above, you could download the bundles `forcats_0.4.0.tar.gz` and `readxl_1.3.1.tar.gz` (or whatever the current versions may be). You could unpack such a bundle in the shell (not the R console) like so:
+This should tip you off that a package bundle or "source tarball" is not simply the result of making a tar archive of the source files, then compressing with gzip. By convention, in the R world, a few more operations are carried out when making the `.tar.gz` file and this is why we've elected to refer to this as a package bundle.
+
+Every CRAN package is available in bundled form, via the "Package source" field of individual landing pages. Continuing our examples from above, you could download the bundles `forcats_0.4.0.tar.gz` and `readxl_1.3.1.tar.gz` (or whatever the current versions may be). You could unpack such a bundle in the shell (not the R console) like so:
 
 ```bash
 tar xvf forcats_0.4.0.tar.gz
@@ -81,11 +83,11 @@ The main differences between a source package and an uncompressed bundle are:
 
 You won't need to contemplate the exact structure of package `.tar.gz` files very often, but you do need to understand the `.Rbuildignore` file. It controls which files from the source package make it into the downstream forms.
 
-Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package, i.e. the result of `dir(full.names = TRUE, recursive = TRUE, include.dirs = TRUE, all.files = TRUE)` run from the package's top-level directory. If the regular expression matches, that file or directory is excluded. Note there are some default exclusions implemented by R itself, mostly relating to classic version control systems and editors, such as SVN, Git, and Emacs.
+Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package ^[To see the set of filepaths that should be on your radar, execute `dir(full.names = TRUE, recursive = TRUE, include.dirs = TRUE, all.files = TRUE)` in the package's top-level directory.]. If the regular expression matches, that file or directory is excluded. Note there are some default exclusions implemented by R itself, mostly relating to classic version control systems and editors, such as SVN, Git, and Emacs.
 
 To exclude a specific file or directory (the most common use case), you __MUST__ anchor the regular expression. For example, to exclude a directory called "notes", use `^notes$`. The regular expression `notes` will match any file name containing notes, e.g. `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc. The safest way to exclude a specific file or directory is to use `usethis::use_build_ignore("notes")`, which does the escaping for you.
 
-`.Rbuildignore` is a way to resolve some of the tension between the practices that support your development process and CRAN's requirements for submission and distribution. The affected files fall into two broad, semi-overlapping classes:
+`.Rbuildignore` is a way to resolve some of the tension between the practices that support your development process and CRAN's requirements for submission and distribution. Even if you aren't planning to release on CRAN, following these conventions will allow you to make the best use of R's built-in tooling for package checking and installation. The affected files fall into two broad, semi-overlapping classes:
 
   * Files that help you generate package contents programmatically. Examples:
     - Using `README.Rmd` to generate an informative and current `README.md`.
@@ -113,7 +115,7 @@ Here is a non-exhaustive list of typical entries in the `.Rbuildignore` file for
 ^\.github$          # Contributing guidelines, CoC, issue templates, etc.
 ```
 
-Note that the comments above are not generally present in `.Rbuildignore`; they are included here only for exposition.
+Note that the comments above must not appear in an actual `.Rbuildignore` file; they are included here only for exposition.
 
 We'll mention when you need to add files to `.Rbuildignore` whenever it's important. Remember that `usethis::use_build_ignore()` is an attractive way to manage this file.
 
