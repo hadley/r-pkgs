@@ -210,19 +210,27 @@ The usethis package has been loaded into memory and, in fact, has also been atta
 
 ## What is a library? {#library}
 
-A library is simply a directory containing installed packages. You can have multiple libraries on your computer. In fact, almost every one has at least two: one for packages you’ve installed, and one for the packages that come with every R installation (like base, stats, etc). Normally, the directories with user-installed packages vary based on the version of R that you’re using. That's why it seems like you lose all of your packages when you reinstall R --- they're still on your hard drive, but R can't find them. 
+We just discussed the `library()` function, whose name is inspired by what it does. When you call `library(foo)`, R looks through the current __libraries__ for an installed package named "foo" and, if successful, it makes foo available for use.
 
-You can use `.libPaths()` to see which libraries are currently active. Here are mine:
+In R, a __library__ is a directory containing installed packages, sort of like a library for books. Unfortunately, in the R world, you will frequently encounter confused usage of the words "library" and "package". It's common for someone to refer to dplyr, for example, as a library when it is actually a package. There are a few reasons for the confusion. First, R's terminology arguably runs counter to broader programming conventions, where the usual meaning of "library" is closer to what we mean by "package". The name of the `library()` function itself probably reinforces the wrong associations. Finally, this vocabulary error is often harmless, so it's easy for R users to fall into the wrong habit and for people who point out this mistake to look like insufferable pedants. But here's the bottom line:
+
+> We use the `library()` function to load a __package__. ^[Well, actually, `library()` loads and attaches a package, but that's a topic for another section (\@ref(search-path)).]
+
+The distinction between the two is important and useful as you get involved in package development.
+
+You can have multiple libraries on your computer. In fact, many of you already do, especially if you're on Windows. You can use `.libPaths()` to see which libraries are currently active. Here's how this might look on Windows:
 
 ```{r, eval = FALSE}
+# on Windows
 .libPaths()
-#> [1] "/Users/hadley/R"                                               
-#> [2] "/Library/Frameworks/R.framework/Versions/3.1/Resources/library"
-lapply(.libPaths(), dir)
+#> [1] "C:/Users/jenny/Documents/R/win-library/3.6"
+#> [2] "C:/Program Files/R/R-3.6.0/library"
+
+lapply(.libPaths(), list.dirs, recursive = FALSE, full.names = FALSE)
 #> [[1]]
-#>   [1] "AnnotationDbi"   "ash"             "assertthat"     
-#>   ...      
-#> [163] "xtable"          "yaml"            "zoo"            
+#>   [1] "abc"           "anytime"       "askpass"       "assertthat"   
+#>  ...
+#> [145] "zeallot"      
 #> 
 #> [[2]]
 #>  [1] "base"         "boot"         "class"        "cluster"     
@@ -235,20 +243,52 @@ lapply(.libPaths(), dir)
 #> [29] "translations" "utils"
 ```
 
-The first lib path is for the packages I've installed (I've installed a lot!). The second is for so-called "recommended" packages that come with every installation of R.
+Here's a similar look on macOS (but your results may vary):
+```{r, eval = FALSE}
+# on macOS
+.libPaths()
+#> [1] "/Users/jenny/resources/R/library_3.6"                          
+#> [2] "/Library/Frameworks/R.framework/Versions/3.6/Resources/library"
 
-When you use `library(pkg)` or `require(pkg)` to load a package, R looks through each path in `.libPaths()` to see if a directory called `pkg` exists. If it doesn't exist, you'll get an error message:
-
-```{r, error = TRUE}
-library(blah)
-# or:
-require(blah)
+lapply(.libPaths(), list.dirs, recursive = FALSE, full.names = FALSE)
+#> [[1]]
+#>    [1] "abc"                  "abc.data"             "abind"                
+#>  ...
+#> [1033] "Zelig"                "zip"                  "zoo"                 
+#> 
+#> [[2]]
+#>  [1] "base"         "boot"         "class"        "cluster"     
+#>  [5] "codetools"    "compiler"     "datasets"     "foreign"     
+#>  [9] "graphics"     "grDevices"    "grid"         "KernSmooth"  
+#> [13] "lattice"      "MASS"         "Matrix"       "methods"     
+#> [17] "mgcv"         "nlme"         "nnet"         "parallel"    
+#> [21] "rpart"        "spatial"      "splines"      "stats"       
+#> [25] "stats4"       "survival"     "tcltk"        "tools"       
+#> [29] "translations" "utils"
 ```
 
-The main difference between `library()` and `require()` is what happens if a package isn't found. While `library()` throws an error, `require()` prints a warning message and returns `FALSE`. In practice, this distinction isn't important because when building a package you should __NEVER__ use either inside a package. See [package dependencies](#dependencies) for what you should do instead.
+In both cases we see two active libraries, consulted in this order:
 
-When you start learning R, it's easy to get confused between libraries and packages because you use `library()` function to load a _package_. However, the distinction between the two is important and useful. For example, one important application is packrat, which automates the process of managing project-specific libraries. With packrat, when you upgrade a package in one project, it only affects that project, not every project on your computer. This is useful because it allows you to play around with cutting-edge packages without affecting other projects' use of older, more reliable packages. This is also useful when you're both developing and using a package.
-t
+  1. A user library
+  2. A system-level or global library
+
+This setup is typical on Windows, but is something you usually need to opt into on macOS, for example, by specifying `R_LIBS_USER` in `.Renviron`. With this setup, add-on packages installed from CRAN (or elsewhere) or under local development are kept in the user library. Above, the macOS system is used as a primary development machine and has many packages here (~1000), whereas the Windows system is only used occasionally and is much more spartan. The core set of base and recommended packages that ship with R live in the system-level library and are the same on macOS and Windows. This separation appeals to many developers and makes it easy to, for example, clean out your add-on packages without disturbing your base R installation. If you're on macOS and only see one library, there is no urgent need to change anything, but it's something to consider next time you upgrade R.
+
+The filepaths for these libraries also make it clear they are associated with a specific version of R (3.6.x at the time of writing), which is also typical. This reflects and enforces the fact that you need to reinstall your add-on packages when you update R from, say, 3.5 to 3.6, which is a change in the **minor** version. You generally do not need to re-install add-on packages for a so-called patch release, e.g., going from R 3.6.0 to 3.6.1.
+
+As your R usage grows more sophisticated, it's common to start managing package libraries with more intention. For example, tools like [renv](https://rstudio.github.io/renv/) (and its predecessor [packrat](https://rstudio.github.io/packrat/)) automate the process of managing project-specific libraries. This can be important for making data products reproducible, portable, and isolated from one another. A package developer might prepend the library search path with a temporary library, containing a set of packages at specific versions, in order to explore issues with backwards and forwards compatibility, without affecting other day-to-day work. Reverse dependency checks are another example where we explicitly manage the library search path.
+
+Here are the main levers for controlling which libraries are active, in order of scope and persistence:
+
+  * Environment variables, like `R_LIBS` and `R_LIBS_USER`, which are consulted
+    at startup.
+  * Calling `.libPaths()` with one or more filepaths.
+  * `withr::with_libpaths()` to execute small snippets of code with an altered
+    search path.
+  * Arguments to individual functions, like `install.packages(lib =)` and
+    `library(lib.loc =)`.
+    
+Finally, it's important to note that `library()` should NEVER be used *inside a package*. Packages and scripts rely on different mechanisms for declaring their dependencies and this is one of the biggest adjustments you need to make in your mental model and habits. We explore this topic fully in chapter \@ref(namespace).
 
 ## Naming your package {#naming}
 
