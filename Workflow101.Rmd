@@ -1,0 +1,185 @@
+# Fundamental package workflows {#workflows101}
+
+```{r, include = FALSE}
+source("common.R")
+```
+
+Having peeked under the hood of R packages and libraries in Chapter \@ref(package-structure-state), here
+we provide the basic workflows for creating a package and moving it through the different states that come up during development.
+
+## Naming your package {#naming}
+
+> "There are only two hard things in Computer Science: cache invalidation and 
+> naming things." 
+>
+> --- Phil Karlton
+
+Before you can create your first package, you need to come up with a name for it. I think this is the hardest part of creating a package! (Not least because devtools can't automate it for you.)
+
+### Requirements for a name
+
+There are three formal requirements: the name can only consist of letters, numbers and periods, i.e., `.`; it must start with a letter; and it cannot end with a period. Unfortunately, this means you can't use either hyphens or underscores, i.e., `-` or `_`, in your package name. I recommend against using periods in package names because it has confusing connotations (i.e., file extension or S3 method).
+
+### Strategies for creating a name
+
+If you're planning on releasing your package, I think it's worth spending a few minutes to come up with a good name. Here are some recommendations for how to go about it:
+
+* Pick a unique name you can easily Google. This makes it easy for potential users to 
+  find your package (and associated resources) and for you to see who's using it. 
+  You can also check if a name is already used on CRAN by loading <http://cran.r-project.org/web/packages/[PACKAGE_NAME]>.
+
+* Avoid using both upper and lower case letters: doing so makes the package name
+  hard to type and even harder to remember. For example, I can never remember if it's
+  Rgtk2 or RGTK2 or RGtk2.
+
+* Find a word that evokes the problem and modify it so that it's unique:
+
+    * plyr is generalisation of the apply family, and evokes pliers.
+    * lubridate makes dates and times easier.
+    * knitr (knit + r) is "neater" than sweave (s + weave).
+    * testdat tests that data has the correct format.
+
+* Use abbreviations: 
+
+    * Rcpp = R + C++ (plus plus)
+    * lvplot = letter value plots. 
+
+* Add an extra R: 
+
+    * stringr provides string tools.
+    * tourr implements grand tours (a visualisation method).
+    * gistr lets you programmatically create and modify GitHub gists.
+
+If you're creating a package that talks to a commercial service, make sure you check the branding guidelines to avoid problems down the line. For example, rDrop isn't called rDropbox because Dropbox prohibits any applications from using the full trademarked name.
+
+### Checking if your package name is available
+
+It is a good idea to spend some time choosing your package name.
+You can check if your package name is available for use on CRAN 
+by using the [`available` package](https://github.com
+ropenscilabs/available), which does the following:
+
+* Checks for validity
+* Checks not already available on GitHub, CRAN and Bioconductor
+* Searches Urban Dictionary, Wiktionary and Wikipedia for 
+unintended meanings
+
+(insert screenshot here?)
+
+While checking if your package name is available, it might also 
+be worthwhile to check if the functionality of your package 
+already exists - you may save yourself a lot of time using 
+existing software rather than writing your own.
+
+For more discussion on other aspects of R package names, see [Nick Tierney's blog post on naming things](https://www.njtierney.com/post/2018/06/20/naming-things/). If you change your mind on your package name, Nick also has a blog post on [how to rename your package](https://www.njtierney.com/post/2017/10/27/change-pkg-name/).
+
+## Creating a package {#getting-started}
+
+Once you've come up with a name, there are two ways to create the package. You can use RStudio:
+
+1. Click File | New Project.
+
+2. Choose "New Directory":
+
+    ```{r, echo = FALSE}
+    knitr::include_graphics("images/create-1.png")
+    ```
+   
+2. Then "R Package":
+
+    ```{r, echo = FALSE}
+    knitr::include_graphics("images/create-2.png")
+    ```
+
+2. Then give your package a name and click "Create Project":
+
+    ```{r, echo = FALSE}
+    knitr::include_graphics("images/create-3.png")
+    ```
+    
+Alternatively, you can create a new package from within R by running
+
+```{r, eval = FALSE}
+usethis::create_package("path/to/package/pkgname")
+```
+    
+Either route gets you to the same place: the smallest usable package, one with three components:
+
+1. An `R/` directory, which you'll learn about in [R code](#r).
+
+1. A basic `DESCRIPTION` file, which you'll learn about in 
+   [package metadata](#description).
+
+1. A basic `NAMESPACE` file, which you'll learn about in 
+   [the namespace](#namespace).
+
+It will also include an RStudio project file, `pkgname.Rproj`, that makes your package easy to use with RStudio, as described below.
+
+Don't use `package.skeleton()` to create a package. Following that workflow actually creates more work for you because it creates extra files that you'll have to delete or modify before you can have a working package.
+
+## RStudio projects {#projects}
+
+To get started with your new package in RStudio, double-click the `pkgname.Rproj` file that `create()` just made. This will open a new RStudio project for your package. Projects are a great way to develop packages because:
+
+*   Each project is isolated; code run in one project does not affect any 
+    other project.
+
+*   You get handy code navigation tools like `F2` to jump to a function
+    definition and `Ctrl + .` to look up functions by name.
+
+*   You get useful keyboard shortcuts for common package development tasks.
+    You'll learn about them throughout the book. But to see them all, press 
+    Alt + Shift + K or use the Help | Keyboard shortcuts menu.
+    
+    ```{r, echo = FALSE}
+    knitr::include_graphics("images/keyboard-shortcuts.png")
+    ```
+   
+(If you want to learn more RStudio tips and tricks, follow @[rstudiotips](https://twitter.com/rstudiotips) on twitter.)
+
+Both RStudio and `usethis::create_package()` will make an `.Rproj` file for you. If you have an existing package that doesn't have an `.Rproj` file, you can use `usethis::use_rstudio("path/to/package")` to add it. If you don't use RStudio, you can get many of the benefits by starting a new R session and ensuring the working directory is set to the package directory. 
+
+### What is an RStudio project file?
+
+An `.Rproj` file is just a text file. The project file created by devtools looks like this:
+
+```
+Version: 1.0
+
+RestoreWorkspace: No
+SaveWorkspace: No
+AlwaysSaveHistory: Default
+
+EnableCodeIndexing: Yes
+Encoding: UTF-8
+
+AutoAppendNewline: Yes
+StripTrailingWhitespace: Yes
+
+BuildType: Package
+PackageUseDevtools: Yes
+PackageInstallArgs: --no-multiarch --with-keep.source
+PackageRoxygenize: rd,collate,namespace
+```
+
+You don't need to modify this file by hand. Instead, use the friendly project options dialog box, accessible from the projects menu in the top-right corner of RStudio.
+
+```{r, echo = FALSE, out.width="30%"}
+knitr::include_graphics("images/project-options-1.png")
+```
+```{r, echo = FALSE, out.width="70%"}
+knitr::include_graphics("images/project-options-2.png")
+```
+    
+*TODO: re-integrate this diagram*    
+    
+```{r, echo = FALSE}
+knitr::include_graphics("diagrams/loading.png")
+```
+
+
+[wre]:https://cran.r-project.org/doc/manuals/R-exts.html
+[wre-tarball]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-package-tarballs
+[wre-binary]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-binary-packages
+[ria]:https://cran.r-project.org/doc/manuals/R-admin.html
+[ria-install]:https://cran.r-project.org/doc/manuals/R-admin.html#Installing-packages
