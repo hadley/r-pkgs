@@ -30,64 +30,94 @@ Finally, it's also valid to evaluate the suitability of existing tools on the ba
 >
 > --- Phil Karlton
 
-Before you can create your first package, you need to come up with a name for it. I think this is the hardest part of creating a package! (Not least because devtools can't automate it for you.)
+Before you can create your package, you need to come up with a name for it. This can be the hardest part of creating a package! (Not least because no one can automate it for you.)
 
-### Requirements for a name
+### Formal requirements
 
-There are three formal requirements: the name can only consist of letters, numbers and periods, i.e., `.`; it must start with a letter; and it cannot end with a period. Unfortunately, this means you can't use either hyphens or underscores, i.e., `-` or `_`, in your package name. I recommend against using periods in package names because it has confusing connotations (i.e., file extension or S3 method).
+There are three formal requirements:
 
-### Strategies for creating a name
+  1. The name can only consist of letters, numbers, and periods, i.e., `.`.
+  1. It must start with a letter.
+  1. It cannot end with a period.
+  
+Unfortunately, this means you can't use either hyphens or underscores, i.e., `-` or `_`, in your package name. We recommend against using periods in package names, due to confusing associations with file extensions and S3 methods.
 
-If you're planning on releasing your package, I think it's worth spending a few minutes to come up with a good name. Here are some recommendations for how to go about it:
+### Pragmatic advice
 
-* Pick a unique name you can easily Google. This makes it easy for potential users to 
-  find your package (and associated resources) and for you to see who's using it. 
-  You can also check if a name is already used on CRAN by loading <http://cran.r-project.org/web/packages/[PACKAGE_NAME]>.
+If you plan to share your package package with others, it's worth spending a few minutes to come up with a good name. Here are some things to consider:
+
+* Pick a unique name that's easy to Google. This makes it easy for potential
+  users to find your package (and associated resources) and for you to see who's
+  using it.
+  
+* Don't pick a name that's already in use on CRAN or Bioconductor. You may
+  also want to consider some other types of name collision:
+  - Is there an in-development package maturing on, say, GitHub that already
+    has some history and seems to be heading towards release?
+  - Is this name already used for another piece of software or for a library or
+    framework in, e.g., the Python or JavaScript ecosystem?
 
 * Avoid using both upper and lower case letters: doing so makes the package name
-  hard to type and even harder to remember. For example, I can never remember if it's
-  Rgtk2 or RGTK2 or RGtk2.
+  hard to type and even harder to remember. For example, it's hard to remember
+  if it's Rgtk2 or RGTK2 or RGtk2.
+  
+* Give preference to names that are pronounceable, so people are comfortable
+  talking about your package and have a way to hear it inside their head.
 
 * Find a word that evokes the problem and modify it so that it's unique:
 
-    * plyr is generalisation of the apply family, and evokes pliers.
-    * lubridate makes dates and times easier.
-    * knitr (knit + r) is "neater" than sweave (s + weave).
-    * testdat tests that data has the correct format.
+  - lubridate makes dates and times easier.
+  - rvest "harvests" the content from web pages.
+  - r2d3 provides utilities for working with D3 visualisations.
+  - forcats is an anagram of factors, which we use __for__ __cat__egorical data.
 
 * Use abbreviations: 
 
-    * Rcpp = R + C++ (plus plus)
-    * lvplot = letter value plots. 
+  - Rcpp = R + C++ (plus plus)
+  - brms = Bayesian Regression Models using Stan
 
 * Add an extra R: 
 
-    * stringr provides string tools.
-    * tourr implements grand tours (a visualisation method).
-    * gistr lets you programmatically create and modify GitHub gists.
+  - stringr provides string tools.
+  - beepr plays notification sounds.
+  - callr calls R, from R.
+  
+* Don't get sued.
 
-If you're creating a package that talks to a commercial service, make sure you check the branding guidelines to avoid problems down the line. For example, rDrop isn't called rDropbox because Dropbox prohibits any applications from using the full trademarked name.
+  - If you're creating a package that talks to a commercial service, check the
+    branding guidelines. For example, rDrop isn't called rDropbox because
+    Dropbox prohibits any applications from using the full trademarked name.
+    
+Nick Tierney presents a fun typology of package names in his [Naming Things](https://www.njtierney.com/post/2018/06/20/naming-things/) blog post; see that for more inspiring examples. He also has some experience with renaming packages, so the post [So, you’ve decided to change your r package name](https://www.njtierney.com/post/2017/10/27/change-pkg-name/) is a good resource if you don't get this right the first time.
+  
+### Use the available package
 
-### Checking if your package name is available
+It is impossible to abide by all of the above suggestions simultaneously, so obviously you will need to make some trade-offs. The [available package](https://cran.r-project.org/package=available) has a function called `available()` that helps you evaluate a potential package name from many angles:
 
-It is a good idea to spend some time choosing your package name.
-You can check if your package name is available for use on CRAN 
-by using the [`available` package](https://github.com
-ropenscilabs/available), which does the following:
+```{r, eval = FALSE}
+library(available)
 
-* Checks for validity
-* Checks not already available on GitHub, CRAN and Bioconductor
-* Searches Urban Dictionary, Wiktionary and Wikipedia for 
-unintended meanings
+available("doofus")
+#> Urban Dictionary can contain potentially offensive results,
+#>   should they be included? [Y]es / [N]o:
+#> 1: 1
+#> ── doofus ──────────────────────────────────────────────────────────────────
+#> Name valid: ✔
+#> Available on CRAN: ✔ 
+#> Available on Bioconductor: ✔
+#> Available on GitHub:  ✔ 
+#> Abbreviations: http://www.abbreviations.com/doofus
+#> Wikipedia: https://en.wikipedia.org/wiki/doofus
+#> Wiktionary: https://en.wiktionary.org/wiki/doofus
+#> Sentiment:???
+```
 
-(insert screenshot here?)
+`available::available()` does the following:
 
-While checking if your package name is available, it might also 
-be worthwhile to check if the functionality of your package 
-already exists - you may save yourself a lot of time using 
-existing software rather than writing your own.
-
-For more discussion on other aspects of R package names, see [Nick Tierney's blog post on naming things](https://www.njtierney.com/post/2018/06/20/naming-things/). If you change your mind on your package name, Nick also has a blog post on [how to rename your package](https://www.njtierney.com/post/2017/10/27/change-pkg-name/).
+* Checks for validity.
+* Checks availability on CRAN, Bioconductor, and beyond.
+* Searches various websites to help you discover any unintended meanings. In an
+  interactive session, the URLs you see above are opened in browser tabs.
 
 ## Creating a package {#getting-started}
 
