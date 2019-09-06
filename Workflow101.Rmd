@@ -7,7 +7,9 @@ source("common.R")
 Having peeked under the hood of R packages and libraries in Chapter \@ref(package-structure-state), here
 we provide the basic workflows for creating a package and moving it through the different states that come up during development.
 
-## Survey the existing landscape
+## Create a package
+
+### Survey the existing landscape
 
 <!-- TODO: would love to put some version of the "geeks and repetitive tasks" figure here, but it would take more time than I want to spend right now to figure out original source, licensing, etc. Revisit when I do a concentrated push on figures. -->
 
@@ -17,13 +19,13 @@ Many packages are born out of one person's frustration at some common task that 
     formally, in a package.
   * Process: greater mastery of R will make you more effective in your work.
   
-If all you care about is the existence of a product, then your main goal is to navigate the space of existing packages. Silge, Nash, and Graves organized a survey and sessions around this at useR!2017 and their write up for the R Journal [@silge-nash-graves] provides a comprehensive roundup of resources.
+If all you care about is the existence of a product, then your main goal is to navigate the space of existing packages. Silge, Nash, and Graves organized a survey and sessions around this at useR! 2017 and their write up for the R Journal [@silge-nash-graves] provides a comprehensive roundup of resources.
 
 If you are looking for ways to increase your R mastery, you should still educate yourself about the landscape. But there are plenty of good reasons to make your own package, even if there is relevant prior work. The way experts got that way is by actually building things, often very basic things, and you deserve the same chance to learn by tinkering. If you're only allowed to work on things that have never been touched, you're likely looking at problems that are either very obscure or very difficult.
 
 Finally, it's also valid to evaluate the suitability of existing tools on the basis of user interface, defaults, and edge case behaviour. If a package can technically do what you need, but it's very unergonomic for your use case, it's fair to say it doesn't meet your needs. In this case, it can still make sense for you to develop your own implementation or to write wrapper functions that hide the sharp edges.
 
-## Naming your package {#naming}
+### Name your package {#naming}
 
 > "There are only two hard things in Computer Science: cache invalidation and 
 > naming things." 
@@ -32,7 +34,7 @@ Finally, it's also valid to evaluate the suitability of existing tools on the ba
 
 Before you can create your package, you need to come up with a name for it. This can be the hardest part of creating a package! (Not least because no one can automate it for you.)
 
-### Formal requirements
+#### Formal requirements
 
 There are three formal requirements:
 
@@ -42,7 +44,7 @@ There are three formal requirements:
   
 Unfortunately, this means you can't use either hyphens or underscores, i.e., `-` or `_`, in your package name. We recommend against using periods in package names, due to confusing associations with file extensions and S3 methods.
 
-### Pragmatic advice
+#### Pragmatic advice
 
 If you plan to share your package package with others, it's worth spending a few minutes to come up with a good name. Here are some things to consider:
 
@@ -90,7 +92,7 @@ If you plan to share your package package with others, it's worth spending a few
     
 Nick Tierney presents a fun typology of package names in his [Naming Things](https://www.njtierney.com/post/2018/06/20/naming-things/) blog post; see that for more inspiring examples. He also has some experience with renaming packages, so the post [So, you’ve decided to change your r package name](https://www.njtierney.com/post/2017/10/27/change-pkg-name/) is a good resource if you don't get this right the first time.
   
-### Use the available package
+#### Use the available package
 
 It is impossible to abide by all of the above suggestions simultaneously, so obviously you will need to make some trade-offs. The [available package](https://cran.r-project.org/package=available) has a function called `available()` that helps you evaluate a potential package name from many angles:
 
@@ -120,51 +122,48 @@ available("doofus")
   interactive session, the URLs you see above are opened in browser tabs.
 * Attempts to report whether name has positive or negative sentiment.
 
-## Creating a package {#getting-started}
+### Package creation {#creating}
 
-Once you've come up with a name, there are two ways to create the package. You can use RStudio:
+Once you've come up with a name, there are two ways to create the package.
 
-1. Click File | New Project.
+  * Call `usethis::create_package()`.
+  * In RStudio, do *File > New Project > New Directory > R Package*. This
+    ultimately calls `usethis::create_package()`, so really there's just one
+    way.
 
-2. Choose "New Directory":
+*TODO: revisit when I tackle usethis + RStudio project templates https://github.com/r-lib/usethis/issues/770. In particular, contemplate whether to reinstate any screenshot-y coverage of RStudio workflows here.*
 
-    ```{r, echo = FALSE}
-    knitr::include_graphics("images/create-1.png")
-    ```
-   
-2. Then "R Package":
-
-    ```{r, echo = FALSE}
-    knitr::include_graphics("images/create-2.png")
-    ```
-
-2. Then give your package a name and click "Create Project":
-
-    ```{r, echo = FALSE}
-    knitr::include_graphics("images/create-3.png")
-    ```
-    
-Alternatively, you can create a new package from within R by running
-
-```{r, eval = FALSE}
-usethis::create_package("path/to/package/pkgname")
-```
-    
-Either route gets you to the same place: the smallest usable package, one with three components:
+This produces the smallest possible *working* package, with three components:
 
 1. An `R/` directory, which you'll learn about in [R code](#r).
 
-1. A basic `DESCRIPTION` file, which you'll learn about in 
-   [package metadata](#description).
+1. A basic `DESCRIPTION` file, which you'll learn about in
+  [package metadata](#description).
 
 1. A basic `NAMESPACE` file, which you'll learn about in 
    [the namespace](#namespace).
 
-It will also include an RStudio project file, `pkgname.Rproj`, that makes your package easy to use with RStudio, as described below.
+It may also include an RStudio project file, `pkgname.Rproj`, that makes your package easy to use with RStudio, as described below. Basic `.Rbuildignore` and `.gitignore` files are also left behind.
 
-Don't use `package.skeleton()` to create a package. Following that workflow actually creates more work for you because it creates extra files that you'll have to delete or modify before you can have a working package.
+Don’t use `package.skeleton()` to create a package. Because this function comes with R, you might be tempted to use it, but it creates a package that immediately throws errors with `R CMD build`. It anticipates a different development process than we use here, so repairing this broken initial state just makes unnecessary work for people who use devtools (and, especially, roxygen2). Use `create_package()`.
+    
+### Where should you `create_package()`?
+
+The main and only required argument to `create_package()` is the `path` where your new package will live:
+
+```{r, eval = FALSE}
+create_package("path/to/package/pkgname")
+```
+
+Remember that this is where your package lives in its __source__ form (section \@ref(source-package)), not in its __installed__ form (section \@ref(installed-package)). Installed packages live in a __library__ and we discussed conventional setups for libraries in section \@ref(library).
+
+Where should you keep source packages? The main principle is that this location should be distinct from where installed packages live. In the absence of external considerations, a typical user should designate a directory inside their home directory for R (source) packages. We discussed this with colleagues and the source of some of your favorite R packages lives inside directories like `~/rrr/`, `~/documents/tidyverse/`, `~/r/packages/`, or `~/pkg/`. Some of us use one directory for this, others divide source packages among a few directories based on their development role (contributor vs. not), GitHub organization (tidyverse vs r-lib), development stage (active vs. not), and so on.
+
+The above probably reflects that we are primarily tool-builders. An academic researcher might organize their files around individual publications, whereas a data scientist might organize around data products and reports. There is no particular technical or traditional reason for one specific approach. As long as you keep a clear distinction between source and installed packages, just pick a strategy that works within your overall system for file organization, and use it consistently.
 
 ## RStudio projects {#projects}
+
+*TODO: revise this*
 
 To get started with your new package in RStudio, double-click the `pkgname.Rproj` file that `create()` just made. This will open a new RStudio project for your package. Projects are a great way to develop packages because:
 
@@ -217,16 +216,13 @@ knitr::include_graphics("images/project-options-1.png")
 ```{r, echo = FALSE, out.width="70%"}
 knitr::include_graphics("images/project-options-2.png")
 ```
+ 
+## `load_all()`
+
+*TODO: write this*
     
 *TODO: re-integrate this diagram*    
     
 ```{r, echo = FALSE}
 knitr::include_graphics("diagrams/loading.png")
 ```
-
-
-[wre]:https://cran.r-project.org/doc/manuals/R-exts.html
-[wre-tarball]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-package-tarballs
-[wre-binary]:https://cran.r-project.org/doc/manuals/R-exts.html#Building-binary-packages
-[ria]:https://cran.r-project.org/doc/manuals/R-admin.html
-[ria-install]:https://cran.r-project.org/doc/manuals/R-admin.html#Installing-packages
