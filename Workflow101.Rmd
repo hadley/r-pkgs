@@ -259,11 +259,31 @@ You can also launch Projects from within RStudio via *File > Open Project (in Ne
 
 It is very normal -- and productive! -- to have multiple Projects open at once.
 
-## Working directory discipline
+## Working directory and filepath discipline
 
-*TODO: write this*
+As you develop your package, you will be executing R code. This will be a mix of workflow calls (e.g., `document()` or `test()`) and *ad hoc* calls that help you write your functions, examples, and tests. We *strongly recommend* that you leave the working directory of your R process set to the top-level of the source package.
 
-If you don't use RStudio, you can get many of the benefits by starting a new R session and ensuring the working directory is set to the package directory. 
+If you're totally new to package development, you don't have much basis for supporting or resisting this proposal. But those with some experience may find it somewhat upsetting. How are we supposed to express paths when working in subdirectories, like `tests/`? As it becomes relevant, we'll show you how to exploit path-building helpers, such as `testthat::test_path()`, that determine paths at execution time.
+
+The basic idea is that by leaving working directory alone, you are encouraged to write paths that convey intent explicitly ("read `foo.csv` from the test directory") instead of implicitly ("read `foo.csv` from current working directory, which I *think* is going to be the test directory"). A sure sign of reliance on implicit paths is incessant fiddling with your working directory, because you're using `setwd()` to manually fulfill the assumptions that are implicit in your paths.
+
+This mentality can design away a whole class of path headaches and makes day-to-day development more pleasant as well. There are two reasons why implicit paths are hard to get right:
+
+  * Recall the different forms that a package can take during the development
+    cycle (Chapter \@ref(package-structure-state)). These states differ from
+    each other in terms of which files and folders exist and their relative
+    positions within the hierarchy. It's tricky to write relative paths that
+    work across all package states.
+  * Eventually, your package will be processed with built-in tools like
+    `R CMD build`, `R CMD check`, and `R CMD INSTALL`, by you and potentially
+    CRAN. It's hard to keep track of what the working directory will be at
+    every stage of these processes.
+
+Path helpers like `testthat::test_path()`, `fs::path_package()`, and the [rprojroot package](https://rprojroot.r-lib.org) are extremely useful for building resilient paths that hold up across the whole range of situations that come up during development and usage.
+
+
+
+
 
 ## `load_all()`
 
