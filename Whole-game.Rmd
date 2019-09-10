@@ -23,8 +23,6 @@ This chapter runs through the development of a small toy package. It's meant to 
 
 To keep the pace brisk, we exploit the modern conveniences in the devtools package and the RStudio IDE. In later chapters, we are more explicit about what those helpers are doing for us.
 
-*Work in progress! Adapting from material originally developed as part of STAT 545 and as a possible vignette for devtools.*
-
 ## Load devtools and friends
 
 Load the devtools package, which is the public face of a set of packages that support various aspects of package development.
@@ -45,14 +43,17 @@ library(fs)
 We use various functions from devtools to build a small toy package from scratch, with features commonly seen in released packages:
 
   * Functions to address a specific need, such as helpers to work with factors.
-  * Access to established workflows for installation, getting help, and checking basic quality.
+  * Access to established workflows for installation, getting help, and checking
+    basic quality.
   * Version control and an open development process.
-    - This is completely optional in your work, but recommended. You'll see how Git and GitHub helps us expose all the intermediate stages of our package.
-  * Documentation for individual functions via [roxygen2](https://CRAN.R-project.org/package=roxygen2).
+    - This is completely optional in your work, but recommended. You'll see how
+      Git and GitHub helps us expose all the intermediate stages of our package.
+  * Documentation for individual functions via
+    [roxygen2](https://CRAN.R-project.org/package=roxygen2).
   * Unit testing with [testthat](http://testthat.r-lib.org).
   * Documentation for the package as a whole via an executable `README.Rmd`.
 
-We call the package **foofactors** and it will have a couple functions for handling factors. Please note that these functions are super simple and definitely not the point! For a proper package for factor handling, please see [forcats](https://cran.r-project.org/package=forcats).
+We call the package __foofactors__ and it will have a couple functions for handling factors. Please note that these functions are super simple and definitely not the point! For a proper package for factor handling, please see [forcats](https://forcats.tidyverse.org).
 
 The foofactors package itself is not our goal here. It is a device for demonstrating a typical workflow for package development with devtools.
 
@@ -60,13 +61,13 @@ The foofactors package itself is not our goal here. It is a device for demonstra
 
 The foofactors package is tracked during its development with the Git version control system. This is purely optional and you can certainly follow along without implementing this. A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting foofactors on GitHub: <https://github.com/jennybc/foofactors>. By inspecting the [commit history](https://github.com/jennybc/foofactors/commits/master) and especially the diffs, you can see exactly what changes at each step of the process laid out below.
 
-FIXME: I think these diffs are extremely useful and would like to surface them better here.
+*TODO: I think these diffs are extremely useful and would like to surface them better here.*
 
 ## `create_package()`
 
-Call `create_package()` to initialize a new package in a directory on your computer (and create the directory, if necessary).
+Call `create_package()` to initialize a new package in a directory on your computer (and create the directory, if necessary). See section \@ref(creating) for more.
 
-Make a deliberate choice about where to create this package on your computer. It should probably be somewhere within your home directory, alongside your other R projects. It should not be nested inside another RStudio Project, R package, or Git repo. Nor should it be in an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don't try to do devtools' job for it!
+Make a deliberate choice about where to create this package on your computer. It should probably be somewhere within your home directory, alongside your other R projects. It should not be nested inside another RStudio Project, R package, or Git repo. Nor should it be in an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don't try to do devtools' job for it! See \@ref(where-source-package) for more.
 
 Substitute your chosen path into a `create_package()` call like this:
 
@@ -125,7 +126,7 @@ proj_sitrep()
 
 If you're working in RStudio, you should find yourself in a new instance of RStudio, opened into your new foofactors package (and Project). If you somehow need to do this manually, navigate to the directory and double click on `foofactors.Rproj`. RStudio has special handling for packages and you should now see a *Build* tab in the same pane as *Environment* and *History*.
 
-FIXME: good place for a screenshot
+*TODO: good place for a screenshot.*
 
 What's in this new directory that is also an R package and, probably, an RStudio Project? Here's a listing (locally, you can consult your *Files* pane):
 
@@ -138,18 +139,18 @@ dir_info(all = TRUE) %>%
 In the file browser, go to *More > Show Hidden Files* to toggle the visibility of hidden files (a.k.a. ["dotfiles"](https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments)). A select few are visible all the time, but sometimes you want to see them all.
 :::
 
-  * `.Rbuildignore` lists files that we need to have around but that should not be included when building the R package from source.
+  * `.Rbuildignore` lists files that we need to have around but that should not be included when building the R package from source. More in \@ref(rbuildignore).
   * `.Rproj.user`, if you have it, is a directory used internally by RStudio.
   * `.gitignore` anticipates Git usage and ignores some standard, behind-the-scenes files created by R and RStudio. Even if you do not plan to use Git, this is harmless.
   * `DESCRIPTION` provides [metadata about your package](#description). We edit this shortly.
   * [`NAMESPACE`](#namespace) declares the functions your package exports for external use and the external functions your package imports from other packages. At the moment, it holds temporary-yet-functional placeholder content.
   * The `R/` directory is the ["business end" of your package](#r). It will soon contain `.R` files with function definitions.
-  * `foofactors.Rproj` is the file that makes this directory an RStudio Project. Even if you don't use RStudio, this file is harmless. Or you can suppress its creation with `create_package(..., rstudio = FALSE)`.
+  * `foofactors.Rproj` is the file that makes this directory an RStudio Project. Even if you don't use RStudio, this file is harmless. Or you can suppress its creation with `create_package(..., rstudio = FALSE)`. More in \@ref(projects).
 
 ## `use_git()`
 
 :::tip
-The use of Git or another version control system is optional, but a recommended practice in the long-term. We explain its importance in FUTURE LINK (FIXME: link to right place when exists).
+The use of Git or another version control system is optional, but a recommended practice in the long-term. We explain its importance in \@ref(git).
 :::
 
 The foofactors directory is an R source package and an RStudio Project. Now we make it also a Git repository, with `use_git()`.
@@ -177,7 +178,7 @@ dir_info(all = TRUE, regexp = "^[.]git$") %>%
 
 If you're using RStudio, it probably requested permission to relaunch itself in this Project. You can do so manually by quitting and relaunching by double clicking on `foofactors.Rproj`. Now, in addition to package development support, you have access to a basic Git client in the *Git* tab of the *Environment/History/Build* pane.
 
-FIXME: good place for a screenshot
+*TODO: good place for a screenshot.*
 
 Click on History (the clock icon) and, if you consented, you will see an initial commit made via `use_git()`:
 
@@ -236,7 +237,7 @@ Put the definition of `fbind()` **and only the definition of `fbind()`** in `R/f
 
 ## `load_all()`
 
-How do we test drive `fbind()`? If this were a regular R script, we might use RStudio to send the function definition to the R Console and define `fbind()` in the global workspace. Or maybe we'd call `source("R/fbind.R")`. For package development, however, devtools offers a more robust approach.
+How do we test drive `fbind()`? If this were a regular R script, we might use RStudio to send the function definition to the R Console and define `fbind()` in the global workspace. Or maybe we'd call `source("R/fbind.R")`. For package development, however, devtools offers a more robust approach. See section \@ref(load-all) for more.
 
 Call `load_all()` to make `fbind()` available for experimentation.
 
@@ -416,7 +417,7 @@ writeLines(
 cat(fbind_roxygen_header, sep = "\n")
 ```
 
-FIXME: mention how RStudio helps you execute examples here?
+*TODO: mention how RStudio helps you execute examples here?*
 
 ```{r commit-fbind-roxygen-header, echo = debug, comment = NA, eval = create}
 add(repo, path = file.path("R", "fbind.R"))
@@ -531,8 +532,6 @@ This creates the file `tests/testthat/test-fbind.R`. Put this content in it:
 
 ```{r test-fbind-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = create}
 test_fodder <- c(
-  'context("Binding factors")',
-  '',
   'test_that("fbind() binds factor (or character)", {',
   '  x <- c("a", "b")',
   '  x_fact <- factor(x)',
@@ -560,7 +559,7 @@ Run this test interactively, as you will when you write your own. Note you'll ha
 
 Going forward, your tests will mostly run *en masse* and at arms's length via `test()`:
 
-FIXME: work on the aesthetics of this output.
+*TODO: work on the aesthetics of this output.*
 
 ```{r test, eval = create, message = FALSE}
 test()
@@ -702,7 +701,7 @@ commit(repo, message = "Set up README.Rmd")
 
 The `README.Rmd` we use is here: [README.Rmd](https://raw.githubusercontent.com/jennybc/foofactors/master/README.Rmd) and these are the contents:
 
-FIXME: update this link after merge into r-pkgs.
+*TODO: update this link after merge into r-pkgs.*
 
 ```{r copy-readme-rmd, include = debug, eval = create}
 file_copy(
