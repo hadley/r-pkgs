@@ -216,7 +216,9 @@ It's painful to manage multiple R versions, especially since you'll need to rein
 
 CRAN runs on multiple platforms: Windows, Mac OS X, Linux and Solaris. You don't need to run `R CMD check` on every one of these platforms, but it's a really good idea to do it on at least two. This increases your chances of spotting code that relies on the idiosyncrasies of specific platform. If you're on Linux or Mac, use the `devtools::check_win_*()` functions to check on Windows. If you're on Windows, use Travis, as described in [continuous integration with Travis](#travis), to run checks on Linux.
 
-Debugging code that works on your computer but fails elsewhere is painful. If that happens to you, either install a virtualisation tool so that you can run another operating system locally, or find a friend to help you figure out the problem. Don't submit the package and hope CRAN will help you figure out the problem.
+Debugging code that works on your computer but fails elsewhere is painful. If that happens to you, you can install a virtualisation tool so that you can run another operating system locally.  Alternatively, can you find a friend to help you figure out the problem?  If your package is on GitHub, you can configure Travis-CI.  You can also use the `devtools::check_win_*()` family of functions, as noted above.  [Winbuilder](https://win-builder.r-project.org/upload.aspx) can be very useful for this.  They ask you to run "R-release" and "R-devel" there.  (You may be able to ignore the other two, "ATC" and "R-oldrelease".)  
+
+DO NOT submit the package and hope CRAN will help you figure out the problem.
 
 ### Check results {#release-check}
 
@@ -248,7 +250,21 @@ You've already learned how to use `R CMD check` and why it's important in [autom
 
 ### Reverse dependencies {#release-deps}
 
-Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work. To help you do this, devtools provides `devtools::revdep_check()`. This:
+Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work. To help you do this, use `revdepcheck::revdep_check()`.
+
+NOTE:  The `revdepcheck` package is not available on CRAN as of 2020-03-10.  To get it you need `remotes`:  
+
+```{r, revdepcheckInstall, eval = FALSE}
+install.packages('remotes') # if you do not already have this.
+remotes::install_github('revdepcheck')
+
+pkg_dir <- ???? [full path to the local development version of your package;  pkg_dir should include DESCRIPTION, etc.]
+
+revdepcheck::revdep_check(pkg_dir)
+```
+
+
+This:
 
 1. Sets up a temporary library so it doesn't clobber any existing packages you
    have installed.
@@ -259,9 +275,7 @@ Finally, if you're releasing a new version of an existing package, it's your res
 
 1. Summarises the results in a single file.
 
-Run `use_revdep()` to set up your package with a useful template.
-
-If any packages fail `R CMD check`, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN (you can easily get all maintainer e-mail addresses with `revdep_maintainers()`). After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`. Each package should be accompanied by a brief explanation that either tells CRAN that it's a false positive in `R CMD check` (e.g. you couldn't install a dependency locally) or that it's a legitimate change in the API (which the maintainer hasn't fixed yet). 
+If any packages fail `R CMD check`, check first to see if it's something you can fix.  If not, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN (you can easily get all maintainer e-mail addresses with `revdep_maintainers()`). After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`. Each package should be accompanied by a brief explanation that either tells CRAN that it's a false positive in `R CMD check` (e.g. you couldn't install a dependency locally) or that it's a legitimate change in the API (which the maintainer hasn't fixed yet). 
 
 Inform CRAN of your release process: "I advised all downstream package maintainers of these problems two weeks ago". Here's an example from a recent release of dplyr:
 
