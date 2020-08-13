@@ -1,0 +1,63 @@
+on:
+  push:
+    branches: '*'
+  schedule:
+    # run every day at 11 PM
+    - cron: '0 23 * * *'
+
+name: build-book
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@master
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@master
+        with:
+          r-version: 'release'
+
+      - name: Install pandoc and pandoc citeproc
+        run: |
+          brew install pandoc
+          brew install pandoc-citeproc
+
+      - name: Cache R packages
+        uses: actions/cache@v1
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-4-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: r-4-
+
+      - name: Cache bookdown results
+        uses: actions/cache@v1
+        with:
+          path: _bookdown_files
+          key: bookdown-2-${{ hashFiles('**/*Rmd') }}
+          restore-keys: bookdown-2-
+
+      - name: Install packages
+        run: |
+          R -e 'install.packages("remotes")'
+          R -e 'install.packages("ps", type = "binary")'
+          R -e 'remotes::install_deps(dependencies = TRUE)'
+
+      - name: Install PhantomJS
+        run: R -e 'webshot::install_phantomjs()'
+
+      - name: Build site
+        run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
+
+      - name: Install npm
+        uses: actions/setup-node@v1
+
+      - name: Deploy to Netlify
+        # NETLIFY_AUTH_TOKEN added in the repo's secrets
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          npm install netlify-cli -g
+          netlify deploy --prod --dir _book
