@@ -16,8 +16,13 @@ knitr::opts_chunk$set(
 )
 
 options(
-  rlang_trace_top_env = rlang::current_env(),
-  rlang__backtrace_on_error = "none"
+  rlang_trace_top_env = globalenv(),
+  #rlang_trace_top_env = rlang::current_env(),
+  # https://github.com/tidyverse/reprex/issues/320
+  # TL;DR Inline this, as needed. Real fix needs to happen in evaluate.
+  #`rlang:::force_unhandled_error` = TRUE,
+  rlang_backtrace_on_error = "full",
+  #rlang__backtrace_on_error = "none"
 )
 
 options(
