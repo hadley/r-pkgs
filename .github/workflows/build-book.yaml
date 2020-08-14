@@ -1,6 +1,10 @@
 on:
   push:
-    branches: '*'
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
   schedule:
     # run every day at 11 PM
     - cron: '0 23 * * *'
@@ -12,40 +16,40 @@ jobs:
     runs-on: macOS-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
 
       - name: Setup R
         uses: r-lib/actions/setup-r@master
-        with:
-          r-version: 'release'
+          
+      - uses: r-lib/actions/setup-pandoc@master
 
-      - name: Install pandoc and pandoc citeproc
+      - name: Query dependencies
         run: |
-          brew install pandoc
-          brew install pandoc-citeproc
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
+        shell: Rscript {0}
 
       - name: Cache R packages
         uses: actions/cache@v1
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: r-4-${{ hashFiles('DESCRIPTION') }}
-          restore-keys: r-4-
+          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
 
       - name: Cache bookdown results
         uses: actions/cache@v1
         with:
           path: _bookdown_files
-          key: bookdown-2-${{ hashFiles('**/*Rmd') }}
-          restore-keys: bookdown-2-
+          key: bookdown-1-${{ hashFiles('**/*Rmd') }}
+          restore-keys: bookdown-1-
 
       - name: Install packages
         run: |
-          R -e 'install.packages("remotes")'
-          R -e 'install.packages("ps", type = "binary")'
-          R -e 'remotes::install_deps(dependencies = TRUE)'
-
-      - name: Install PhantomJS
-        run: R -e 'webshot::install_phantomjs()'
+          # hack that is occasionally needed when ps updates
+          #install.packages("ps", type = "binary")
+          remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
 
       - name: Build site
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
