@@ -20,6 +20,8 @@ jobs:
 
       - name: Setup R
         uses: r-lib/actions/setup-r@master
+        with:
+          crayon.enabled: 'FALSE'
           
       - uses: r-lib/actions/setup-pandoc@master
 
@@ -34,21 +36,33 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-2-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-2-
 
       - name: Cache bookdown results
         uses: actions/cache@v1
         with:
           path: _bookdown_files
-          key: bookdown-1-${{ hashFiles('**/*Rmd') }}
-          restore-keys: bookdown-1-
+          key: bookdown-2-${{ hashFiles('**/*Rmd') }}
+          restore-keys: bookdown-2-
+
+      - name: Install macOS system dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install libgit2
 
       - name: Install packages
         run: |
           # hack that is occasionally needed when ps updates
           #install.packages("ps", type = "binary")
           remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
+
+      - name: Session info
+        run: |
+          options(width = 100)
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
       - name: Configure Git user
