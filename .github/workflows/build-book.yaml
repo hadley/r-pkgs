@@ -73,14 +73,25 @@ jobs:
       - name: Build site
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
 
-      - name: Install npm
-        uses: actions/setup-node@v1
-
       - name: Deploy to Netlify
-        # NETLIFY_AUTH_TOKEN added in the repo's secrets
+        id: netlify-deploy
+        uses: nwtgck/actions-netlify@v1.1
+        with:
+          publish-dir: './_book'
+          production-branch: master
+          #production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          #deploy-message: 'Production deploy from GitHub Actions: ${{ github.ref }} (${{ github.sha }})'
+          #deploy-message: "Deploy from GitHub Actions"
+          #deploy-message:
+          #  'Deploy Docs from GitHub Actions - ${{ github.event.pull_request.title || github.ref }}'
+          #deploy-message: '${{ github.event.head_commit.message }}'
+          #enable-pull-request-comment: true
+          #enable-commit-comment: true
+          #overwrites-pull-request-comment: true
         env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        run: |
-          npm install netlify-cli -g
-          netlify deploy --prod --dir _book
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+        
+     - run: echo netlify URL ${{ steps.netlify-deploy.outputs.deploy-url }}
