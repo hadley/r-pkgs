@@ -175,7 +175,7 @@ To use C++ code from another package:
   `R CMD check` will complain).
   
 * Follow Martyn Plummer's recommendations on 
-  [Portable C++ for R packages](http://journal.r-project.org/archive/2011-2/RJournal_2011-2_Plummer.pdf).
+  [Portable C++ for R packages](https://journal.r-project.org/archive/2011-2/RJournal_2011-2_Plummer.pdf).
 
 * Whenever you use C++ code in your package, you need to clean up after 
   yourself when your package is unloaded. Do this by writing a `.onUnload()` 
@@ -228,7 +228,7 @@ To call a C function from R, you first need a C function! In an R package, C cod
 
 (Yes, including `<Rinternals.h>` seems like bad form. On top of that, doing so doesn't actually give you access to the "internal" internal API unless you set some additional flags. The default just gives you access to the "public" internal API, which is both necessary and done for safety's sake. Yes, this is confusing.)
 
-These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read "[The R API](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#The-R-API)" in "Writing R Extensions". A number of exported functions are not documented, so you'll also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
+These headers allow you to access R's C API. Unfortunately this API is not well documented. I'd recommend starting with my notes at [R's C interface](http://adv-r.had.co.nz/C-interface.html). After that, read "[The R API](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#The-R-API)" in "Writing R Extensions". A number of exported functions are not documented, so you'll also need to read the [R source code](https://github.com/wch/r-source) to figure out the details.
 
 Here's the bare minimum you need to know: C functions that talk to R must use the `SEXP` type for both inputs and outputs. `SEXP`, short for S expression, is the C struct used to represent every type of object in R. A C function typically starts by converting `SEXP`s to atomic C objects, and ends by converting C objects back to a `SEXP`. (The R API is designed so that these conversions often don't require copying.) The following table lists the functions that convert length one R vectors to and from C scalars:
 
@@ -321,7 +321,7 @@ raw	        | `unsigned char*`
 
 Note that `.C()` assumes your function doesn't know how to deal with missing values and will throw an error if any arguments contain an NA. If it can correctly handle missing values, set `NAOK = TRUE` in the call to `.C()`. 
 
-You can learn more about `.C()` in its help, `?.C` and in [R-extensions](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Interface-functions-_002eC-and-_002eFortran).
+You can learn more about `.C()` in its help, `?.C` and in [R-extensions](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Interface-functions-_002eC-and-_002eFortran).
 
 ### Workflow {#c-workflow}
 
@@ -339,7 +339,7 @@ R packages need to provide DLLs that can be relocated; DLLs that work regardless
 
 R solves this problem using __function registration__. To export a `.Call()` C function, you register it with `R_RegisterCCallable()`. To import a `.Call()` C function, you get a pointer to it with `R_GetCCallable()`. Similar techniques are available for `.C()` C functions, but are beyond the scope of this book. As we'll see below, a user-friendly package will do both these tasks, so users of the package can ignore the details and simply include a header a file.
 
-[Sidebar: Confusingly, there's another type of function registration. Instead of registering C functions using the namespace (i.e. `@useDynLib pkg fun`), you can register them with `R_registerRoutines()` and `@useDynLib mypackage, .registration = TRUE`. To learn the details read [Registering native extensions](http://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in "Writing R extensions".]
+[Sidebar: Confusingly, there's another type of function registration. Instead of registering C functions using the namespace (i.e. `@useDynLib pkg fun`), you can register them with `R_registerRoutines()` and `@useDynLib mypackage, .registration = TRUE`. To learn the details read [Registering native extensions](https://cran.r-project.org/doc/manuals/R-exts.html#Registering-native-routines) in "Writing R extensions".]
 
 To register a function, call `R_RegisterCCallable()`, defined in `<R_ext/Rdynload.h>`. Function registration should be done in a function called `R_init_<mypackage>`. This function is called automatically when the "mypackage" DLL is loaded. `R_RegisterCCallable()` has three arguments:
 
@@ -376,7 +376,7 @@ SEXP add_(SEXP x, SEXP y) {
 }
 ```
 
-Rather than relying on each package that imports your C code to do this correctly, you should instead do it for them. Write `inst/include/mypackageAPI.h` which provides a wrapper function for each exported function. A popular package that does that is [xts](http://cran.r-project.org/web/packages/xts/). Download the source package and look in the `include/` directory to see what it does.
+Rather than relying on each package that imports your C code to do this correctly, you should instead do it for them. Write `inst/include/mypackageAPI.h` which provides a wrapper function for each exported function. A popular package that does that is [xts](https://cran.r-project.org/web/packages/xts/). Download the source package and look in the `include/` directory to see what it does.
 
 ### Importing C code {#c-import}
 
@@ -411,7 +411,7 @@ Using C code from another package varies based on how the package is implemented
 
 * Don't use C's random number generators (like `rand()` or `random()`), 
   instead use the C API to R's rngs: `unif_rand()`, `norm_rand()`, etc. 
-  Note the caveats in ["Random number generation"](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Random-numbers) - you must call `GetRNGstate()` before and 
+  Note the caveats in ["Random number generation"](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Random-numbers) - you must call `GetRNGstate()` before and 
   `PutRNGstate()` after.
 
 * Use R macros `ISNAN(x)` and `R_FINITE(x)` to check for NaNs and infinite
@@ -447,7 +447,7 @@ R --debugger=lldb
 R --debugger=gdb
 ```
 
-This will start either [lldb](http://lldb.llvm.org) or [gdb](http://www.gnu.org/software/gdb/), the debuggers that work with code produced by `clang` or `gcc` respectively. Like R, `lldb` and `gdb` provide a REPL, a run-eval-print loop where you enter commands and then look at the results. In the examples below I'll show the results of `lldb`, which is what I use (the output from `gdb` is similar). For each interactive command I'll tell you the explicit, but long, `lldb` command and the short, but cryptic, `gdb` command. Because `lldb` understand all `gdb` commands, you can use choose to be explicit of terse.
+This will start either [lldb](https://lldb.llvm.org) or [gdb](https://www.gnu.org/software/gdb/), the debuggers that work with code produced by `clang` or `gcc` respectively. Like R, `lldb` and `gdb` provide a REPL, a run-eval-print loop where you enter commands and then look at the results. In the examples below I'll show the results of `lldb`, which is what I use (the output from `gdb` is similar). For each interactive command I'll tell you the explicit, but long, `lldb` command and the short, but cryptic, `gdb` command. Because `lldb` understand all `gdb` commands, you can use choose to be explicit of terse.
 
 Once you've started the debugger, start R by typing `process start` (lldb) or `run` (gdb). Now when your C/C++ code crashes you'll be dumped into an interactive debugger instead of getting a cryptic error message and a crash. 
 
@@ -583,13 +583,13 @@ When developing C or C++ code, it's usually better to use RStudio's Build & Relo
 Packages with compiled code are much more likely to have difficulties getting on CRAN than those without. The reason? Your package must build from source on all major platforms (Linux, Mac and Windows). This is hard! 
 
 * CRAN provides an automated service for checking R packages on windows: 
-  [win-builder](http://win-builder.r-project.org). You can easily access this
+  [win-builder](https://win-builder.r-project.org). You can easily access this
   by running `devtools::check_win_release()`, which builds and uploads a package
-  bundle. The devel and oldrel R versions can be targetted with
+  bundle. The devel and oldrel R versions can be targeted with
   `check_win_devel()` and `check_win_oldrelease()`, respectively.
   
 * I've tried to include the most important advice in this chapter, but I'd
-  recommend reading the entire section on [writing portable C and C++ code](http://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Portable-C-and-C_002b_002b-code) in "Writing
+  recommend reading the entire section on [writing portable C and C++ code](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Portable-C-and-C_002b_002b-code) in "Writing
   R extensions".
 
 * In exceptional circumstances, like binding to Windows-only functionality, 
