@@ -11,9 +11,6 @@ on:
 
 name: build-book
 
-env:
-  isExtPR: ${{ github.event.pull_request.head.repo.fork == true }}
-
 jobs:
   build:
     runs-on: macOS-latest
@@ -77,7 +74,7 @@ jobs:
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
 
       - name: Deploy to Netlify
-        if: contains(env.isExtPR, 'false')
+        if: !github.event.pull_request.head.repo.fork
         id: netlify-deploy
         uses: nwtgck/actions-netlify@v1.1
         with:
@@ -98,7 +95,7 @@ jobs:
       - run: echo netlify URL ${{ steps.netlify-deploy.outputs.deploy-url }}
       
       - name: Update commit status for non-default branches
-        if: github.ref != 'refs/heads/master' && contains(env.isExtPR, 'false')
+        if: github.ref != 'refs/heads/master' && !github.event.pull_request.head.repo.fork
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
