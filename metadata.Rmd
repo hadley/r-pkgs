@@ -6,7 +6,7 @@ source("common.R")
 
 The job of the `DESCRIPTION` file is to store important metadata about your package. When you first start writing packages, you'll mostly use these metadata to record what packages are needed to run your package. However, as time goes by and you start sharing your package with others, the metadata file becomes increasingly important because it specifies who can use it (the license) and whom to contact (you!) if there are any problems.
 
-Every package must have a `DESCRIPTION`. In fact, it's the defining feature of a package (RStudio and devtools consider any directory containing `DESCRIPTION` to be a package). To get you started, `devtools::create("mypackage")` automatically adds a bare-bones description file. This will allow you to start writing the package without having to worry about the metadata until you need to. The minimal description will vary a bit depending on your settings, but should look something like this:
+Every package must have a `DESCRIPTION`. In fact, it's the defining feature of a package (RStudio and devtools consider any directory containing `DESCRIPTION` to be a package). To get you started, `usethis::create_package("mypackage")` automatically adds a bare-bones description file. This will allow you to start writing the package without having to worry about the metadata until you need to. The minimal description will vary a bit depending on your settings, but should look something like this:
 
 ```yaml
 Package: mypackage
@@ -102,13 +102,13 @@ Both `Imports` and `Suggests` take a comma separated list of package names. I re
 
 When developing packages locally, you never need to use `Suggests`. When releasing your package, using `Suggests` is a courtesy to your users. It frees them from downloading rarely needed packages, and lets them get started with your package as quickly as possible.
 
-The easiest way to add `Imports` and `Suggests` to your package is to use `devtools::use_package()`. This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
+The easiest way to add `Imports` and `Suggests` to your package is to use `usethis::use_package()`. This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
 
 ```{r, eval = FALSE}
-devtools::use_package("dplyr") # Defaults to imports
+usethis::use_package("dplyr") # Defaults to imports
 #> Adding dplyr to Imports
 #> Refer to functions with dplyr::fun()
-devtools::use_package("dplyr", "Suggests")
+usethis::use_package("dplyr", "Suggests")
 #> Adding dplyr to Suggests
 #> Use requireNamespace("dplyr", quietly = TRUE) to test if package is 
 #>  installed, then use dplyr::fun() to refer to functions.
@@ -130,7 +130,11 @@ You almost always want to specify a minimum version rather than an exact version
 
 Versioning is most important when you release your package. Usually people don't have exactly the same versions of packages installed that you do. If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message. However, if you supply the version number, they'll get a error message that tells them exactly what the problem is: an out of date package. 
 
-Generally, it's always better to specify the version and to be conservative about which version to require. Unless you know otherwise, always require a version greater than or equal to the version you're currently using.
+Think carefully if you declare a minimum version. In some sense, the safest thing to do is to require a version greater than or equal to the package's current version. For public work, this is most naturally defined as the current CRAN version of a package; private or personal projects may adopt some other convention. But it's important to appreciate the implications for people who try to install your package: if their local installation doesn't fulfill all of your requirements around versions, installation will either fail or force upgrades of these dependencies. This is desirable if your minimum version requirements are genuine, i.e. your package would be broken otherwise. But if your stated requirements have a less solid rationale, this may be unnecessarily conservative and inconvenient.
+
+In the absence of clear, hard requirements, you should set minimum versions (or not) based on your expected user base, the package versions they are likely to have, and a cost-benefit analysis of being too lax versus too conservative.
+
+TODO: return here and insert concrete details closer to publication. Thing 1: mention relevant usethis function(s). Today that is `use_tidy_version()` but it needs some work (https://github.com/r-lib/usethis/issues/771). Thing 2: See if Kirill's prototype of studying minimum version has matured into anything we can recommend for general use (https://github.com/r-lib/pillar/tree/c017f20476fce431ceee18cc3a637f7ed2884d3a/minver#readme)
 
 ### Other dependencies
 
@@ -142,13 +146,22 @@ There are three other fields that allow you to express more specialised dependen
     when you should still use `Depends`, in [namespaces](#namespace).
     
     You can also use `Depends` to require a specific version of R, e.g.
-    `Depends: R (>= 3.0.1)`. As with packages, it's a good idea to 
-    play it safe and require a version greater than or equal to the version 
-    you're currently using. `devtools::create()` will do this for you.
-    
-    In R 3.1.1 and earlier you'll also need to use `Depends: methods` if 
-    you use S4. This bug is fixed in R 3.2.0, so methods can go back to
-    `Imports` where they belong.
+    `Depends: R (>= 3.4.0)`. Again, think carefully if you do this. This raises
+    the same issues as setting a minimum version for a package you depend on,
+    except the stakes are much higher when it comes to R itself. Users can't simply
+    consent to the necessary upgrade, so, if other packages depend on yours,
+    your minimum version requirement for R can cause a cascade of package
+    installation failures.
+
+      - The [backports package](https://cran.r-project.org/package=backports)
+      is useful if you want to use a function like `trimws()`, which was
+      introduced in 3.3.0, while still supporting older R versions.
+      - The tidyverse packages officially support the current R version, the
+      devel version, and four previous versions. We proactively test this 
+      support in the standard build matrix we use for continuous integration.
+      - Packages with a lower level of use may not need this level of rigour.
+      The main takeaway is: if you state a minimum, you should have a reason and
+      you should take reasonable measures to test your claim regularly.      
     
   * `LinkingTo`: packages listed here rely on C or C++ code in another package. 
     You'll learn more about `LinkingTo` in [compiled code](#src).
@@ -247,17 +260,6 @@ Authors@R: c(
     person("Hadley", "Wickham", email = "hadley@rstudio.com", role = "cre"),
     person("Winston", "Chang", email = "winston@rstudio.com", role = "aut"))
 ```
-
-Alternatively, you can do this concisely by using `as.person()`:
-
-```yaml
-Authors@R: as.person(c(
-    "Hadley Wickham <hadley@rstudio.com> [aut, cre]", 
-    "Winston Chang <winston@rstudio.com> [aut]"
-  ))
-```
-
-(This only works well for names with only one first and last name.)
 
 Every package must have at least one author (aut) and one maintainer (cre) (they might be the same person). The creator must have an email address. These fields are used to generate the basic citation for the package (e.g. `citation("pkgname")`). Only people listed as authors will be included in the auto-generated citation. There are a few extra details if you're including code that other people have written. Since this typically occurs when you're wrapping a C library, it's discussed in [compiled code](#src).
 

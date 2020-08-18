@@ -1,0 +1,139 @@
+# System setup {#setup}
+
+```{r, include = FALSE}
+source("common.R")
+```
+
+## Prepare your system {#setup-prep}
+
+To get started, make sure you have the latest version of R (at least `r paste0(version$major, ".", version$minor)`, which is the version being used to render this book), then run the following code to get the packages you'll need:
+
+```{r, eval = FALSE}
+install.packages(c("devtools", "roxygen2", "testthat", "knitr"))
+```
+
+Make sure you have a recent version of the RStudio integrated development environment (IDE). In fact, consider using the preview version and updating regularly. Compared to the official released version, the preview gives you access to the latest and greatest features and only slightly increases your chances of finding a bug. It is distinct from the more volatile daily build.
+
+  * Preview version: <https://www.rstudio.com/products/rstudio/download/preview/>
+  * Released version: <https://www.rstudio.com/products/rstudio/download/>
+    - Most readers can use the free, open source version of RStudio Desktop.
+
+## devtools, usethis, and you {#setup-usage}
+
+> "I am large, I contain multitudes."
+>
+> --- Walt Whitman, Song of Myself
+
+After 7 years of development, devtools had grown into a rather unwieldy package, making maintenance difficult. Version 2.0.0, released in late 2018, marked the [conscious uncoupling](https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/) of devtools, with most functionality moving into seven smaller packages. Through various means, devtools continues to expose all its usual functionality, although it is mostly maintained elsewhere. For example, devtools might provide a wrapper function in order to set user-friendly defaults, introduce helpful interactive behaviour, or to combine functionality from multiple sub-packages.
+
+What's our recommended approach to devtools and its constituent packages? It varies, depending on whether you're working in useR or developeR mode:
+
+  * For interactive use, useRs should attach devtools and think of it as the provider of your favorite functions for package development.
+  * For programmatic use, such as inside another package, developeRs should NOT depend on devtools, but should instead access functions via the package that is their primary home.
+    - devtools should rarely appear in the role of `foo` in a qualified call of the form `foo::fcn()`. Instead, `foo` should be the package where `fcn()` is defined.
+    - An exception to this is that we continue to feature `devtools::install_github()` as the way to install the development version of a package in its README, even though `install_github()` actually lives in the remotes package. That's because this piece of advice pertains to interactive use, where we prefer to emphasize devtools.
+  * Try to report bugs on the package that is a function's primary home.
+    
+Example of how to simulate installing and loading a package, during interactive development:
+
+```{r eval = FALSE}
+library(devtools)
+load_all()
+```
+
+If that same functionality is used inside an R package, this is the preferred call:
+
+```{r eval = FALSE}
+pkgload::load_all()
+```
+
+The usethis package is the one constituent package that more people may be aware of and that they may use directly. It now holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package. All functions in usethis are made available by devtools. So, once you attach devtools, you can use any function in usethis without qualification, i.e. just call `use_testthat()`. If you choose to specify the namespace, such as when working in a more programmatic style, then access usethis functions directly: do `usethis::use_testthat()` instead of `devtools::use_testthat()`.
+
+### Personal startup configuration
+
+You can attach devtools like so:
+
+```{r, eval = FALSE}
+library(devtools)
+```
+
+But it soon grows aggravating to repeatedly attach devtools in every R session. Therefore, we strongly recommend attaching devtools in your `.Rprofile` startup file, like so:
+
+```{r eval = FALSE}
+if (interactive()) {
+  suppressMessages(require(devtools))
+}
+```
+
+For convenience, the function `use_devtools()` creates `.Rprofile`, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen. Another package you may want to handle this way is testthat.
+
+:::tip
+In general, it's a bad idea to attach packages in `.Rprofile`, as it invites you to create R scripts that don't reflect all of their dependencies via explicit calls to `library(foo)`. But devtools is a workflow package that smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts. Note how we still take care to only attach in interactive sessions.
+:::
+
+usethis consults certain options when, for example, creating R packages *de novo*. This allows you to specify personal defaults for yourself as a package maintainer or for your preferred license. Here's an example of a code snippet that could go in `.Rprofile`:
+
+```{r, eval = FALSE}
+options(
+  usethis.full_name = "Jane Doe",
+  usethis.description = list(
+    `Authors@R` = 'person("Jane", "Doe", email = "jane@example.com", role = c("aut", "cre"), 
+    comment = c(ORCID = "YOUR-ORCID-ID"))',
+    License = "MIT + file LICENSE",
+    Version = "0.0.0.9000"
+  ),
+  usethis.protocol  = "ssh"  
+)
+```
+
+The following code installs the development versions of devtools and usethis, which may be important during the revision of the book.
+
+```{r, eval = FALSE}
+devtools::install_github("r-lib/devtools")
+devtools::install_github("r-lib/usethis")
+```
+
+## R build toolchain {#setup-tools}
+
+To be fully capable of building R packages from source, you'll also need a compiler and a few other command line tools. This may not be strictly necessary until you want to build packages containing C or C++ code (the topic of chapter \@ref(src)). Especially if you are using RStudio, you can set this aside for now. The IDE will alert you and provide support once you try to do something that requires you to setup your development environment. Read on for advice on doing this yourself.
+
+### Windows
+
+On Windows the collection of tools needed for building packages from source is called Rtools.
+
+Rtools is NOT an R package. It is NOT installed with `install.packages()`. Instead, download it from <https://cran.r-project.org/bin/windows/Rtools/> and run the installer.
+
+During the Rtools installation you may see a window asking you to "Select
+Additional Tasks".
+
+- Do _not_ select the box for "Edit the system PATH". devtools and RStudio should put Rtools on the `PATH` automatically when it is needed.
+- Do select the box for "Save version information to registry". It should be selected by default.
+
+### macOS
+
+You need to install the Xcode command line tools, which requires that you [register as an Apple developer](https://developer.apple.com/programs/register/) (don't worry, it's free).
+
+Then, in the shell, do:
+
+```shell
+xcode-select --install
+```
+
+Alternatively, you can install the current release of full [Xcode from the Mac App Store](https://itunes.apple.com/ca/app/xcode/id497799835?mt=12). This includes a very great deal that you do not need, but it offers the advantage of App Store convenience.
+
+### Linux
+
+Make sure you've installed not only R, but also the R development tools. For example, on Ubuntu (and Debian) you need to install the `r-base-dev` package.
+
+### Verify system prep
+
+You can check that you have everything installed and working by running the following code:
+
+```{r, eval = FALSE}
+# TODO: replace with whatever results from https://github.com/r-lib/devtools/issues/1970
+library(devtools)
+has_devel()
+#> [1] TRUE
+```
+
+If everything is ok, it returns `TRUE`. Otherwise, it will reveal some diagnostic info about the problem.
