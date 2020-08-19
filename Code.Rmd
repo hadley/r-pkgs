@@ -245,7 +245,7 @@ You have changed the R landscape if you've loaded a package with `library()`, or
 If the behaviour of _other_ functions differs before and after running your function, you've modified the landscape.
 Changing the landscape is bad because it makes code much harder to understand. 
 
-There are some functions that modify global settings that you should never use because there are better alternatives:
+There are some functions that modify global settings that you should never use in package development, because there are better alternatives:
 
 * __Don't use `library()` or `require()`__. These modify the search path, 
   affecting what functions are available from the global environment. 
@@ -259,36 +259,138 @@ There are some functions that modify global settings that you should never use b
   If you're using `source()` to create a dataset, instead switch to `data/`
   as described in [datasets](#data).
 
-Other functions need to be used with caution.
-If you use them, make sure to clean up after yourself with `on.exit()`:
+#### Managing state
 
-* If you modify global `options()` or graphics `par()`, save the old values 
-  and reset when you're done:
-  
-    ```{r, eval = FALSE}
-    old <- options(stringsAsFactors = FALSE)
-    on.exit(options(old), add = TRUE)
+Sometimes you cannot avoid modifying the state of the world, in which case you just have to make sure that you put things back the way you found them.
+
+The first function to know about is base R's [`on.exit()`](https://rdrr.io/r/base/on.exit.html).
+Inside your function body, every time you do something that should be undone **on exit**, you immediately register the cleanup code with `on.exit(expr, add = TRUE)`[^on-exit-add].
+
+[^on-exit-add]: It's too bad `add = TRUE` isn't the default, because you almost always want this. Without it, each call to `on.exit()` clobbers the effect of previous calls.
+
+Here's a `sloppy()` function that prints a number with a specific number of significant digits, by adjusting a global R option.
+
+```{r include = FALSE}
+op <- options()
+```
+
+```{r}
+sloppy <- function(x, sig_digits) {
+  options(digits = sig_digits)
+  print(x)
+}
+
+pi
+
+sloppy(pi, 2)
+
+pi
+```
+
+```{r include = FALSE}
+options(op)
+```
+
+Notice how `pi` prints differently before and after the call to `sloppy()`?
+Calling `sloppy()` has a side effect: it changes the `digits` option globally, not just within its own scope of operations.
+This is what we want to avoid, *especially* in package functions.
+
+*Don't worry, we're restoring global state (specifically, the `digits` option) behind the scenes here.*
+
+Here's how to do better with `on.exit()`.
+
+```{r}
+neat <- function(x, sig_digits) {
+  op <- options(digits = sig_digits)
+  on.exit(options(op), add = TRUE)
+  print(x)
+}
+
+pi
+
+neat(pi, 2)
+
+pi
+```
+
+The use of `on.exit()` ensures that `neat()` leaves `digits` the way that it found it.
+`on.exit()` also works when you exit the function abnormally, i.e. due to error.
+This is why it's a better choice than any do-it-yourself solution.
+
+`on.exit()` is a very useful function and provides enough inspiration for an entire package: withr (<https://withr.r-lib.org>), which is a Swiss army knife for managing state in very flexible ways.
+It's a very lean package that is designed for use in other packages and it's what we tend to use in new code, in package functions and tests, for situations like that above.
+
+`withr::defer()` is very much like `on.exit()`, i.e. it schedules the execution of arbitrary code when the current function exits:
+
+```{r}
+neater <- function(x, sig_digits) {
+  op <- options(digits = sig_digits)
+  defer(options(op))
+  print(x)
+}
+
+pi
+
+neat(pi, 2)
+
+pi
+```
+
+The default behaviour of `withr::defer()` tends to match our requirements better than `on.exit()`: `defer()` *adds* expressions to the *top* of the stack of deferred actions. (This can be achieved with `on.exit(add = TRUE, after = FALSE)`.)
+
+The last killer feature `withr::defer()` is that its explicit `envir` argument makes it possible to write your own `on.exit()`-like helpers.
+We don't demonstrate that here[^self-cleaning-test-fixtures].
+
+[^self-cleaning-test-fixtures]: This idea is explored thoroughly, in the context of testing, in the blog post [Self-cleaning test fixtures](https://www.tidyverse.org/blog/2020/04/self-cleaning-test-fixtures/).
+
+Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers.
+These helpers come in two forms that are useful in different situations:
+
+* `with_*()` functions are best for executing small snippets of code with a
+  modified state
+    ```{r eval = FALSE}
+    neatest_with <- function(x, sig_digits) {
+      withr::with_options(
+        list(digits = sig_digits),
+        print(x)
+      )                                                 --
+    }
+    ```
+* `local_*()` functions are best for modifying state "from now until the
+  function exits"
+    ```{r eval = FALSE}
+    neatest_local <- function(x, sig_digits) {
+      withr::local_options(list(digits = sig_digits))
+      print(x)
+    }
     ```
 
-* Avoid modifying the working directory. If you do have to change it, make sure
-  to change it back when you're done:
+Here are the state change helpers in withr that you are most likely to find useful:
 
-    ```{r, eval = FALSE}
-    old <- setwd(tempdir())
-    on.exit(setwd(old), add = TRUE)
-    ```
+| Do / undo this              | withr functions                     |
+|-----------------------------|-------------------------------------|
+| Set an R option             | `with_options()`, `local_options()` |
+| Set an environment variable | `with_envvar()`, `local_envvar()`   |
+| Change working directory    | `with_dir()`, `local_dir()`         |
+| Set a graphics parameter    | `with_par()`, `local_par()`         |
 
-* Creating plots and printing output to the console are two other ways of
-  affecting the global R environment. Often you can't avoid these (because 
-  they're important!) but it's good practice to isolate them in functions that
-  __only__ produce output. This also makes it easier for other people to 
-  repurpose your work for new uses. For example, if you separate data preparation
-  and plotting into two functions, others can use your data prep work (which
-  is often the hardest part!) to create new visualisations.
+#### Isolate functions with side effects
+
+Creating plots and printing output to the console are two other ways of affecting the global R environment.
+Often you can't avoid these (because they're important!), but it's good practice to isolate them in functions that __only__ produce output.
+This also makes it easier for other people to repurpose your work for new uses.
+For example, if you separate data preparation and plotting into two functions,
+others can use your data prep work (which is often the hardest part!) to create new visualisations.
+
+*TODO: is this a good place to talk about `format()` vs. `print()`? And the evils of doing cool calculations only in, e.g., a `summary()` method?*
+
+#### Protect yourself from the environment
 
 The flip side of the coin is that you should avoid relying on the user's landscape, which might be different to yours.
 For example, functions like `read.csv()` are dangerous because the value of `stringsAsFactors` argument comes from the global option `stringsAsFactors`.
 If you expect it to be `TRUE` (the default), and the user has set it to be `FALSE`, your code might fail. 
+
+*TODO: we need to revisit this example in light of `stringsAsFactors` changes in R 4.0.*
 
 ### When you __do__ need side-effects
 
@@ -301,12 +403,12 @@ For now, you should always use `.onLoad()` unless explicitly directed otherwise.
 
 Some common uses of `.onLoad()` and `.onAttach()` are:
 
-*   To display an informative message when the package loads. This might make 
-    usage conditions clear, or display useful tips. Startup messages is one 
-    place where you should use `.onAttach()` instead of `.onLoad()`. To display 
-    startup messages, always use `packageStartupMessage()`, and not `message()`. 
-    (This allows `suppressPackageStartupMessages()` to selectively suppress 
-    package startup messages).
+* To display an informative message when the package loads. This might make 
+  usage conditions clear, or display useful tips. A startup messages is one 
+  place where you should use `.onAttach()` instead of `.onLoad()`. To display 
+  a startup message, always use `packageStartupMessage()`, and not `message()`. 
+  This allows `suppressPackageStartupMessages()` to selectively suppress 
+  package startup messages.
 
     ```{r, eval = FALSE}
     .onAttach <- function(libname, pkgname) {
@@ -314,12 +416,14 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
     }
     ```
     
-*   To set custom options for your package with `options()`. To avoid conflicts
-    with other packages, ensure that you prefix option names with the name
-    of your package. Also be careful not to override options that the user
-    has already set.
+* To set custom options for your package with `options()`. To avoid conflicts
+  with other packages, ensure that you prefix option names with the name of your
+  package. Also be careful not to override options that the user has already
+  set.
+  
+  *TODO: revise this for current usethis.*
     
-    I use the following code in devtools to set up useful options:
+  I use the following code in devtools to set up useful options:
     
     ```{r, eval = FALSE}
     .onLoad <- function(libname, pkgname) {
@@ -340,17 +444,16 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
     }
     ```
     
-    Then devtools functions can use e.g. `getOption("devtools.name")` to 
-    get the name of the package author, and know that a sensible default value
-    has already been set.
+  Then devtools functions can use e.g. `getOption("devtools.name")` to get the
+  name of the package author, and know that a sensible default value has already
+  been set.
     
-*   To connect R to another programming language. For example, if you use rJava
-    to talk to a `.jar` file, you need to call `rJava::.jpackage()`. To
-    make C++ classes available as reference classes in R with Rcpp modules,
-    you call `Rcpp::loadRcppModules()`. 
+* To connect R to another programming language. For example, if you use rJava to
+  talk to a `.jar` file, you need to call `rJava::.jpackage()`. To make C++
+  classes available as reference classes in R with Rcpp modules, you call
+  `Rcpp::loadRcppModules()`. 
 
-*   To register vignette engines with `tools::vignetteEngine()`.
-
+* To register vignette engines with `tools::vignetteEngine()`.
 
 As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`.
 They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code).
@@ -388,7 +491,7 @@ cat(stringi::stri_escape_unicode(x))
 
 You can feed your `.R` files to `tools::showNonASCIIfile()` to detect all lines that contain non-ASCII characters:
 
-```r}
+```{r}
 library(purrr)
 
 walk(list.files("R", full.names = TRUE),
