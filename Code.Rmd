@@ -6,11 +6,14 @@ source("common.R")
 
 # R code {#r}
 
-The first principle of using a package is that all R code goes in `R/`. In this chapter, you'll learn about the `R/` directory, my recommendations for organising your functions into files, and some general tips on good style. You'll also learn about some important differences between functions in scripts and functions in packages.
+The first principle of using a package is that all R code goes in `R/`.
+In this chapter, you'll learn about the `R/` directory, my recommendations for organising your functions into files, and some general tips on good style.
+You'll also learn about some important differences between functions in scripts and functions in packages.
 
 ## R code workflow {#r-workflow}
 
-The first practical advantage to using a package is that it's easy to re-load your code. You can either run `devtools::load_all()`, or in RStudio press __Ctrl/Cmd + Shift + L__,  which also saves all open files, saving you a keystroke.
+The first practical advantage to using a package is that it's easy to re-load your code.
+You can either run `devtools::load_all()`, or in RStudio press __Ctrl/Cmd + Shift + L__,  which also saves all open files, saving you a keystroke.
 
 This keyboard shortcut leads to a fluid development workflow:
 
@@ -22,7 +25,9 @@ This keyboard shortcut leads to a fluid development workflow:
 
 1. Rinse and repeat.
 
-Congratulations! You've learned your first package development workflow. Even if you learn nothing else from this book, you'll have gained a useful workflow for editing and reloading R code.
+Congratulations!
+You've learned your first package development workflow.
+Even if you learn nothing else from this book, you'll have gained a useful workflow for editing and reloading R code.
 
 ## Organising your functions
 
@@ -32,11 +37,12 @@ Congratulations! You've learned your first package development workflow. Even if
 
 *removed in deference to material in <https://style.tidyverse.org>; see [tidyverse/style/#122](https://github.com/tidyverse/style/issues/122)*
 
-TL;DR = "Use the [styler package](http://styler.r-lib.org)".
+TL;DR = "Use the [styler package](https://styler.r-lib.org)".
 
 ## Top-level code {#r-differences}
 
-Up until now, you've probably been writing __scripts__, R code saved in a file that you load with `source()`. There are two main differences between code in scripts and packages:
+Up until now, you've probably been writing __scripts__, R code saved in a file that you load with `source()`.
+There are two main differences between code in scripts and packages:
 
 * In a script, code is run when it is loaded. In a package, code is run when it
   is built. This means your package code should only create objects, the
@@ -50,7 +56,11 @@ The next two sections expand on these important differences.
 
 ### Loading code
 
-When you load a script with `source()`, every line of code is executed and the results are immediately made available. Things are different in a package, because it is loaded in two steps. When the package is built (e.g. by CRAN) all the code in `R/` is executed and the results are saved. When you load a package, with `library()` or `require()`, the cached results are made available to you. If you loaded scripts in the same way as packages, your code would look like this:
+When you load a script with `source()`, every line of code is executed and the results are immediately made available.
+Things are different in a package, because it is loaded in two steps.
+When the package is built (e.g. by CRAN) all the code in `R/` is executed and the results are saved.
+When you load a package, with `library()` or `require()`, the cached results are made available to you.
+If you loaded scripts in the same way as packages, your code would look like this:
 
 ```{r, eval = FALSE}
 # Load a script into a new environment and save it
@@ -62,9 +72,12 @@ save(envir = env, "my-script.Rdata")
 load("my-script.Rdata")
 ```
 
-For example, take `x <- Sys.time()`. If you put this in a script, `x` would tell you when the script was `source()`d. But if you put that same code in a package, `x` would tell you when the package was _built_. 
+For example, take `x <- Sys.time()`.
+If you put this in a script, `x` would tell you when the script was `source()`d.
+But if you put that same code in a package, `x` would tell you when the package was _built_. 
 
-This means that you should never run code at the top-level of a package: package code should only create objects, mostly functions. For example, imagine your foo package contains this code:
+This means that you should never run code at the top-level of a package: package code should only create objects, mostly functions.
+For example, imagine your foo package contains this code:
 
 ```{r, eval = FALSE}
 library(ggplot2)
@@ -81,7 +94,8 @@ library(foo)
 show_mtcars()
 ```
 
-The code won't work because ggplot2's `qplot()` function won't be available: `library(foo)` doesn't re-execute `library(ggplot2)`. The top-level R code in a package is only executed when the package is built, not when it's loaded.
+The code won't work because ggplot2's `qplot()` function won't be available: `library(foo)` doesn't re-execute `library(ggplot2)`.
+The top-level R code in a package is only executed when the package is built, not when it's loaded.
 
 To get around this problem you might be tempted to do:
 
@@ -92,11 +106,16 @@ show_mtcars <- function() {
 }
 ```
 
-That's also problematic, as you'll see below. Instead, describe the packages your code needs in the `DESCRIPTION` file, as you'll learn in [package dependencies](#dependencies).
+That's also problematic, as you'll see below.
+Instead, describe the packages your code needs in the `DESCRIPTION` file, as you'll learn in [package dependencies](#dependencies).
 
 ### The R landscape
 
-Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined. This means you need to pay attention to the R landscape, which includes not just the available functions and objects, but all the global settings. You have changed the R landscape if you've loaded a package with `library()`, or changed a global option with `options()`, or modified the working directory with `setwd()`. If the behaviour of _other_ functions differs before and after running your function, you've modified the landscape. Changing the landscape is bad because it makes code much harder to understand. 
+Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined.
+This means you need to pay attention to the R landscape, which includes not just the available functions and objects, but all the global settings.
+You have changed the R landscape if you've loaded a package with `library()`, or changed a global option with `options()`, or modified the working directory with `setwd()`.
+If the behaviour of _other_ functions differs before and after running your function, you've modified the landscape.
+Changing the landscape is bad because it makes code much harder to understand. 
 
 There are some functions that modify global settings that you should never use because there are better alternatives:
 
@@ -112,7 +131,8 @@ There are some functions that modify global settings that you should never use b
   If you're using `source()` to create a dataset, instead switch to `data/`
   as described in [datasets](#data).
 
-Other functions need to be used with caution. If you use them, make sure to clean up after yourself with `on.exit()`:
+Other functions need to be used with caution.
+If you use them, make sure to clean up after yourself with `on.exit()`:
 
 * If you modify global `options()` or graphics `par()`, save the old values 
   and reset when you're done:
@@ -138,11 +158,18 @@ Other functions need to be used with caution. If you use them, make sure to clea
   and plotting into two functions, others can use your data prep work (which
   is often the hardest part!) to create new visualisations.
 
-The flip side of the coin is that you should avoid relying on the user's landscape, which might be different to yours. For example, functions like `read.csv()` are dangerous because the value of `stringsAsFactors` argument comes from the global option `stringsAsFactors`. If you expect it to be `TRUE` (the default), and the user has set it to be `FALSE`, your code might fail. 
+The flip side of the coin is that you should avoid relying on the user's landscape, which might be different to yours.
+For example, functions like `read.csv()` are dangerous because the value of `stringsAsFactors` argument comes from the global option `stringsAsFactors`.
+If you expect it to be `TRUE` (the default), and the user has set it to be `FALSE`, your code might fail. 
 
 ### When you __do__ need side-effects
 
-Occasionally, packages do need side-effects. This is most common if your package talks to an external system --- you might need to do some initial setup when the package loads. To do that, you can use two special functions: `.onLoad()` and `.onAttach()`. These are called when the package is loaded and attached. You'll learn about the distinction between the two in [Namespaces](#namespace). For now, you should always use `.onLoad()` unless explicitly directed otherwise.
+Occasionally, packages do need side-effects.
+This is most common if your package talks to an external system --- you might need to do some initial setup when the package loads.
+To do that, you can use two special functions: `.onLoad()` and `.onAttach()`.
+These are called when the package is loaded and attached.
+You'll learn about the distinction between the two in [Namespaces](#namespace).
+For now, you should always use `.onLoad()` unless explicitly directed otherwise.
 
 Some common uses of `.onLoad()` and `.onAttach()` are:
 
@@ -197,19 +224,31 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
 *   To register vignette engines with `tools::vignetteEngine()`.
 
 
-As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`. They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code). They give the path where the package is installed (the "library"), and the name of the package.
+As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`.
+They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code).
+They give the path where the package is installed (the "library"), and the name of the package.
 
-If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects. By convention, `.onLoad()` and friends are usually saved in a file called `zzz.R`. (Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should no longer be used.)
+If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects.
+By convention, `.onLoad()` and friends are usually saved in a file called `zzz.R`.
+(Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should no longer be used.)
     
 ### S4 classes, generics and methods
 
-Another type of side-effect is defining S4 classes, methods and generics. R packages capture these side-effects so they can be replayed when the package is loaded, but they need to be called in the right order. For example, before you can define a method, you must have defined both the generic and the class. This requires that the R files be sourced in a specific order. This order is controlled by the `Collate` field in the `DESCRIPTION`. This is described in more detail in [documenting S4](#man-s4).
+Another type of side-effect is defining S4 classes, methods and generics.
+R packages capture these side-effects so they can be replayed when the package is loaded, but they need to be called in the right order.
+For example, before you can define a method, you must have defined both the generic and the class.
+This requires that the R files be sourced in a specific order.
+This order is controlled by the `Collate` field in the `DESCRIPTION`.
+This is described in more detail in [documenting S4](#man-s4).
 
 ## CRAN notes {#r-cran}
 
-(Each chapter will finish with some hints for submitting your package to CRAN. If you don't plan on submitting your package to CRAN, feel free to ignore them!)
+(Each chapter will finish with some hints for submitting your package to CRAN.
+If you don't plan on submitting your package to CRAN, feel free to ignore them!)
 
-If you're planning on submitting your package to CRAN, you must use only ASCII characters in your `.R` files. You can still include unicode characters in strings, but you need to use the special unicode escape `"\u1234"` format. The easiest way to do that is to use `stringi::stri_escape_unicode()`:
+If you're planning on submitting your package to CRAN, you must use only ASCII characters in your `.R` files.
+You can still include unicode characters in strings, but you need to use the special unicode escape `"\u1234"` format.
+The easiest way to do that is to use `stringi::stri_escape_unicode()`:
 
 ```{r}
 x <- "This is a bullet •"
@@ -217,4 +256,13 @@ y <- "This is a bullet \u2022"
 identical(x, y)
 
 cat(stringi::stri_escape_unicode(x))
+```
+
+You can feed your `.R` files to `tools::showNonASCIIfile()` to detect all lines that contain non-ASCII characters:
+
+```r}
+library(purrr)
+
+walk(list.files("R", full.names = TRUE),
+     tools::showNonASCIIfile)
 ```
