@@ -1,0 +1,550 @@
+# The package within {#package-within}
+
+```{r, include = FALSE}
+source("common.R")
+```
+
+Like the [whole game chapter](#whole-game), this chapter runs through the development of a small toy package.
+In that chapter , we deliberately chose a very narrow problem (some factor operations), in order to emphasize the package development workflow and tooling.
+Here we have a different priority.
+
+We start with a data analysis script and show how to find the package that lurks within.
+We're going to show how to extract reusable data and logic from an analysis script, put it into an R package, and then use that package in a much simplified script.
+
+## Apple
+
+Here is a fictional data analysis script for a group that collects reports from people who went for a swim: Where did you swim and how hot was it?
+Their data usually comes as a CSV file, which they read into a data frame.
+
+```{r}
+infile <- "beach.csv"
+(dat <- read.csv(infile))
+```
+
+They then classify each observation as using American ("US") or British ("UK") English, based on the word chosen to describe the sandy place where the ocean and land meet.
+The `where` column is used to build the new `english` column.
+
+```{r}
+dat$english[dat$where == "beach"] <- "US"
+dat$english[dat$where == "coast"] <- "US"
+dat$english[dat$where == "seashore"] <- "UK"
+dat$english[dat$where == "seaside"] <- "UK"
+```
+
+Sadly, the temperatures are often reported in a mix of Fahrenheit and Celsius.
+In the absence of better information, they guess that Americans report temperatures in Fahrenheit and therefore those observations are converted to Celsius.
+
+```{r}
+dat$temp[dat$english == "US"] <- (dat$temp[dat$english == "US"] - 32) * 5/9
+```
+
+Finally, this cleaned (cleaner?) data is written back out to a CSV file.
+They like to capture a timestamp in the filename when they do this.
+
+```{r}
+now <- Sys.time()
+timestamp <- format(now, "%Y-%B-%d_%H-%M")
+(outfile <- paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile)))
+write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
+```
+
+Even if your typical analytical tasks are quite different, hopefully a few patterns you see here seem familiar.
+It's easy to imagine that this group does very similar pre-processing of many similar data files over time.
+Their analyses can be more efficient and consistent if they make these standard data maneuvers available to themselves as functions a package, instead of inlining the same data and logic into dozens or hundreds of data ingest scripts.
+
+## Banana
+
+The package that lurks within the original script is actually pretty hard to see!
+It's obscured by a few suboptimal coding practices, such as the use of repetitive copy/paste-style code and the mixing of code and data.
+Therefore a good first step is to refactor this code, isolating as much data and logic as possible in proper objects and functions, respectively.
+
+At the same time, we introduce the use of some add-on packages, for several reasons.
+First, we would actually use the tidyverse for this sort of data wrangling.
+Second, many people use add-on packages in their scripts, so it is good to see how add-on packages are handled as we create this package.
+
+Here's the next version of the script.
+
+```{r, R.options = list(tidyverse.quiet = TRUE)}
+library(tidyverse)
+
+infile <- "beach.csv"
+dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
+
+lookup_table <- tribble(
+      ~where, ~english,
+     "beach",     "US",
+     "coast",     "US",
+  "seashore",     "UK",
+   "seaside",     "UK"
+)
+
+dat <- dat %>% 
+  left_join(lookup_table)
+
+f_to_c <- function(x) (x - 32) * 5/9
+
+dat <- dat %>% 
+  mutate(temp = if_else(english == "US", f_to_c(temp), temp))
+
+now <- Sys.time()
+outfile_path <- function(infile) {
+  timestamp <- format(now, "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+write_csv(dat, outfile_path(infile))
+```
+
+The key features to note are:
+
+  * We are using functions from tidyverse packages (specifically from readr and
+    dplyr).
+  * The map between different "beach" words and whether they are associated with
+    "US" or "UK" English is now isolated in a lookup table, which lets us create
+    the `english` column in one go with a `left_join()`.
+  * The `f_to_c()` and `outfile_path()` functions now hold the logic for 
+    converting temperatures and forming the timestamped output file name.
+
+It's getting easier to recognize the reusable bits of this script, i.e. the bits that have nothing to do with a specific input file, like `beach.csv`.
+This sort of refactoring often happens naturally on the way to creating your own package, but if it does not, it's a good idea to do this intentionally.
+
+## Cherry
+
+A typical next step is to move reusable data and logic out of the analysis script and into their own separate files.
+
+Here is the content of `beach-lookup-table.csv`:
+
+```
+where,english
+beach,US
+coast,US
+seashore,UK
+seaside,UK
+```
+
+Here is the content of `cleaning-helpers.R`:
+
+```{r, eval = FALSE}
+library(tidyverse)
+
+localize_beach <- function(dat) {
+  lookup_table <- read_csv(
+    "beach-lookup-table.csv",
+    col_types = cols(where = "c", english = "c")
+  )
+  left_join(dat, lookup_table)
+}
+
+f_to_c <- function(x) (x - 32) * 5/9
+
+celsify_temp <- function(dat) {
+  mutate(dat, temp = if_else(english == "US", f_to_c(temp), temp))
+}
+
+now <- Sys.time()
+outfile_path <- function(infile) {
+  timestamp <- format(now, "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+```
+
+We've defined a few helper functions: `localize_beach()`, `f_to_c()`, `celsify_temp()`, and `outfile_path()`.
+
+Here is the next version of the script, now that we've pulled out the lookup table and the helper functions.
+
+```{r, R.options = list(tidyverse.quiet = TRUE)}
+library(tidyverse)
+
+source("cleaning-helpers.R")
+
+infile <- "beach.csv"
+dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
+
+dat <- dat %>% 
+  localize_beach() %>% 
+  celsify_temp()
+
+write_csv(dat, outfile_path(infile))
+```
+
+You'll notice that the script is getting shorter and, hopefully, easier to read and modify, because repetitive and fussy clutter has been moved elsewhere.
+Whether the code is actually easier to work with is subjective and depends on how natural the "interface" to the external bits feels for the people who actually preprocess swimming data.
+
+Let's assume the group agrees that our design decisions are good enough, i.e. this seems likely to make data cleaning easier, not harder.
+Sure, things are not perfect, but this is a typical developmental stage when you're trying to figure out what the helper functions should be and how they should work.
+
+## Durian
+
+Here's a well-intentioned, naïve, and fundamentally broken first attempt at making a package:
+
+  * Use `create_package()` to scaffold a new R package.
+    - This is a good first step!
+  * Copy `cleaning-helpers.R` into the new package, specifically, to
+    `R/cleaning-helpers.R`.
+    - This is morally correct, but mechanically wrong in several ways, as we
+      will soon see.
+  * Copy `beach-lookup-table.csv` into the new package. Hmm, but where? We
+    settle on the top-level of the package.
+    - This is not going to end well. Shipping data in a package is a special
+      topic, which is covered in FUTURE LINK.
+  * Install this package.
+    - Despite all of the problems identified above, this actually works! Which
+      is interesting, because we can (try to) use it and see what happens.
+      
+Here's the version of the script that you hope will run after successfully installing this package.
+
+```{r eval = FALSE}
+library(tidyverse)
+library(durian)
+
+infile <- "beach.csv"
+dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
+
+dat <- dat %>% 
+  localize_beach() %>% 
+  celsify_temp()
+
+write_csv(dat, outfile_path(infile))
+```
+
+The only change from our previous script is that
+
+```{r eval = FALSE}
+source("cleaning-helpers.R")
+```
+
+has been replaced by
+
+```{r eval = FALSE}
+library(durian)
+```
+
+Here's what actually happens when we try to run this:
+
+```{r eval = FALSE}
+library(tidyverse)
+library(durian)
+
+infile <- "beach.csv"
+dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
+
+dat <- dat %>% 
+  localize_beach() %>% 
+  celsify_temp()
+#> Error in localize_beach(.) : could not find function "localize_beach"
+
+write_csv(dat, "beach_out.csv")
+#> Error in outfile_path(infile) : could not find function "outfile_path"
+```
+
+None of our helper functions are actually available for use!
+This is because we have not *exported* them.
+In contrast to `source()`ing helper functions, attaching a package does not dump its functions into the global workspace.
+By default, functions in a package are not exported, i.e. they are internal-use only.
+We need to export the functions for our users.
+In this book, we achieve this with an `@export` tag in the special roxygen comment above each function.
+Then we run `document()`, to (re)generate the `NAMESPACE` file, which declares our exported functions.
+
+So let's fix that, re-install the package, and try again.
+
+Now when we execute our script, it works!
+Well, it works *sometimes*.
+Specifically, it works if and only if the working directory is set to the top-level of the source package.
+With any other working directory, assuming "beach.csv" is present, here's the new error:
+
+```{r eval = FALSE}
+library(tidyverse)
+library(durian)
+
+infile <- "beach.csv"
+dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
+
+dat <- dat %>% 
+  localize_beach() %>% 
+  celsify_temp()
+#> Error: 'beach-lookup-table.csv' does not exist in current working directory ('/Users/jenny/tmp').
+
+write_csv(dat, outfile_path(infile))
+```
+
+The lookup table consulted inside `localize_beach()` cannot be found.
+One does not simply dump CSV files into an R package and expect things to "just work".
+We will fix this in our next iteration of the package.
+
+Before we abandon this initial effort, let's also appreciate the fact that we were able to install, attach, and use a fundamentally broken package.
+`load_all()` works fine, too.
+This is a sobering reminder that you should be running `check()` very often during development, as it will alert you to many problems that simple installation and usage does not reveal.
+
+Indeed, `R CMD check` fails for this package and we see this:
+
+```
+* installing *source* package ‘durian’ ...
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+Error in library(tidyverse) : there is no package called ‘tidyverse’
+Error: unable to load R code in package ‘durian’
+Execution halted
+ERROR: lazy loading failed for package ‘durian’
+* removing ‘/Users/jenny/rrr/durian.Rcheck/durian’
+```
+
+What do you mean "there is no package called 'tidyverse'"?!?
+We're using it, with no problems, in our main script!
+
+This error is what happens when the strictness of `R CMD check` meets the very first line of `R/cleaning-helpers.R`:
+
+```{r, eval = FALSE}
+library(tidyverse)
+```
+
+This is not how you declare that your package depends on another package (the tidyverse, in this case) and it is not how you use another package in your package.
+Dependencies must be declared in `DESCRIPTION`.
+Since we declared no dependencies, `R CMD check` takes us at our word and tries to install our package with only the base packages available, which means this `library(tidyverse)` call fails.
+A "regular" installation succeeds, simply because the tidyverse is available in your regular library, which hides this particular mistake.
+
+## Elderberry
+
+We're ready to make the most minimal, functioning version of this package.
+
+Here is the new version of `R/cleaning-helpers.R`[^bad-file-name]:
+
+[^bad-file-name]: This filename is not ideal, but it is technically allowed.
+We discuss organising and naming the files below `R/` in FUTURE LINK.
+
+```{r, eval = FALSE}
+lookup_table <- tribble(
+      ~where, ~english,
+     "beach",     "US",
+     "coast",     "US",
+  "seashore",     "UK",
+   "seaside",     "UK"
+)
+
+#' @export
+localize_beach <- function(dat) {
+  dplyr::left_join(dat, lookup_table)
+}
+
+f_to_c <- function(x) (x - 32) * 5/9
+
+#' @export
+celsify_temp <- function(dat) {
+  dplyr::mutate(dat, temp = dplyr::if_else(where == "US", f_to_c(temp), temp))
+}
+
+now <- Sys.time()
+#' @export
+outfile_path <- function(infile) {
+  timestamp <- format(now, "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+```
+
+We define the `lookup_table` with R code, since reading from CSV didn't work out very well for us.
+This is OK for small, internal, static data, but remember to see chapter FUTURE LINK for more general techniques for storing data in a package.
+
+All of our calls to tidyverse functions have now been qualified with the name of the specific package that actually provides the function, e.g. `dplyr::mutate()` and `readr::read_csv()`.
+There are other approaches to accessing functions in other packages, explained in FUTURE LINK, but this is our recommended default.
+It is also our strong recommendation that no one depends on the tidyverse metapackage in a package.
+Instead, it is better to identify the specific packages you actually use.
+
+Finally, the `library(tidyverse)` call is gone and instead we declare our use of dplyr and readr in the Imports field of `DESCRIPTION`:
+
+```
+Package: elderberry
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: ...
+Description: What the package does (one paragraph).
+License: ...
+Imports: 
+    dplyr,
+    readr
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+```
+
+This version of the package can be installed, used, AND it technically passes `R CMD check`, though with 1 note and 1 warning.
+
+```
+* checking R code for possible problems ... NOTE
+celsify_temp: no visible binding for global variable ‘english’
+celsify_temp: no visible binding for global variable ‘temp’
+Undefined global functions or variables:
+  english temp
+
+* checking for missing documentation entries ... WARNING
+Undocumented code objects:
+  ‘celsify_temp’ ‘localize_beach’ ‘outfile_path’
+All user-level objects in a package should have documentation entries.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+```
+
+The note is a peculiarity of using dplyr inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
+We could add either of these lines to a file below `R/` to eliminate this note:
+
+```{r, eval = FALSE}
+# option 1 (then you should also put utils in Imports)
+utils::globalVariables(c("english", "temp"))
+
+# option 2
+english <- temp <- NULL
+```
+
+The warning is because we haven't properly documented our helper functions, which is very user-unfriendly.
+You've already seen how to create full help files with roxygen comments in WHOLE GAME and we cover this topic thoroughly in FUTURE LINK.
+We won't discuss this more here, although you'll notice later versions of the package have proper documentation.
+
+## fig
+
+The package is working which is great, but our colleagues notice something odd about the timestamps:
+
+```{r, eval = FALSE}
+Sys.time()
+#> [1] "2020-09-03 16:12:29 PDT"
+
+outfile_path(infile)
+#> [1] "2020-September-03_16-06_beach_clean.csv"
+```
+
+The time in the timestamped filename doesn't reflect the time reported by the system.
+In fact, the timestamp never seems to change at all!
+Why is this?
+
+Recall how we form filepath for output files:
+
+```{r, eval = FALSE}
+now <- Sys.time()
+#' @export
+outfile_path <- function(infile) {
+  timestamp <- format(now, "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+```
+
+The fact that we capture `now <-- Sys.time()` outside of the definition of `outfile_path()` has probably been vexing some of you for a while.
+`now` reflects the instant in time when we execute `now <-- Sys.time()`.
+In our initial approach, that happened when we `source()`d `cleaning-helpers.R`.
+That's not ideal, but it was probably a pretty harmless mistake, because the helper file would be `source()`d shortly before we wrote the outfile.
+
+But this approach is pretty devastating in the context of a package.
+`now <-- Sys.time()` is executed **when the package is built** and never again.
+It is very easy to subconsciously assume it is re-evaluated when the package is installed, attached, or used.
+But it is not.
+
+By defining `now` with top-level code below `R/`, we've doomed our package to timestamp all of its output files with the same (wrong) time.
+The fix is to make sure the `Sys.time()` call happens *inside* the body of `outfile_path()`.
+
+Let's look again at an excerpt of `R/cleaning-helpers.R`:
+
+```{r}
+lookup_table <- dplyr::tribble(
+      ~where, ~english,
+     "beach",     "US",
+     "coast",     "US",
+  "seashore",     "UK",
+   "seaside",     "UK"
+)
+
+now <- Sys.time()
+#' @export
+outfile_path <- function(infile) {
+  timestamp <- format(now, "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+```
+
+The definition of the data frame `lookup_table` and the function `outfile_path()` with top-level code is correct.
+It is appropriate that these be defined exactly once, at build time.
+The definition of `now`, which is then used inside `outfile_path()`, with top-level code is incorrect.
+
+Here are better versions of `outfile_path()`:
+
+```{r, eval = FALSE}
+# always timestamp as "now"
+outfile_path <- function(infile) {
+  timestamp <- format(Sys.time(), "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+
+# allow user to provide a time, but default to "now"
+outfile_path <- function(infile, time = Sys.time()) {
+  timestamp <- format(time, "%Y-%B-%d_%H-%M")
+  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+}
+```
+
+This illustrates that you need to have a different mindset when defining functions inside a package.
+There are some types of sloppiness that are fairly harmless when a function is defined immediately before its use, but that can be more costly for functions defined inside a package.
+
+## Unimplemented ideas
+
+Dealing with dysfunctional missing value codes, e.g. where -99 means temp is missing
+
+Try to find a way to change an option?
+Something to do with locale? stringsAsFactors? digits?
+
+Final product
+
+Show importing only the tidyverse packages that are used, through proper mechanisms.
+
+Handle the system time thing properly.
+
+Handle the state change thing properly.
+
+BTW: could also show using the degree symbol properly with unicode escape sequence.
+
+
+```{r eval = FALSE}
+Sys.setlocale("LC_TIME", "")
+Sys.timezone()
+dat
+LC_TIME
+%a %A abbreviated / full weekday
+%b %B month
+%c date and time locale-specific
+%x dat local-specific
+ for example the French month abbreviations are not the same on any two of Linux, macOS, Solaris and Windows
+format(Sys.time(), "%a %b %d %X %Y")
+format(Sys.time(), "%c")
+format(Sys.time(), "%x %X %z %Z")
+
+format(seq.Date(as.Date('1978-01-01'), by = 'day', len = 7), "%a")
+format(seq.Date(as.Date('2000-01-01'), by = 'month', len = 12), "%b")
+Sys.getlocale("LC_TIME")
+
+format(Sys.time(), "%Y-%b-%d_%H-%M")
+
+withr::with_timezone(
+  "UTC",
+  withr::with_locale(
+    c("LC_TIME" = "fr_FR"),
+    {
+      format(Sys.time(), "%Y-%B-%d_%H-%M")
+    }
+  )
+)  
+
+format(Sys.time(), "%Y-%B-%d_%H-%M")
+
+## lct <- Sys.getlocale("LC_TIME"); Sys.setlocale("LC_TIME", "C")
+x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+z <- strptime(x, "%d%b%Y")
+## Sys.setlocale("LC_TIME", lct)
+z
+```
+
+
+## Text to reuse somewhere
+
+As your use of R becomes more sophisticated, it's common to start to write your own R functions.
+If a function is only used in one place, you probably define it right there.
+But if you've bothered to write a function, it's likely you want to reuse it in multiple places: within one script, across multiple scripts, or even across multiple projects.
+This is *exactly* what an R package is for!
+
+Without package technology, you probably collect these function definitions in one or more dedicated `.R` files and then `source()` them as needed.
+Typically these functions co-evolve with the code where you use them, i.e. your analysis code, your Shiny apps, or your R Markdown reports.
+If you use these functions across multiple projects, you also face the uncomfortable dilemma of where to define them and whether to have multiple, slightly different copies of this code lying around.
