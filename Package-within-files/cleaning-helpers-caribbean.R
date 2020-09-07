@@ -15,7 +15,7 @@ celsify_temp <- function(dat) {
 }
 
 now <- Sys.time()
+timestamp <- function(time) format(time, "%Y-%B-%d_%H-%M-%S")
 outfile_path <- function(infile) {
-  timestamp <- format(now, "%Y-%B-%d_%H-%M")
-  paste0(timestamp, "_", sub("(.*)[.]csv$", "\\1_clean.csv", infile))
+  paste0(timestamp(now), "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile))
 }
