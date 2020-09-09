@@ -10,7 +10,7 @@ The first principle of making a package is that all R code goes in the `R/` dire
 In this chapter, you'll learn about organising your functions into files, maintaining a consistent style, and recognizing the stricter requirements for functions in a package (versus in a script).
 We'll also remind you of the fundamental workflows for test-driving and formally checking an in-development package: `load_all()`, `test()`, and `check()`.
 
-## Organising your functions into files {#r-organising}
+## Organise functions into files {#r-organising}
 
 The only hard rule is that your package should store its function definitions in R scripts, i.e. files with extension `.R`, that live in the `R/` directory[^no-subdirs].
 However, a few more conventions can make the source code of your package easier to navigate and relieve you of re-answering "How should I name this?" each time you create a new file.
@@ -132,7 +132,7 @@ This allows maintainers to focus on reviewing the substance of the pull request,
 
 [^robot-pedantry]: The [Robot Pedantry, Human Empathy](https://mikemcquaid.com/2018/06/05/robot-pedantry-human-empathy/) blog post by Mike McQuaid does an excellent job summarizing the benefit of automating tasks like code re-styling.
 
-## Understanding when code is executed
+## Understand when code is executed
 
 Up until now, you've probably been writing __scripts__, R code saved in a file that you load with `source()`.
 There are two main differences between code in scripts and packages:
@@ -202,7 +202,7 @@ show_mtcars <- function() {
 That's also problematic, as you'll see below.
 Instead, describe the packages your code needs in the `DESCRIPTION` file, as you'll learn in [package dependencies](#dependencies).
 
-## Respecting the R landscape
+## Respect the R landscape
 
 Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined.
 This means you need to pay attention to the R landscape, which includes not just the available functions and objects, but all the global settings.
@@ -249,16 +249,67 @@ If you expect it to be `TRUE` (the default), and the user has set it to be `FALS
 
 *TODO: update or replace this example in light of `stringsAsFactors` changes.*
 
-### Managing state with withr
+### Manage state with withr
 
-Show the basics, then link to withr vignette:
-
-[Changing and restoring state](https://withr.r-lib.org/articles/changing-and-restoring-state.html)
-
-### Restoring state with `base::on.exit()`
+The withr package is inspired by `base::on.exit()` (which is covered in the next section) and provides a more flexible `on.exit()`-like toolkit.
+`withr::defer()` can be used as a drop-in replacement for `on.exit()`, but the real reason to use it is to get its default "stack-like" behaviour and to use its `envir` argument (in more advanced usage).
 
 The general pattern is to capture the original state, schedule its eventual restoration "on exit", then make the state change.
-Some "setters", such as `options()` or `par()`, return the old value when you provide a new value, leading to usage that looks like this:
+Some setters, such as `options()` or `par()`, return the old value when you provide a new value, leading to usage that looks like this:
+
+```{r, eval = FALSE}
+f <- function(x, y, z) {
+  ...
+  old <- options(mfrow = c(2, 2), pty = "s")
+  defer(options(old))
+  ...
+}
+```
+
+Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers.
+Here a few of the state change helpers in withr that you are most likely to find useful:
+
+| Do / undo this              | withr functions                     |
+|-----------------------------|-------------------------------------|
+| Set an R option             | `with_options()`, `local_options()` |
+| Set an environment variable | `with_envvar()`, `local_envvar()`   |
+| Change working directory    | `with_dir()`, `local_dir()`         |
+| Set a graphics parameter    | `with_par()`, `local_par()`         |
+
+You'll notice each helper comes in two forms that are useful in different situations:
+
+* `with_*()` functions are best for executing small snippets of code with a
+  temporarily modified state. (These functions are inspired by how
+  `base::with()` works.)
+    ```{r eval = FALSE}
+    f <- function(x, sig_digits) {
+      # imagine lots of code here
+      withr::with_options(
+        list(digits = sig_digits),
+        print(x)
+      )
+      # ... and a lot more code here
+    }
+    ```
+* `local_*()` functions are best for modifying state "from now until the
+  function exits"
+    ```{r eval = FALSE}
+    g <- function(x, sig_digits) {
+      withr::local_options(list(digits = sig_digits))
+      print(x)
+      # imagine lots of code here
+    }
+    ```
+
+Developing code interactively with withr is pleasant, because deferred actions can be scheduled even on the global environment.
+Those cleanup actions can then be executed with `withr::deferred_run()` or cleared without exeuction with `withr::deferred_clear()`.
+Without this feature, it can be tricky to experiment with code that needs cleanup "on exit", because it behaves so differently when executed in the console versus at arm's length inside a function.
+
+More in-depth coverage is given in the withr vignette [Changing and restoring state](https://withr.r-lib.org/articles/changing-and-restoring-state.html) and withr will also prove useful when we talk about testing in \@ref(tests).
+
+### Restore state with `base::on.exit()`
+
+Here is how the general "save, schedule restoration, change" pattern looks when using `base::on.exit()`.
   
 ```{r, eval = FALSE}
 f <- function(x, y, z) {
@@ -269,20 +320,23 @@ f <- function(x, y, z) {
 }
 ```
 
-Other state changes don't have a neat, pre-built solution like this and you must implement it yourself.
+Other state changes aren't available with that sort of setter and you must implement it yourself.
 
 ```{r, eval = FALSE}
 g <- function(a, b, c) {
   ...
   scratch_file <- tempfile()
   on.exit(unlink(scratch_file), add = TRUE)
+  file.create(scratch_file)
   ...
 }
 ```
 
-Note that we always specify `on.exit(..., add = TRUE)` because you almost always want this behaviour, i.e. to *add* to the list of deferred cleanup tasks rather than to *replace* them entirely.
+Note that we specify `on.exit(..., add = TRUE)`, because you almost always want this behaviour, i.e. to *add* to the list of deferred cleanup tasks rather than to *replace* them entirely.
+This (and the default value of `after`) are related to our preference for `withr::defer()`, when we're willing to take a dependency on withr.
+These issues are explored in a [withr vignette](https://withr.r-lib.org/articles/changing-and-restoring-state.html).
 
-### Isolating side effects
+### Isolate side effects
 
 Creating plots and printing output to the console are two other ways of affecting the global R environment.
 Often you can't avoid these (because they're important!) but it's good practice to isolate them in functions that __only__ produce output.
