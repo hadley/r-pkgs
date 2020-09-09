@@ -33,7 +33,7 @@ They appear in alphabetical order and their main purpose is to indicate the prog
 
 ## Aegean: a script that works
 
-Here is a fictional data analysis script for a group that collects reports from people who went for a swim:
+Here is a fictional data analysis script `data-cleaning.R` for a group that collects reports from people who went for a swim:
 
 > Where did you swim and how hot was it outside?
 
@@ -42,7 +42,7 @@ Their data usually comes as a CSV file, which they read into a data frame.
 ```{cat, engine.opts = list(file = "swim.csv")}
 name,where,temp
 Adam,beach,95
-Bess,coast,29
+Bess,coast,91
 Cora,seashore,28
 Dale,beach,85
 Evan,seaside,31
@@ -64,7 +64,7 @@ dat$english[dat$where == "seaside"] <- "UK"
 ```
 
 Sadly, the temperatures are often reported in a mix of Fahrenheit and Celsius.
-In the absence of better information, they guess that Americans report temperatures in Fahrenheit and therefore those observations are converted to Celsius. (Yes, this seems to be too crude!)
+In the absence of better information, they guess that Americans report temperatures in Fahrenheit and therefore those observations are converted to Celsius.
 
 ```{r}
 dat$temp[dat$english == "US"] <- (dat$temp[dat$english == "US"] - 32) * 5/9
@@ -103,7 +103,7 @@ Second, many people use add-on packages in their scripts, so it is good to see h
 
 Here's the next version of the script.
 
-```{cat, engine.opts = list(file = "Package-within-files/main-baltic"), R.options = list(tidyverse.quiet = TRUE)}
+```{cat, engine.opts = list(file = "Package-within-files/baltic-data-cleaning.R")}
 library(tidyverse)
 
 infile <- "swim.csv"
@@ -134,7 +134,7 @@ outfile_path <- function(infile) {
 write_csv(dat, outfile_path(infile))
 ```
 
-```{r, code = readLines("Package-within-files/main-baltic"), R.options = list(tidyverse.quiet = TRUE)}
+```{r, code = readLines("Package-within-files/baltic-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
 ```
 
 ```{r include = FALSE}
@@ -177,7 +177,7 @@ writeLines(readLines("beach-lookup-table.csv"))
 
 Here is the content of `cleaning-helpers.R`:
 
-```{cat, engine.opts = list(file = "Package-within-files/cleaning-helpers-caribbean.R"), class.source = "R"}
+```{cat, engine.opts = list(file = "Package-within-files/caribbean-cleaning-helpers.R"), class.source = "R"}
 library(tidyverse)
 
 localize_beach <- function(dat) {
@@ -207,12 +207,12 @@ Here is the next version of the data cleaning script, now that we've pulled out 
 
 ```{r, include = FALSE}
 fs::file_copy(
-  "Package-within-files/cleaning-helpers-caribbean.R",
+  "Package-within-files/caribbean-cleaning-helpers.R",
   "cleaning-helpers.R"
 )
 ```
 
-```{cat, engine.opts = list(file = "Package-within-files/main-dardanelles"), R.options = list(tidyverse.quiet = TRUE)}
+```{cat, engine.opts = list(file = "Package-within-files/caribbean-data-cleaning.R")}
 library(tidyverse)
 source("cleaning-helpers.R")
 
@@ -226,7 +226,7 @@ dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
 write_csv(dat, outfile_path(infile))
 ```
 
-```{r, code = readLines("Package-within-files/main-dardanelles"), R.options = list(tidyverse.quiet = TRUE)}
+```{r, code = readLines("Package-within-files/caribbean-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
 ```
 
 ```{r include = FALSE}
@@ -238,7 +238,7 @@ You'll notice that the script is getting shorter and, hopefully, easier to read 
 Whether the code is actually easier to work with is subjective and depends on how natural the "interface" feels for the people who actually preprocess swimming data.
 These sorts of design decisions are the subject of a separate project: [principles.tidyverse.org](https://principles.tidyverse.org).
 
-Let's assume the group agrees that our design decisions are promising, i.e.  we seem to be making things better, not worse.
+Let's assume the group agrees that our design decisions are promising, i.e. we seem to be making things better, not worse.
 Sure, the existing code is not perfect, but this is a typical developmental stage when you're trying to figure out what the helper functions should be and how they should work.
 
 ## Dardanelles: an attempt at a package
@@ -256,14 +256,14 @@ Concretely, we do this:
   * Copy `beach-lookup-table.csv` into the new package. But where? Let's try
     the top-level of the source package.
     - This is not going to end well. Shipping data in a package is a special
-      topic, which is covered in \@ref(data).
+      topic, which is covered in chapter \@ref(data).
   * Install this package.
     - Despite all of the problems identified above, this actually works! Which
       is interesting, because we can (try to) use it and see what happens.
       
 Here's the version of the script that you hope will run after successfully installing this package.
 
-```{cat, engine.opts = list(file = "Package-within-files/main-dardanelles.R"), class.source = "R"}
+```{cat, engine.opts = list(file = "Package-within-files/dardanelles-main.R"), class.source = "R"}
 library(tidyverse)
 library(dardanelles)
 
@@ -311,7 +311,7 @@ None of our helper functions are actually available for use, even though we call
 In contrast to `source()`ing a file of helper functions, attaching a package does not dump its functions into the global workspace.
 By default, functions in a package are only for internal use.
 We need to export `localize_beach()`, `celsify_temp()`, and `outfile_path()` so our users can call them.
-In this book, we achieve this by putting `@export` in the special roxygen comment above each function (namespace management is covered in \@ref(namespace)).
+In this book, we achieve this by putting `@export` in the special roxygen comment above each function (namespace management is covered in chapter \@ref(namespace)).
 
 ```{r eval = FALSE}
 #' @export
@@ -344,7 +344,7 @@ write_csv(dat, outfile_path(infile))
 
 The lookup table consulted inside `localize_beach()` cannot be found.
 One does not simply dump CSV files into the source of an R package and expect things to "just work".
-We will fix this in our next iteration of the package (\@ref(data) has full coverage of how to include data in a package).
+We will fix this in our next iteration of the package (chapter \@ref(data) has full coverage of how to include data in a package).
 
 Before we abandon this initial experiment, let's also marvel at the fact that we were able to install, attach, and, to a certain extent, use a fundamentally broken package.
 `load_all()` works fine, too!
@@ -354,8 +354,8 @@ This will quickly alert you to many problems that simple installation and usage 
 Indeed, `R CMD check` fails for this package and we see this[^configure-license]:
 
 [^configure-license]: If you have not done so already, you'll also need to configure a license to satisfy `R CMD check`.
-For a quick experiment like this, `usethis::use_cc0_license()` is fine.
-For real work, see \@ref(license) for guidance.
+For a quick experiment like this, `usethis::use_mit_license()` is fine.
+For real work, see chapter \@ref(license) for guidance.
 
 ```
 * installing *source* package ‘dardanelles’ ...
@@ -399,9 +399,9 @@ We're ready to make the most minimal version of this package that actually works
 Here is the new version of `R/cleaning-helpers.R`[^bad-file-name]:
 
 [^bad-file-name]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
-We discuss organising and naming the files below `R/` in FUTURE LINK TO CORRECT SECTION OF Code.Rmd.
+We discuss organising and naming the files below `R/` in section \@ref(code-organising).
 
-```{cat, engine.opts = list(file = "Package-within-files/cleaning-helpers-erie.R"), class.source = "R"}
+```{cat, engine.opts = list(file = "Package-within-files/erie-cleaning-helpers.R"), class.source = "R"}
 lookup_table <- tribble(
       ~where, ~english,
      "beach",     "US",
@@ -435,14 +435,14 @@ We've gone back to defining the `lookup_table` with R code, since our initial at
 This is OK for small, internal, static data, but remember to see chapter \@ref(data) for more general techniques for storing data in a package.
 
 All of our calls to tidyverse functions have now been qualified with the name of the specific package that actually provides the function, e.g. `dplyr::mutate()`.
-There are other ways to access functions in another package, explained in \@ref(namespace), but this is our recommended default.
+There are other ways to access functions in another package, explained in chapter \@ref(namespace), but this is our recommended default.
 It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^do-not-depend-on-tidyverse].
 Instead, it is better to identify the specific package(s) you actually use.
 In this case, our package only uses dplyr.
 
 [^do-not-depend-on-tidyverse]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
 
-The `library(tidyverse)` call is gone and instead we declare our use of dplyr  in the Imports field of `DESCRIPTION`:
+The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
 
 ```
 Package: erie
@@ -451,8 +451,8 @@ Imports:
     dplyr
 ```
 
-This, together with our use of namespace-qualified calls, like `dplyr::left_join()` constitutes a valid way to use another package within ours.
-The metadata conveyed via DESCRIPTION is covered in \@ref(#description).
+This, together with our use of namespace-qualified calls, like `dplyr::left_join()`, constitutes a valid way to use another package within ours.
+The metadata conveyed via DESCRIPTION is covered in chapter \@ref(description).
 
 All of the user-facing functions have an `@export` tag in their roxygen comment, which means that `devtools::document()` adds them correctly to the `NAMESPACE` file.
 Note that `f_to_c()` is currently only used internally, inside `celsify_temp()`, so we have not exported it (likewise for `timestamp()`).
@@ -475,7 +475,9 @@ Extensions’ manual.
 ```
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
-We could add either of these lines to any file below `R/` to eliminate this note:
+We could add either of these lines to any file below `R/` to eliminate this note[^dplyr-global-variables-note]:
+
+[^dplyr-global-variables-note]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
 
 ```{r, eval = FALSE}
 # option 1 (then you should also put utils in Imports)
@@ -487,12 +489,12 @@ english <- temp <- NULL
 
 The warning about missing documentation is because we haven't properly documented our exported functions.
 This is a valid concern and something you should absolutely address in a real package.
-You've already seen how to create help files with roxygen comments in \@ref(whole-game-document) and we cover this topic thoroughly \@ref(man).
+You've already seen how to create help files with roxygen comments in [the whole game chapter](whole-game-document) and we cover this topic thoroughly chapter \@ref(man).
 Therefore, we won't discuss this further here.
 
 ## Flores: build time vs. run time
 
-The package works which is great, but group members notice something odd about the timestamps:
+The package works, which is great, but group members notice something odd about the timestamps:
 
 ```{r, eval = FALSE}
 Sys.time()
@@ -516,9 +518,9 @@ outfile_path <- function(infile) {
 }
 ```
 
-The fact that we capture `now <- Sys.time()` outside of the definition of `outfile_path()` has probably been vexing some of you for a while.
+The fact that we capture `now <- Sys.time()` outside of the definition of `outfile_path()` has probably been vexing some readers for a while.
 `now` reflects the instant in time when we execute `now <- Sys.time()`.
-In our initial approach, that happened when we `source()`d `cleaning-helpers.R`.
+In the initial approach, that happened when we `source()`d `cleaning-helpers.R`.
 That's not ideal, but it was probably a pretty harmless mistake, because the helper file would be `source()`d shortly before we wrote the outfile.
 
 But this approach is quite devastating in the context of a package.
@@ -577,7 +579,7 @@ There are some types of sloppiness that are fairly harmless when a function is d
 
 ## Gibraltar: side effects {#package-within-side-effects}
 
-The timestamps now reflect the current time now, but the group raises a new concern.
+The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.
 The heart of the timestamp strategy is this format string[^format-posixct]:
 
@@ -709,7 +711,7 @@ We show various methods to limit the scope of our changes to LC_TIME and the tim
 A good rule of thumb is to make the scope of such changes as narrow as is possible and practical.
 The `tz` argument of `format()` is the most surgical way to deal with the timezone, but nothing similar exists for LC_TIME.
 We make the temporary locale modification using the withr package, which provides a very flexible toolkit for temporary state changes.
-This (and `base::on.exit()`) are discussed further in FUTURE TO LINK TO CORRECT SECTION OF Code.Rmd.
+This (and `base::on.exit()`) are discussed further in section \@ref(code-r-landscape).
 
 This underscores a point from the previous section: you need to adopt a different mindset when defining functions inside a package.
 Try to avoid making any changes to the user's overall state.
@@ -719,19 +721,21 @@ If such changes are unavoidable, make sure to reverse them (if possible) or to d
 fs::file_delete(c("beach-lookup-table.csv", "swim.csv"))
 ```
 
-## Loose ends and Unimplemented ideas
+<!--
+
+Loose ends and Unimplemented ideas
 
 Inconsistent w.r.t. voice: is it "they" or "you" or "we" who's writing this package?
 
-I planned to follow up on the incorrectly converted temperatures, i.e. make the `if()` condition also include whether the reported `temp` is over a threshhold.
-Now I'm not sure this is worth it.
-Given then, the error we're making might just be distracting and should be removed.
-
-Dealing with dysfunctional missing value codes, e.g. where -99 means temp is missing
+Another data cleaning idea was to deal with dysfunctional missing value codes, e.g. where -99 means temp is missing.
 
 Could also show using the degree symbol properly with unicode escape sequence.
 
-## Text to reuse somewhere
+-->
+
+<!--
+
+Text to possible reuse?
 
 As your use of R becomes more sophisticated, it's common to start to write your own R functions.
 If a function is only used in one place, you probably define it right there.
@@ -741,3 +745,5 @@ This is *exactly* what an R package is for!
 Without package technology, you probably collect these function definitions in one or more dedicated `.R` files and then `source()` them as needed.
 Typically these functions co-evolve with the code where you use them, i.e. your analysis code, your Shiny apps, or your R Markdown reports.
 If you use these functions across multiple projects, you also face the uncomfortable dilemma of where to define them and whether to have multiple, slightly different copies of this code lying around.
+
+-->
