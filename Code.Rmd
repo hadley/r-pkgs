@@ -10,6 +10,80 @@ The first principle of making a package is that all R code goes in the `R/` dire
 In this chapter, you'll learn about organising your functions into files, maintaining a consistent style, and recognizing the stricter requirements for functions in a package (versus in a script).
 We'll also remind you of the fundamental workflows for test-driving and formally checking an in-development package: `load_all()`, `test()`, and `check()`.
 
+## Organising your functions into files {#r-organising}
+
+The only hard rule is that your package should store its function definitions in R scripts, i.e. files with extension `.R`, that live in the `R/` directory[^no-subdirs].
+However, a few more conventions can make the source code of your package easier to navigate and relieve you of re-answering "How should I name this?" each time you create a new file.
+The Tidyverse Style Guide offers some [general advise about file names](https://style.tidyverse.org/files.html) and also [advice that specifically applies to files in a package](https://style.tidyverse.org/package-files.html).
+We expand on this here.
+
+[^no-subdirs]: Unfortunately you can't use subdirectories inside `R/`.
+The next best thing is to use a common prefix, e.g., `abc-*.R`, to signal that a group of files are related.
+
+The file name should be meaningful and convey which functions are defined within.
+While you're free to arrange functions into files as you wish, the two extremes are bad: don't put all functions into one file and don't put each function into its own separate file.
+This advice should inform your general policy, but there are exceptions to every rule.
+If a specific function is very large or has lots of documentation, it can make sense to give it its own file, named after the function.
+More often, a single `.R` file will contain multiple function definitions: such as a main function and its supporting helpers, a family of related functions, or some combination of the two.
+
+Here are some examples from the actual source of the [tidyr package](http://tidyr.tidyverse.org/) at version 1.1.2.
+There are some departures from the hard-and-fast rules given above, which illustrates that there's a lot of room for judgment here.
+
+```{r include = FALSE}
+library(tidyverse)
+
+tidyr_separate <- tibble(
+  `Organising principle` = "Main function plus helpers",
+  `Source file` = "[tidyr/R/separate.R](https://github.com/tidyverse/tidyr/blob/v1.1.2/R/separate.R)",
+  Comments = "Defines the user-facing `separate()` (an S3 generic), a `data.frame` method, and private helpers"
+)
+
+tidyr_rectangle <- tibble(
+  `Organising principle` = "Family of functions",
+  `Source file` = "[tidyr/R/rectangle.R](https://github.com/tidyverse/tidyr/blob/v1.1.2/R/rectangle.R)",
+  Comments = "Defines a family of functions for \"rectangling\" nested lists (`hoist()` and the `unnest()` functions), all documented together in a big help topic, plus private helpers"
+)
+
+tidyr_uncount <- tibble(
+  `Organising principle` = "One function",
+  `Source file` = "[tidyr/R/uncount.R](https://github.com/tidyverse/tidyr/blob/v1.1.2/R/uncount.R)",
+  Comments = "Defines exactly one function, `uncount()`, that's not particulary large, but doesn't fit naturally into any other `.R` file"
+)
+ 
+dat <- bind_rows(tidyr_uncount, tidyr_separate, tidyr_rectangle)
+```
+
+```{r echo = FALSE}
+knitr::kable(dat)
+```
+
+:::tip
+Another file you often see in the wild is `R/utils.R`.
+This is a common place to define small utilities that are used inside multiple package functions.
+Since they serve as helpers to multiple functions, placing them in `R/utils.R` makes them easier to re-discover when you return to your package after a long break.
+
+Bob Rudis assembled a collection of such files and did some analysis in the post [Dissecting R Package “Utility Belts”](https://rud.is/b/2018/04/08/dissecting-r-package-utility-belts/).
+:::
+  
+If it's very hard to predict which file a function lives in, that suggests it's time to separate your functions into more files or reconsider how you are naming your functions and/or files.
+
+:::rstudio-tip
+The organisation of functions within files is less important in RStudio, which offers two ways to jump to the definition of a function:
+
+* Press Ctrl + . (the period) then start typing the name. Keep typing to narrow
+  the list and eventually pick a function (or file) to visit. This works for both
+  functions and files in your project.
+      
+    ```{r, echo = FALSE}
+    knitr::include_graphics("images/file-finder.png", dpi = 220)
+    ```
+  
+* With your cursor in a function name or with a function name selected, press
+  F2. This works for functions defined in your package or in another package.
+
+After navigating to a function with one of these methods, return to where you started by clicking the back arrow at the top-left of the editor `r knitr::include_graphics("images/arrows.png", dpi = 220)` or by pressing Ctrl + F9 (Windows & Linux) or Cmd + F9 (macOS).
+:::
+ 
 ## R code workflow {#r-workflow}
 
 The first practical advantage to using a package is that it's easy to re-load your code.
@@ -28,10 +102,6 @@ This keyboard shortcut leads to a fluid development workflow:
 Congratulations!
 You've learned your first package development workflow.
 Even if you learn nothing else from this book, you'll have gained a useful workflow for editing and reloading R code.
-
-## Organising your functions
-
-*removed in deference to material in <https://style.tidyverse.org>; see [tidyverse/style/#121](https://github.com/tidyverse/style/issues/121)*
 
 ## Code style
 
