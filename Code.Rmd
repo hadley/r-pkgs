@@ -10,11 +10,11 @@ The first principle of making a package is that all R code goes in the `R/` dire
 In this chapter, you'll learn about organising your functions into files, maintaining a consistent style, and recognizing the stricter requirements for functions in a package (versus in a script).
 We'll also remind you of the fundamental workflows for test-driving and formally checking an in-development package: `load_all()`, `test()`, and `check()`.
 
-## Organise functions into files {#r-organising}
+## Organise functions into files {#code-organising}
 
 The only hard rule is that your package should store its function definitions in R scripts, i.e. files with extension `.R`, that live in the `R/` directory[^no-subdirs].
 However, a few more conventions can make the source code of your package easier to navigate and relieve you of re-answering "How should I name this?" each time you create a new file.
-The Tidyverse Style Guide offers some [general advise about file names](https://style.tidyverse.org/files.html) and also [advice that specifically applies to files in a package](https://style.tidyverse.org/package-files.html).
+The Tidyverse Style Guide offers some [general advice about file names](https://style.tidyverse.org/files.html) and also [advice that specifically applies to files in a package](https://style.tidyverse.org/package-files.html).
 We expand on this here.
 
 [^no-subdirs]: Unfortunately you can't use subdirectories inside `R/`.
@@ -86,13 +86,13 @@ After navigating to a function with one of these methods, return to where you st
  
 ## Fast feedback via `load_all()` {#code-load-all}
 
-This section will plug `load_all()`.
+*This section will re-encourage use of `load_all()`.*
 
-Will prominently recommend reading the coverage in the workflows chapter: \@ref(load-all).
+*Will prominently recommend reading the coverage in the workflows chapter: \@ref(load-all).*
 
-And also mention that `load_all()` is shown as part of the package development process in the Whole game: \@ref(whole-game-load-all).
+*And also mention that `load_all()` is shown as part of the package development process in the Whole game: \@ref(whole-game-load-all).*
 
-I mostly want to explain *why* `load_all()` is so important here, since how to use it and exactly what it does is covered elsewhere.
+*I mostly want to explain why `load_all()` is so important here, since how to use it and exactly what it does is covered elsewhere.*
 
 ## Code style
 
@@ -202,7 +202,7 @@ show_mtcars <- function() {
 That's also problematic, as you'll see below.
 Instead, describe the packages your code needs in the `DESCRIPTION` file, as you'll learn in [package dependencies](#dependencies).
 
-## Respect the R landscape
+## Respect the R landscape {#code-r-landscape}
 
 Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined.
 This means you need to pay attention to the R landscape, which includes not just the available functions and objects, but all the global settings.
@@ -217,8 +217,8 @@ There are some functions that modify global settings that you should never use b
 * __Don't use `library()` or `require()`__. These modify the search path, 
   affecting what functions are available from the global environment. 
   Intead, you should use the `DESCRIPTION` to specify your package's
-  requirements, as described in \@ref(description). This also makes sure those
-  packages are installed when your package is installed.
+  requirements, as described in chapter \@ref(description). This also makes sure
+  those packages are installed when your package is installed.
   
 * __Never use `source()`__ to load code from a file. `source()` modifies the
   current environment, inserting the results of executing the code. There is no
@@ -305,7 +305,7 @@ Developing code interactively with withr is pleasant, because deferred actions c
 Those cleanup actions can then be executed with `withr::deferred_run()` or cleared without exeuction with `withr::deferred_clear()`.
 Without this feature, it can be tricky to experiment with code that needs cleanup "on exit", because it behaves so differently when executed in the console versus at arm's length inside a function.
 
-More in-depth coverage is given in the withr vignette [Changing and restoring state](https://withr.r-lib.org/articles/changing-and-restoring-state.html) and withr will also prove useful when we talk about testing in \@ref(tests).
+More in-depth coverage is given in the withr vignette [Changing and restoring state](https://withr.r-lib.org/articles/changing-and-restoring-state.html) and withr will also prove useful when we talk about testing in chapter \@ref(tests).
 
 ### Restore state with `base::on.exit()`
 
@@ -414,35 +414,24 @@ They give the path where the package is installed (the "library"), and the name 
 If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects.
 By convention, `.onLoad()` and friends are usually saved in a file called `R/zzz.R`.
 (Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should no longer be used.)
-    
-### S4 classes, generics and methods
-
-*TODO: what's the fate of this little section?*
-
-Another type of side-effect is defining S4 classes, methods and generics.
-R packages capture these side-effects so they can be replayed when the package is loaded, but they need to be called in the right order.
-For example, before you can define a method, you must have defined both the generic and the class.
-This requires that the R files be sourced in a specific order.
-This order is controlled by the `Collate` field in the `DESCRIPTION`.
-This is described in more detail in [documenting S4](#man-s4).
 
 ## Constant health checks
 
 Here is a typical sequence of calls when using devtools for package development:
 
-* Edit one or more files below `R/`.
-* `document()` (if you've made any changes that impact help files or NAMESPACE)
-* `load_all()`
-* (Perhaps) run some examples interactively.
-* `test()` (or `test_file()`)
-* `check()`
+1. Edit one or more files below `R/`.
+1. `document()` (if you've made any changes that impact help files or NAMESPACE)
+1. `load_all()`
+1. Run some examples interactively.
+1. `test()` (or `test_file()`)
+1. `check()`
 
 An interesting question is how frequently and rapidly you move through this development cycle.
 We often find ourselves running through the above sequence several times in an hour or in a day while adding or modifying a single function.
 
 Those newer to package development might be most comfortable slinging R code and much less comfortable writing and compiling documentation, simulating package build & installation, testing, and running `R CMD check`.
 And it is human nature to embrace the familiar and postpone the unfamiliar.
-This often leads to a dysfunctional workflow where the above sequence unfolds infrequently, maybe once per month or every couple of months, very slowly and often with great pain:
+This often leads to a dysfunctional workflow where the full sequence above unfolds infrequently, maybe once per month or every couple of months, very slowly and often with great pain:
 
 1. Edit one or more files below `R/`.
 1. Build, install, and use the package. Iterate occasionally with previous step.
