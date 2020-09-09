@@ -359,28 +359,41 @@ This often leads to a dysfunctional workflow where the above sequence unfolds in
 1. Run `R CMD check` right before submitting to CRAN or doing some other explicit
    "release" step.
 
-## CRAN notes {#r-cran}
+## CRAN notes {#code-cran}
 
 (Each chapter will finish with some hints for submitting your package to CRAN.
 If you don't plan on submitting your package to CRAN, feel free to ignore them!)
 
 If you're planning on submitting your package to CRAN, you must use only ASCII characters in your `.R` files.
-You can still include unicode characters in strings, but you need to use the special unicode escape `"\u1234"` format.
-The easiest way to do that is to use `stringi::stri_escape_unicode()`:
+In practice, this means you are limited to the digits 0 to 9, lowercase letters 'a' to 'z', uppercase letters 'A' to 'Z', and common punctuation.
+
+But sometimes you need to inline a small bit of character data that includes, e.g., a Greek letter (µ), an accented character (ü), or a symbol (30°).
+You can use any Unicode character as long as you specify it in the special Unicode escape `"\u1234"` format.
+The easiest way to find the correct code point is to use `stringi::stri_escape_unicode()`:
 
 ```{r}
 x <- "This is a bullet •"
 y <- "This is a bullet \u2022"
 identical(x, y)
-
 cat(stringi::stri_escape_unicode(x))
 ```
 
-You can feed your `.R` files to `tools::showNonASCIIfile()` to detect all lines that contain non-ASCII characters:
+Sometimes you have the opposite problem.
+You don't *intentionally* have any non-ASCII characters in your R code, but automated checks reveal that you do.
 
-```r}
-library(purrr)
+```
+W  checking R files for non-ASCII characters ...
+   Found the following file with non-ASCII characters:
+     foo.R
+   Portable packages must use only ASCII characters in their R code,
+   except perhaps in comments.
+   Use \uxxxx escapes for other characters.
+```
 
-walk(list.files("R", full.names = TRUE),
-     tools::showNonASCIIfile)
+The most common offenders are "curly" or "smart" single and double quotes that sneak in through copy/paste.
+The functions `tools::showNonASCII()` and `tools::showNonASCIIfile(file)` help you find the offending file(s) and line(s).
+
+```{r eval = FALSE}
+tools::showNonASCIIfile("R/foo.R")
+#> 666: #' If you<e2><80><99>ve copy/pasted quotes, watch out!
 ```
