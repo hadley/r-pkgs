@@ -21,20 +21,43 @@ A separate issue is that of attribution: making sure that all contributors are f
 This is generally (but not always) outside of the realm of open source licenses, but is something that is very important to do.
 Attribution is about authors not copyright holders.
 
+Doing the right thing vs. doing the legal thing.
+Respecting the wishes of the authors even if they have no legal backing is the right thing to do.
+I'm going to give you a lot of details in this chapter, but in the vast majority of cases as long as you do your best to follow people's expressed wishes you don't need to worry further.
+
+(Please make sure that you're using usethis 2.0.0 or greater; writing this chapter prompted a number of changes in the package)
+
+## tl;dr
+
+There's a lot to learn about open source licenses, so if you just want the bare minimum to share your package with the world, there are two primary options used by \~90% of CRAN packages:
+
+-   The permissive [MIT license](https://choosealicense.com/licenses/mit/), which allows basically unlimited freedom to copy, adapt, and publish your code.
+    Apply it to your package by calling `use_mit_license()`.
+
+-   The copyleft [GPLv3 license](https://choosealicense.com/licenses/gpl-3.0/), which ensures that if your code is modified or bundled, that the modified or bundled version must licensed with the GPL.
+    Apply it your package by calling `use_gpl_license()`.
+
+Alternatively, if you don't want to make your code open source, but still want to cleanly pass R CMD check, call `use_proprietary_license()`.
+
 ## Copyright
 
-Open source licenses are "powered" by copyright law, i.e. if someone violates a license, the legal tool that allows them to be punished is copyright law.
-This is important to understand because it gives you the tools to reason about when license apply.
+Before we talk about licenses, it's important to talk a little about copyright, because copyright is the legal framework that underpins open source licenses.
+Here we'll focus on US copyright law because that's what we're most familiar with.
+The broad strokes are similar across most countries, but the details will differ so you should also look for a copyright guide for your country.
+(And, again, if you're making any important business decisions, you should consult a local lawyer.)
 
-But most importantly this means that interpretation of licenses does vary from country to country.
-The advice in this chapter is based on US copyright law; much of it is true in any country but important details may be different.
-Again, if you are making important business decisions, you need to consult a local lawyer.
+### Copyright and software
 
-### Copy "rights"
+In the US, copyright grants the copyright holder[^license-1] six exclusive rights[^license-2] to any creative work
+. Three of the rights apply to software
+[^license-3]:
 
-In the US, copyright grants the creator six exclusive rights[^license-1], three of which apply to software:
+[^license-1]: This is usually the author, but not always.
+    More on that shortly.
 
-[^license-1]: <https://www.law.cornell.edu/uscode/text/17/106>
+[^license-2]: <https://www.law.cornell.edu/uscode/text/17/106>
+
+[^license-3]: The other rights apply to things that you can perform (like plays) and sound recordings.
 
 -   To *reproduce* the work in copies.
 
@@ -42,47 +65,69 @@ In the US, copyright grants the creator six exclusive rights[^license-1], three 
 
 -   To *distribute* copies of the work to the public by sale or other transfer of ownership, or by rental, lease, or lending.
 
-These are sometimes called the rights of **reproduction**, **adaptation**, and **publication**.
-These rights are very strict --- if you don't explicitly provide a license to your code, this means that you're not technically permitted to even copy code off a website and paste it into your editor.
+To express this a little more pithily, only the author has right to **copy**, **modify**, and **share** their code.
+These exclusive rights are strict: if code doesn't have a license, you're not allowed to copy it, modify it, or share it with others.
 
-There are a number of limitations to exclusive rights above, but only one applies to software: fair use[^license-2].
-For example, fair use allows you to include a snippet of open source code in a slide in a presentation teaching about a package or critiquing the code in a package without having adhere to the license.
+There are some limitations to these exclusive rights, but only one applies to software: fair use[^license-4].
+Defining fair use is hard, and doesn't apply much in software development.
+It does, however, mean that it's usually OK to include a snippet of open source code in a presentation slide without having worry about the license.
 
-[^license-2]: The others include things like the right to perform a play in a face-to-face classroom, or you're allowed to sell books that you own, and its ok for authorized companies to make accessible versions.
+[^license-4]: The others include things like the right to perform a play in a face-to-face classroom, or you're allowed to sell books that you own, and its ok for authorized companies to make accessible versions.
 
-These exclusive rights are the default: but the copyright holder can choose to relax them if they want.
-So the goal of open source licenses is to provide a set of standard ways of relaxing these rights so that anyone is allowed to copy, modify, and distribute code, as long as they adhere to some conditions.
+Fortunately, while these rights are the default, the copyright holder can choose to relax them if they want.
+The goal of open source licenses is to provide a set of standard way of relaxing these rights to make sure that as many people as possible can copy, modify, and share open source code.
 
-Challenges of licensing data.
-Not copyrightable in the US, so open source licenses, which are enforced through copyright law, don't apply.
+Who is the copyright holder?
+If it's something you do as an employee, in the scope of your employment, your employer owns it.
+If it's a contract, you own it, unless you've explicitly agree otherwise (see <http://worksmadeforhire.com> for more details).
+If it's something you do for yourself in your free time, you own it.
 
 ### Derivative work
 
-Derivative work: <https://www.linuxjournal.com/article/6366.>
+Understanding what it means to copy or distribute code.
+But what does it mean to modify it to create a derivative work?
 
-It's also important to note that copyright law doesn't say anything about output produced from copyrighted code, so you are free to license (or not) any R code that you produce.
-Practically, this means that your *use* of R code is barely influenced by the licenses of the packages that you use.
+What is a derivative work?
 
-### Who holds the copyright?
+-   Fixing a bug
 
-Who owns the copyright?
-If it's something you do as an employee, in the scope of your employment, your employer owns it.
-If it's a contract, you own it, unless you've explicitly agree otherwise.
+-   Translating to another programming language.
 
-<http://worksmadeforhire.com>
+-   In some cases, rewriting an algorithm might be considered a derivative work, even if none of the original code is included.
+
+What isn't a derivative work?
+
+-   Merely using code is not sufficient to make a derivative work.
+    That means that R code that you write to perform a data analysis is not a derivative work.
+
+Derivative work: <https://www.linuxjournal.com/article/6366>.
 
 ## Open source licenses
 
 ### Main types of license
 
-Permissive vs. copyleft.
+There are two main types of open source license.
+Very roughly:
 
-Most popular license in over programming languages: <https://github.blog/2015-03-09-open-source-license-usage-on-github-com/> --- 45% of Github projects with licenses in 2015 used MIT.
-13% used GPLv2, 9% used GPLv3.
+-   **Permissive** licenses are very easy going.
+    Code with a permissive license can be freely copied, modified, and published.
+    The only restriction is that the license must be preserved.
+    The MIT license is the most common permissive license.
 
-In general, permissive licenses are somewhat more popular across the open source community, but as we'll see shortly, copyleft licenses are more popular in the R community.
+-   **Copyleft** licenses are stricter.
+    You can freely copy and modify the code for personal use, but if you want to publish modified versions , but any public adaptations or larger works that include the code must also be open sourced.
+    The GPL is the most common copyleft license.
+
+Over all open source code, permissive licenses tend to me most common.
+For example, a [2015 survey of GitHub repositories](https://github.blog/2015-03-09-open-source-license-usage-on-github-com/) found that \~55% used a permissive license and \~20% used a copyleft license.
+Github projects with licenses in 2015 used MIT.
+Things are little different in R community: my analysis (included below) suggests that \~70% of CRAN packages use a copyleft license and \~15% use a permissive license.
 
 ### Commonalities
+
+Permissions, conditions, and limitations (from <https://choosealicense.com/licenses/>)
+
+My remarks apply to licenses that are common in the R community (GPL, LGPL, AGPL, MIT, BSD, and Apache); there's a large range of other licenses that I'm not familiar with and make no claims about.
 
 It's important to note that all open source licenses give you the right for private modification and distribution within your company.
 It's only when you go to distribute your changes to others that the license kicks in.
@@ -259,6 +304,9 @@ It means there must be a single named license that is as restrictive or more res
 -   If it's not compatible, you can not include the code into your package.
     You'll need to keep the code separate so that it is not distributed together.
 
+e.g. if you include MIT code in a GPL licensed package, to use the package you need to agree to the GPL license.
+But someone could extract out just the MIT code and only be limited by that license.
+
 ### Existing licenses
 
 Important to preserve all existing license and copyright statements.
@@ -288,13 +336,13 @@ If you are submitting to CRAN, you also need include a `LICENSE.note` file which
 ### Stack Overflow
 
 It's worth a special note about a very common source of external code: Stack Overflow.
-But there's a major licensing challenge: Stack Overflow code is licensed[^license-3] using the Creative Common CC BY-SA license, and of common open source licenses, only compatible with GPLv3[^license-4]
+But there's a major licensing challenge: Stack Overflow code is licensed[^license-5] using the Creative Common CC BY-SA license, and of common open source licenses, only compatible with GPLv3[^license-6]
 . This means that you should not use code from Stack Overflow in your packages
 .
 
-[^license-3]: <https://stackoverflow.com/help/licensing>
+[^license-5]: <https://stackoverflow.com/help/licensing>
 
-[^license-4]: <https://creativecommons.org/share-your-work/licensing-considerations/compatible-licenses/>
+[^license-6]: <https://creativecommons.org/share-your-work/licensing-considerations/compatible-licenses/>
 
 Learn more at <https://empirical-software.engineering/blog/so-snippets-in-gh-projects>.
 
@@ -324,3 +372,12 @@ In tidyverse packages, we tend only include major contributors; people who have 
 ### Attribution
 
 <https://devguide.ropensci.org/collaboration.html#attributions> --- be generous with attribution.
+
+## Data
+
+Copyright law is designed to protect "creative" works, and in the US data is generally considered to be measurements of observable facts, and hence not creative.
+That means that data (particularly in the form you'll normally see in a R package) is not copyrightable, and hence not protected by an open source license.
+
+(Note that this doesn't mean all data is free to be freely shared; there are other ways to protect what you do with data, like requiring you to agree to contract before giving you access to it. This sort of protection isn't generally applied to R packages so I won't discuss it further here).
+
+### 
