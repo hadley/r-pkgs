@@ -136,71 +136,150 @@ There are two main differences between code in scripts and packages:
 
 * In a script, code is run ... when you run it! The awkwardness of this
   statement reflects that it's hard to even think about this issue with a
-  script. However, we must, because the code in a package is run **when the
-  package is built**. This has big implications for how you write the code below
-  `R/`: package code should only create objects, the vast majority of which will
-  be functions.
+  script. However, we must, in order to appreciate that the code in a package is
+  run **when the package is built**. This has big implications for how you write
+  the code below `R/`: package code should only create objects, the vast majority
+  of which will be functions.
   
 * Functions in your package will be used in situations that you didn't imagine.
   This means your functions need to be thoughtful in the way that they interact
   with the outside world.
 
-This section and the next expand on these important differences.
+We expand on the first point here and the second in the next section.
 
-### Loading code
+When you `source()` a script, every line of code is executed and the results are immediately made available.
+Things are different with package code, because it is loaded in two steps.
+When the binary package is built (often, by CRAN) all the code in `R/` is executed and the results are saved.
+When you attach a package with `library()`, these cached results are re-loaded and certain objects (mostly functions) are made available for your use.
+The full details on what it means for a package to be in binary form are given in \@ref(structure-binary).
+We refer to the creation of the binary package as (binary) "build time" and, specifically, we mean when `R CMD INSTALL --build` is run.
+(You might think that this is what `R CMD build` does, but that actually makes a bundled package, a.k.a. a "source tarball".)
+For macOS and Windows users of CRAN packages, build time is whenever CRAN built the binary package for their OS.
+For those who install packages from source, build time is essentially when they (built and) installed the package.
 
-When you load a script with `source()`, every line of code is executed and the results are immediately made available.
-Things are different in a package, because it is loaded in two steps.
-When the package is built (e.g. by CRAN) all the code in `R/` is executed and the results are saved.
-When you load a package, with `library()` or `require()`, the cached results are made available to you.
-If you loaded scripts in the same way as packages, your code would look like this:
+Consider the assignment `x <- Sys.time()`.
+If you put this in a script, `x` tells you when the script was `source()`d.
+But if you put that same code in a package, `x` tells you when the package binary was _built_.
+In section \@ref(package-within-build-time-run-time), we show a complete example of this in the context of forming timestamps inside a package.
 
-```{r, eval = FALSE}
-# Load a script into a new environment and save it
-env <- new.env(parent = emptyenv())
-source("my-script.R", local = env)
-save(envir = env, "my-script.Rdata")
+The main takeaway is this:
 
-# Later, in another R session
-load("my-script.Rdata")
+> Any R code outside of a function is suspicious and should be carefully reviewed.
+
+We explore a few real-world examples below that show easy it is to get burned by this "build time vs. load time" issue.
+Luckily, once you diagnose this problem, it is generally not difficult to fix.
+
+### A path returned by `system.file()`
+
+The shinybootstrap2 package once had this code below `R/`:
+
+```{r eval = FALSE}
+dataTableDependency <- list(
+  htmlDependency(
+    "datatables", "1.10.2",
+    c(file = system.file("www/datatables", package = "shinybootstrap2")),
+    script = "js/jquery.dataTables.min.js"
+  ),
+  htmlDependency(
+    "datatables-bootstrap", "1.10.2",
+    c(file = system.file("www/datatables", package = "shinybootstrap2")),
+    stylesheet = c("css/dataTables.bootstrap.css", "css/dataTables.extra.css"),
+    script = "js/dataTables.bootstrap.js"
+  )
+)
 ```
 
-For example, take `x <- Sys.time()`.
-If you put this in a script, `x` would tell you when the script was `source()`d.
-But if you put that same code in a package, `x` would tell you when the package was _built_. 
+So `dataTableDependency` was an object defined in top-level package code and it depends on some paths obtained via `system.file()`.
+As described in [a GitHub issue](https://github.com/rstudio/htmltools/issues/22),
 
-This means that you should never run code at the top-level of a package: package code should only create objects, mostly functions.
-For example, imagine your foo package contains this code:
+> This works fine when the package is built and tested on the same machine.
+> However, if the package is built on one machine and then used on another (as is the case with CRAN binary packages), then this will fail -- the dependency will point to the wrong directory on the host.
 
-```{r, eval = FALSE}
-library(ggplot2)
+The heart of the solution is to make sure that `system.file()` is called from a function, at run time.
+Indeed, this fix was made here (in commit [138db47](https://github.com/rstudio/shinybootstrap2/commit/138db47e6bef195f14f6a14f4289ca445e9b2efa#diff-fedcc5cc99f3d44a4caf06f8e6e0ae08)) and in a few other packages that had similar code and a related check was added in `htmlDependency()` itself.
+This particular problem would now be caught by `R CMD check`, due to changes that came with [staged installation](https://developer.r-project.org/Blog/public/2019/02/14/staged-install/index.html) as of R 3.6.0.
 
-show_mtcars <- function() {
-  qplot(mpg, wt, data = mtcars)
+### Available colours
+
+The crayon package has a function, `crayon::show_ansi_colors()`, that displays an ANSI colour table on your screen, basically to show what sort of styling is possible.
+In an early version, the function looked something like this:
+
+```{r eval = FALSE}
+show_ansi_colors <- function(colors = num_colors()) {
+  if (colors < 8) {
+    cat("Colors are not supported")
+  } else if (colors < 256) {
+    cat(ansi_colors_8, sep = "")
+    invisible(ansi_colors_8)
+  } else {
+    cat(ansi_colors_256, sep = "")
+    invisible(ansi_colors_256)
+  }
+}
+
+ansi_colors_8 <- # code to generate a vector covering basic terminal colors
+  
+ansi_colors_256 <- # code to generate a vector covering 256 colors
+```
+
+where `ansi_colors_8` and `ansi_colors_256` were character vectors exploring a certain set of colours, presumably styled via ANSI escapes.
+
+The problem was those objects were formed and cached when the binary package was built.
+Since that often happens on a headless server, this likely happens under conditions where terminal colours might not be enabled or even available.
+Users of the installed package could still call `show_ansi_colors()` and `num_colors()` would detect the number of colours supported by their system (256 on most modern computers).
+But then an un-coloured object would print to screen (the original GitHub issue is [r-lib/crayon#37](https://github.com/r-lib/crayon/issues/37)).
+
+The solution was to compute the display objects with a function at run time (in commit [e2b368a](https://github.com/r-lib/crayon/commit/e2b368ac27331d82154f85299f18efbc36227caa):
+
+```{r}
+show_ansi_colors <- function(colors = num_colors()) {
+  if (colors < 8) {
+    cat("Colors are not supported")
+  } else if (colors < 256) {
+    cat(ansi_colors_8(), sep = "")
+    invisible(ansi_colors_8())
+  } else {
+    cat(ansi_colors_256(), sep = "")
+    invisible(ansi_colors_256())
+  }
+}
+
+ansi_colors_8 <- function() {
+  # code to generate a vector covering basic terminal colors
+}
+  
+ansi_colors_256 <- function() {
+  # code to generate a vector covering 256 colors
 }
 ```
 
-If someone tries to use it:
+Literally, the same code is used, it is simply pushed down into the body of a function taking no arguments (similar to the shinybootstrap2 example).
+Each reference to, e.g., the `ansi_colors_8` object is replaced by a call to the `ansi_colors_8()` function.
 
-```{r, eval = FALSE}
-library(foo)
-show_mtcars()
+The main takeaway is that functions that assess or expose the capabilities of your package on a user's system must fully execute on your user's system.
+It's fairly easy to accidentally rely on results that were cached at build time, quite possibly on a different machine.
+
+### Aliasing a function
+
+One last example shows that, even if you are careful to only define functions below `R/`, there are still some subtleties to consider.
+Imagine that you want the function `foo()` in your package to basically be an alias for the function `blah()` from some other package, e.g. pkgB.
+You might be tempted to do this:
+
+```{r eval = FALSE}
+foo <- pkgB::blah
 ```
 
-The code won't work because ggplot2's `qplot()` function won't be available: `library(foo)` doesn't re-execute `library(ggplot2)`.
-The top-level R code in a package is only executed when the package is built, not when it's loaded.
+However, this will cause `foo()` in your package to reflect the definition of `pkgB::blah()` at the version present on the machine where the binary package is built (often CRAN), at that moment in time.
+If a bug is discovered in `pkgB::blah()` and subsequently fixed, your package will still use the older, buggy version, until your package is rebuilt (often by CRAN) and your users upgrade, which is completely out of your control.
+This alternative approach protects you from this:
 
-To get around this problem you might be tempted to do:
-
-```{r, eval = FALSE}
-show_mtcars <- function() {
-  library(ggplot2)
-  qplot(mpg, wt, data = mtcars)
-}
+```{r}
+foo <- function(...) pkgB::blah(...)
 ```
 
-That's also problematic, as you'll see below.
-Instead, describe the packages your code needs in the `DESCRIPTION` file, as you'll learn in [package dependencies](#dependencies).
+Now, when your user calls `foo()`, they are effectively calling `pkgB::blah()`, at the version installed on *their* machine at that very moment.
+
+A real example of this affected an older version of knitr, related to how the default "evaluate" hook was being set to `evaluate::evaluate()` (original issue is [yihui/knitr#1441](https://github.com/yihui/knitr/issues/1441), resolved in commit [d6b53e0](https://github.com/yihui/knitr/commit/d6b53e0f15a8afd1de4987a86931ba54f886278d)).
 
 ## Respect the R landscape {#code-r-landscape}
 
@@ -443,7 +522,7 @@ This often leads to a dysfunctional workflow where the full sequence above unfol
 We've already talked about the value of fast feedback, in the context of `load_all()`.
 But this also applies to running `document()`, `test()`, and `check()`.
 There are defects you just can't detect from using `load_all()` and running a few interactive examples that are immediately revealed by more formal checks.
-Finding and fixing 5 bugs, one at a time, right after you created each one is much easier than discovering all 5 at once (possibly interacting with each other), weeks or months after you wrote the code.
+Finding and fixing 5 bugs, one at a time, right after you created each one is much easier than troubleshooting all 5 at once (possibly interacting with each other), weeks or months after you last touched the code.
 
 ## CRAN notes {#code-cran}
 
