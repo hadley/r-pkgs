@@ -28,10 +28,10 @@ We start with a data analysis script and show how to find the package that lurks
 We isolate and then extract reusable data and logic from the script, put this into an R package, and then use that package in a much simplified script.
 We make a few rookie mistakes along the way, in order to highlight special considerations for the R code inside a package.
 
-*The section headers are an arbitrary selection of names related to bodies of water.
-They appear in alphabetical order and their main purpose is to indicate the progression towards a working package.*
+*The section headers incorporate the NATO phonetic alphabet and have no specific meaning.
+They are just a convenient way to mark our progress towards a working package.*
 
-## Aegean: a script that works
+## Alfa: a script that works
 
 Here is a fictional data analysis script `data-cleaning.R` for a group that collects reports from people who went for a swim:
 
@@ -91,7 +91,7 @@ Even if your typical analytical tasks are quite different, hopefully you see a f
 It's easy to imagine that this group does very similar pre-processing of many similar data files over time.
 Their analyses can be more efficient and consistent if they make these standard data maneuvers available to themselves as functions a package, instead of inlining the same data and logic into dozens or hundreds of data ingest scripts.
 
-## Baltic: a better script that works
+## Bravo: a better script that works
 
 The package that lurks within the original script is actually pretty hard to see!
 It's obscured by a few suboptimal coding practices, such as the use of repetitive copy/paste-style code and the mixing of code and data.
@@ -103,7 +103,7 @@ Second, many people use add-on packages in their scripts, so it is good to see h
 
 Here's the next version of the script.
 
-```{cat, engine.opts = list(file = "Package-within-files/baltic-data-cleaning.R")}
+```{cat, engine.opts = list(file = "Package-within-files/bravo-data-cleaning.R")}
 library(tidyverse)
 
 infile <- "swim.csv"
@@ -134,7 +134,7 @@ outfile_path <- function(infile) {
 write_csv(dat, outfile_path(infile))
 ```
 
-```{r, code = readLines("Package-within-files/baltic-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
+```{r, code = readLines("Package-within-files/bravo-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
 ```
 
 ```{r include = FALSE}
@@ -156,7 +156,7 @@ The key features to note are:
 It's getting easier to recognize the reusable bits of this script, i.e. the bits that have nothing to do with a specific input file, like `swim.csv`.
 This sort of refactoring often happens naturally on the way to creating your own package, but if it does not, it's a good idea to do this intentionally.
 
-## Caribbean: external helpers
+## Charlie: external helpers
 
 A typical next step is to move reusable data and logic out of the analysis script and into one or more separate files.
 This is a conventional opening move, if you want to use these same helper files in multiple analyses.
@@ -177,7 +177,7 @@ writeLines(readLines("beach-lookup-table.csv"))
 
 Here is the content of `cleaning-helpers.R`:
 
-```{cat, engine.opts = list(file = "Package-within-files/caribbean-cleaning-helpers.R"), class.source = "R"}
+```{cat, engine.opts = list(file = "Package-within-files/charlie-cleaning-helpers.R"), class.source = "R"}
 library(tidyverse)
 
 localize_beach <- function(dat) {
@@ -207,12 +207,12 @@ Here is the next version of the data cleaning script, now that we've pulled out 
 
 ```{r, include = FALSE}
 fs::file_copy(
-  "Package-within-files/caribbean-cleaning-helpers.R",
+  "Package-within-files/charlie-cleaning-helpers.R",
   "cleaning-helpers.R"
 )
 ```
 
-```{cat, engine.opts = list(file = "Package-within-files/caribbean-data-cleaning.R")}
+```{cat, engine.opts = list(file = "Package-within-files/charlie-data-cleaning.R")}
 library(tidyverse)
 source("cleaning-helpers.R")
 
@@ -226,7 +226,7 @@ dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
 write_csv(dat, outfile_path(infile))
 ```
 
-```{r, code = readLines("Package-within-files/caribbean-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
+```{r, code = readLines("Package-within-files/charlie-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
 ```
 
 ```{r include = FALSE}
@@ -241,7 +241,7 @@ These sorts of design decisions are the subject of a separate project: [principl
 Let's assume the group agrees that our design decisions are promising, i.e. we seem to be making things better, not worse.
 Sure, the existing code is not perfect, but this is a typical developmental stage when you're trying to figure out what the helper functions should be and how they should work.
 
-## Dardanelles: an attempt at a package
+## Delta: an attempt at a package
 
 Let's make a package! Here's the simplest thing you might hope will "just work": make `cleaning-helpers.R` into an R package. Somehow.
 
@@ -263,9 +263,9 @@ Concretely, we do this:
       
 Here's the version of the script that you hope will run after successfully installing this package.
 
-```{cat, engine.opts = list(file = "Package-within-files/dardanelles-main.R"), class.source = "R"}
+```{cat, engine.opts = list(file = "Package-within-files/delta-main.R"), class.source = "R"}
 library(tidyverse)
-library(dardanelles)
+library(delta)
 
 infile <- "swim.csv"
 dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
@@ -286,14 +286,14 @@ source("cleaning-helpers.R")
 has been replaced by
 
 ```{r eval = FALSE}
-library(dardanelles)
+library(delta)
 ```
 
 Here's what actually happens when we try to run this:
 
 ```{r eval = FALSE}
 library(tidyverse)
-library(dardanelles)
+library(delta)
 
 infile <- "swim.csv"
 dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
@@ -307,7 +307,7 @@ write_csv(dat, outfile_path(infile))
 #> Error in outfile_path(infile) : could not find function "outfile_path"
 ```
 
-None of our helper functions are actually available for use, even though we call `library(dardanelles)`!
+None of our helper functions are actually available for use, even though we call `library(delta)`!
 In contrast to `source()`ing a file of helper functions, attaching a package does not dump its functions into the global workspace.
 By default, functions in a package are only for internal use.
 We need to export `localize_beach()`, `celsify_temp()`, and `outfile_path()` so our users can call them.
@@ -329,7 +329,7 @@ From any other working directory, we still get an error:
 
 ```{r eval = FALSE}
 library(tidyverse)
-library(dardanelles)
+library(delta)
 
 infile <- "swim.csv"
 dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
@@ -358,15 +358,15 @@ For a quick experiment like this, `usethis::use_mit_license()` is fine.
 For real work, see chapter \@ref(license) for guidance.
 
 ```
-* installing *source* package ‘dardanelles’ ...
+* installing *source* package ‘delta’ ...
 ** using staged installation
 ** R
 ** byte-compile and prepare package for lazy loading
 Error in library(tidyverse) : there is no package called ‘tidyverse’
-Error: unable to load R code in package ‘dardanelles’
+Error: unable to load R code in package ‘delta’
 Execution halted
-ERROR: lazy loading failed for package ‘dardanelles’
-* removing ‘/Users/jenny/rrr/dardanelles.Rcheck/dardanelles’
+ERROR: lazy loading failed for package ‘delta’
+* removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
 ```
 
 What do you mean "there is no package called 'tidyverse'"?!?
@@ -392,7 +392,7 @@ To review, copying `cleaning-helpers.R` to `R/cleaning-helpers.R`, without furth
   package.
 * Does not properly declare our dependency on other add-on packages.
 
-## Erie: a working package
+## Echo: a working package
 
 We're ready to make the most minimal version of this package that actually works.
 
@@ -401,7 +401,7 @@ Here is the new version of `R/cleaning-helpers.R`[^bad-file-name]:
 [^bad-file-name]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
 We discuss organising and naming the files below `R/` in section \@ref(code-organising).
 
-```{cat, engine.opts = list(file = "Package-within-files/erie-cleaning-helpers.R"), class.source = "R"}
+```{cat, engine.opts = list(file = "Package-within-files/echo-cleaning-helpers.R"), class.source = "R"}
 lookup_table <- tribble(
       ~where, ~english,
      "beach",     "US",
@@ -445,7 +445,7 @@ In this case, our package only uses dplyr.
 The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
 
 ```
-Package: erie
+Package: echo
 (... other lines omitted ...)
 Imports: 
     dplyr
@@ -492,7 +492,7 @@ This is a valid concern and something you should absolutely address in a real pa
 You've already seen how to create help files with roxygen comments in [the whole game chapter](whole-game-document) and we cover this topic thoroughly chapter \@ref(man).
 Therefore, we won't discuss this further here.
 
-## Flores: build time vs. run time {#package-within-build-time-run-time}
+## Foxtrot: build time vs. run time {#package-within-build-time-run-time}
 
 The package works, which is great, but group members notice something odd about the timestamps:
 
@@ -577,7 +577,7 @@ This illustrates that you need to have a different mindset when defining objects
 The vast majority of those objects should be functions and these functions should generally only use data they create or that is passed via an argument.
 There are some types of sloppiness that are fairly harmless when a function is defined immediately before its use, but that can be more costly for functions distributed as a package.
 
-## Gibraltar: side effects {#package-within-side-effects}
+## Golf: side effects {#package-within-side-effects}
 
 The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.

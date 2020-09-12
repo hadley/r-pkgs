@@ -1,5 +1,5 @@
 library(tidyverse)
-library(dardanelles)
+library(delta)
 
 infile <- "swim.csv"
 dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
