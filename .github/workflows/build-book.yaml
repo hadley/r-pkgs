@@ -28,39 +28,41 @@ jobs:
           
       - uses: r-lib/actions/setup-pandoc@master
 
-      - name: Query dependencies
+      - name: Get R version
+        id: get-r-version
         run: |
-          install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-        shell: Rscript {0}
+          echo "::set-output name=version::$(Rscript -e 'cat(as.character(getRversion()))')"
+        shell: bash
 
       - name: Cache R packages
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-3-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-3-
+          key: ${{ runner.os }}-${{ steps.get-r-version.outputs.version }}-1-
 
       - name: Cache bookdown results
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: _bookdown_files
-          key: bookdown-5-${{ hashFiles('**/*Rmd') }}
-          restore-keys: bookdown-4-
+          key: bookdown-6-${{ hashFiles('**/*Rmd') }}
+          restore-keys: bookdown-6-
+
+      - name: Install pak
+        run: |
+          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+        shell: Rscript {0}
 
       - name: Install macOS system dependencies
         if: runner.os == 'macOS'
         run: |
           brew install libgit2
 
-      - name: Install packages
+      - name: Install dependencies
         run: |
-          # hack that is occasionally needed when ps updates
-          #install.packages("ps", type = "binary")
-          remotes::install_deps(dependencies = TRUE)
+          pak::local_install_dev_deps()
+          pak::pkg_install("rcmdcheck")
         shell: Rscript {0}
-
+ 
       - name: Session info
         run: |
           options(width = 100)
