@@ -23,29 +23,15 @@ jobs:
 
       - name: Setup R
         uses: r-lib/actions/setup-r@master
-        with:
-          crayon.enabled: 'FALSE'
-          
-      - uses: r-lib/actions/setup-pandoc@master
 
-      - name: Get R version
-        id: get-r-version
-        run: |
-          echo "::set-output name=version::$(Rscript -e 'cat(as.character(getRversion()))')"
-        shell: bash
+      - name: Setup pandoc
+        uses: r-lib/actions/setup-pandoc@master
 
       - name: Cache R packages
         uses: actions/cache@v2
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ steps.get-r-version.outputs.version }}-1-
-
-      - name: Cache bookdown results
-        uses: actions/cache@v2
-        with:
-          path: _bookdown_files
-          key: bookdown-6-${{ hashFiles('**/*Rmd') }}
-          restore-keys: bookdown-6-
+          key: ${{ runner.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
 
       - name: Install pak
         run: |
@@ -73,6 +59,13 @@ jobs:
         run: |
           git config --local user.name "$GITHUB_ACTOR"
           git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Cache bookdown results
+        uses: actions/cache@v2
+        with:
+          path: _bookdown_files
+          key: bookdown-6-${{ hashFiles('**/*Rmd') }}
+          restore-keys: bookdown-6-
 
       - name: Build site
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
