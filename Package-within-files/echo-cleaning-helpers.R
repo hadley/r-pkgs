@@ -1,4 +1,4 @@
-lookup_table <- tribble(
+lookup_table <- dplyr::tribble(
       ~where, ~english,
      "beach",     "US",
      "coast",     "US",
