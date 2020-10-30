@@ -3,16 +3,19 @@
 ```{r, include = FALSE}
 source("common.R")
 
+# Whenever any chunk changes, we want to re-run _every_ chunk
+rmd <- parsermd::parse_rmd("Whole-game.Rmd")
+chunks <- parsermd::rmd_subset(rmd, type_refs = "rmd_chunk")
+hash <- digest::digest(sapply(chunks, "[[", "code"))
 knitr::opts_chunk$set(
   cache = TRUE,
-  # Re-run all chunks whenever this file changes
-  # TOOD: hash code chunks
-  cache.extra = file.mtime("Whole-game.Rmd")
+  cache.extra = hash
 )
 
-# By default, knitr saves loaded packages and reloads in the new session.
-# But this doesn't work for foofactors because we want to delete it at the
-# end of the chapter
+# By default, knitr saves loaded packages and reloads at the start of the
+# the new session. This doesn't work for foofactors because the package is
+# deleted at the end of the doc. So we just hack knitr to not save or load
+# the package info
 assignInNamespace(
   "cache", ns = "knitr",
   modifyList(knitr:::cache, list(library = function(...) {}))
