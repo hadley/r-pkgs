@@ -27,12 +27,12 @@ options(
 
 options(
   digits = 3,
+  width = 68,
   str = strOptions(strict.width = "cut")
 )
+knitr::opts_chunk$set(width = 68)
 
 if (knitr::is_latex_output()) {
-  knitr::opts_chunk$set(width = 69)
-  options(width = 69)
   options(crayon.enabled = FALSE)
   options(cli.unicode = TRUE)
 }
@@ -87,6 +87,8 @@ shhh_check <- function(..., quiet = TRUE) {
 }
 
 pretty_install <- function(...) {
+  withr::local_options(list(crayon.enabled = FALSE))
+  
   out <- install_quietly(...)
   output <- strsplit(out$output, split = "\n")[[1]]
   output <- grep("^(\\s*|[-|])$", output, value = TRUE, invert = TRUE)

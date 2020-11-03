@@ -1,15 +1,16 @@
 # The whole game {#whole-game}
 
 ```{r, include = FALSE}
+options(crayon.enabled = TRUE)
 source("common.R")
+library(devtools)
 
 # Whenever any chunk changes, we want to re-run _every_ chunk
 rmd <- parsermd::parse_rmd("Whole-game.Rmd")
 chunks <- parsermd::rmd_subset(rmd, type_refs = "rmd_chunk")
-hash <- digest::digest(sapply(chunks, "[[", "code"))
 knitr::opts_chunk$set(
   cache = TRUE,
-  cache.extra = hash
+  cache.extra = digest::digest(chunks)
 )
 
 # By default, knitr saves loaded packages and reloads at the start of the
@@ -127,10 +128,12 @@ if (!is.null(where)) {
 }
 ```
 
+:::downlit
 ```{r create-package, eval = create, echo = debug, R.options = list(usethis.description = NULL)}
 create_package(foopath, open = FALSE, rstudio = TRUE)
 proj_set(foopath)
 ```
+:::
 
 ```{r set-proj-and-wd, include = debug, eval = create}
 # being kind someone working interactively and locally
@@ -155,10 +158,12 @@ If you're working in RStudio, you should find yourself in a new instance of RStu
 
 What's in this new directory that is also an R package and, probably, an RStudio Project? Here's a listing (locally, you can consult your *Files* pane):
 
+:::downlit
 ```{r init-show-files, echo = FALSE, eval = create}
 dir_info(all = TRUE) %>% 
   select(path, type)
 ```
+:::
 
 :::rstudio-tip
 In the file browser, go to *More > Show Hidden Files* to toggle the visibility of hidden files (a.k.a. ["dotfiles"](https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments)). A select few are visible all the time, but sometimes you want to see them all.
@@ -209,10 +214,12 @@ If you're using RStudio, it probably requested permission to relaunch itself in 
 
 Click on History (the clock icon) and, if you consented, you will see an initial commit made via `use_git()`:
 
+:::downlit
 ```{r inspect-first-commit, echo = FALSE, eval = create}
 git_log(max = 1) %>% 
   select(commit, author, message)
 ```
+:::
 
 :::rstudio-tip
 RStudio can initialize a Git repository, in any Project, even if it's not an R package, as long you've set up RStudio + Git integration. Do *Tools > Version Control > Project Setup*. Then choose *Version control system: Git* and *initialize a new git repository for this project*.
@@ -236,7 +243,8 @@ factor(c(as.character(a), as.character(b)))
 
 That seems to produce a result that makes more sense. Let's drop that logic into the body of a function called `fbind()`:
 
-```{r fbind-fodder, asis = TRUE, echo = FALSE, comment = NA}
+:::downlit
+```{r fbind-fodder, echo = FALSE, comment = NA}
 fbind_fodder <- c(
   "fbind <- function(a, b) {",
   "  factor(c(as.character(a), as.character(b)))",
@@ -244,6 +252,7 @@ fbind_fodder <- c(
 )
 cat(fbind_fodder, sep = "\n")
 ```
+:::
 
 This book does not teach you how to write functions in R. To learn more about that take a look at the [Functions chapter](https://r4ds.had.co.nz/functions.html) of R for Data Science and the [Functions chapter](https://adv-r.hadley.nz/functions.html) of Advanced R.
 
@@ -330,9 +339,11 @@ Note that `check()` produces rather voluminous output, optimized for interactive
 check()
 ```
 
+:::downlit
 ```{r first-check, eval = create, warning = TRUE, echo = FALSE}
 shhh_check(error_on = "never")
 ```
+:::
 
 **Read the output of the check!** Deal with problems early and often. It's just like incremental development of `.R` and `.Rmd` files. The longer you go between full checks that everything works, the harder it becomes to pinpoint and solve your problems.
 
@@ -418,7 +429,8 @@ If you use RStudio, open `R/fbind.R` in the source editor and put the cursor som
 
 If you don't use RStudio, create the comment yourself. Regardless, you should modify it to look something like this:
 
-```{r fbind-roxygen-header, asis = TRUE, echo = FALSE, comment = NA, eval = create}
+:::downlit
+```{r fbind-roxygen-header, echo = FALSE, comment = NA, eval = create}
 fbind_roxygen_header <- c(
   "#' Bind two factors",
   "#'",
@@ -440,6 +452,7 @@ writeLines(
 )
 cat(fbind_roxygen_header, sep = "\n")
 ```
+:::
 
 *TODO: mention how RStudio helps you execute examples here?*
 
@@ -491,9 +504,11 @@ foofactors should pass `R CMD check` cleanly now and forever more: 0 errors, 0 w
 check()
 ```
 
+:::downlit
 ```{r first-clean-check, eval = create, warning = TRUE, echo = FALSE}
 shhh_check(error_on = "never")
 ```
+:::
 
 ## `install()`
 
@@ -551,7 +566,8 @@ use_test("fbind")
 
 This creates the file `tests/testthat/test-fbind.R`. Put this content in it:
 
-```{r test-fbind-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = create}
+:::downlit
+```{r test-fbind-fodder, echo = FALSE, comment = NA, eval = create}
 test_fodder <- c(
   'test_that("fbind() binds factor (or character)", {',
   '  x <- c("a", "b")',
@@ -567,6 +583,7 @@ test_path <- path("tests", "testthat", "test-fbind.R")
 writeLines(test_fodder, test_path)
 cat(test_fodder, sep = "\n")
 ```
+:::
 
 This tests that `fbind()` gives an expected result when combining two factors and a character vector and a factor.
 
@@ -620,7 +637,8 @@ use_r("fcount")
 
 Put this content in the file `R/fcount.R`:
 
-```{r fcount-fodder, asis = TRUE, echo = FALSE, comment = NA}
+:::downlit
+```{r fcount-fodder, echo = FALSE, comment = NA}
 fcount_fodder <- c(
   "#' Make a sorted frequency table for a factor",
   "#'",
@@ -636,6 +654,7 @@ fcount_fodder <- c(
 )
 cat(fcount_fodder, sep = "\n")
 ```
+:::
 
 ```{r write-fcount, include = FALSE, eval = create}
 writeLines(fcount_fodder, path("R", "fcount.R"))
@@ -754,9 +773,11 @@ Let's run `check()` again to make sure all is still well.
 check()
 ```
 
+:::downlit
 ```{r final-check, eval = create, warning = TRUE, echo = FALSE}
 shhh_check(error_on = "never")
 ```
+:::
 
 foofactors should have no errors, warnings or notes. This would be a good time to re-build and install it properly. And celebrate!
 
