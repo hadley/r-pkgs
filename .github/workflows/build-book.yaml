@@ -29,16 +29,18 @@ jobs:
       - name: Setup pandoc
         uses: r-lib/actions/setup-pandoc@master
 
+      - name: Install pak and query dependencies
+        run: |
+          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+          saveRDS(pak::local_dev_deps(), ".github/r-depends.rds")
+        shell: Rscript {0}
+
       - name: Cache R packages
         uses: actions/cache@v2
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ steps.install-r.outputs.installed-r-version }}-2-
-
-      - name: Install pak
-        run: |
-          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
-        shell: Rscript {0}
+          key: ${{ runner.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-${{ hashFiles('.github/r-depends.rds') }}
+          restore-keys: ${{ runner.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
 
       - name: Install macOS system dependencies
         if: runner.os == 'macOS'
@@ -47,7 +49,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pak::local_install_dev_deps()
+          pak::local_install_dev_deps(upgrade = TRUE)
         shell: Rscript {0}
  
       - name: Session info
