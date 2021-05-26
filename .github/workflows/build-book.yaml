@@ -22,15 +22,14 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Setup R
+      - uses: r-lib/actions/setup-r@v1
         id: install-r
-        uses: r-lib/actions/setup-r@master
+        with:
+          crayon.enabled: 'FALSE'
 
-      - name: Setup pandoc
-        uses: r-lib/actions/setup-pandoc@master
+      - uses: r-lib/actions/setup-pandoc@v1
 
       - name: Install pak and query dependencies
         run: |
@@ -38,13 +37,14 @@ jobs:
           saveRDS(pak::local_dev_deps_tree(), ".github/r-depends.rds")
         shell: Rscript {0}
 
-      - name: Cache R packages
+      - name: Restore R package cache
         uses: actions/cache@v2
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ steps.install-r.outputs.installed-r-version }}-2-${{ hashFiles('.github/r-depends.rds') }}
-          restore-keys: ${{ runner.os }}-${{ steps.install-r.outputs.installed-r-version }}-2-
-
+          path: |
+            ${{ env.R_LIBS_USER }}
+            !${{ env.R_LIBS_USER }}/pak
+          key: ${{ runner.os }}-${{ steps.get-r-version.outputs.version }}-3-
+          
       - name: Install macOS system dependencies
         if: runner.os == 'macOS'
         run: |
