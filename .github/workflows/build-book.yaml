@@ -1,20 +1,17 @@
 on:
   push:
-    branches:
-      - master
+    branches: [master, main]
   pull_request:
-    branches:
-      - master
+    branches: [master, main]
   schedule:
     # run every day at 11 PM
     - cron: '0 23 * * *'
 
 name: build-book
 
-
 jobs:
-  build:
-    runs-on: macOS-latest
+  build-book:
+    runs-on: ubuntu-latest
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -24,44 +21,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: r-lib/actions/setup-pandoc@v1
+
       - uses: r-lib/actions/setup-r@v1
-        id: install-r
         with:
-          crayon.enabled: 'FALSE'
+          use-public-rspm: true
 
       - uses: r-lib/actions/setup-pandoc@v1
 
-      - name: Install pak and query dependencies
-        run: |
-          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
-          saveRDS(pak::local_dev_deps_tree(), ".github/r-depends.rds")
-        shell: Rscript {0}
-
-      - name: Restore R package cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.R_LIBS_USER }}
-            !${{ env.R_LIBS_USER }}/pak
-          key: ${{ runner.os }}-${{ steps.get-r-version.outputs.version }}-4-
-          
-      - name: Install macOS system dependencies
-        if: runner.os == 'macOS'
-        run: |
-          brew install libgit2
-
-      - name: Install dependencies
-        run: |
-          pak::local_install_dev_deps(upgrade = TRUE)
-        shell: Rscript {0}
- 
-      - name: Session info
-        run: |
-          options(width = 100)
-          pkgs <- installed.packages()[, "Package"]
-          sessioninfo::session_info(pkgs, include_base = TRUE)
-        shell: Rscript {0}
-
+      - uses: r-lib/actions/setup-r-dependencies@v1
+      
       - name: Configure Git user
         run: |
           git config --local user.name "$GITHUB_ACTOR"
@@ -76,7 +45,7 @@ jobs:
       - name: Build site
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
 
-      - name: Copy
+      - name: Copy redirects file
         run: cp _redirects _book/
 
       - name: Deploy to Netlify
