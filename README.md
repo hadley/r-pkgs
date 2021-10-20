@@ -1,8 +1,9 @@
 # R Packages
 
 <!-- badges: start -->
-[![R build status](https://github.com/hadley/r-pkgs/workflows/build-book/badge.svg)](https://github.com/hadley/r-pkgs/actions)
+[![bookdown](https://github.com/hadley/r-pkgs/workflows/bookdown/badge.svg)](https://github.com/hadley/r-pkgs/actions)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/a5dbbee9-7396-4e7f-8ce7-6abd362d9752/deploy-status)](https://app.netlify.com/sites/r-pkgs/deploys)
+
 <!-- badges: end -->
 
 This repo holds the code and text behind the **R Packages** book. The site is built with [bookdown](https://bookdown.org/yihui/bookdown/).
