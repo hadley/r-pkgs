@@ -1,0 +1,246 @@
+# Licensing {#license}
+
+
+
+The goal of this chapter is to give you the basic tools to manage licensing for your R package.
+Software licensing is a large and complicated field, made particularly complex because it lies at the intersection of programming and law.
+Fortunately, you don't need to be an expert to do the right thing: respecting how an author wants their code to be treated as indicated by the license they've picked.
+
+To understand the author's wishes, it's useful to understand the two major camps of open source licenses:
+
+-   **Permissive** licenses are very easy going.
+    Code with a permissive license can be freely copied, modified, and published, and the only restriction is that the license must be preserved.
+    The [**MIT**](https://choosealicense.com/licenses/mit/) and [**Apache**](https://choosealicense.com/licenses/apache-2.0/) licenses are the most common modern permissive licenses; older permissive licenses include the various forms of the **BSD** license.
+
+-   **Copyleft** licenses are stricter.
+    The most common copyleft license is the [**GPL**](https://choosealicense.com/licenses/gpl-3.0/') which allows you to freely copy and modify the code for personal use, but if you publish modified versions or bundle with other code, the modified version or complete bundle must also be licensed with the GPL.
+
+To get a high-level view of the open source licensing space, and the details of individual licenses, I highly recommend <https://choosealicense.com>, which I've used in the links above.
+
+When you look across all programming languages, permissive licenses are the most common.
+For example, a [2015 survey of GitHub repositories](https://github.blog/2015-03-09-open-source-license-usage-on-github-com/) found that \~55% used a permissive license and \~20% used a copyleft license.
+The R community is a little different: as of 2020, my analysis (following [Sean Kross's blog post](https://seankross.com/2016/08/02/How-R-Packages-are-Licensed.html)) found that \~70% of CRAN packages use a copyleft license and \~15% use a permissive license.
+
+This chapter will start with licensing your own code, and then cover the most important details of receiving code from other people (e.g. in a PR) and bundling other people's code into your package.
+Note that simply using a package or R itself doesn't require that you comply with the license; this is why you can write proprietary R code and why R packages can have any license you choose.
+
+For more details about licensing R packages, I recommend [*Licensing R*](https://thinkr-open.github.io/licensing-r/) by Colin Fay.
+
+
+
+(If you run the code in this chapter, please make sure that you're using usethis 2.0.0 or greater; writing this chapter prompted a number of changes in the package.)
+
+## Code you write
+
+We'll start by talking about code that you write, and how to license it to make clear how you want people to treat it.
+In brief:
+
+-   If you want a permissive license so people can use your code with minimal restrictions, choose the [MIT license](https://choosealicense.com/licenses/mit/) with `use_mit_license()`.
+
+-   If you want a copyleft license so that all derivatives and bundles of your code are also open source, choose the [GPLv3 license](https://choosealicense.com/licenses/gpl-3.0/) with `use_gpl_license()`.
+
+-   If your package primarily contains data, not code, and you want minimal restrictions, choose the [CC0 license](https://choosealicense.com/licenses/cc0-1.0/) with `use_cc0_license()`.
+    Or if you want to require attribution when your data is used, choose the [CC BY license](https://choosealicense.com/licenses/cc-by-4.0/) by calling `use_ccby_license()`.
+
+-   If you don't want to make your code open source call `use_proprietary_license()`.
+    Such packages can not be distributed by CRAN.
+
+We'll come back to more details and present a few other licenses in Section \@ref(more-licenses)
+
+It's important to use a license because if you don't the default copyright laws apply which mean that no one is allowed to make a copy of your code without your express permission.
+
+(It is possible to license a CRAN package with a non-open source license like the [ACM license](https://www.acm.org/publications/policies/software-copyright-notice) but we don't recommend it.)
+
+## Copyright holder
+
+Before we go any further, it's important to introduce an important term: **copyright holder**.
+The copyright holder (or holders) are the people who own the underlying copyright on the code, and are hence the only people who are allowed to choose (or later change) the license.
+There are three main cases[^license-1]:
+
+[^license-1]: At least in the US; you'll need to double check with your local laws.
+
+-   If you wrote the code in your own time, you're the copyright holder.
+
+-   If you wrote the code for your employer, your employer is the copyright holder.
+
+-   If you wrote the code for contract work, you're the copyright holder unless the contract specifically describes otherwise.
+
+This means that if you're writing a package for your job, you'll need to get your employer to approve the open source license you use.
+Some employers (particularly universities) have standard policies so you don't need to ask for permission every time; you'll need to investigate what your company's policy is.
+
+Note that if multiple people have contributed to the package, there will be multiple copyright holders: each person or company will hold the copyright for their specific contribution.
+We'll come back to this topic in Section \@ref(code-you-bundle).
+
+### Key files
+
+There are three key files used to record your licensing decision:
+
+-   Every license sets the `License` field in the `DESCRIPTION`.
+    This contains the name of the license in a standard form so that `R CMD check` and CRAN can automatically verify it.
+    It comes in four main forms:
+
+    -   A name and version specification, e.g.
+        `GPL (>= 2)`, or `Apache License (= 2.0)`.
+
+    -   A standard abbreviation, e.g.
+        `GPL-2`, `LGPL-2.1`, `Artistic-2.0`.
+
+    -   A name of a license "template" and a file containing specific variables.
+        The most common case is `MIT + file LICENSE`, where the `LICENSE` file needs to contain two fields: the year and copyright holder.
+
+    -   Pointer to the full text of a non-standard license, `file LICENSE`.
+
+    More complicated licensing structures are possible but outside the scope of this text.
+    See the [Licensing section](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Licensing) of R-exts for details.
+
+-   As described above, the `LICENSE` file is used in one of two ways.
+    Some licenses is templates that require additional details to be complete in the `LICENSE` file.
+    The `LICENSE` file can also contain the full text of non-standard and non-open source licenses.
+    You are not permitted to include the full text of standard licenses.
+
+-   `LICENSE.md` includes a copy of the full text of the license.
+    All open source licenses require a copy of the license to be included, but CRAN does not permit you to include a copy of standard licenses in your package, so we also use `.Rbuildignore` to make sure this file is not sent to CRAN.
+
+There is one other file that we'll come back to in Section \@ref(how-to-include): `LICENSE.note`.
+This is used when you have bundled code written by other people, and parts of your package have more permissive licenses than the whole.
+
+### More licenses {#more-licenses}
+
+I gave you the absolute minimum you need to know above.
+But it's worth mentioning a few more important licenses roughly ordered from most permissive to least permissive:
+
+-   `use_mit_license()`: the [MIT license](https://choosealicense.com/licenses/mit/) is the most permissive license only requiring that you keep the copyright and license notice.
+
+-   `use_apache_license()`: the [Apache License](https://choosealicense.com/licenses/apache-2.0/) is similar to the MIT license but it also includes an explicit patent grant.
+    Patents are another component of intellectual property distinct from copyrights, and some organisations also care about protection from patent claims.
+
+-   `use_lgpl_license()`: the [LGPL](https://choosealicense.com/licenses/lgpl-3.0/) is a little weaker than the GPL, allowing you to bundle LPGL code using any license for the larger work.
+
+-   `use_gpl_license():` We've discussed the [GPL](https://choosealicense.com/licenses/gpl-3.0/) already, but there's one important wrinkle to note --- the GPL has two major versions, GPLv2 and GPLv3, and they're not compatible (i.e. you can't bundle GPLv2 and GPLv3 code in the same project).
+    To avoid this problem it's generally recommended to license your package as GPL \>=2 or GPL \>= 3 so that future versions of the GPL license also apply to your code.
+    This is what `use_gpl_license()` does by default.
+
+-   `use_agpl_license()`: The [AGPL](https://choosealicense.com/licenses/agpl-3.0/) defines distribution to include providing a service over a network, so that if you use AGPL code to provide a web service, all bundled code must also be open-sourced.
+    Because this is a considerably broader claim than the GPL, many companies expressly forbid the use of AGPL software.
+
+There are many other licenses available.
+You can see a list of the most popular at [https://choosealicense.com/licenses/](https://choosealicense.com/licenses/,) and a full list at <https://opensource.org/licenses/alphabetical>.
+The primary downside of choosing a license not in the bullet list above is that fewer R users will understand what it means.
+
+### Relicensing
+
+It's important to spend a little time thinking about your initial license because it can be hard to change it later because it requires the permission of all copyright holders.
+Unless you've done something special (which we'll discuss in Section \@ref(code-given-to-you)), the copyright holders include everyone who has contributed a non-trivial amount of code.
+
+If you do need to re-license a package, we recommend the following steps:
+
+1.  Check the `Authors@R` field in the `DESCRIPTION` to confirm that the package doesn't contain bundled code (which we'll talk about Section \@ref(bundled-package)).
+
+2.  Find all contributors by looking at the Git history or the contributors display on GitHub.
+
+3.  Optionally, inspect the specific contributions and remove people who only contributed typo fixes and similar[^license-2].
+
+4.  Ask every contributor if they're OK with changing the license.
+    If every contributor is on GitHub, the easiest way to do this is to create an issue where you list all contributors and ask them to confirm that they're OK with the change.
+    Two examples where the tidyverse team has relicensed code include [generics](https://github.com/r-lib/generics/issues/49) and [covr](https://github.com/r-lib/covr/issues/256).
+
+5.  Once all copyright holders have approved, make the change by calling the appropriate license function.
+
+[^license-2]: Very simple contributions like typo fixes are generally not protected by copyright because they're not creative works.
+    But even a single sentence can be considered a creative work, so err on the side of safety, and if you have any doubts leave the contributor in.
+
+### Data {#license-data}
+
+Open source licenses are designed specifically to apply to source code, so if you're releasing a package that primarily contains data, you should use a different type of license.
+We recommend one of two [Creative Commons](http://creativecommons.org/) licenses:
+
+-   If you want to make the data as freely available as possible, you use the CC0 license with `use_cc0_license()`.
+    This is a permissive license that's equivalent to the MIT license (but applies to data, not code).
+
+-   If you want to require attribution when someone else uses your data, you can use the CC-BY license, with `use_ccby_license()`.
+
+## Code given to you {#code-given-to-you}
+
+Many packages include code not written by the author.
+There are two main ways this happens: other people might choose to contribute to your package using a pull request or similar, or you might find some code and choose to bundle it.
+This section will discuss code that others give to you, and the next section will discuss code that you bundle.
+
+When someone contributes code to your package using a pull request or similar, you can assume that the author is happy for their code to use your license.
+This is explicit in the [GitHub terms of service](https://docs.github.com/en/github/site-policy/github-terms-of-service#6-contributions-under-repository-license), but is generally considered to be true regardless of how the code is contributed[^license-3].
+
+[^license-3]: Some particularly risk averse organisations require contributors to provide a [developer certificate of origin](https://developercertificate.org), but this is relatively rare in general, and I haven't seen it in the R community.
+
+Note, however, that the author retains copyright of their code, unless you use a "contributor license agreement" or CLA for short.
+The primary advantage of a CLA is that it makes the copyright of the code very simple, and hence makes it easy to relicense code if needed.
+This is most important for dual open-source/commercial projects because it easily allows for dual licensing where the code is made available to the world with copyleft license, and made available to paying customers with a different, more permissive, license.
+
+It's also important to acknowledge the contribution, and it's good practice to be generous with thanks and attribution.
+In the tidyverse, we ask that all code contributors include a bullet in `NEWS.md` with their GitHub username, and we thank all contributors in release announcements.
+We only add core developers[^license-4] to the `DESCRIPTION` file; but some projects choose to add all contributors no matter how small.
+
+[^license-4]: i.e. people responsible for on-going development.
+    This is best made explicit in the ggplot2 governance document, [`GOVERNANCE.md`](https://github.com/tidyverse/ggplot2/blob/main/GOVERNANCE.md).
+
+## Code you bundle
+
+There are three common reasons that you might choose to bundle code written by someone else:
+
+-   You're including someone else's CSS or JS library in order to create a useful and attractive web page or HTML widgets.
+
+-   You're providing an R wrapper for a simple C or C++ library.
+    (For complex C/C++ libraries, you don't usually bundle the code in your package, but instead link to a copy installed elsewhere on the system).
+
+-   You've copied a small amount of R code from another package to avoid taking a dependency.
+    Generally, taking a dependency on another package is the right thing to do because you don't need to worry about licensing, and you'll automatically get bug fixes.
+    But sometimes you only need a very small amount of code from a big package, and copying and pasting it into your package is the right thing to do.
+
+Note that R is rather different to languages like C where the most common way that code is bundled together is by compiling it into a single executable.
+
+### License compatibility
+
+Before you bundle someone else's code into your package, you need to first check that the bundled license is compatible with your license.
+When distributing code, you can add additional restrictions, but you can not remove restrictions, which means that license compatibility is not symmetric.
+For example, you can bundle MIT licensed code in a GPL licensed package, but you can not bundle GPL licensed code in an MIT licensed package.
+
+There are five main cases to consider:
+
+-   If your license and their license are the same: it's OK to bundle.
+
+-   If their license is MIT or BSD, it's OK to bundle.
+
+-   If their code has a copyleft license and your code has a permissive license, you can't bundle their code.
+    You'll need to consider an alternative approach, either looking for code with a more permissive license, or putting the external code in a separate package.
+
+-   If the code comes from Stack Overflow, it's licensed[^license-5] with the Creative Common CC BY-SA license, which is only compatible with GPLv3[^license-6]
+    . This means that you need to take extra care when using Stack Overflow code in open source packages
+    . Learn more at <https://empirical-software.engineering/blog/so-snippets-in-gh-projects>.
+
+-   Otherwise, you'll need to do a little research.
+    Wikipedia has a [useful diagram](https://en.wikipedia.org/wiki/License_compatibility#Compatibility_of_FOSS_licenses) and Google is your friend.
+    It's important to note that different versions of the same license are not necessarily compatible, e.g.
+    GPLv2 and GPLv3 are not compatible.
+
+[^license-5]: <https://stackoverflow.com/help/licensing>
+
+[^license-6]: <https://creativecommons.org/share-your-work/licensing-considerations/compatible-licenses/>
+
+If your package isn't open source, things are more complicated.
+Permissive licenses are still easy, and copyleft licenses generally don't restrict use as long as you don't distribute the package outside your company.
+But this is a complex issue and opinions differ, and should check with your legal department first.
+
+### How to include {#how-to-include}
+
+Once you've determined that the licenses are compatible, you can bring the code in your package.
+When doing so, you need to preserve all existing license and copyright statements, and make it as easy as possible for future readers to understanding the licensing situation:
+
+-   If you're including a fragment of another project, generally best to put in its own file and ensure that file has copyright statements and license description at the top.
+
+-   If you're including multiple files, put in a directory, and put a LICENSE file in that directory.
+
+You also need to include some standard metadata in `Authors@R`.
+You should use `role = "cph"` to declare that the author is a copyright holder, with a `comment` describing what they're the author of.
+
+If you're submitting to CRAN and the bundled code has a different (but compatible) license, you also need to include a `LICENSE.note` file that describes the overall license of the package, and the specific licenses of each individual component.
+For example, the diffviewer package bundles six javascript libraries all of which use a permissive license.
+The [`DESCRIPTION`](https://github.com/r-lib/diffviewer/blob/main/DESCRIPTION) lists all copyright holders, and the [`LICENSE.note`](https://github.com/r-lib/diffviewer/blob/main/LICENSE.note) describes their licenses.
+(Other packages use other techniques, but I think this is the simplest approach that will fly with CRAN.)

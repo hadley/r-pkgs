@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 2 The whole game | R Packages</title>
+<meta name="author" content="Hadley Wickham">
+<meta name="author" content="Jennifer Bryan">
+<meta name="description" content="Spoiler alert! This chapter runs through the development of a small toy package. It’s meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the...">
+<meta name="generator" content="bookdown 0.24 with bs4_book()">
+<meta property="og:title" content="Chapter 2 The whole game | R Packages">
+<meta property="og:type" content="book">
+<meta property="og:url" content="https://r-pkgs.org/whole-game.html">
+<meta property="og:image" content="https://r-pkgs.org/images/cover.png">
+<meta property="og:description" content="Spoiler alert! This chapter runs through the development of a small toy package. It’s meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 2 The whole game | R Packages">
+<meta name="twitter:site" content="@hadley">
+<meta name="twitter:description" content="Spoiler alert! This chapter runs through the development of a small toy package. It’s meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the...">
+<meta name="twitter:image" content="https://r-pkgs.org/images/cover.png">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-141182576-1"></script><script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'UA-141182576-1');
+  </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="style.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="">R Packages</a>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Welcome!</a></li>
+<li><a class="" href="preface.html">Preface</a></li>
+<li class="book-part">Getting started</li>
+<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
+<li><a class="active" href="whole-game.html"><span class="header-section-number">2</span> The whole game</a></li>
+<li><a class="" href="setup.html"><span class="header-section-number">3</span> System setup</a></li>
+<li><a class="" href="package-structure-state.html"><span class="header-section-number">4</span> Package structure and state</a></li>
+<li><a class="" href="workflows101.html"><span class="header-section-number">5</span> Fundamental development workflows</a></li>
+<li><a class="" href="package-within.html"><span class="header-section-number">6</span> The package within</a></li>
+<li class="book-part">Package components</li>
+<li><a class="" href="r.html"><span class="header-section-number">7</span> R code</a></li>
+<li><a class="" href="description.html"><span class="header-section-number">8</span> Package metadata</a></li>
+<li><a class="" href="license.html"><span class="header-section-number">9</span> Licensing</a></li>
+<li><a class="" href="man.html"><span class="header-section-number">10</span> Object documentation</a></li>
+<li><a class="" href="vignettes.html"><span class="header-section-number">11</span> Vignettes: long-form documentation</a></li>
+<li><a class="" href="tests.html"><span class="header-section-number">12</span> Testing</a></li>
+<li><a class="" href="namespace.html"><span class="header-section-number">13</span> Namespace</a></li>
+<li><a class="" href="data.html"><span class="header-section-number">14</span> External data</a></li>
+<li><a class="" href="src.html"><span class="header-section-number">15</span> Compiled code</a></li>
+<li><a class="" href="inst.html"><span class="header-section-number">16</span> Installed files</a></li>
+<li><a class="" href="misc.html"><span class="header-section-number">17</span> Other components</a></li>
+<li class="book-part">Sharing with others</li>
+<li><a class="" href="git.html"><span class="header-section-number">18</span> Git and GitHub</a></li>
+<li><a class="" href="r-cmd-check.html"><span class="header-section-number">19</span> Automated checking</a></li>
+<li><a class="" href="release.html"><span class="header-section-number">20</span> Releasing a package</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/hadley/r-pkgs">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="whole-game" class="section level1">
+<h1>
+<span class="header-section-number">2</span> The whole game<a class="anchor" aria-label="anchor" href="#whole-game"><i class="fas fa-link"></i></a>
+</h1>
+<p><em>Spoiler alert!</em></p>
+<p>This chapter runs through the development of a small toy package. It’s meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.</p>
+<p>To keep the pace brisk, we exploit the modern conveniences in the devtools package and the RStudio IDE. In later chapters, we are more explicit about what those helpers are doing for us.</p>
+<div id="load-devtools-and-friends" class="section level2">
+<h2>
+<span class="header-section-number">2.1</span> Load devtools and friends<a class="anchor" aria-label="anchor" href="#load-devtools-and-friends"><i class="fas fa-link"></i></a>
+</h2>
+<p>You can initiate your new package from any active R session. You don’t need to worry about whether you’re in an existing or new project or not. The functions we use take care of this.</p>
+<p>Load the devtools package, which is the public face of a set of packages that support various aspects of package development.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span></code></pre></div>
+<p>Do you have an old version of devtools? Compare your version against ours and upgrade if necessary.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span>
+<span class="co">#&gt; [1] '2.4.2'</span></code></pre></div>
+<p>For presentation purposes only, we use <a href="https://fs.r-lib.org">fs</a>, for filesystem work, and the <a href="https://tidyverse.tidyverse.org">tidyverse</a>, for light data wrangling.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org">tidyverse</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://fs.r-lib.org">fs</a></span><span class="op">)</span></code></pre></div>
+</div>
+<div id="toy-package-foofactors" class="section level2">
+<h2>
+<span class="header-section-number">2.2</span> Toy package: foofactors<a class="anchor" aria-label="anchor" href="#toy-package-foofactors"><i class="fas fa-link"></i></a>
+</h2>
+<p>We use various functions from devtools to build a small toy package from scratch, with features commonly seen in released packages:</p>
+<ul>
+<li>Functions to address a specific need, such as helpers to work with factors.</li>
+<li>Access to established workflows for installation, getting help, and checking
+basic quality.</li>
+<li>Version control and an open development process.
+<ul>
+<li>This is completely optional in your work, but recommended. You’ll see how
+Git and GitHub helps us expose all the intermediate stages of our package.</li>
+</ul>
+</li>
+<li>Documentation for individual functions via
+<a href="https://CRAN.R-project.org/package=roxygen2">roxygen2</a>.</li>
+<li>Unit testing with <a href="https://testthat.r-lib.org">testthat</a>.</li>
+<li>Documentation for the package as a whole via an executable <code>README.Rmd</code>.</li>
+</ul>
+<p>We call the package <strong>foofactors</strong> and it will have a couple functions for handling factors. Please note that these functions are super simple and definitely not the point! For a proper package for factor handling, please see <a href="https://forcats.tidyverse.org">forcats</a>.</p>
+<p>The foofactors package itself is not our goal here. It is a device for demonstrating a typical workflow for package development with devtools.</p>
+</div>
+<div id="peek-at-the-finished-product" class="section level2">
+<h2>
+<span class="header-section-number">2.3</span> Peek at the finished product<a class="anchor" aria-label="anchor" href="#peek-at-the-finished-product"><i class="fas fa-link"></i></a>
+</h2>
+<p>The foofactors package is tracked during its development with the Git version control system. This is purely optional and you can certainly follow along without implementing this. A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting foofactors on GitHub: <a href="https://github.com/jennybc/foofactors" class="uri">https://github.com/jennybc/foofactors</a>. By inspecting the <a href="https://github.com/jennybc/foofactors/commits/master">commit history</a> and especially the diffs, you can see exactly what changes at each step of the process laid out below.</p>
+<p><em>TODO: I think these diffs are extremely useful and would like to surface them better here.</em></p>
+</div>
+<div id="create_package" class="section level2">
+<h2>
+<span class="header-section-number">2.4</span> <code>create_package()</code><a class="anchor" aria-label="anchor" href="#create_package"><i class="fas fa-link"></i></a>
+</h2>
+<p>Call <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> to initialize a new package in a directory on your computer (and create the directory, if necessary). See section <a href="workflows101.html#creating">5.1.3</a> for more.</p>
+<p>Make a deliberate choice about where to create this package on your computer. It should probably be somewhere within your home directory, alongside your other R projects. It should not be nested inside another RStudio Project, R package, or Git repo. Nor should it be in an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don’t try to do devtools’ job for it! See <a href="workflows101.html#where-source-package">5.1.4</a> for more.</p>
+<p>Substitute your chosen path into a <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> call like this:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/create_package.html">create_package</a></span><span class="op">(</span><span class="st">"~/path/to/foofactors"</span><span class="op">)</span></code></pre></div>
+<p>We have to work in a temp directory, because this book is built non-interactively, in the cloud. Behind the scenes, we’re executing our own <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> command, but don’t be surprised if our output differs a bit from yours.</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Creating <span style="color: #0000BB;">'/tmp/RtmpTmvjG1/foofactors/'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting active project to <span style="color: #0000BB;">'/tmp/RtmpTmvjG1/foofactors'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Creating <span style="color: #0000BB;">'R/'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'DESCRIPTION'</span></span>
+<span class="co">#&gt; <span style="color: #0000BB;">Package</span>: foofactors</span>
+<span class="co">#&gt; <span style="color: #0000BB;">Title</span>: What the Package Does (One Line, Title Case)</span>
+<span class="co">#&gt; <span style="color: #0000BB;">Version</span>: 0.0.0.9000</span>
+<span class="co">#&gt; <span style="color: #0000BB;">Authors@R</span> (parsed):</span>
+<span class="co">#&gt;     * First Last &lt;first.last@example.com&gt; [aut, cre] (YOUR-ORCID-ID)</span>
+<span class="co">#&gt; <span style="color: #0000BB;">Description</span>: What the package does (one paragraph).</span>
+<span class="co">#&gt; <span style="color: #0000BB;">License</span>: `use_mit_license()`, `use_gpl3_license()` or friends to</span>
+<span class="co">#&gt;     pick a license</span>
+<span class="co">#&gt; <span style="color: #0000BB;">Encoding</span>: UTF-8</span>
+<span class="co">#&gt; <span style="color: #0000BB;">Roxygen</span>: list(markdown = TRUE)</span>
+<span class="co">#&gt; <span style="color: #0000BB;">RoxygenNote</span>: 7.1.2</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'NAMESPACE'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'foofactors.Rproj'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^foofactors\\.Rproj$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'.Rproj.user'</span> to <span style="color: #0000BB;">'.gitignore'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^\\.Rproj\\.user$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting active project to <span style="color: #0000BB;">'&lt;no active project&gt;'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting active project to <span style="color: #0000BB;">'/tmp/RtmpTmvjG1/foofactors'</span></span></code></pre>
+</div>
+<p>If you’re working in RStudio, you should find yourself in a new instance of RStudio, opened into your new foofactors package (and Project). If you somehow need to do this manually, navigate to the directory and double click on <code>foofactors.Rproj</code>. RStudio has special handling for packages and you should now see a <em>Build</em> tab in the same pane as <em>Environment</em> and <em>History</em>.</p>
+<p><em>TODO: good place for a screenshot.</em></p>
+<p>What’s in this new directory that is also an R package and, probably, an RStudio Project? Here’s a listing (locally, you can consult your <em>Files</em> pane):</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#&gt; <span style="color: #555555;"># A tibble: 6 × 2</span></span>
+<span class="co">#&gt;   path             type     </span>
+<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;fs::path&gt;</span>       <span style="color: #555555; font-style: italic;">&lt;fct&gt;</span>    </span>
+<span class="co">#&gt; <span style="color: #555555;">1</span> .Rbuildignore    file     </span>
+<span class="co">#&gt; <span style="color: #555555;">2</span> .gitignore       file     </span>
+<span class="co">#&gt; <span style="color: #555555;">3</span> DESCRIPTION      file     </span>
+<span class="co">#&gt; <span style="color: #555555;">4</span> NAMESPACE        file     </span>
+<span class="co">#&gt; <span style="color: #555555;">5</span> <span style="color: #0000BB; font-weight: bold;">R</span>                directory</span>
+<span class="co">#&gt; <span style="color: #555555;">6</span> foofactors.Rproj file</span></code></pre>
+</div>
+<div class="rstudio-tip">
+<p>In the file browser, go to <em>More &gt; Show Hidden Files</em> to toggle the visibility of hidden files (a.k.a. <a href="https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments">“dotfiles”</a>). A select few are visible all the time, but sometimes you want to see them all.</p>
+</div>
+<ul>
+<li>
+<code>.Rbuildignore</code> lists files that we need to have around but that should not be included when building the R package from source. More in <a href="package-structure-state.html#rbuildignore">4.3.1</a>.</li>
+<li>
+<code>.Rproj.user</code>, if you have it, is a directory used internally by RStudio.</li>
+<li>
+<code>.gitignore</code> anticipates Git usage and ignores some standard, behind-the-scenes files created by R and RStudio. Even if you do not plan to use Git, this is harmless.</li>
+<li>
+<code>DESCRIPTION</code> provides <a href="description.html#description">metadata about your package</a>. We edit this shortly.</li>
+<li>
+<a href="namespace.html#namespace"><code>NAMESPACE</code></a> declares the functions your package exports for external use and the external functions your package imports from other packages. At this point, it is empty, except for a comment declaring that this is a file we will not edit by hand.</li>
+<li>The <code>R/</code> directory is the <a href="r.html#r">“business end” of your package</a>. It will soon contain <code>.R</code> files with function definitions.</li>
+<li>
+<code>foofactors.Rproj</code> is the file that makes this directory an RStudio Project. Even if you don’t use RStudio, this file is harmless. Or you can suppress its creation with <code>create_package(..., rstudio = FALSE)</code>. More in <a href="workflows101.html#projects">5.2</a>.</li>
+</ul>
+</div>
+<div id="use_git" class="section level2">
+<h2>
+<span class="header-section-number">2.5</span> <code>use_git()</code><a class="anchor" aria-label="anchor" href="#use_git"><i class="fas fa-link"></i></a>
+</h2>
+<div class="tip">
+<p>The use of Git or another version control system is optional, but a recommended practice in the long-term. We explain its importance in <a href="git.html#git">18</a>.</p>
+</div>
+<p>The foofactors directory is an R source package and an RStudio Project. Now we make it also a Git repository, with <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_git.html">use_git</a></span><span class="op">(</span><span class="op">)</span>  
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Initialising Git repo</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'.Rhistory'</span>, <span style="color: #0000BB;">'.Rdata'</span>, <span style="color: #0000BB;">'.httr-oauth'</span>, <span style="color: #0000BB;">'.DS_Store'</span> to <span style="color: #0000BB;">'.gitignore'</span></span></code></pre></div>
+<p>In an interactive session, you will be asked if you want to commit some files here and you should probably accept the offer. Behind the scenes, we’ll cause the same to happen for us.</p>
+<p>What’s new? Only the creation of a <code>.git</code> directory, which is hidden in most contexts, including the RStudio file browser. Its existence is evidence that we have indeed initialized a Git repo here.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="http://fs.r-lib.org/reference/dir_ls.html">dir_info</a></span><span class="op">(</span>all <span class="op">=</span> <span class="cn">TRUE</span>, regexp <span class="op">=</span> <span class="st">"^[.]git$"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">path</span>, <span class="va">type</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #555555;"># A tibble: 1 × 2</span></span>
+<span class="co">#&gt;   path       type     </span>
+<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;fs::path&gt;</span> <span style="color: #555555; font-style: italic;">&lt;fct&gt;</span>    </span>
+<span class="co">#&gt; <span style="color: #555555;">1</span> <span style="color: #0000BB; background-color: #00BB00;">.git</span>       directory</span></code></pre></div>
+<p>If you’re using RStudio, it probably requested permission to relaunch itself in this Project. You can do so manually by quitting and relaunching by double clicking on <code>foofactors.Rproj</code>. Now, in addition to package development support, you have access to a basic Git client in the <em>Git</em> tab of the <em>Environment/History/Build</em> pane.</p>
+<p><em>TODO: good place for a screenshot.</em></p>
+<p>Click on History (the clock icon) and, if you consented, you will see an initial commit made via <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>:</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#&gt; <span style="color: #555555;"># A tibble: 1 × 3</span></span>
+<span class="co">#&gt;   commit                                   author         message   </span>
+<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;chr&gt;</span>                                    <span style="color: #555555; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #555555; font-style: italic;">&lt;chr&gt;</span>     </span>
+<span class="co">#&gt; <span style="color: #555555;">1</span> 6c44ab55fafff0b30980790f7f2fa99e8024d610 Whole Game &lt;w… <span style="color: #555555;">"</span>Initial …</span></code></pre>
+</div>
+<div class="rstudio-tip">
+<p>RStudio can initialize a Git repository, in any Project, even if it’s not an R package, as long you’ve set up RStudio + Git integration. Do <em>Tools &gt; Version Control &gt; Project Setup</em>. Then choose <em>Version control system: Git</em> and <em>initialize a new git repository for this project</em>.</p>
+</div>
+</div>
+<div id="write-the-first-function" class="section level2">
+<h2>
+<span class="header-section-number">2.6</span> Write the first function<a class="anchor" aria-label="anchor" href="#write-the-first-function"><i class="fas fa-link"></i></a>
+</h2>
+<p>It is not too hard to find a puzzling operation involving factors. Let’s see what happens when we catenate two factors.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="op">(</span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"character"</span>, <span class="st">"hits"</span>, <span class="st">"your"</span>, <span class="st">"eyeballs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; [1] character hits      your      eyeballs </span>
+<span class="co">#&gt; Levels: character eyeballs hits your</span>
+<span class="op">(</span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"but"</span>, <span class="st">"integer"</span>, <span class="st">"where it"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; [1] but      integer  where it counts  </span>
+<span class="co">#&gt; Levels: but counts integer where it</span>
+<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
+<span class="co">#&gt; [7] where it  counts   </span>
+<span class="co">#&gt; 8 Levels: character eyeballs hits your but counts ... where it</span></code></pre></div>
+<p>NOTE: As of R 4.1.0 (released 2021-05-18), “using <code><a href="https://rdrr.io/r/base/c.html">c()</a></code> to combine a factor with other factors now gives a factor”, instead of an integer vector.
+Hallelujah!
+Here’s what <code>c(a, b)</code> looked like in R until May 2021, i.e. in R &lt; 4.1.0:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] 1 3 4 2 1 3 4 2</span></code></pre></div>
+<p>NOTE continued: What puzzling thing about R should be the basis of a new toy package example? Who knows, featuring it here might help get it fixed in base R itself! You can record your ideas in this GitHub issue: <a href="https://github.com/hadley/r-pkgs/issues/709" class="uri">https://github.com/hadley/r-pkgs/issues/709</a>.</p>
+<p>Huh? Many people do not expect the result of catenating two factors to be an integer vector consisting of the numbers 1, 2, 3, and 4. What if we coerce each factor to character, catenate, then re-convert to factor?</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
+<span class="co">#&gt; [7] where it  counts   </span>
+<span class="co">#&gt; 8 Levels: but character counts eyeballs hits integer ... your</span></code></pre></div>
+<p>That seems to produce a result that makes more sense. Let’s drop that logic into the body of a function called <code>fbind()</code>:</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fbind</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="op">}</span></code></pre>
+</div>
+<p>This book does not teach you how to write functions in R. To learn more about that take a look at the <a href="https://r4ds.had.co.nz/functions.html">Functions chapter</a> of R for Data Science and the <a href="https://adv-r.hadley.nz/functions.html">Functions chapter</a> of Advanced R.</p>
+</div>
+<div id="use_r" class="section level2">
+<h2>
+<span class="header-section-number">2.7</span> <code>use_r()</code><a class="anchor" aria-label="anchor" href="#use_r"><i class="fas fa-link"></i></a>
+</h2>
+<p>Where shall we define <code>fbind()</code>? Save it in a <code>.R</code> file, in the <code>R/</code> subdirectory of your package. A reasonable starting position is to make a new <code>.R</code> file for each function in your package and name the file after the function. As you add more functions, you’ll want to relax this and begin to group related functions together. We’ll save the definition of <code>fbind()</code> in the file <code>R/fbind.R</code>.</p>
+<p>The helper <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> creates and/or opens a script below <code>R/</code>. It really shines in a more mature package, when navigating between <code>.R</code> files and the associated tests. But, even here, it’s useful to keep yourself from getting too carried away while working in <code>Untitled4</code>.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_r</a></span><span class="op">(</span><span class="st">"fbind"</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Edit <span style="color: #0000BB;">'R/fbind.R'</span></span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Call <span style="color: #555555;">`use_test()`</span> to create a matching test file</span></code></pre></div>
+<p>Put the definition of <code>fbind()</code> <strong>and only the definition of <code>fbind()</code></strong> in <code>R/fbind.R</code> and save it. The file <code>R/fbind.R</code> should NOT contain any of the other top-level code we have recently executed, such as the definitions of factors <code>a</code> and <code>b</code>, <code><a href="https://devtools.r-lib.org/">library(devtools)</a></code> or <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>. This foreshadows an adjustment you’ll need to make as you transition from writing R scripts to R packages. Packages and scripts use different mechanisms to declare their dependency on other packages and to store example or test code. We explore this further in chapter <a href="r.html#r">7</a>.</p>
+</div>
+<div id="whole-game-load-all" class="section level2">
+<h2>
+<span class="header-section-number">2.8</span> <code>load_all()</code><a class="anchor" aria-label="anchor" href="#whole-game-load-all"><i class="fas fa-link"></i></a>
+</h2>
+<p>How do we test drive <code>fbind()</code>? If this were a regular R script, we might use RStudio to send the function definition to the R Console and define <code>fbind()</code> in the global workspace. Or maybe we’d call <code>source("R/fbind.R")</code>. For package development, however, devtools offers a more robust approach. See section <a href="workflows101.html#load-all">5.4</a> for more.</p>
+<p>Call <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> to make <code>fbind()</code> available for experimentation.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span></code></pre></div>
+<p>Now call <code>fbind(a, b)</code> to see how it works.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">fbind</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
+<span class="co">#&gt; [7] where it  counts   </span>
+<span class="co">#&gt; 8 Levels: but character counts eyeballs hits integer ... your</span></code></pre></div>
+<p>Note that <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> has made the <code>fbind()</code> function available, although it does not exist in the global workspace.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"fbind"</span>, where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">globalenv</a></span><span class="op">(</span><span class="op">)</span>, inherits <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="co">#&gt; [1] FALSE</span></code></pre></div>
+<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> simulates the process of building, installing, and attaching the foofactors package. As your package accumulates more functions, some exported, some not, some of which call each other, some of which call functions from packages you depend on, <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> gives you a much more accurate sense of how the package is developing than test driving functions defined in the global workspace. Also <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> allows much faster iteration than actually building, installing, and attaching the package.</p>
+<p>Review so far:</p>
+<ul>
+<li>We wrote our first function, <code>fbind()</code>, to catenate two factors.</li>
+<li>We used <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> to quickly make this function available for interactive use, as if we’d built and installed foofactors and attached it via <code><a href="https://rdrr.io/r/base/library.html">library(foofactors)</a></code>.</li>
+</ul>
+<div class="rstudio-tip">
+<p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>More &gt; Load All</em>, and in keyboard shortcuts Ctrl + Shift + L (Windows &amp; Linux) or Cmd + Shift + L (macOS).</p>
+</div>
+<div id="commit-fbind" class="section level3">
+<h3>
+<span class="header-section-number">2.8.1</span> Commit <code>fbind()</code><a class="anchor" aria-label="anchor" href="#commit-fbind"><i class="fas fa-link"></i></a>
+</h3>
+<p>If you’re using Git, use your preferred method to commit the new <code>R/fbind.R</code> file. We do so behind the scenes here and here’s the associated diff.</p>
+<pre><code>#&gt; diff --git a/R/fbind.R b/R/fbind.R
+#&gt; new file mode 100644
+#&gt; index 0000000..7b03d75
+#&gt; --- /dev/null
+#&gt; +++ b/R/fbind.R
+#&gt; @@ -0,0 +1,3 @@
+#&gt; +fbind &lt;- function(a, b) {
+#&gt; +  factor(c(as.character(a), as.character(b)))
+#&gt; +}</code></pre>
+<p>From this point on, we commit after each step. Remember <a href="https://github.com/jennybc/foofactors/commits/master">these commits</a> are available in the public repository.</p>
+</div>
+</div>
+<div id="check" class="section level2">
+<h2>
+<span class="header-section-number">2.9</span> <code>check()</code><a class="anchor" aria-label="anchor" href="#check"><i class="fas fa-link"></i></a>
+</h2>
+<p>We have empirical evidence that <code>fbind()</code> works. But how can we be sure that all the moving parts of the foofactors package still work? This may seem silly to check, after such a small addition, but it’s good to establish the habit of checking this often.</p>
+<p><code>R CMD check</code>, executed in the shell, is the gold standard for checking that an R package is in full working order. <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> is a convenient way to run this without leaving your R session.</p>
+<p>Note that <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> produces rather voluminous output, optimized for interactive consumption. We intercept that here and just reveal a summary. Your local <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> output will be different.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BBBB;">── R CMD check results ────────────────── foofactors 0.0.0.9000 ────</span></span>
+<span class="co">#&gt; Duration: 22.4s</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; <span style="color: #BB00BB;">❯ checking DESCRIPTION meta-information ... WARNING</span></span>
+<span class="co">#&gt;   Non-standard license specification:</span>
+<span class="co">#&gt;     `use_mit_license()`, `use_gpl3_license()` or friends to pick a</span>
+<span class="co">#&gt;     license</span>
+<span class="co">#&gt;   Standardizable: FALSE</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; <span style="color: #00BB00;">0 errors ✔</span> | <span style="color: #BB0000;">1 warning ✖</span> | <span style="color: #00BB00;">0 notes ✔</span></span></code></pre>
+</div>
+<p><strong>Read the output of the check!</strong> Deal with problems early and often. It’s just like incremental development of <code>.R</code> and <code>.Rmd</code> files. The longer you go between full checks that everything works, the harder it becomes to pinpoint and solve your problems.</p>
+<p>At this point, we expect 1 warning (and 0 errors, 0 notes):</p>
+<ul>
+<li><code>Non-standard license specification</code></li>
+</ul>
+<p>We’ll address that soon.</p>
+<div class="rstudio-tip">
+<p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>Check</em>, and in keyboard shortcuts Ctrl + Shift + E (Windows &amp; Linux) or Cmd + Shift + E (macOS).</p>
+</div>
+</div>
+<div id="edit-description" class="section level2">
+<h2>
+<span class="header-section-number">2.10</span> Edit <code>DESCRIPTION</code><a class="anchor" aria-label="anchor" href="#edit-description"><i class="fas fa-link"></i></a>
+</h2>
+<p>Before we tackle the warning about the license, let’s work on the boilerplate content in <code>DESCRIPTION</code>. The <code>DESCRIPTION</code> file provides metadata about your package and is covered fully in chapter <a href="description.html#description">8</a>.</p>
+<p>Make these edits:</p>
+<ul>
+<li>Make yourself the author.</li>
+<li>Write some descriptive text in the <code>Title</code> and <code>Description</code> fields.</li>
+</ul>
+<div class="rstudio-tip">
+<p>Use Ctrl + <code>.</code> in RStudio and start typing “DESCRIPTION” to activate a helper that makes it easy to open a file for editing. In addition to a filename, your hint can be a function name. This is very handy once a package has lots of functions and files below <code>R/</code>.</p>
+</div>
+<p>When you’re done, <code>DESCRIPTION</code> should look similar to this:</p>
+<pre><code>Package: foofactors
+Title: Make Factors Less Aggravating
+Version: 0.0.0.9000
+Authors@R:
+    person("Jane", "Doe", email = "jane@example.com", role = c("aut", "cre"))
+Description: Factors have driven people to extreme measures, like ordering
+    custom conference ribbons and laptop stickers to express how HELLNO we
+    feel about stringsAsFactors. And yet, sometimes you need them. Can they
+    be made less maddening? Let's find out.
+License: What license it uses
+Encoding: UTF-8
+LazyData: true</code></pre>
+</div>
+<div id="use_mit_license" class="section level2">
+<h2>
+<span class="header-section-number">2.11</span> <code>use_mit_license()</code><a class="anchor" aria-label="anchor" href="#use_mit_license"><i class="fas fa-link"></i></a>
+</h2>
+<blockquote>
+<p><a href="https://blog.codinghorror.com/pick-a-license-any-license/">Pick a License, Any License. – Jeff Atwood</a></p>
+</blockquote>
+<p>For foofactors, we use the MIT license. This requires specification in <code>DESCRIPTION</code> and an additional file called <code>LICENSE</code>, naming the copyright holder and year. We’ll use the helper <code><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license()</a></code>. Substitute your name here.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license</a></span><span class="op">(</span><span class="st">"Jane Doe"</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting <span style="color: #00BB00;">License</span> field in DESCRIPTION to <span style="color: #0000BB;">'MIT + file LICENSE'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'LICENSE'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'LICENSE.md'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^LICENSE\\.md$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span></code></pre></div>
+<p>Open the newly created <code>LICENSE</code> file and confirm it has the current year and your name.</p>
+<pre><code>YEAR: 2021
+COPYRIGHT HOLDER: Jane Doe</code></pre>
+<p>Like other license helpers, <code><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license()</a></code> also puts a copy of the full license in <code>LICENSE.md</code> and adds this file to <code>.Rbuildignore</code>. It’s considered a best practice to include a full license in your package’s source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.</p>
+</div>
+<div id="whole-game-document" class="section level2">
+<h2>
+<span class="header-section-number">2.12</span> <code>document()</code><a class="anchor" aria-label="anchor" href="#whole-game-document"><i class="fas fa-link"></i></a>
+</h2>
+<p>Wouldn’t it be nice to get help on <code>fbind()</code>, just like we do with other R functions? This requires that your package have a special R documentation file, <code>man/fbind.Rd</code>, written in an R-specific markup language that is sort of like LaTeX. Luckily we don’t necessarily have to author that directly.</p>
+<p>We write a specially formatted comment right above <code>fbind()</code>, in its source file, and then let a package called <a href="https://roxygen2.r-lib.org">roxygen2</a> handle the creation of <code>man/fbind.Rd</code>. The motivation and mechanics of roxygen2 are covered in chapter <a href="man.html#man">10</a>.</p>
+<p>If you use RStudio, open <code>R/fbind.R</code> in the source editor and put the cursor somewhere in the <code>fbind()</code> function definition. Now do <em>Code &gt; Insert roxygen skeleton</em>. A very special comment should appear above your function, in which each line begins with <code>#'</code>. RStudio only inserts a barebones template, so you will need to edit it to look something like that below.</p>
+<p>If you don’t use RStudio, create the comment yourself. Regardless, you should modify it to look something like this:</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#' Bind two factors</span>
+<span class="co">#'</span>
+<span class="co">#' Create a new factor from two existing factors, where the new factor's levels</span>
+<span class="co">#' are the union of the levels of the input factors.</span>
+<span class="co">#'</span>
+<span class="co">#' @param a factor</span>
+<span class="co">#' @param b factor</span>
+<span class="co">#'</span>
+<span class="co">#' @return factor</span>
+<span class="co">#' @export</span>
+<span class="co">#' @examples</span>
+<span class="co">#' fbind(iris$Species[c(1, 51, 101)], PlantGrowth$group[c(1, 11, 21)])</span></code></pre>
+</div>
+<p><em>TODO: mention how RStudio helps you execute examples here?</em></p>
+<p>But we’re not done yet! We still need to trigger the conversion of this new roxygen comment into <code>man/fbind.Rd</code> with <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code>:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/document.html">document</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Updating <span style="color: #0000BB;">foofactors</span> documentation</span>
+<span class="co">#&gt; Updating roxygen version in /tmp/RtmpTmvjG1/foofactors/DESCRIPTION</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span>
+<span class="co">#&gt; Writing NAMESPACE</span>
+<span class="co">#&gt; Writing fbind.Rd</span></code></pre></div>
+<div class="rstudio-tip">
+<p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>More &gt; Document</em>, and in keyboard shortcuts Ctrl + Shift + D (Windows &amp; Linux) or Cmd + Shift + D (macOS).</p>
+</div>
+<p>You should now be able to preview your help file like so:</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="op">?</span><span class="va">fbind</span></code></pre></div>
+<p>You’ll see a message like “Rendering development documentation for ‘fbind’”, which reminds that you are basically previewing draft documentation. That is, this documentation is present in your package’s source, but is not yet present in an installed package. In fact, we haven’t installed foofactors yet, but we will soon.</p>
+<p>Note also that your package’s documentation won’t be properly wired up until it has been formally built and installed. This polishes off niceties like the links between help files and the creation of a package index.</p>
+<div id="namespace-changes" class="section level3">
+<h3>
+<span class="header-section-number">2.12.1</span> <code>NAMESPACE</code> changes<a class="anchor" aria-label="anchor" href="#namespace-changes"><i class="fas fa-link"></i></a>
+</h3>
+<p>In addition to converting <code>fbind()</code>’s special comment into <code>man/fbind.Rd</code>, the call to <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> updates the <code>NAMESPACE</code> file, based on <code>@export</code> directives found in roxygen comments. Open <code>NAMESPACE</code> for inspection. The contents should be:</p>
+<pre><code># Generated by roxygen2: do not edit by hand
+
+export(fbind)</code></pre>
+<p>The export directive in <code>NAMESPACE</code> is what makes <code>fbind()</code> available to a user after attaching foofactors via <code><a href="https://rdrr.io/r/base/library.html">library(foofactors)</a></code>. Just as it is entirely possible to author <code>.Rd</code> files “by hand”, you can manage <code>NAMESPACE</code> explicitly yourself. But we choose to delegate this to devtools (and roxygen2).</p>
+</div>
+</div>
+<div id="check-again" class="section level2">
+<h2>
+<span class="header-section-number">2.13</span> <code>check()</code> again<a class="anchor" aria-label="anchor" href="#check-again"><i class="fas fa-link"></i></a>
+</h2>
+<p>foofactors should pass <code>R CMD check</code> cleanly now and forever more: 0 errors, 0 warnings, 0 notes.</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BBBB;">── R CMD check results ────────────────── foofactors 0.0.0.9000 ────</span></span>
+<span class="co">#&gt; Duration: 24s</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; <span style="color: #00BB00;">0 errors ✔</span> | <span style="color: #00BB00;">0 warnings ✔</span> | <span style="color: #00BB00;">0 notes ✔</span></span></code></pre>
+</div>
+</div>
+<div id="install" class="section level2">
+<h2>
+<span class="header-section-number">2.14</span> <code>install()</code><a class="anchor" aria-label="anchor" href="#install"><i class="fas fa-link"></i></a>
+</h2>
+<p>Since we have a minimum viable product now, let’s install the foofactors package into your library via <code><a href="https://devtools.r-lib.org//reference/install.html">install()</a></code>:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code>   checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’
+─  preparing ‘foofactors’:
+   checking DESCRIPTION meta-information ...
+✔  checking DESCRIPTION meta-information
+─  checking for LF line-endings in source and make files and shell scripts
+─  checking for empty or unneeded directories
+   Omitted ‘LazyData’ from DESCRIPTION
+─  building ‘foofactors_0.0.0.9000.tar.gz’
+Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
+  /tmp/RtmpTmvjG1/foofactors_0.0.0.9000.tar.gz --install-tests 
+* installing to library ‘/home/runner/work/_temp/Library’
+* installing *source* package ‘foofactors’ ...
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (foofactors)</code></pre>
+<div class="rstudio-tip">
+<p>RStudio exposes similar functionality in the <em>Build</em> menu and in the <em>Build</em> pane via <em>Install and Restart</em>.</p>
+</div>
+<p>Now we can attach and use foofactors like any other package. Let’s revisit our small example from the top. This is a good time to restart your R session and ensure you have a clean workspace.</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">foofactors</span><span class="op">)</span>
+
+<span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"character"</span>, <span class="st">"hits"</span>, <span class="st">"your"</span>, <span class="st">"eyeballs"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"but"</span>, <span class="st">"integer"</span>, <span class="st">"where it"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">)</span>
+
+<span class="fu">fbind</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
+<span class="co">#&gt; [7] where it  counts   </span>
+<span class="co">#&gt; 8 Levels: but character counts eyeballs hits integer ... your</span></code></pre></div>
+<p>Success!</p>
+</div>
+<div id="use_testthat" class="section level2">
+<h2>
+<span class="header-section-number">2.15</span> <code>use_testthat()</code><a class="anchor" aria-label="anchor" href="#use_testthat"><i class="fas fa-link"></i></a>
+</h2>
+<p>We’ve tested <code>fbind()</code> informally, in a single example. We can formalize and expand this with some unit tests. This means we express a few concrete expectations about the correct <code>fbind()</code> result for various inputs.</p>
+<p>First, we declare our intent to write unit tests and to use the testthat package for this, via <code><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat()</a></code>:</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'testthat'</span> to <span style="color: #00BB00;">Suggests</span> field in DESCRIPTION</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting <span style="color: #00BB00;">Config/testthat/edition</span> field in DESCRIPTION to <span style="color: #0000BB;">'3'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Creating <span style="color: #0000BB;">'tests/testthat/'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'tests/testthat.R'</span></span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Call <span style="color: #555555;">`use_test()`</span> to initialize a basic test file and open it for editing.</span></code></pre></div>
+<p>This initializes the unit testing machinery for your package. It adds <code>Suggests: testthat</code> to <code>DESCRIPTION</code>, creates the directory <code>tests/testthat/</code>, and adds the script <code>tests/testthat.R</code>.</p>
+<p>However, it’s still up to YOU to write the actual tests!</p>
+<p>The helper <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> opens and/or creates a test file. You can provide the file’s basename or, if you are editing the relevant source file in RStudio, it will be automatically generated. Since this book is built non-interactively, we must provide the basename explicitly:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_test</a></span><span class="op">(</span><span class="st">"fbind"</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'tests/testthat/test-fbind.R'</span></span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Edit <span style="color: #0000BB;">'tests/testthat/test-fbind.R'</span></span></code></pre></div>
+<p>This creates the file <code>tests/testthat/test-fbind.R</code>. Put this content in it:</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"fbind() binds factor (or character)"</span>, <span class="op">{</span>
+  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>
+  <span class="va">x_fact</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
+  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span>
+  <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span><span class="op">)</span>
+
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fu">fbind</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, <span class="va">z</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fu">fbind</span><span class="op">(</span><span class="va">x_fact</span>, <span class="va">y</span><span class="op">)</span>, <span class="va">z</span><span class="op">)</span>
+<span class="op">}</span><span class="op">)</span></code></pre>
+</div>
+<p>This tests that <code>fbind()</code> gives an expected result when combining two factors and a character vector and a factor.</p>
+<p>Run this test interactively, as you will when you write your own. Note you’ll have to attach testthat via <code><a href="https://testthat.r-lib.org">library(testthat)</a></code> in your R session first and you’ll probably want to <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>.</p>
+<p>Going forward, your tests will mostly run <em>en masse</em> and at arm’s length via <code><a href="https://devtools.r-lib.org//reference/test.html">test()</a></code>:</p>
+<p><em>TODO: work on the aesthetics of this output. Or maybe testthat 3e will save me the trouble.</em></p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/test.html">test</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<div class="rstudio-tip">
+<p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/test.html">test()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>More &gt; Test package</em>, and in keyboard shortcuts Ctrl + Shift + T (Windows &amp; Linux) or Cmd + Shift + T (macOS).</p>
+</div>
+<p>Your tests are also run whenever you <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> the package. In this way, you basically augment the standard checks with some of your own, that are specific to your package. It is a good idea to use the <a href="https://covr.r-lib.org">covr package</a> to track what proportion of your package’s source code is exercised by the tests. More details can be found in chapter <a href="tests.html#tests">12</a>.</p>
+</div>
+<div id="use_package" class="section level2">
+<h2>
+<span class="header-section-number">2.16</span> <code>use_package()</code><a class="anchor" aria-label="anchor" href="#use_package"><i class="fas fa-link"></i></a>
+</h2>
+<p>You will inevitably want to use a function from another package in your own package. Just as we needed to <strong>export</strong> <code>fbind()</code>, we need to <strong>import</strong> functions from the namespace of other packages. If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as “always available”, such as <code><a href="https://rdrr.io/r/stats/median.html">stats::median()</a></code> or <code><a href="https://rdrr.io/r/utils/head.html">utils::head()</a></code>.</p>
+<p>We’re going to add another function to foofactors that produces a sorted frequency table for a factor. We’ll borrow some smarts from the forcats package, specifically the function <code><a href="https://forcats.tidyverse.org/reference/fct_count.html">forcats::fct_count()</a></code>.</p>
+<p>First, declare your general intent to use some functions from the forcats namespace with <code><a href="https://usethis.r-lib.org/reference/use_package.html">use_package()</a></code>:</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"forcats"</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'forcats'</span> to <span style="color: #00BB00;">Imports</span> field in DESCRIPTION</span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Refer to functions with <span style="color: #555555;">`forcats::fun()`</span></span></code></pre></div>
+<p>This adds the forcats package to the “Imports” section of <code>DESCRIPTION</code>. And that is all.</p>
+<p>Now we add a second function to foofactors: imagine we want a frequency table for a factor, as a regular data frame with nice variable names, versus as an object of class <code>table</code> or something with odd names. Let’s also sort the rows so that the most prevalent level is at the top.</p>
+<p>Initiate a new <code>.R</code> file below <code>R/</code> with <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code>:</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_r</a></span><span class="op">(</span><span class="st">"fcount"</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Edit <span style="color: #0000BB;">'R/fcount.R'</span></span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Call <span style="color: #555555;">`use_test()`</span> to create a matching test file</span></code></pre></div>
+<p>Put this content in the file <code>R/fcount.R</code>:</p>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#' Make a sorted frequency table for a factor</span>
+<span class="co">#'</span>
+<span class="co">#' @param x factor</span>
+<span class="co">#'</span>
+<span class="co">#' @return A tibble</span>
+<span class="co">#' @export</span>
+<span class="co">#' @examples</span>
+<span class="co">#' fcount(iris$Species)</span>
+<span class="va">fcount</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
+  <span class="fu">forcats</span><span class="fu">::</span><span class="fu"><a href="https://forcats.tidyverse.org/reference/fct_count.html">fct_count</a></span><span class="op">(</span><span class="va">x</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="op">}</span></code></pre>
+</div>
+<p>Notice how we preface the call to a forcats functions with <code>forcats::</code>. This specifies that we want to call the <code><a href="https://forcats.tidyverse.org/reference/fct_count.html">fct_count()</a></code> function from the forcats namespace. There is more than one way to call functions in other packages and the one we espouse here is explained fully in chapter <a href="namespace.html#namespace">13</a>.</p>
+<p>Try out the new <code>fcount()</code> function by simulating package installation via <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>:</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span>
+<span class="fu">fcount</span><span class="op">(</span><span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #555555;"># A tibble: 3 × 2</span></span>
+<span class="co">#&gt;   f              n</span>
+<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;fct&gt;</span>      <span style="color: #555555; font-style: italic;">&lt;int&gt;</span></span>
+<span class="co">#&gt; <span style="color: #555555;">1</span> setosa        50</span>
+<span class="co">#&gt; <span style="color: #555555;">2</span> versicolor    50</span>
+<span class="co">#&gt; <span style="color: #555555;">3</span> virginica     50</span></code></pre></div>
+<p>Generate the associated help file via <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code>. This also adds <code>fcount()</code> to the <code>NAMESPACE</code> as an exported function.</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/document.html">document</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Updating <span style="color: #0000BB;">foofactors</span> documentation</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span>
+<span class="co">#&gt; Writing NAMESPACE</span>
+<span class="co">#&gt; Writing NAMESPACE</span>
+<span class="co">#&gt; Writing fcount.Rd</span></code></pre></div>
+</div>
+<div id="use_github" class="section level2">
+<h2>
+<span class="header-section-number">2.17</span> <code>use_github()</code><a class="anchor" aria-label="anchor" href="#use_github"><i class="fas fa-link"></i></a>
+</h2>
+<p>You’ve seen us making commits during the development process for foofactors. You can see an indicative history at <a href="https://github.com/jennybc/foofactors" class="uri">https://github.com/jennybc/foofactors</a>. Our use of version control and the decision to expose the development process means you can inspect the state of the foofactors source at each developmental stage. By looking at so-called diffs, you can see exactly how each devtools helper function modifies the source files that constitute the foofactors package.</p>
+<p>How would you connect your local foofactors package and Git repository to a companion repository on GitHub?</p>
+<ol style="list-style-type: decimal">
+<li>
+<a href="https://usethis.r-lib.org/reference/use_github.html"><code>use_github()</code></a> is a helper that we recommend for the long-term. We won’t demonstrate it here because it requires some nontrivial setup on your end. We also don’t want to tear down and rebuild the public foofactors package every time we build this book.</li>
+<li>Set up the GitHub repo first! It sounds counterintuitive, but the easiest way to get your work onto GitHub is to initiate there, then use RStudio to start working in a synced local copy. This approach is described in Happy Git’s workflows <a href="https://happygitwithr.com/new-github-first.html">New project, GitHub first</a> and <a href="https://happygitwithr.com/existing-github-first.html">Existing project, GitHub first</a>.</li>
+<li>Command line Git can always be used to add a remote repository <em>post hoc</em>. This is described in the Happy Git workflow <a href="https://happygitwithr.com/existing-github-last.html">Existing project, GitHub last</a>.</li>
+</ol>
+<p>Any of these approaches will connect your local foofactors project to a GitHub repo, public or private, which you can push to or pull from using the Git client built into RStudio.</p>
+</div>
+<div id="use_readme_rmd" class="section level2">
+<h2>
+<span class="header-section-number">2.18</span> <code>use_readme_rmd()</code><a class="anchor" aria-label="anchor" href="#use_readme_rmd"><i class="fas fa-link"></i></a>
+</h2>
+<p>Now that your package is on GitHub, the <code>README.md</code> file matters. It is the package’s home page and welcome mat, at least until you decide to give it a website (see <a href="https://pkgdown.r-lib.org">pkgdown</a>), add a vignette (see chapter <a href="vignettes.html#vignettes">11</a>), or submit it to CRAN (see chapter <a href="release.html#release">20</a>).</p>
+<p>The <code><a href="https://usethis.r-lib.org/reference/use_readme_rmd.html">use_readme_rmd()</a></code> function initializes a basic, executable <code>README.Rmd</code> ready for you to edit:</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_readme_rmd.html">use_readme_rmd</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'README.Rmd'</span></span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^README\\.Rmd$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Update <span style="color: #0000BB;">'README.Rmd'</span> to include installation instructions.</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'.git/hooks/pre-commit'</span></span></code></pre></div>
+<p>In addition to creating <code>README.Rmd</code>, this adds some lines to <code>.Rbuildignore</code>, and creates a Git pre-commit hook to help you keep <code>README.Rmd</code> and <code>README.md</code> in sync.</p>
+<p><code>README.Rmd</code> already has sections that:</p>
+<ul>
+<li>Prompt you to describe the purpose of the package.</li>
+<li>Provide code to install your package.</li>
+<li>Prompt you to show a bit of usage.</li>
+</ul>
+<p>How to populate this skeleton? Copy stuff liberally from <code>DESCRIPTION</code> and any formal and informal tests or examples you have. Anything is better than nothing. Otherwise … do you expect people to install your package and comb through individual help files to figure out how to use it? They probably won’t.</p>
+<p>We like to write the <code>README</code> in R Markdown, so it can feature actual usage. The inclusion of live code also makes it less likely that your <code>README</code> grows stale and out-of-sync with your actual package.</p>
+<p>If RStudio has not already done so, open <code>README.Rmd</code> for editing. Make sure it shows some usage of <code>fbind()</code> and/or <code>fcount()</code>, for example.</p>
+<p>The <code>README.Rmd</code> we use is here: <a href="https://raw.githubusercontent.com/jennybc/foofactors/master/README.Rmd">README.Rmd</a> and these are the contents:</p>
+<p><em>TODO: update this link after merge into r-pkgs.</em></p>
+<pre><code>---
+output: github_document
+---
+
+&lt;!-- README.md is generated from README.Rmd. Please edit that file --&gt;
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#&gt;",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+**NOTE: This is a toy package created for expository purposes, for the second edition of [R Packages](https://r-pkgs.org). It is not meant to actually be useful. If you want a package for factor handling, please see [forcats](https://forcats.tidyverse.org).**
+
+# foofactors    
+
+&lt;!-- badges: start --&gt;
+&lt;!-- badges: end --&gt;
+
+Factors are a very useful type of variable in R, but they can also be very aggravating. This package provides some helper functions for the care and feeding of factors.
+
+## Installation
+
+You can install foofactors like so:
+
+``` r
+devtools::install_github("jennybc/foofactors")
+```
+  
+## Quick demo
+
+Binding two factors via `fbind()`:
+
+```{r}
+library(foofactors)
+a &lt;- factor(c("character", "hits", "your", "eyeballs"))
+b &lt;- factor(c("but", "integer", "where it", "counts"))
+```
+
+Simply catenating two factors leads to a result that most don't expect.
+
+```{r}
+c(a, b)
+```
+
+The `fbind()` function glues two factors together and returns factor.
+
+```{r}
+fbind(a, b)
+```
+
+Often we want a table of frequencies for the levels of a factor. The base `table()` function returns an object of class `table`, which can be inconvenient for downstream work.
+
+```{r}
+set.seed(1234)
+x &lt;- factor(sample(letters[1:5], size = 100, replace = TRUE))
+table(x)
+```
+
+The `fcount()` function returns a frequency table as a tibble with a column of factor levels and another of frequencies:
+
+```{r}
+fcount(x)
+```</code></pre>
+<p>Don’t forget to render it to make <code>README.md</code>! The pre-commit hook should remind you if you try to commit <code>README.Rmd</code> but not <code>README.md</code> and also when <code>README.md</code> appears to be out-of-date.</p>
+<p>The very best way to render <code>README.Rmd</code> is with <code><a href="https://devtools.r-lib.org//reference/build_rmd.html">build_readme()</a></code>, because it takes care to render with the the most current version of your package, i.e. it installs a temporary copy from the current source.</p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/build_rmd.html">build_readme</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Installing <span style="color: #0000BB;">foofactors</span> in temporary library</span>
+<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Building <span style="color: #0000BB;">/tmp/RtmpTmvjG1/foofactors/README.Rmd</span></span></code></pre></div>
+<p>You can see the rendered <code>README.md</code> simply by <a href="https://github.com/jennybc/foofactors#readme">visiting foofactors on GitHub</a>.</p>
+<p>Finally, don’t forget to do one last commit. And push, if you’re using GitHub.</p>
+</div>
+<div id="the-end-check-and-install" class="section level2">
+<h2>
+<span class="header-section-number">2.19</span> The end: <code>check()</code> and <code>install()</code><a class="anchor" aria-label="anchor" href="#the-end-check-and-install"><i class="fas fa-link"></i></a>
+</h2>
+<p>Let’s run <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> again to make sure all is still well.</p>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<div class="downlit">
+<pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BBBB;">── R CMD check results ────────────────── foofactors 0.0.0.9000 ────</span></span>
+<span class="co">#&gt; Duration: 25.5s</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; <span style="color: #00BB00;">0 errors ✔</span> | <span style="color: #00BB00;">0 warnings ✔</span> | <span style="color: #00BB00;">0 notes ✔</span></span></code></pre>
+</div>
+<p>foofactors should have no errors, warnings or notes. This would be a good time to re-build and install it properly. And celebrate!</p>
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code>   checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’
+─  preparing ‘foofactors’:
+   checking DESCRIPTION meta-information ...
+✔  checking DESCRIPTION meta-information
+─  checking for LF line-endings in source and make files and shell scripts
+─  checking for empty or unneeded directories
+   Removed empty directory ‘foofactors/tests/testthat/_snaps’
+   Omitted ‘LazyData’ from DESCRIPTION
+─  building ‘foofactors_0.0.0.9000.tar.gz’
+Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
+  /tmp/RtmpTmvjG1/foofactors_0.0.0.9000.tar.gz --install-tests 
+* installing to library ‘/home/runner/work/_temp/Library’
+* installing *source* package ‘foofactors’ ...
+** using staged installation
+** R
+** tests
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (foofactors)</code></pre>
+<p>Feel free to visit the <a href="https://github.com/jennybc/foofactors">foofactors package</a> on GitHub, which is exactly as developed here. The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved. The rest of this book goes in greater detail for each step you’ve seen here and much more.</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="intro.html"><span class="header-section-number">1</span> Introduction</a></div>
+<div class="next"><a href="setup.html"><span class="header-section-number">3</span> System setup</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#whole-game"><span class="header-section-number">2</span> The whole game</a></li>
+<li><a class="nav-link" href="#load-devtools-and-friends"><span class="header-section-number">2.1</span> Load devtools and friends</a></li>
+<li><a class="nav-link" href="#toy-package-foofactors"><span class="header-section-number">2.2</span> Toy package: foofactors</a></li>
+<li><a class="nav-link" href="#peek-at-the-finished-product"><span class="header-section-number">2.3</span> Peek at the finished product</a></li>
+<li><a class="nav-link" href="#create_package"><span class="header-section-number">2.4</span> create_package()</a></li>
+<li><a class="nav-link" href="#use_git"><span class="header-section-number">2.5</span> use_git()</a></li>
+<li><a class="nav-link" href="#write-the-first-function"><span class="header-section-number">2.6</span> Write the first function</a></li>
+<li><a class="nav-link" href="#use_r"><span class="header-section-number">2.7</span> use_r()</a></li>
+<li>
+<a class="nav-link" href="#whole-game-load-all"><span class="header-section-number">2.8</span> load_all()</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#commit-fbind"><span class="header-section-number">2.8.1</span> Commit fbind()</a></li></ul>
+</li>
+<li><a class="nav-link" href="#check"><span class="header-section-number">2.9</span> check()</a></li>
+<li><a class="nav-link" href="#edit-description"><span class="header-section-number">2.10</span> Edit DESCRIPTION</a></li>
+<li><a class="nav-link" href="#use_mit_license"><span class="header-section-number">2.11</span> use_mit_license()</a></li>
+<li>
+<a class="nav-link" href="#whole-game-document"><span class="header-section-number">2.12</span> document()</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#namespace-changes"><span class="header-section-number">2.12.1</span> NAMESPACE changes</a></li></ul>
+</li>
+<li><a class="nav-link" href="#check-again"><span class="header-section-number">2.13</span> check() again</a></li>
+<li><a class="nav-link" href="#install"><span class="header-section-number">2.14</span> install()</a></li>
+<li><a class="nav-link" href="#use_testthat"><span class="header-section-number">2.15</span> use_testthat()</a></li>
+<li><a class="nav-link" href="#use_package"><span class="header-section-number">2.16</span> use_package()</a></li>
+<li><a class="nav-link" href="#use_github"><span class="header-section-number">2.17</span> use_github()</a></li>
+<li><a class="nav-link" href="#use_readme_rmd"><span class="header-section-number">2.18</span> use_readme_rmd()</a></li>
+<li><a class="nav-link" href="#the-end-check-and-install"><span class="header-section-number">2.19</span> The end: check() and install()</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/hadley/r-pkgs/blob/main/Whole-game.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/hadley/r-pkgs/edit/main/Whole-game.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>R Packages</strong>" was written by Hadley Wickham, Jennifer Bryan. </p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>
