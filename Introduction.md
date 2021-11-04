@@ -185,7 +185,7 @@ library(testthat)
 #>     test_file
 devtools::session_info()
 #> ─ Session info  ──────────────────────────────────────────────────
-#>  hash: pill, flag: British Indian Ocean Territory, woman mechanic: medium skin tone
+#>  hash: construction worker, man factory worker: medium-dark skin tone, flag: New Zealand
 #> 
 #>  setting  value
 #>  version  R version 4.1.2 (2021-11-01)
@@ -196,7 +196,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-11-03
+#>  date     2021-11-04
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
@@ -248,7 +248,7 @@ devtools::session_info()
 #>  utf8          1.2.2   2021-07-24 [1] Custom
 #>  vctrs         0.3.8   2021-04-29 [1] Custom
 #>  withr         2.4.2   2021-04-18 [1] Custom
-#>  xfun          0.27    2021-10-18 [1] Custom
+#>  xfun          0.28    2021-11-04 [1] CRAN (R 4.1.2)
 #>  xml2          1.3.2   2020-04-23 [1] Custom
 #>  yaml          2.2.1   2020-02-01 [1] Custom
 #> 
