@@ -94,4 +94,3 @@ pretty_install <- function(...) {
   output <- grep("^(\\s*|[-|])$", output, value = TRUE, invert = TRUE)
   c(output, out$messages)
 }
-

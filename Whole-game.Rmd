@@ -1,9 +1,10 @@
 # The whole game {#whole-game}
 
-```{r, include = FALSE}
-options(crayon.enabled = TRUE)
+```{r, include = FALSE, R.options = list(tidyverse.quiet = TRUE)}
 source("common.R")
-library(devtools)
+library(glue)
+library(fs)
+library(tidyverse)
 
 # Whenever any chunk changes, we want to re-run _every_ chunk
 rmd <- parsermd::parse_rmd("Whole-game.Rmd")
@@ -14,35 +15,40 @@ knitr::opts_chunk$set(
 )
 
 # By default, knitr saves loaded packages and reloads at the start of the
-# the new session. This doesn't work for foofactors because the package is
-# deleted at the end of the doc. So we just hack knitr to not save or load
+# the new session. This doesn't work for our toy package because it is
+# deleted at the end of this Rmd. So we just hack knitr to not save or load
 # the package info
 assignInNamespace(
   "cache", ns = "knitr",
   modifyList(knitr:::cache, list(library = function(...) {}))
 )
 
-## do you want to see how this sausage is made?
+# do you want to see how this sausage is made?
 debug <- FALSE
 
-## do we build the toy package? if so, where?
-## * NA            --> no, don't build it
-## * "tmp_user"    --> build in ~/tmp/foofactors, so it's easy to access after
-## * "tmp_session" --> build in session temp dir, it's disposable
+# do we build the toy package? if so, where?
+# NA            --> no, don't build it
+# "tmp_user"    --> build in ~/tmp/TOYPACKAGE, so it's easy to access after
+# "tmp_session" --> build in session temp dir, it's disposable
 where <- "tmp_session"
 ```
 
 *Spoiler alert!*
 
-This chapter runs through the development of a small toy package. It's meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.
+This chapter runs through the development of a small toy package.
+It's meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.
 
-To keep the pace brisk, we exploit the modern conveniences in the devtools package and the RStudio IDE. In later chapters, we are more explicit about what those helpers are doing for us.
+To keep the pace brisk, we exploit the modern conveniences in the devtools package and the RStudio IDE.
+In later chapters, we are more explicit about what those helpers are doing for us.
 
 ## Load devtools and friends
 
-You can initiate your new package from any active R session. You don't need to worry about whether you're in an existing or new project or not. The functions we use take care of this.
+You can initiate your new package from any active R session.
+You don't need to worry about whether you're in an existing or new project or not.
+The functions we use take care of this.
 
 Load the devtools package, which is the public face of a set of packages that support various aspects of package development.
+The most obvious of these is the usethis package, which you'll see is also being loaded.
 
 ```{r}
 library(devtools)
@@ -54,51 +60,61 @@ Do you have an old version of devtools? Compare your version against ours and up
 packageVersion("devtools")
 ```
 
-For presentation purposes only, we use [fs](https://fs.r-lib.org), for filesystem work, and the [tidyverse](https://tidyverse.tidyverse.org), for light data wrangling.
-
-```{r, R.options = list(tidyverse.quiet = TRUE)}
-library(tidyverse)
-library(fs)
-```
-
-## Toy package: foofactors
+## Toy package: regexcite
 
 We use various functions from devtools to build a small toy package from scratch, with features commonly seen in released packages:
 
-  * Functions to address a specific need, such as helpers to work with factors.
-  * Access to established workflows for installation, getting help, and checking
-    basic quality.
-  * Version control and an open development process.
-    - This is completely optional in your work, but recommended. You'll see how
-      Git and GitHub helps us expose all the intermediate stages of our package.
-  * Documentation for individual functions via
-    [roxygen2](https://CRAN.R-project.org/package=roxygen2).
-  * Unit testing with [testthat](https://testthat.r-lib.org).
-  * Documentation for the package as a whole via an executable `README.Rmd`.
+* Functions to address a specific need, in this case helpers for work with regular expressions.
+* Version control and an open development process.
+  - This is completely optional in your work, but highly recommended.
+    You'll see how Git and GitHub help us expose all the intermediate stages of
+    our toy package.
+* Access to established workflows for installation, getting help, and checking quality.
+  - Documentation for individual functions via [roxygen2](https://CRAN.R-project.org/package=roxygen2).
+  - Unit testing with [testthat](https://testthat.r-lib.org).
+  - Documentation for the package as a whole via an executable `README.Rmd`.
 
-We call the package __foofactors__ and it will have a couple functions for handling factors. Please note that these functions are super simple and definitely not the point! For a proper package for factor handling, please see [forcats](https://forcats.tidyverse.org).
+We call the package **regexcite** and it will have a couple functions that make common tasks with regular expressions easier.
+Please note that these functions are super simple and definitely not the point! For real work, there are several proper R packages that address this problem space:
 
-The foofactors package itself is not our goal here. It is a device for demonstrating a typical workflow for package development with devtools.
+* [stringr](https://stringr.tidyverse.org) (which uses stringi)
+* [stringi](https://stringi.gagolewski.com/)
+* [rex](https://cran.r-project.org/package=rex)
+* [rematch2](https://cran.r-project.org/package=rematch2)
+
+The regexcite package itself is not our goal here.
+It is a device for demonstrating a typical workflow for package development with devtools.
 
 ## Peek at the finished product
 
-The foofactors package is tracked during its development with the Git version control system. This is purely optional and you can certainly follow along without implementing this. A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting foofactors on GitHub: <https://github.com/jennybc/foofactors>. By inspecting the [commit history](https://github.com/jennybc/foofactors/commits/master) and especially the diffs, you can see exactly what changes at each step of the process laid out below.
+The regexcite package is tracked during its development with the Git version control system.
+This is purely optional and you can certainly follow along without implementing this.
+A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting regexcite on GitHub: <https://github.com/jennybc/regexcite>.
+By inspecting the [commit history](https://github.com/jennybc/regexcite/commits/main) and especially the diffs, you can see exactly what changes at each step of the process laid out below.
 
-*TODO: I think these diffs are extremely useful and would like to surface them better here.*
+<!-- TODO: I think these diffs are extremely useful and would like to surface them better here. -->
 
 ## `create_package()`
 
-Call `create_package()` to initialize a new package in a directory on your computer (and create the directory, if necessary). See section \@ref(creating) for more.
+Call `create_package()` to initialize a new package in a directory on your computer (and create the directory, if necessary).
+See section \@ref(creating) for more.
 
-Make a deliberate choice about where to create this package on your computer. It should probably be somewhere within your home directory, alongside your other R projects. It should not be nested inside another RStudio Project, R package, or Git repo. Nor should it be in an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don't try to do devtools' job for it! See \@ref(where-source-package) for more.
+Make a deliberate choice about where to create this package on your computer.
+It should probably be somewhere within your home directory, alongside your other R projects.
+It should not be nested inside another RStudio Project, R package, or Git repo.
+Nor should it be in an R package library, which holds packages that have already been built and installed.
+The conversion of the source package we create here into an installed package is part of what devtools facilitates.
+Don't try to do devtools' job for it!
+See \@ref(where-source-package) for more.
 
 Substitute your chosen path into a `create_package()` call like this:
 
 ```{r create-package-fake, eval = FALSE}
-create_package("~/path/to/foofactors")
+create_package("~/path/to/regexcite")
 ```
 
-We have to work in a temp directory, because this book is built non-interactively, in the cloud. Behind the scenes, we're executing our own `create_package()` command, but don't be surprised if our output differs a bit from yours.
+We have to work in a temp directory, because this book is built non-interactively, in the cloud.
+Behind the scenes, we're executing our own `create_package()` command, but don't be surprised if our output differs a bit from yours.
 
 ```{r configure, include = FALSE}
 where <- match.arg(
@@ -109,260 +125,329 @@ create <- !is.na(where)
 
 where <- switch(
   where,
-  tmp_user = fs::path_home("tmp"),
-  tmp_session = fs::path_temp(),
+  tmp_user = path_home("tmp"),
+  tmp_session = path_temp(),
   NULL
 )
 
-foopath <- path(where, "foofactors")
+pkgpath <- path(where, "regexcite")
 
 if (!is.null(where)) {
-  if (requireNamespace("foofactors", quietly = TRUE)) {
-    remove.packages("foofactors")
-    unloadNamespace("foofactors")
+  if (requireNamespace("regexcite", quietly = TRUE)) {
+    remove.packages("regexcite")
+    unloadNamespace("regexcite")
   }
-  if (fs::dir_exists(foopath)) {
-    fs::dir_delete(foopath)
+  if (dir_exists(pkgpath)) {
+    dir_delete(pkgpath)
   }
-  fs::dir_create(where)
+  dir_create(where)
 }
 ```
 
-:::downlit
-```{r create-package, eval = create, echo = debug, R.options = list(usethis.description = NULL)}
-create_package(foopath, open = FALSE, rstudio = TRUE)
-proj_set(foopath)
+```{r create-package, eval = create, echo = debug}
+withr::with_options(
+  list(usethis.description = NULL),
+  create_package(pkgpath, open = FALSE, rstudio = TRUE)
+)
 ```
-:::
 
 ```{r set-proj-and-wd, include = debug, eval = create}
-# being kind someone working interactively and locally
 (owd <- getwd())
-if (is.null(getOption("knitr.in.progress"))) {
-  setwd(foopath)
-}
+local_project(pkgpath, setwd = TRUE)
 getwd()
 
-## I normally am not this masochistic, but there is little choice
-knitr::opts_knit$set(root.dir = foopath)
+# I normally am not this masochistic, but there is little choice
+knitr::opts_knit$set(root.dir = pkgpath)
 ```
 
 ```{r sitrep, include = debug, eval = create}
-## can't be in chunk above, because knitr
+# can't be in chunk above, because knitr
 proj_sitrep()
 ```
 
-If you're working in RStudio, you should find yourself in a new instance of RStudio, opened into your new foofactors package (and Project). If you somehow need to do this manually, navigate to the directory and double click on `foofactors.Rproj`. RStudio has special handling for packages and you should now see a *Build* tab in the same pane as *Environment* and *History*.
+If you're working in RStudio, you should find yourself in a new instance of RStudio, opened into your new regexcite package (and Project).
+If you somehow need to do this manually, navigate to the directory and double click on `regexcite.Rproj`.
+RStudio has special handling for packages and you should now see a *Build* tab in the same pane as *Environment* and *History*.
 
-*TODO: good place for a screenshot.*
+<!-- TODO: good place for a screenshot. -->
 
-What's in this new directory that is also an R package and, probably, an RStudio Project? Here's a listing (locally, you can consult your *Files* pane):
+What's in this new directory that is also an R package and, probably, an RStudio Project?
+Here's a listing (locally, you can consult your *Files* pane):
 
-:::downlit
 ```{r init-show-files, echo = FALSE, eval = create}
 dir_info(all = TRUE) %>% 
   select(path, type)
 ```
-:::
 
 :::rstudio-tip
-In the file browser, go to *More > Show Hidden Files* to toggle the visibility of hidden files (a.k.a. ["dotfiles"](https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments)). A select few are visible all the time, but sometimes you want to see them all.
+In the file browser, go to *More > Show Hidden Files* to toggle the visibility of hidden files (a.k.a. ["dotfiles"](https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments)).
+A select few are visible all the time, but sometimes you want to see them all.
 :::
 
-  * `.Rbuildignore` lists files that we need to have around but that should not be included when building the R package from source. More in \@ref(rbuildignore).
-  * `.Rproj.user`, if you have it, is a directory used internally by RStudio.
-  * `.gitignore` anticipates Git usage and ignores some standard, behind-the-scenes files created by R and RStudio. Even if you do not plan to use Git, this is harmless.
-  * `DESCRIPTION` provides [metadata about your package](#description). We edit this shortly.
-  * [`NAMESPACE`](#namespace) declares the functions your package exports for external use and the external functions your package imports from other packages. At this point, it is empty, except for a comment declaring that this is a file we will not edit by hand.
-  * The `R/` directory is the ["business end" of your package](#r). It will soon contain `.R` files with function definitions.
-  * `foofactors.Rproj` is the file that makes this directory an RStudio Project. Even if you don't use RStudio, this file is harmless. Or you can suppress its creation with `create_package(..., rstudio = FALSE)`. More in \@ref(projects).
+* `.Rbuildignore` lists files that we need to have around but that should not be
+  included when building the R package from source.
+  More in \@ref(rbuildignore).
+* `.Rproj.user`, if you have it, is a directory used internally by RStudio.
+* `.gitignore` anticipates Git usage and ignores some standard,
+  behind-the-scenes files created by R and RStudio.
+  Even if you do not plan to use Git, this is harmless.
+* `DESCRIPTION` provides [metadata about your package](#description).
+  We edit this shortly.
+* [`NAMESPACE`](#namespace) declares the functions your package exports for
+  external use and the external functions your package imports from other
+  packages.
+  At this point, it is empty, except for a comment declaring that this is a file
+  we will not edit by hand.
+* The `R/` directory is the ["business end" of your package](#r).
+  It will soon contain `.R` files with function definitions.
+* `regexcite.Rproj` is the file that makes this directory an RStudio Project.
+  Even if you don't use RStudio, this file is harmless.
+  Or you can suppress its creation with `create_package(..., rstudio = FALSE)`.
+  More in \@ref(projects).
 
 ## `use_git()`
 
 :::tip
-The use of Git or another version control system is optional, but a recommended practice in the long-term. We explain its importance in \@ref(git).
+The use of Git or another version control system is optional, but a recommended practice in the long-term.
+We explain its importance in \@ref(git).
 :::
 
-The foofactors directory is an R source package and an RStudio Project. Now we make it also a Git repository, with `use_git()`.
+The regexcite directory is an R source package and an RStudio Project.
+Now we make it also a Git repository, with `use_git()`.
 
 ```{r use-git, eval = create, chunk_envvar = c(rlang_interactive = "FALSE")}
-use_git()  
+use_git()
 ```
 
-In an interactive session, you will be asked if you want to commit some files here and you should probably accept the offer. Behind the scenes, we'll cause the same to happen for us.
+In an interactive session, you will be asked if you want to commit some files here and you should probably accept the offer.
+Behind the scenes, we'll cause the same to happen for us.
 
 ```{r gert-begin, echo = debug, comment = NA, include = FALSE, eval = create}
 suppressPackageStartupMessages(library(gert))
-
-git_config_set("user.name", "Whole Game")
-git_config_set("user.email", "whole_game@example.com")
-
 git_add(".")
 git_commit("Initial commit")
 ```
 
-What's new? Only the creation of a `.git` directory, which is hidden in most contexts, including the RStudio file browser. Its existence is evidence that we have indeed initialized a Git repo here.
+What's new?
+Only the creation of a `.git` directory, which is hidden in most contexts, including the RStudio file browser.
+Its existence is evidence that we have indeed initialized a Git repo here.
 
-```{r post-git-file-list, eval = create}
+```{r post-git-file-list, echo = FALSE, eval = create}
 dir_info(all = TRUE, regexp = "^[.]git$") %>% 
   select(path, type)
 ```
 
-If you're using RStudio, it probably requested permission to relaunch itself in this Project. You can do so manually by quitting and relaunching by double clicking on `foofactors.Rproj`. Now, in addition to package development support, you have access to a basic Git client in the *Git* tab of the *Environment/History/Build* pane.
+If you're using RStudio, it probably requested permission to relaunch itself in this Project, which you should do.
+You can do so manually by quitting, then relaunching RStudio by double clicking on `regexcite.Rproj`.
+Now, in addition to package development support, you have access to a basic Git client in the *Git* tab of the *Environment/History/Build* pane.
 
-*TODO: good place for a screenshot.*
+<!-- TODO: good place for a screenshot. -->
 
-Click on History (the clock icon) and, if you consented, you will see an initial commit made via `use_git()`:
+Click on History (the clock icon in the Git pane) and, if you consented, you will see an initial commit made via `use_git()`:
 
-:::downlit
 ```{r inspect-first-commit, echo = FALSE, eval = create}
 git_log(max = 1) %>% 
   select(commit, author, message)
 ```
-:::
 
 :::rstudio-tip
-RStudio can initialize a Git repository, in any Project, even if it's not an R package, as long you've set up RStudio + Git integration. Do *Tools > Version Control > Project Setup*. Then choose *Version control system: Git* and *initialize a new git repository for this project*.
+RStudio can initialize a Git repository, in any Project, even if it's not an R package, as long you've set up RStudio + Git integration.
+Do *Tools > Version Control > Project Setup*.
+Then choose *Version control system: Git* and *initialize a new git repository for this project*.
 :::
 
 ## Write the first function
 
-It is not too hard to find a puzzling operation involving factors. Let's see what happens when we catenate two factors.
+A fairly common task when dealing with strings is the need to split a single string into many parts.
+The `strsplit()` function in base R does exactly this.
 
 ```{r}
-(a <- factor(c("character", "hits", "your", "eyeballs")))
-(b <- factor(c("but", "integer", "where it", "counts")))
-c(a, b)
+(x <- "alfa,bravo,charlie,delta")
+strsplit(x, split = ",")
 ```
 
-NOTE: As of R 4.1.0 (released 2021-05-18), "using `c()` to combine a factor with other factors now gives a factor", instead of an integer vector.
-Hallelujah!
-Here's what `c(a, b)` looked like in R until May 2021, i.e. in R < 4.1.0:
-
-```{r eval = FALSE}
-c(a, b)
-#> [1] 1 3 4 2 1 3 4 2
-```
-
-NOTE continued: What puzzling thing about R should be the basis of a new toy package example? Who knows, featuring it here might help get it fixed in base R itself! You can record your ideas in this GitHub issue: <https://github.com/hadley/r-pkgs/issues/709>.
-
-Huh? Many people do not expect the result of catenating two factors to be an integer vector consisting of the numbers 1, 2, 3, and 4. What if we coerce each factor to character, catenate, then re-convert to factor?
+Take a close look at the return value.
 
 ```{r}
-factor(c(as.character(a), as.character(b)))
+str(strsplit(x, split = ","))
 ```
 
-That seems to produce a result that makes more sense. Let's drop that logic into the body of a function called `fbind()`:
+The shape of this return value often surprises people or, at least, inconveniences them.
+The input is a character vector of length one and the output is a list of length one.
+This makes total sense in light of R's fundamental tendency towards vectorization.
+But sometimes it's still a bit of a bummer.
+Often you know that your input is morally a scalar, i.e. it's just a single string, and really want the output to be the character vector its parts.
 
-:::downlit
-```{r fbind-fodder, echo = FALSE, comment = NA}
-fbind_fodder <- c(
-  "fbind <- function(a, b) {",
-  "  factor(c(as.character(a), as.character(b)))",
-  "}"
+This leads R users to employ various methods of "unlist"-ing the result:
+
+```{r}
+unlist(strsplit(x, split = ","))
+
+strsplit(x, split = ",")[[1]]
+```
+
+The second, safer solution is the basis for the inaugural function of regexcite: `strsplit1()`.
+
+```{r strsplit1-fodder, echo = FALSE, comment = NA}
+strsplit1_fodder <- glue('
+  strsplit1 <- function(x, split) {
+    strsplit(x, split = split)[[1]]
+  }',
+  .open = "<<", .close = ">>"
 )
-cat(fbind_fodder, sep = "\n")
+cat(strsplit1_fodder)
 ```
-:::
 
-This book does not teach you how to write functions in R. To learn more about that take a look at the [Functions chapter](https://r4ds.had.co.nz/functions.html) of R for Data Science and the [Functions chapter](https://adv-r.hadley.nz/functions.html) of Advanced R.
+This book does not teach you how to write functions in R.
+To learn more about that take a look at the [Functions chapter](https://r4ds.had.co.nz/functions.html) of R for Data Science and the [Functions chapter](https://adv-r.hadley.nz/functions.html) of Advanced R.
+
+:::tip
+The name of `strsplit1()` is a nod to the very handy `paste0()`, which first appeared in R 2.15.0 in 2012.
+`paste0()` was created to address the extremely common use case of `paste()`-ing strings together *without* a separator.
+`paste0()` has been lovingly described as ["statistical computing's most influential contribution of the 21st century"](https://simplystatistics.org/2013/01/31/paste0-is-statistical-computings-most-influential-contribution-of-the-21st-century/).
+:::
 
 ## `use_r()`
 
-Where shall we define `fbind()`? Save it in a `.R` file, in the `R/` subdirectory of your package. A reasonable starting position is to make a new `.R` file for each function in your package and name the file after the function. As you add more functions, you'll want to relax this and begin to group related functions together. We'll save the definition of `fbind()` in the file `R/fbind.R`.
+Where shall we define `strsplit1()`?
+Save it in a `.R` file, in the `R/` subdirectory of your package.
+A reasonable starting position is to make a new `.R` file for each user-facing function in your package and name the file after the function.
+As you add more functions, you'll want to relax this and begin to group related functions together.
+We'll save the definition of `strsplit1()` in the file `R/strsplit1.R`.
 
-The helper `use_r()` creates and/or opens a script below `R/`. It really shines in a more mature package, when navigating between `.R` files and the associated tests. But, even here, it's useful to keep yourself from getting too carried away while working in `Untitled4`.
+The helper `use_r()` creates and/or opens a script below `R/`.
+It really shines in a more mature package, when navigating between `.R` files and the associated test file.
+But, even here, it's useful to keep yourself from getting too carried away while working in `Untitled4`.
 
-```{r init-fbind, eval = create, chunk_envvar = c(rlang_interactive = "FALSE")}
-use_r("fbind")
+```{r init-strsplit1}
+#| eval = create, chunk_envvar = c(rlang_interactive = "FALSE")
+use_r("strsplit1")
 ```
 
-```{r write-fbind, include = FALSE, eval = create}
-writeLines(fbind_fodder, path("R", "fbind.R"))
+```{r write-strsplit1, include = FALSE, eval = create}
+writeLines(strsplit1_fodder, path("R", "strsplit1.R"))
 ```
 
-Put the definition of `fbind()` **and only the definition of `fbind()`** in `R/fbind.R` and save it. The file `R/fbind.R` should NOT contain any of the other top-level code we have recently executed, such as the definitions of factors `a` and `b`, `library(devtools)` or `use_git()`. This foreshadows an adjustment you'll need to make as you transition from writing R scripts to R packages. Packages and scripts use different mechanisms to declare their dependency on other packages and to store example or test code. We explore this further in chapter \@ref(r).
+Put the definition of `strsplit1()` **and only the definition of `strsplit1()`** in `R/strsplit1.R` and save it.
+The file `R/strsplit1.R` should NOT contain any of the other top-level code we have recently executed, such as the definition of our practice input `x`, `library(devtools)`, or `use_git()`.
+This foreshadows an adjustment you'll need to make as you transition from writing R scripts to R packages.
+Packages and scripts use different mechanisms to declare their dependency on other packages and to store example or test code.
+We explore this further in chapter \@ref(r).
 
 ## `load_all()` {#whole-game-load-all}
 
-How do we test drive `fbind()`? If this were a regular R script, we might use RStudio to send the function definition to the R Console and define `fbind()` in the global workspace. Or maybe we'd call `source("R/fbind.R")`. For package development, however, devtools offers a more robust approach. See section \@ref(load-all) for more.
+How do we test drive `strsplit1()`?
+If this were a regular R script, we might use RStudio to send the function definition to the R Console and define `strsplit1()` in the global environment.
+Or maybe we'd call `source("R/strsplit1.R")`.
+For package development, however, devtools offers a more robust approach.
+See section \@ref(load-all) for more.
 
-Call `load_all()` to make `fbind()` available for experimentation.
+Call `load_all()` to make `strsplit1()` available for experimentation.
 
 ```{r load-all, eval = create}
 load_all()
 ```
 
-Now call `fbind(a, b)` to see how it works.
+Now call `strsplit1(x)` to see how it works.
 
 ```{r, eval = create}
-fbind(a, b)
+(x <- "alfa,bravo,charlie,delta")
+strsplit1(x, split = ",")
 ```
 
-Note that `load_all()` has made the `fbind()` function available, although it does not exist in the global workspace.
+Note that `load_all()` has made the `strsplit1()` function available, although it does not exist in the global environment.
 
 ```{r, eval = create}
-exists("fbind", where = globalenv(), inherits = FALSE)
+exists("strsplit1", where = globalenv(), inherits = FALSE)
 ```
 
-`load_all()` simulates the process of building, installing, and attaching the foofactors package. As your package accumulates more functions, some exported, some not, some of which call each other, some of which call functions from packages you depend on, `load_all()` gives you a much more accurate sense of how the package is developing than test driving functions defined in the global workspace. Also `load_all()` allows much faster iteration than actually building, installing, and attaching the package.
+If you see `TRUE` instead of `FALSE`, that indicates you're still using a script-oriented workflow and sourcing your functions.
+Here's how to get back on track:
+
+* Clean out the global environment and restart R.
+* Re-attach devtools with `library(devtools)` and re-load regexcite with
+  `load_all()`.
+* Redefine the test input `x` and call `strsplit1(x, split = ",")` again.
+  This should work!
+* Run `exists("strsplit1", where = globalenv(), inherits = FALSE)` again and
+  you should see `FALSE`.
+
+`load_all()` simulates the process of building, installing, and attaching the regexcite package.
+As your package accumulates more functions, some exported, some not, some of which call each other, some of which call functions from packages you depend on, `load_all()` gives you a much more accurate sense of how the package is developing than test driving functions defined in the global environment.
+Also `load_all()` allows much faster iteration than actually building, installing, and attaching the package.
 
 Review so far:
 
-  * We wrote our first function, `fbind()`, to catenate two factors.
-  * We used `load_all()` to quickly make this function available for interactive use, as if we'd built and installed foofactors and attached it via `library(foofactors)`.
+* We wrote our first function, `strsplit1()`, to split a string into a character
+  vector (not a list containing a character vector).
+* We used `load_all()` to quickly make this function available for interactive
+  use, as if we'd built and installed regexcite and attached it via
+  `library(regexcite)`.
 
 :::rstudio-tip
 RStudio exposes `load_all()` in the *Build* menu, in the *Build* pane via *More > Load All*, and in keyboard shortcuts Ctrl + Shift + L (Windows & Linux) or Cmd + Shift + L (macOS).
 :::
 
-### Commit `fbind()`
+### Commit `strsplit1()`
 
-If you're using Git, use your preferred method to commit the new `R/fbind.R` file. We do so behind the scenes here and here's the associated diff.
+If you're using Git, use your preferred method to commit the new `R/strsplit1.R` file.
+We do so behind the scenes here and here's the associated diff.
 
-```{r fbind-commit, echo = debug, comment = NA, include = FALSE, eval = create}
-git_add(path("R", "fbind.R"))
-git_commit("Add fbind()")
+```{r strsplit1-commit}
+#| echo = debug, comment = NA, include = FALSE, eval = create
+git_add(path("R", "strsplit1.R"))
+git_commit("Add strsplit1()")
 ## tags might be useful for making stable links to the package at specific
 ## evolutionary stages
 ## possible convention: tag name = chunk label
 #tag_name <- knitr::opts_current$get("label")
-#tag(repo, tag_name, "initial creation of fbind()")
-#tag(repo, "fbind-init", "initial creation of fbind()")
+#tag(repo, tag_name, "initial creation of strsplit1()")
+#tag(repo, "strsplit1-init", "initial creation of strsplit1()")
 #sha <- (commits(repo)[[1]])@sha
 ```
 
-```{r add-fbind-diff, echo = FALSE, eval = create, asis = TRUE}
+```{r add-strsplit1-diff, echo = FALSE, eval = create, asis = TRUE}
 cat(git_diff_patch(ref = "HEAD"))
 ```
 
-From this point on, we commit after each step. Remember [these commits](https://github.com/jennybc/foofactors/commits/master) are available in the public repository.
+From this point on, we commit after each step.
+Remember [these commits](https://github.com/jennybc/regexcite/commits/main) are available in the public repository.
 
 ## `check()`
 
-We have empirical evidence that `fbind()` works. But how can we be sure that all the moving parts of the foofactors package still work? This may seem silly to check, after such a small addition, but it's good to establish the habit of checking this often.
+We have informal, empirical evidence that `strsplit1()` works.
+But how can we be sure that all the moving parts of the regexcite package still work?
+This may seem silly to check, after such a small addition, but it's good to establish the habit of checking this often.
 
-`R CMD check`, executed in the shell, is the gold standard for checking that an R package is in full working order. `check()` is a convenient way to run this without leaving your R session.
+`R CMD check`, executed in the shell, is the gold standard for checking that an R package is in full working order.
+`check()` is a convenient way to run this without leaving your R session.
 
-Note that `check()` produces rather voluminous output, optimized for interactive consumption. We intercept that here and just reveal a summary. Your local `check()` output will be different.
+Note that `check()` produces rather voluminous output, optimized for interactive consumption.
+We intercept that here and just reveal a summary.
+Your local `check()` output will be different.
 
 ```{r first-check-fake, eval = FALSE}
 check()
 ```
 
-:::downlit
 ```{r first-check, eval = create, warning = TRUE, echo = FALSE}
 shhh_check(error_on = "never")
 ```
-:::
 
-**Read the output of the check!** Deal with problems early and often. It's just like incremental development of `.R` and `.Rmd` files. The longer you go between full checks that everything works, the harder it becomes to pinpoint and solve your problems.
+**Read the output of the check!**
+Deal with problems early and often.
+It's just like incremental development of `.R` and `.Rmd` files.
+The longer you go between full checks that everything works, the harder it becomes to pinpoint and solve your problems.
 
 At this point, we expect 1 warning (and 0 errors, 0 notes):
 
-  * `Non-standard license specification`
+```
+Non-standard license specification:
+  `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+  license
+```
 
-We'll address that soon.
+We'll address that soon, by doing exactly what it says.
 
 :::rstudio-tip
 RStudio exposes `check()` in the *Build* menu, in the *Build* pane via *Check*, and in keyboard shortcuts Ctrl + Shift + E (Windows & Linux) or Cmd + Shift + E (macOS).
@@ -370,39 +455,45 @@ RStudio exposes `check()` in the *Build* menu, in the *Build* pane via *Check*, 
 
 ## Edit `DESCRIPTION`
 
-Before we tackle the warning about the license, let's work on the boilerplate content in `DESCRIPTION`. The `DESCRIPTION` file provides metadata about your package and is covered fully in chapter \@ref(description).
+The `DESCRIPTION` file provides metadata about your package and is covered fully in chapter \@ref(description).
+This is a good time to have a look at regexcite's current `DESCRIPTION`.
+You'll see it's populated with boilerplate content, which needs to be replaced.
 
 Make these edits:
 
-  * Make yourself the author.
-  * Write some descriptive text in the `Title` and `Description` fields.
+* Make yourself the author. If you don't have an ORCID, you can omit the
+  `comment = ...` portion.
+* Write some descriptive text in the `Title` and `Description` fields.
   
 :::rstudio-tip
-Use Ctrl + `.` in RStudio and start typing "DESCRIPTION" to activate a helper that makes it easy to open a file for editing. In addition to a filename, your hint can be a function name. This is very handy once a package has lots of functions and files below `R/`.
+Use Ctrl + `.` in RStudio and start typing "DESCRIPTION" to activate a helper that makes it easy to open a file for editing.
+In addition to a filename, your hint can be a function name.
+This is very handy once a package has lots of files.
 :::
 
 When you're done, `DESCRIPTION` should look similar to this:
 
-```{r description-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = create}
-DESCRIPTION_fodder <- c(
-  'Package: foofactors',
-  'Title: Make Factors Less Aggravating',
-  'Version: 0.0.0.9000',
-  'Authors@R:',
-  '    person("Jane", "Doe", email = "jane@example.com", role = c("aut", "cre"))',
-  'Description: Factors have driven people to extreme measures, like ordering',
-  '    custom conference ribbons and laptop stickers to express how HELLNO we',
-  '    feel about stringsAsFactors. And yet, sometimes you need them. Can they',
-  '    be made less maddening? Let\'s find out.',
-  'License: What license it uses',
-  'Encoding: UTF-8',
-  'LazyData: true'
-)
+```{r description-fodder}
+#| asis = TRUE, echo = FALSE, comment = NA, eval = create
+DESCRIPTION_fodder <- glue('
+  Package: regexcite
+  Title: Make Regular Expressions More Exciting
+  Version: 0.0.0.9000
+  Authors@R: 
+      person("Jane", "Doe", , "jane@example.com", role = c("aut", "cre"))
+  Description: Convenience functions to make some common tasks with string
+      manipulation and regular expressions a bit easier.
+  License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+      license
+  Encoding: UTF-8
+  Roxygen: list(markdown = TRUE)
+  RoxygenNote: 7.1.2')
 writeLines(DESCRIPTION_fodder, "DESCRIPTION")
-cat(DESCRIPTION_fodder, sep = "\n")
+cat(DESCRIPTION_fodder)
 ```
 
-```{r commit-description, echo = debug, comment = NA, include = FALSE, eval = create}
+```{r commit-description}
+#| echo = debug, comment = NA, include = FALSE, eval = create
 git_add("DESCRIPTION")
 git_commit("Edit DESCRIPTION")
 ```
@@ -411,70 +502,85 @@ git_commit("Edit DESCRIPTION")
 
 > [Pick a License, Any License. -- Jeff Atwood](https://blog.codinghorror.com/pick-a-license-any-license/)
 
-For foofactors, we use the MIT license. This requires specification in `DESCRIPTION` and an additional file called `LICENSE`, naming the copyright holder and year. We'll use the helper `use_mit_license()`. Substitute your name here.
+We currently have a placeholder in the `License` field of `DESCRIPTION` that's deliberately invalid and suggests a resolution.
 
-```{r use-mit-license, eval = create}
-use_mit_license("Jane Doe")
+```
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
 ```
 
-Open the newly created `LICENSE` file and confirm it has the current year and your name.
+Let's call `use_mit_license()`.
 
-```{r license-fodder, asis = TRUE, echo = FALSE, comment = NA, eval = create}
+```{r use-mit-license, eval = create}
+use_mit_license()
+```
+
+This configures the `License` field correctly for the MIT license, which promises to name the copyright holders and year in a `LICENSE` file.
+Open the newly created `LICENSE` file and confirm it looks something like this:
+
+```{r license-fodder}
+#| asis = TRUE, echo = FALSE, comment = NA, eval = create
 cat(readLines("LICENSE"), sep = "\n")
 ```
 
-Like other license helpers, `use_mit_license()` also puts a copy of the full license in `LICENSE.md` and adds this file to `.Rbuildignore`. It's considered a best practice to include a full license in your package's source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.
+Like other license helpers, `use_mit_license()` also puts a copy of the full license in `LICENSE.md` and adds this file to `.Rbuildignore`.
+It's considered a best practice to include a full license in your package's source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.
 
 ```{r commit-license, echo = debug, comment = NA, include = FALSE, eval = create}
-git_add(c("LICENSE", "LICENSE.md", ".Rbuildignore", "DESCRIPTION"))
-git_commit("Add LICENSE")
+git_add(c(".Rbuildignore", "DESCRIPTION", "LICENSE", "LICENSE.md"))
+git_commit("Use MIT license")
 ```
 
 ## `document()` {#whole-game-document}
 
-Wouldn't it be nice to get help on `fbind()`, just like we do with other R functions? This requires that your package have a special R documentation file, `man/fbind.Rd`, written in an R-specific markup language that is sort of like LaTeX. Luckily we don't necessarily have to author that directly.
+Wouldn't it be nice to get help on `strsplit1()`, just like we do with other R functions?
+This requires that your package have a special R documentation file, `man/strsplit1.Rd`, written in an R-specific markup language that is sort of like LaTeX.
+Luckily we don't necessarily have to author that directly.
 
-We write a specially formatted comment right above `fbind()`, in its source file, and then let a package called [roxygen2](https://roxygen2.r-lib.org) handle the creation of `man/fbind.Rd`.  The motivation and mechanics of roxygen2 are covered in chapter \@ref(man).
+We write a specially formatted comment right above `strsplit1()`, in its source file, and then let a package called [roxygen2](https://roxygen2.r-lib.org) handle the creation of `man/strsplit1.Rd`.
+The motivation and mechanics of roxygen2 are covered in chapter \@ref(man).
 
-If you use RStudio, open `R/fbind.R` in the source editor and put the cursor somewhere in the `fbind()` function definition. Now do *Code > Insert roxygen skeleton*. A very special comment should appear above your function, in which each line begins with `#'`. RStudio only inserts a barebones template, so you will need to edit it to look something like that below.
+If you use RStudio, open `R/strsplit1.R` in the source editor and put the cursor somewhere in the `strsplit1()` function definition.
+Now do *Code > Insert roxygen skeleton*.
+A very special comment should appear above your function, in which each line begins with `#'`.
+RStudio only inserts a barebones template, so you will need to edit it to look something like that below.
 
-If you don't use RStudio, create the comment yourself. Regardless, you should modify it to look something like this:
+If you don't use RStudio, create the comment yourself.
+Regardless, you should modify it to look something like this:
 
-:::downlit
-```{r fbind-roxygen-header, echo = FALSE, comment = NA, eval = create}
-fbind_roxygen_header <- c(
-  "#' Bind two factors",
-  "#'",
-  "#' Create a new factor from two existing factors, where the new factor's levels",
-  "#' are the union of the levels of the input factors.",
-  "#'",
-  "#' @param a factor",
-  "#' @param b factor",
-  "#'",
-  "#' @return factor",
-  "#' @export",
-  "#' @examples",
-  "#' fbind(iris$Species[c(1, 51, 101)], PlantGrowth$group[c(1, 11, 21)])"
-)
-fbind_safe <- readLines(path("R", "fbind.R"))
+```{r strsplit1-roxygen-header, echo = FALSE, comment = NA, eval = create}
+strsplit1_roxygen_header <- glue("
+  #' Split a string
+  #'
+  #' @param x A character vector with one element.
+  #' @param split What to split on.
+  #'
+  #' @return A character vector.
+  #' @export
+  #'
+  #' @examples
+  #' x <- \"alfa,bravo,charlie,delta\"
+  #' strsplit(x, split = \",\")")
+strsplit1_safe <- readLines(path("R", "strsplit1.R"))
 writeLines(
-  c(fbind_roxygen_header, paste(fbind_safe, collapse = "\n")),
-  path("R", "fbind.R")
+  c(strsplit1_roxygen_header, strsplit1_safe),
+  path("R", "strsplit1.R")
 )
-cat(fbind_roxygen_header, sep = "\n")
-```
-:::
-
-*TODO: mention how RStudio helps you execute examples here?*
-
-```{r commit-fbind-roxygen-header, echo = debug, comment = NA, include = FALSE, eval = create}
-git_add(file.path("R", "fbind.R"))
-git_commit("Add roxygen header to document fbind()")
+cat(strsplit1_roxygen_header, sep = "\n")
 ```
 
-But we're not done yet! We still need to trigger the conversion of this new roxygen comment into `man/fbind.Rd` with `document()`:
+<!-- TODO: mention how RStudio helps you execute examples here? -->
 
-```{r document-fbind, eval = create}
+```{r commit-strsplit1-roxygen-header}
+#| echo = debug, comment = NA, include = FALSE, eval = create
+git_add(path("R", "strsplit1.R"))
+git_commit("Add roxygen header to document strsplit1()")
+```
+
+But we're not done yet!
+We still need to trigger the conversion of this new roxygen comment into `man/strsplit1.Rd` with `document()`:
+
+```{r document-strsplit1, eval = create}
 document()
 ```
 
@@ -485,45 +591,50 @@ RStudio exposes `document()` in the *Build* menu, in the *Build* pane via *More 
 You should now be able to preview your help file like so:
 
 ```{r eval = FALSE}
-?fbind
+?strsplit1
 ```
 
-You'll see a message like "Rendering development documentation for 'fbind'", which reminds that you are basically previewing draft documentation. That is, this documentation is present in your package's source, but is not yet present in an installed package. In fact, we haven't installed foofactors yet, but we will soon.
+You'll see a message like "Rendering development documentation for 'strsplit1'", which reminds that you are basically previewing draft documentation.
+That is, this documentation is present in your package's source, but is not yet present in an installed package.
+In fact, we haven't installed regexcite yet, but we will soon.
 
-Note also that your package's documentation won't be properly wired up until it has been formally built and installed. This polishes off niceties like the links between help files and the creation of a package index.
+Note also that your package's documentation won't be properly wired up until it has been formally built and installed.
+This polishes off niceties like the links between help files and the creation of a package index.
 
 ### `NAMESPACE` changes
 
-In addition to converting `fbind()`'s special comment into `man/fbind.Rd`, the call to `document()` updates the `NAMESPACE` file, based on `@export` directives found in roxygen comments. Open `NAMESPACE` for inspection. The contents should be:
+In addition to converting `strsplit1()`'s special comment into `man/strsplit1.Rd`, the call to `document()` updates the `NAMESPACE` file, based on `@export` directives found in roxygen comments.
+Open `NAMESPACE` for inspection.
+The contents should be:
 
 ```{r asis = TRUE, echo = FALSE, comment = NA, eval = create}
 cat(readLines("NAMESPACE"), sep = "\n")
 ```
 
-The export directive in `NAMESPACE` is what makes `fbind()` available to a user after attaching foofactors via `library(foofactors)`. Just as it is entirely possible to author `.Rd` files "by hand", you can manage `NAMESPACE` explicitly yourself. But we choose to delegate this to devtools (and roxygen2).
+The export directive in `NAMESPACE` is what makes `strsplit1()` available to a user after attaching regexcite via `library(regexcite)`.
+Just as it is entirely possible to author `.Rd` files "by hand", you can manage `NAMESPACE` explicitly yourself.
+But we choose to delegate this to devtools (and roxygen2).
 
 ```{r commit-namespace, echo = debug, comment = NA, include = FALSE, eval = create}
-git_add(c("DESCRIPTION", "NAMESPACE", path("man", "fbind.Rd")))
+git_add(c("NAMESPACE", path("man", "strsplit1.Rd")))
 git_commit("Run document()")
 ```
 
 ## `check()` again
 
-foofactors should pass `R CMD check` cleanly now and forever more: 0 errors, 0 warnings, 0 notes.
+regexcite should pass `R CMD check` cleanly now and forever more: 0 errors, 0 warnings, 0 notes.
 
 ```{r first-clean-check-fake, eval = FALSE}
 check()
 ```
 
-:::downlit
 ```{r first-clean-check, eval = create, warning = TRUE, echo = FALSE}
 shhh_check(error_on = "never")
 ```
-:::
 
 ## `install()`
 
-Since we have a minimum viable product now, let's install the foofactors package into your library via `install()`:
+Since we have a minimum viable product now, let's install the regexcite package into your library via `install()`:
 
 ```{r first-install-fake, eval = FALSE}
 install()
@@ -537,22 +648,24 @@ cat(pretty_install(), sep = "\n")
 RStudio exposes similar functionality in the *Build* menu and in the *Build* pane via *Install and Restart*.
 :::
 
-Now we can attach and use foofactors like any other package. Let's revisit our small example from the top. This is a good time to restart your R session and ensure you have a clean workspace.
+Now we can attach and use regexcite like any other package.
+Let's revisit our small example from the top.
+This is a good time to restart your R session and ensure you have a clean workspace.
 
 ```{r, eval = create}
-library(foofactors)
+library(regexcite)
 
-a <- factor(c("character", "hits", "your", "eyeballs"))
-b <- factor(c("but", "integer", "where it", "counts"))
-
-fbind(a, b)
+x <- "alfa,bravo,charlie,delta"
+strsplit1(x, split = ",")
 ```
 
 Success!
 
 ## `use_testthat()`
 
-We've tested `fbind()` informally, in a single example. We can formalize and expand this with some unit tests. This means we express a few concrete expectations about the correct `fbind()` result for various inputs.
+We've tested `strsplit1()` informally, in a single example.
+We can formalize this as a unit test.
+This means we express a concrete expectation about the correct `strsplit1()` result for a specific input.
 
 First, we declare our intent to write unit tests and to use the testthat package for this, via `use_testthat()`:
 
@@ -560,56 +673,61 @@ First, we declare our intent to write unit tests and to use the testthat package
 use_testthat()
 ```
 
-This initializes the unit testing machinery for your package. It adds `Suggests: testthat` to `DESCRIPTION`, creates the directory `tests/testthat/`, and adds the script `tests/testthat.R`.
+This initializes the unit testing machinery for your package.
+It adds `Suggests: testthat` to `DESCRIPTION`, creates the directory `tests/testthat/`, and adds the script `tests/testthat.R`.
+You'll notice that testthat is probably added with a minimum version of 3.0.0 and a second DESCRIPTION field, `Config/testthat/edition: 3`.
+We'll talk more about those details in chapter \@ref(tests).
 
-```{r commit-testthat-init, echo = debug, comment = NA, include = FALSE, eval = create}
+```{r commit-testthat-init}
+#| echo = debug, comment = NA, include = FALSE, eval = create
 git_add(c("DESCRIPTION", path("tests", "testthat.R")))
 git_commit("Add testing infrastructure")
 ```
 
 However, it's still up to YOU to write the actual tests!
 
-The helper `use_test()` opens and/or creates a test file. You can provide the file's basename or, if you are editing the relevant source file in RStudio, it will be automatically generated. Since this book is built non-interactively, we must provide the basename explicitly:
+The helper `use_test()` opens and/or creates a test file.
+You can provide the file's basename or, if you are editing the relevant source file in RStudio, it will be automatically generated.
+For many of you, if `R/strsplit1.R` is the active file in RStudio, you can just call `use_test()`.
+However, since this book is built non-interactively, we must provide the basename explicitly:
 
-```{r test-fbind, eval = create}
-use_test("fbind")
+```{r test-strsplit1, eval = create}
+use_test("strsplit1")
 ```
 
-This creates the file `tests/testthat/test-fbind.R`. Put this content in it:
+This creates the file `tests/testthat/test-strsplit1.R`.
+If it had already existed, `use_test()` would have just opened it.
+Put this content in:
 
-:::downlit
-```{r test-fbind-fodder, echo = FALSE, comment = NA, eval = create}
-test_fodder <- c(
-  'test_that("fbind() binds factor (or character)", {',
-  '  x <- c("a", "b")',
-  '  x_fact <- factor(x)',
-  '  y <- c("c", "d")',
-  '  z <- factor(c("a", "b", "c", "d"))',
-  '',
-  '  expect_identical(fbind(x, y), z)',
-  '  expect_identical(fbind(x_fact, y), z)',
-  '})'
+```{r test-strsplit1-fodder, echo = FALSE, comment = NA, eval = create}
+test_fodder <- glue('
+  test_that("strsplit1() splits a string", {
+    expect_equal(strsplit1("a,b,c", split = ","), c("a", "b", "c"))
+  })',
+  .open = "<<", .close = ">>"
 )
-test_path <- path("tests", "testthat", "test-fbind.R")
+test_path <- path("tests", "testthat", "test-strsplit1.R")
 writeLines(test_fodder, test_path)
 cat(test_fodder, sep = "\n")
 ```
-:::
 
-This tests that `fbind()` gives an expected result when combining two factors and a character vector and a factor.
+This tests that `strsplit1()` gives the expected result when splitting a string.
 
-```{r commit-fbind-test, echo = debug, comment = NA, eval = FALSE}
-git_add(path("tests", "testthat", "test-fbind.R"))
-git_commit("Test fbind()")
+```{r commit-strsplit1-test, echo = debug, comment = NA, eval = FALSE}
+git_add(test_path)
+git_commit("Test strsplit1()")
 ```
 
-Run this test interactively, as you will when you write your own. Note you'll have to attach testthat via `library(testthat)` in your R session first and you'll probably want to `load_all()`.
+Run this test interactively, as you will when you write your own.
+Note you'll have to attach testthat via `library(testthat)` in your R session first and you'll probably want to `load_all()`.
 
 Going forward, your tests will mostly run *en masse* and at arm's length via `test()`:
 
-*TODO: work on the aesthetics of this output. Or maybe testthat 3e will save me the trouble.*
+<!-- TODO: work on the aesthetics of this output. Or maybe testthat 3e will save me the trouble. -->
 
-```{r test, eval = create, message = FALSE, R.options = list(testthat.default_reporter = testthat::ProgressReporter$new(update_interval = Inf))}
+```{r test}
+#| eval = create, message = FALSE,
+#| R.options = list(testthat.default_reporter = testthat::ProgressReporter$new(update_interval = Inf))
 test()
 ```
 
@@ -617,128 +735,240 @@ test()
 RStudio exposes `test()` in the *Build* menu, in the *Build* pane via *More > Test package*, and in keyboard shortcuts Ctrl + Shift + T (Windows & Linux) or Cmd + Shift + T (macOS).
 :::
 
-Your tests are also run whenever you `check()` the package. In this way, you basically augment the standard checks with some of your own, that are specific to your package. It is a good idea to use the [covr package](https://covr.r-lib.org) to track what proportion of your package's source code is exercised by the tests. More details can be found in chapter \@ref(tests).
+Your tests are also run whenever you `check()` the package.
+In this way, you basically augment the standard checks with some of your own, that are specific to your package.
+It is a good idea to use the [covr package](https://covr.r-lib.org) to track what proportion of your package's source code is exercised by the tests.
+More details can be found in chapter \@ref(tests).
 
 ## `use_package()`
 
-You will inevitably want to use a function from another package in your own package. Just as we needed to **export** `fbind()`, we need to **import** functions from the namespace of other packages. If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as "always available", such as `stats::median()` or `utils::head()`.
+You will inevitably want to use a function from another package in your own package.
+Just as we needed to **export** `strsplit1()`, we need to **import** functions from the namespace of other packages.
+If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as "always available", such as `stats::median()` or `utils::head()`.
 
-We're going to add another function to foofactors that produces a sorted frequency table for a factor. We'll borrow some smarts from the forcats package, specifically the function `forcats::fct_count()`.
+One common dilemma when using R's regular expression functions is uncertainty about whether to request `perl = TRUE` or `perl = FALSE`.
+And then there are often, but not always, other arguments that alter how patterns are matched, such as `fixed`, `ignore.case`, and `invert`.
+It can be hard to keep track of which functions use which arguments and how the arguments interact, so many users never get to the point where they retain these details without rereading the docs.
 
-First, declare your general intent to use some functions from the forcats namespace with `use_package()`:
+The stringr package "provides a cohesive set of functions designed to make working with strings as easy as possible".
+In particular, stringr uses one regular expression system everywhere (ICU regular expressions) and uses the same interface in every function for controlling matching behaviors, such as case sensitivity.
+Some people find this easier to internalize and program around.
+Let's imagine you decide you'd rather build regexcite based on stringr (and stringi) than base R's regular expression functions.
 
-```{r use-forcats, eval = create}
-use_package("forcats")
+First, declare your general intent to use some functions from the stringr namespace with `use_package()`:
+
+```{r use-stringr, eval = create}
+use_package("stringr")
 ```
 
-This adds the forcats package to the "Imports" section of `DESCRIPTION`. And that is all.
+This adds the stringr package to the "Imports" section of `DESCRIPTION`.
+And that is all it does.
 
-```{r commit-forcats-imports, echo = debug, comment = NA, include = FALSE, eval = create}
+```{r commit-stringr-imports}
+#| echo = debug, comment = NA, include = FALSE, eval = create
 git_add("DESCRIPTION")
-git_commit("Import forcats")
+git_commit("Import stringr")
 ```
 
-Now we add a second function to foofactors: imagine we want a frequency table for a factor, as a regular data frame with nice variable names, versus as an object of class `table` or something with odd names. Let's also sort the rows so that the most prevalent level is at the top.
+Let's revisit `strsplit1()` to make it more stringr-like.
+Here's a new take on it:
 
-Initiate a new `.R` file below `R/` with `use_r()`:
-
-```{r init-fcount, eval = create, chunk_envvar = c("TESTTHAT" = "true")}
-use_r("fcount")
-```
-
-Put this content in the file `R/fcount.R`:
-
-:::downlit
-```{r fcount-fodder, echo = FALSE, comment = NA}
-fcount_fodder <- c(
-  "#' Make a sorted frequency table for a factor",
-  "#'",
-  "#' @param x factor",
-  "#'",
-  "#' @return A tibble",
-  "#' @export",
-  "#' @examples",
-  "#' fcount(iris$Species)",
-  "fcount <- function(x) {",
-  "  forcats::fct_count(x, sort = TRUE)",
-  "}"
+```{r str-split-one-fodder, echo = FALSE, comment = NA}
+str_split_one_fodder <- glue("
+  str_split_one <- function(string, pattern, n = Inf) {
+    stopifnot(is.character(string), length(string) <= 1)
+    if (length(string) == 1) {
+      stringr::str_split(string = string, pattern = pattern, n = n)[[1]]
+    } else {
+      character()
+    }
+  }",
+  .open = "<<", .close = ">>"
 )
-cat(fcount_fodder, sep = "\n")
-```
-:::
-
-```{r write-fcount, include = FALSE, eval = create}
-writeLines(fcount_fodder, path("R", "fcount.R"))
+cat(str_split_one_fodder)
 ```
 
-Notice how we preface the call to a forcats functions with `forcats::`. This specifies that we want to call the `fct_count()` function from the forcats namespace. There is more than one way to call functions in other packages and the one we espouse here is explained fully in chapter \@ref(namespace).
+Notice that we:
 
-```{r commit-fcount, echo = debug, comment = NA, include = FALSE, eval = create}
-git_add(path("R", "fcount.R"))
-git_commit("Add fcount()")
+* Rename the function to `str_split_one()`, to signal that that is a wrapper
+  around `stringr::str_split()`.
+* Adopt the argument names from `stringr::str_split()`. Now we have `string` and
+  `pattern` (and `n`), instead of `x` and `split`.
+* Introduce a bit of argument checking and edge case handling. This is
+  unrelated to the switch to stringr and would be equally beneficial in the
+  version built on `strsplit()`.
+* Use the `package::function()` form when calling `stringr::str_split()`. This
+  specifies that we want to call the `str_split()` function from the stringr
+  namespace. There is more than one way to call a function from another
+  package and the one we endorse here is explained fully in chapter
+  \@ref(namespace).
+
+<!-- TODO: I mention usethis below. Have I avoided that otherwise here, i.e. always talking about devtools? -->
+  
+Where should we write this new function definition?
+I'd like to keep following the convention where we name the `.R` file after the function it defines, so now we need to do some fiddly file shuffling.
+Because this comes up fairly often in real life, usethis has a function, `rename_files()`, to choreograph the renaming of a file in `R/` and its associated companion files below `test/`.
+
+```{r}
+rename_files("strsplit1", "str_split_one")
 ```
 
-Try out the new `fcount()` function by simulating package installation via `load_all()`:
-
-```{r fcount-test-drive, eval = create}
-load_all()
-fcount(iris$Species)
+```{r str-split-one-write, echo = FALSE, comment = NA, eval = create}
+str_split_one_roxygen_header <- glue("
+  #' Split a string
+  #'
+  #' @param string A character vector with, at most, one element.
+  #' @inheritParams stringr::str_split
+  #'
+  #' @return A character vector.
+  #' @export
+  #'
+  #' @examples
+  #' x <- \"alfa,bravo,charlie,delta\"
+  #' str_split_one(x, pattern = \",\")
+  #' str_split_one(x, pattern = \",\", n = 2)
+  #'
+  #' y <- \"192.168.0.1\"
+  #' str_split_one(y, pattern = stringr::fixed(\".\"))")
+writeLines(
+  c(str_split_one_roxygen_header, str_split_one_fodder),
+  path("R", "str_split_one.R")
+)
 ```
 
-Generate the associated help file via `document()`. This also adds `fcount()` to the `NAMESPACE` as an exported function.
+Remember: the file name work is purely aspirational.
+We still need to update the contents of these files!
 
-```{r document-fcount, eval = create}
+Here are the updated contents of `R/str_split_one.R`.
+In addition to changing the function definition, we've also updated the roxygen header to reflect the new arguments and to include examples that show off the stringr features.
+
+```{r asis = TRUE, echo = FALSE, comment = NA, eval = create}
+cat(readLines(path("R", "str_split_one.R")), sep = "\n")
+```
+
+Don't forget to also update the test file!
+
+Here are the updated contents of `tests/testthat/test-str_split_one.R`.
+In addition to the change in the function's name and arguments, we've added a couple more tests.
+
+```{r test-str-split-one-write, echo = FALSE, comment = NA, eval = create}
+str_split_one_tests <- glue('
+  test_that("str_split_one() splits a string", {
+    expect_equal(str_split_one("a,b,c", ","), c("a", "b", "c"))
+  })
+
+  test_that("str_split_one() errors if input length > 1", {
+    expect_error(str_split_one(c("a,b","c,d"), ","))
+  })
+
+  test_that("str_split_one() exposes features of stringr::str_split()", {
+    expect_equal(str_split_one("a,b,c", ",", n = 2), c("a", "b,c"))
+    expect_equal(str_split_one("a.b", stringr::fixed(".")), c("a", "b"))
+  })',
+  .open = "<<", .close = ">>"
+)
+writeLines(
+  str_split_one_tests,
+  path("tests", "testthat", "test-str_split_one.R")
+)
+cat(readLines(path("tests", "testthat", "test-str_split_one.R")), sep = "\n")
+```
+
+Before we take the new `str_split_done()` out for a test drive, we need to call `document()`.
+Why?
+Remember that `document()` does two main jobs:
+
+1. Converts our roxygen comments into proper R documentation.
+1. (Re)generates `NAMESPACE`.
+
+The second point is especially important here, since we will no longer export `strsplit1()` and we will newly export `str_split_one()`.
+Don't be dismayed by the warning about `"Objects listed as exports, but not present in namespace: strsplit1"`.
+That always happens when you remove something from the namespace.
+
+```{r document-str-split-one, eval = create}
 document()
 ```
 
-```{r commit-fcount-rd, echo = debug, comment = NA, include = FALSE, eval = create}
-git_add(c("NAMESPACE", path("man", "fcount.Rd")))
-git_commit("Document and export fcount()")
+Try out the new `str_split_one()` function by simulating package installation via `load_all()`:
+
+```{r str-split-one-test-drive, eval = create}
+load_all()
+str_split_one("a, b, c", pattern = ", ")
+```
+
+```{r commit-str-split-one}
+#| echo = debug, comment = NA, include = FALSE, eval = create
+git_add(c(
+  "NAMESPACE",
+  path("man", c("str_split_one.Rd", "strsplit1.Rd")),
+  path("R", c("str_split_one.R", "strsplit1.R")),
+  path("tests", "testthat", c("test-str_split_one.R", "test-strsplit1.R"))
+))
+git_commit("Switch to str_split_one()")
 ```
 
 ## `use_github()`
 
-You've seen us making commits during the development process for foofactors. You can see an indicative history at <https://github.com/jennybc/foofactors>. Our use of version control and the decision to expose the development process means you can inspect the state of the foofactors source at each developmental stage. By looking at so-called diffs, you can see exactly how each devtools helper function modifies the source files that constitute the foofactors package.
+You've seen us making commits during the development process for regexcite.
+You can see an indicative history at <https://github.com/jennybc/regexcite>.
+Our use of version control and the decision to expose the development process means you can inspect the state of the regexcite source at each developmental stage.
+By looking at so-called diffs, you can see exactly how each devtools helper function modifies the source files that constitute the regexcite package.
 
-How would you connect your local foofactors package and Git repository to a companion repository on GitHub?
+How would you connect your local regexcite package and Git repository to a companion repository on GitHub?
 
-  1. [`use_github()`](https://usethis.r-lib.org/reference/use_github.html) is a helper that we recommend for the long-term. We won't demonstrate it here because it requires some nontrivial setup on your end. We also don't want to tear down and rebuild the public foofactors package every time we build this book.
-  1. Set up the GitHub repo first! It sounds counterintuitive, but the easiest way to get your work onto GitHub is to initiate there, then use RStudio to start working in a synced local copy. This approach is described in Happy Git's workflows [New project, GitHub first](https://happygitwithr.com/new-github-first.html) and [Existing project, GitHub first](https://happygitwithr.com/existing-github-first.html).
-  1. Command line Git can always be used to add a remote repository *post hoc*. This is described in the Happy Git workflow [Existing project, GitHub last](https://happygitwithr.com/existing-github-last.html).
+1. [`use_github()`](https://usethis.r-lib.org/reference/use_github.html) is a
+   helper that we recommend for the long-term. We won't demonstrate it here
+   because it requires some credential setup on your end. We also don't want to
+   tear down and rebuild the public regexcite package every time we build this
+   book.
+1. Set up the GitHub repo first! It sounds counter-intuitive, but the easiest way
+   to get your work onto GitHub is to initiate there, then use RStudio to start
+   working in a synced local copy. This approach is described in Happy Git's
+   workflows [New project, GitHub first](https://happygitwithr.com/new-github-first.html) and [Existing project, GitHub first](https://happygitwithr.com/existing-github-first.html).
+1. Command line Git can always be used to add a remote repository *post hoc*.
+   This is described in the Happy Git workflow [Existing project, GitHub last](https://happygitwithr.com/existing-github-last.html).
 
-Any of these approaches will connect your local foofactors project to a GitHub repo, public or private, which you can push to or pull from using the Git client built into RStudio.
+Any of these approaches will connect your local regexcite project to a GitHub repo, public or private, which you can push to or pull from using the Git client built into RStudio.
 
 ## `use_readme_rmd()`
 
-Now that your package is on GitHub, the `README.md` file matters. It is the package's home page and welcome mat, at least until you decide to give it a website (see [pkgdown](https://pkgdown.r-lib.org)), add a vignette (see chapter \@ref(vignettes)), or submit it to CRAN (see chapter \@ref(release)).
+Now that your package is on GitHub, the `README.md` file matters.
+It is the package's home page and welcome mat, at least until you decide to give it a website (see [pkgdown](https://pkgdown.r-lib.org)), add a vignette (see chapter \@ref(vignettes)), or submit it to CRAN (see chapter \@ref(release)).
 
 The `use_readme_rmd()` function initializes a basic, executable `README.Rmd` ready for you to edit:
 
-```{r use-readme-rmd, eval = create, chunk_envvar = c(rlang_interactive = "FALSE")}
+```{r use-readme-rmd}
+#| eval = create, chunk_envvar = c(rlang_interactive = "FALSE")
 use_readme_rmd()
 ```
 
 In addition to creating `README.Rmd`, this adds some lines to `.Rbuildignore`, and creates a Git pre-commit hook to help you keep `README.Rmd` and `README.md` in sync.
 
-`README.Rmd` already has sections that:
+`README.Rmd` already has sections that prompt you to:
 
-  * Prompt you to describe the purpose of the package.
-  * Provide code to install your package.
-  * Prompt you to show a bit of usage.
+* Describe the purpose of the package.
+* Provide installation instructions. If a GitHub remote is detected when
+  `use_readme_rmd()` is called, this section is pre-filled with instructions on
+  how to install from GitHub.
+* Show a bit of usage.
 
-How to populate this skeleton? Copy stuff liberally from `DESCRIPTION` and any formal and informal tests or examples you have. Anything is better than nothing. Otherwise ... do you expect people to install your package and comb through individual help files to figure out how to use it? They probably won't.
+How to populate this skeleton?
+Copy stuff liberally from `DESCRIPTION` and any formal and informal tests or examples you have.
+Anything is better than nothing.
+Otherwise ... do you expect people to install your package and comb through individual help files to figure out how to use it?
+They probably won't.
 
-We like to write the `README` in R Markdown, so it can feature actual usage. The inclusion of live code also makes it less likely that your `README` grows stale and out-of-sync with your actual package.
+We like to write the `README` in R Markdown, so it can feature actual usage.
+The inclusion of live code also makes it less likely that your `README` grows stale and out-of-sync with your actual package.
 
-If RStudio has not already done so, open `README.Rmd` for editing. Make sure it shows some usage of `fbind()` and/or `fcount()`, for example.
+If RStudio has not already done so, open `README.Rmd` for editing.
+Make sure it shows some usage of `str_split_one()`.
 
-The `README.Rmd` we use is here: [README.Rmd](https://raw.githubusercontent.com/jennybc/foofactors/master/README.Rmd) and these are the contents:
-
-*TODO: update this link after merge into r-pkgs.*
+The `README.Rmd` we use is here: [README.Rmd](https://github.com/jennybc/regexcite/blob/main/README.Rmd) and here's what it contains:
 
 ```{r copy-readme-rmd, include = debug, eval = create}
 file_copy(
-  path(owd, "fixtures", "foofactors-README.Rmd"),
+  path(owd, "fixtures", "regexcite-README.Rmd"),
   "README.Rmd",
   overwrite = TRUE
 )
@@ -748,7 +978,8 @@ file_copy(
 cat(readLines("README.Rmd"), sep = "\n")
 ```
 
-Don't forget to render it to make `README.md`! The pre-commit hook should remind you if you try to commit `README.Rmd` but not `README.md` and also when `README.md` appears to be out-of-date.
+Don't forget to render it to make `README.md`!
+The pre-commit hook should remind you if you try to commit `README.Rmd`, but not `README.md`, and also when `README.md` appears to be out-of-date.
 
 The very best way to render `README.Rmd` is with `build_readme()`, because it takes care to render with the the most current version of your package, i.e. it installs a temporary copy from the current source.
 
@@ -756,23 +987,22 @@ The very best way to render `README.Rmd` is with `build_readme()`, because it ta
 build_readme()
 ```
 
-You can see the rendered `README.md` simply by [visiting foofactors on GitHub](https://github.com/jennybc/foofactors#readme).
+You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
 
 Finally, don't forget to do one last commit. And push, if you're using GitHub.
 
-```{r commit-rendered-readme, echo = debug, comment = NA, include = FALSE, eval = create}
+```{r commit-rendered-readme}
+#| echo = debug, comment = NA, include = FALSE, eval = create
 git_add(c(".Rbuildignore", "README.Rmd", "README.md"))
 git_commit("Write README.Rmd and render")
 ```
 
 ```{r final-push, include = FALSE, eval = FALSE}
-# execute manually if you want to update the foofactors repo on github
+# execute manually if you want to update the regexcite repo on github
 # pre-requisite:
 #   render of this with no existing cache and `where <- "tmp_user"`
 library(gert)
-proj_set("~/tmp/foofactors")
-setwd(proj_get())
-git_remote_add("https://github.com/jennybc/foofactors.git")
+git_remote_add("https://github.com/jennybc/regexcite.git")
 git_push(force = TRUE)
 ```
 
@@ -784,13 +1014,12 @@ Let's run `check()` again to make sure all is still well.
 check()
 ```
 
-:::downlit
 ```{r final-check, eval = create, warning = TRUE, echo = FALSE}
 shhh_check(error_on = "never")
 ```
-:::
 
-foofactors should have no errors, warnings or notes. This would be a good time to re-build and install it properly. And celebrate!
+regexcite should have no errors, warnings or notes.
+This would be a good time to re-build and install it properly. And celebrate!
 
 ```{r final-install-fake, eval = FALSE}
 install()
@@ -800,15 +1029,16 @@ install()
 cat(pretty_install(), sep = "\n")
 ```
 
-Feel free to visit the [foofactors package](https://github.com/jennybc/foofactors) on GitHub, which is exactly as developed here. The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved. The rest of this book goes in greater detail for each step you've seen here and much more.
+Feel free to visit the [regexcite package](https://github.com/jennybc/regexcite) on GitHub, which is exactly as developed here.
+The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved.
+The rest of this book goes in greater detail for each step you've seen here and much more.
 
 ```{r cleanup, include = debug, eval = create}
-pkgload::unload("foofactors")
-remove.packages("foofactors")
+pkgload::unload("regexcite")
+remove.packages("regexcite")
 
 # being kind to someone working interactively and locally
 if (is.null(getOption("knitr.in.progress"))) {
-  setwd(owd)
-  proj_set()
+  withr::deferred_run()
 }
 ```
