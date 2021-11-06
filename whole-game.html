@@ -87,122 +87,156 @@
 <span class="header-section-number">2</span> The whole game<a class="anchor" aria-label="anchor" href="#whole-game"><i class="fas fa-link"></i></a>
 </h1>
 <p><em>Spoiler alert!</em></p>
-<p>This chapter runs through the development of a small toy package. It’s meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.</p>
-<p>To keep the pace brisk, we exploit the modern conveniences in the devtools package and the RStudio IDE. In later chapters, we are more explicit about what those helpers are doing for us.</p>
+<p>This chapter runs through the development of a small toy package.
+It’s meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.</p>
+<p>To keep the pace brisk, we exploit the modern conveniences in the devtools package and the RStudio IDE.
+In later chapters, we are more explicit about what those helpers are doing for us.</p>
 <div id="load-devtools-and-friends" class="section level2">
 <h2>
 <span class="header-section-number">2.1</span> Load devtools and friends<a class="anchor" aria-label="anchor" href="#load-devtools-and-friends"><i class="fas fa-link"></i></a>
 </h2>
-<p>You can initiate your new package from any active R session. You don’t need to worry about whether you’re in an existing or new project or not. The functions we use take care of this.</p>
-<p>Load the devtools package, which is the public face of a set of packages that support various aspects of package development.</p>
+<p>You can initiate your new package from any active R session.
+You don’t need to worry about whether you’re in an existing or new project or not.
+The functions we use take care of this.</p>
+<p>Load the devtools package, which is the public face of a set of packages that support various aspects of package development.
+The most obvious of these is the usethis package, which you’ll see is also being loaded.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span>
+<span class="co">#&gt; Loading required package: usethis</span></code></pre></div>
 <p>Do you have an old version of devtools? Compare your version against ours and upgrade if necessary.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span>
 <span class="co">#&gt; [1] '2.4.2'</span></code></pre></div>
-<p>For presentation purposes only, we use <a href="https://fs.r-lib.org">fs</a>, for filesystem work, and the <a href="https://tidyverse.tidyverse.org">tidyverse</a>, for light data wrangling.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org">tidyverse</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://fs.r-lib.org">fs</a></span><span class="op">)</span></code></pre></div>
 </div>
-<div id="toy-package-foofactors" class="section level2">
+<div id="toy-package-regexcite" class="section level2">
 <h2>
-<span class="header-section-number">2.2</span> Toy package: foofactors<a class="anchor" aria-label="anchor" href="#toy-package-foofactors"><i class="fas fa-link"></i></a>
+<span class="header-section-number">2.2</span> Toy package: regexcite<a class="anchor" aria-label="anchor" href="#toy-package-regexcite"><i class="fas fa-link"></i></a>
 </h2>
 <p>We use various functions from devtools to build a small toy package from scratch, with features commonly seen in released packages:</p>
 <ul>
-<li>Functions to address a specific need, such as helpers to work with factors.</li>
-<li>Access to established workflows for installation, getting help, and checking
-basic quality.</li>
+<li>Functions to address a specific need, in this case helpers for work with regular expressions.</li>
 <li>Version control and an open development process.
 <ul>
-<li>This is completely optional in your work, but recommended. You’ll see how
-Git and GitHub helps us expose all the intermediate stages of our package.</li>
+<li>This is completely optional in your work, but highly recommended.
+You’ll see how Git and GitHub help us expose all the intermediate stages of
+our toy package.</li>
 </ul>
 </li>
-<li>Documentation for individual functions via
-<a href="https://CRAN.R-project.org/package=roxygen2">roxygen2</a>.</li>
+<li>Access to established workflows for installation, getting help, and checking quality.
+<ul>
+<li>Documentation for individual functions via <a href="https://CRAN.R-project.org/package=roxygen2">roxygen2</a>.</li>
 <li>Unit testing with <a href="https://testthat.r-lib.org">testthat</a>.</li>
 <li>Documentation for the package as a whole via an executable <code>README.Rmd</code>.</li>
 </ul>
-<p>We call the package <strong>foofactors</strong> and it will have a couple functions for handling factors. Please note that these functions are super simple and definitely not the point! For a proper package for factor handling, please see <a href="https://forcats.tidyverse.org">forcats</a>.</p>
-<p>The foofactors package itself is not our goal here. It is a device for demonstrating a typical workflow for package development with devtools.</p>
+</li>
+</ul>
+<p>We call the package <strong>regexcite</strong> and it will have a couple functions that make common tasks with regular expressions easier.
+Please note that these functions are super simple and definitely not the point! For real work, there are several proper R packages that address this problem space:</p>
+<ul>
+<li>
+<a href="https://stringr.tidyverse.org">stringr</a> (which uses stringi)</li>
+<li><a href="https://stringi.gagolewski.com/">stringi</a></li>
+<li><a href="https://cran.r-project.org/package=rex">rex</a></li>
+<li><a href="https://cran.r-project.org/package=rematch2">rematch2</a></li>
+</ul>
+<p>The regexcite package itself is not our goal here.
+It is a device for demonstrating a typical workflow for package development with devtools.</p>
 </div>
 <div id="peek-at-the-finished-product" class="section level2">
 <h2>
 <span class="header-section-number">2.3</span> Peek at the finished product<a class="anchor" aria-label="anchor" href="#peek-at-the-finished-product"><i class="fas fa-link"></i></a>
 </h2>
-<p>The foofactors package is tracked during its development with the Git version control system. This is purely optional and you can certainly follow along without implementing this. A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting foofactors on GitHub: <a href="https://github.com/jennybc/foofactors" class="uri">https://github.com/jennybc/foofactors</a>. By inspecting the <a href="https://github.com/jennybc/foofactors/commits/master">commit history</a> and especially the diffs, you can see exactly what changes at each step of the process laid out below.</p>
-<p><em>TODO: I think these diffs are extremely useful and would like to surface them better here.</em></p>
+<p>The regexcite package is tracked during its development with the Git version control system.
+This is purely optional and you can certainly follow along without implementing this.
+A nice side benefit is that we eventually connect it to a remote repository on GitHub, which means you can see the glorious result we are working towards by visiting regexcite on GitHub: <a href="https://github.com/jennybc/regexcite" class="uri">https://github.com/jennybc/regexcite</a>.
+By inspecting the <a href="https://github.com/jennybc/regexcite/commits/main">commit history</a> and especially the diffs, you can see exactly what changes at each step of the process laid out below.</p>
+<!-- TODO: I think these diffs are extremely useful and would like to surface them better here. -->
 </div>
 <div id="create_package" class="section level2">
 <h2>
 <span class="header-section-number">2.4</span> <code>create_package()</code><a class="anchor" aria-label="anchor" href="#create_package"><i class="fas fa-link"></i></a>
 </h2>
-<p>Call <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> to initialize a new package in a directory on your computer (and create the directory, if necessary). See section <a href="workflows101.html#creating">5.1.3</a> for more.</p>
-<p>Make a deliberate choice about where to create this package on your computer. It should probably be somewhere within your home directory, alongside your other R projects. It should not be nested inside another RStudio Project, R package, or Git repo. Nor should it be in an R package library, which holds packages that have already been built and installed. The conversion of the source package we are creating here into an installed package is part of what devtools facilitates. Don’t try to do devtools’ job for it! See <a href="workflows101.html#where-source-package">5.1.4</a> for more.</p>
+<p>Call <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> to initialize a new package in a directory on your computer (and create the directory, if necessary).
+See section <a href="workflows101.html#creating">5.1.3</a> for more.</p>
+<p>Make a deliberate choice about where to create this package on your computer.
+It should probably be somewhere within your home directory, alongside your other R projects.
+It should not be nested inside another RStudio Project, R package, or Git repo.
+Nor should it be in an R package library, which holds packages that have already been built and installed.
+The conversion of the source package we create here into an installed package is part of what devtools facilitates.
+Don’t try to do devtools’ job for it!
+See <a href="workflows101.html#where-source-package">5.1.4</a> for more.</p>
 <p>Substitute your chosen path into a <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> call like this:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/create_package.html">create_package</a></span><span class="op">(</span><span class="st">"~/path/to/foofactors"</span><span class="op">)</span></code></pre></div>
-<p>We have to work in a temp directory, because this book is built non-interactively, in the cloud. Behind the scenes, we’re executing our own <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> command, but don’t be surprised if our output differs a bit from yours.</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Creating <span style="color: #0000BB;">'/tmp/RtmpTmvjG1/foofactors/'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting active project to <span style="color: #0000BB;">'/tmp/RtmpTmvjG1/foofactors'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Creating <span style="color: #0000BB;">'R/'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'DESCRIPTION'</span></span>
-<span class="co">#&gt; <span style="color: #0000BB;">Package</span>: foofactors</span>
-<span class="co">#&gt; <span style="color: #0000BB;">Title</span>: What the Package Does (One Line, Title Case)</span>
-<span class="co">#&gt; <span style="color: #0000BB;">Version</span>: 0.0.0.9000</span>
-<span class="co">#&gt; <span style="color: #0000BB;">Authors@R</span> (parsed):</span>
-<span class="co">#&gt;     * First Last &lt;first.last@example.com&gt; [aut, cre] (YOUR-ORCID-ID)</span>
-<span class="co">#&gt; <span style="color: #0000BB;">Description</span>: What the package does (one paragraph).</span>
-<span class="co">#&gt; <span style="color: #0000BB;">License</span>: `use_mit_license()`, `use_gpl3_license()` or friends to</span>
-<span class="co">#&gt;     pick a license</span>
-<span class="co">#&gt; <span style="color: #0000BB;">Encoding</span>: UTF-8</span>
-<span class="co">#&gt; <span style="color: #0000BB;">Roxygen</span>: list(markdown = TRUE)</span>
-<span class="co">#&gt; <span style="color: #0000BB;">RoxygenNote</span>: 7.1.2</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'NAMESPACE'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'foofactors.Rproj'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^foofactors\\.Rproj$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'.Rproj.user'</span> to <span style="color: #0000BB;">'.gitignore'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^\\.Rproj\\.user$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting active project to <span style="color: #0000BB;">'&lt;no active project&gt;'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting active project to <span style="color: #0000BB;">'/tmp/RtmpTmvjG1/foofactors'</span></span></code></pre>
-</div>
-<p>If you’re working in RStudio, you should find yourself in a new instance of RStudio, opened into your new foofactors package (and Project). If you somehow need to do this manually, navigate to the directory and double click on <code>foofactors.Rproj</code>. RStudio has special handling for packages and you should now see a <em>Build</em> tab in the same pane as <em>Environment</em> and <em>History</em>.</p>
-<p><em>TODO: good place for a screenshot.</em></p>
-<p>What’s in this new directory that is also an R package and, probably, an RStudio Project? Here’s a listing (locally, you can consult your <em>Files</em> pane):</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#&gt; <span style="color: #555555;"># A tibble: 6 × 2</span></span>
-<span class="co">#&gt;   path             type     </span>
-<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;fs::path&gt;</span>       <span style="color: #555555; font-style: italic;">&lt;fct&gt;</span>    </span>
-<span class="co">#&gt; <span style="color: #555555;">1</span> .Rbuildignore    file     </span>
-<span class="co">#&gt; <span style="color: #555555;">2</span> .gitignore       file     </span>
-<span class="co">#&gt; <span style="color: #555555;">3</span> DESCRIPTION      file     </span>
-<span class="co">#&gt; <span style="color: #555555;">4</span> NAMESPACE        file     </span>
-<span class="co">#&gt; <span style="color: #555555;">5</span> <span style="color: #0000BB; font-weight: bold;">R</span>                directory</span>
-<span class="co">#&gt; <span style="color: #555555;">6</span> foofactors.Rproj file</span></code></pre>
-</div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/create_package.html">create_package</a></span><span class="op">(</span><span class="st">"~/path/to/regexcite"</span><span class="op">)</span></code></pre></div>
+<p>We have to work in a temp directory, because this book is built non-interactively, in the cloud.
+Behind the scenes, we’re executing our own <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> command, but don’t be surprised if our output differs a bit from yours.</p>
+<pre><code>#&gt; ✔ Creating '/tmp/RtmpKX7l2c/regexcite/'
+#&gt; ✔ Setting active project to '/tmp/RtmpKX7l2c/regexcite'
+#&gt; ✔ Creating 'R/'
+#&gt; ✔ Writing 'DESCRIPTION'
+#&gt; Package: regexcite
+#&gt; Title: What the Package Does (One Line, Title Case)
+#&gt; Version: 0.0.0.9000
+#&gt; Authors@R (parsed):
+#&gt;     * First Last &lt;first.last@example.com&gt; [aut, cre] (YOUR-ORCID-ID)
+#&gt; Description: What the package does (one paragraph).
+#&gt; License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+#&gt;     license
+#&gt; Encoding: UTF-8
+#&gt; Roxygen: list(markdown = TRUE)
+#&gt; RoxygenNote: 7.1.2
+#&gt; ✔ Writing 'NAMESPACE'
+#&gt; ✔ Writing 'regexcite.Rproj'
+#&gt; ✔ Adding '^regexcite\\.Rproj$' to '.Rbuildignore'
+#&gt; ✔ Adding '.Rproj.user' to '.gitignore'
+#&gt; ✔ Adding '^\\.Rproj\\.user$' to '.Rbuildignore'
+#&gt; ✔ Setting active project to '&lt;no active project&gt;'</code></pre>
+<p>If you’re working in RStudio, you should find yourself in a new instance of RStudio, opened into your new regexcite package (and Project).
+If you somehow need to do this manually, navigate to the directory and double click on <code>regexcite.Rproj</code>.
+RStudio has special handling for packages and you should now see a <em>Build</em> tab in the same pane as <em>Environment</em> and <em>History</em>.</p>
+<!-- TODO: good place for a screenshot. -->
+<p>What’s in this new directory that is also an R package and, probably, an RStudio Project?
+Here’s a listing (locally, you can consult your <em>Files</em> pane):</p>
+<pre><code>#&gt; # A tibble: 6 × 2
+#&gt;   path            type     
+#&gt;   &lt;fs::path&gt;      &lt;fct&gt;    
+#&gt; 1 .Rbuildignore   file     
+#&gt; 2 .gitignore      file     
+#&gt; 3 DESCRIPTION     file     
+#&gt; 4 NAMESPACE       file     
+#&gt; 5 R               directory
+#&gt; 6 regexcite.Rproj file</code></pre>
 <div class="rstudio-tip">
-<p>In the file browser, go to <em>More &gt; Show Hidden Files</em> to toggle the visibility of hidden files (a.k.a. <a href="https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments">“dotfiles”</a>). A select few are visible all the time, but sometimes you want to see them all.</p>
+<p>In the file browser, go to <em>More &gt; Show Hidden Files</em> to toggle the visibility of hidden files (a.k.a. <a href="https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory#Unix_and_Unix-like_environments">“dotfiles”</a>).
+A select few are visible all the time, but sometimes you want to see them all.</p>
 </div>
 <ul>
 <li>
-<code>.Rbuildignore</code> lists files that we need to have around but that should not be included when building the R package from source. More in <a href="package-structure-state.html#rbuildignore">4.3.1</a>.</li>
+<code>.Rbuildignore</code> lists files that we need to have around but that should not be
+included when building the R package from source.
+More in <a href="package-structure-state.html#rbuildignore">4.3.1</a>.</li>
 <li>
 <code>.Rproj.user</code>, if you have it, is a directory used internally by RStudio.</li>
 <li>
-<code>.gitignore</code> anticipates Git usage and ignores some standard, behind-the-scenes files created by R and RStudio. Even if you do not plan to use Git, this is harmless.</li>
+<code>.gitignore</code> anticipates Git usage and ignores some standard,
+behind-the-scenes files created by R and RStudio.
+Even if you do not plan to use Git, this is harmless.</li>
 <li>
-<code>DESCRIPTION</code> provides <a href="description.html#description">metadata about your package</a>. We edit this shortly.</li>
+<code>DESCRIPTION</code> provides <a href="description.html#description">metadata about your package</a>.
+We edit this shortly.</li>
 <li>
-<a href="namespace.html#namespace"><code>NAMESPACE</code></a> declares the functions your package exports for external use and the external functions your package imports from other packages. At this point, it is empty, except for a comment declaring that this is a file we will not edit by hand.</li>
-<li>The <code>R/</code> directory is the <a href="r.html#r">“business end” of your package</a>. It will soon contain <code>.R</code> files with function definitions.</li>
+<a href="namespace.html#namespace"><code>NAMESPACE</code></a> declares the functions your package exports for
+external use and the external functions your package imports from other
+packages.
+At this point, it is empty, except for a comment declaring that this is a file
+we will not edit by hand.</li>
+<li>The <code>R/</code> directory is the <a href="r.html#r">“business end” of your package</a>.
+It will soon contain <code>.R</code> files with function definitions.</li>
 <li>
-<code>foofactors.Rproj</code> is the file that makes this directory an RStudio Project. Even if you don’t use RStudio, this file is harmless. Or you can suppress its creation with <code>create_package(..., rstudio = FALSE)</code>. More in <a href="workflows101.html#projects">5.2</a>.</li>
+<code>regexcite.Rproj</code> is the file that makes this directory an RStudio Project.
+Even if you don’t use RStudio, this file is harmless.
+Or you can suppress its creation with <code>create_package(..., rstudio = FALSE)</code>.
+More in <a href="workflows101.html#projects">5.2</a>.</li>
 </ul>
 </div>
 <div id="use_git" class="section level2">
@@ -210,159 +244,203 @@ Git and GitHub helps us expose all the intermediate stages of our package.</li>
 <span class="header-section-number">2.5</span> <code>use_git()</code><a class="anchor" aria-label="anchor" href="#use_git"><i class="fas fa-link"></i></a>
 </h2>
 <div class="tip">
-<p>The use of Git or another version control system is optional, but a recommended practice in the long-term. We explain its importance in <a href="git.html#git">18</a>.</p>
+<p>The use of Git or another version control system is optional, but a recommended practice in the long-term.
+We explain its importance in <a href="git.html#git">18</a>.</p>
 </div>
-<p>The foofactors directory is an R source package and an RStudio Project. Now we make it also a Git repository, with <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_git.html">use_git</a></span><span class="op">(</span><span class="op">)</span>  
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Initialising Git repo</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'.Rhistory'</span>, <span style="color: #0000BB;">'.Rdata'</span>, <span style="color: #0000BB;">'.httr-oauth'</span>, <span style="color: #0000BB;">'.DS_Store'</span> to <span style="color: #0000BB;">'.gitignore'</span></span></code></pre></div>
-<p>In an interactive session, you will be asked if you want to commit some files here and you should probably accept the offer. Behind the scenes, we’ll cause the same to happen for us.</p>
-<p>What’s new? Only the creation of a <code>.git</code> directory, which is hidden in most contexts, including the RStudio file browser. Its existence is evidence that we have indeed initialized a Git repo here.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="http://fs.r-lib.org/reference/dir_ls.html">dir_info</a></span><span class="op">(</span>all <span class="op">=</span> <span class="cn">TRUE</span>, regexp <span class="op">=</span> <span class="st">"^[.]git$"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">path</span>, <span class="va">type</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #555555;"># A tibble: 1 × 2</span></span>
-<span class="co">#&gt;   path       type     </span>
-<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;fs::path&gt;</span> <span style="color: #555555; font-style: italic;">&lt;fct&gt;</span>    </span>
-<span class="co">#&gt; <span style="color: #555555;">1</span> <span style="color: #0000BB; background-color: #00BB00;">.git</span>       directory</span></code></pre></div>
-<p>If you’re using RStudio, it probably requested permission to relaunch itself in this Project. You can do so manually by quitting and relaunching by double clicking on <code>foofactors.Rproj</code>. Now, in addition to package development support, you have access to a basic Git client in the <em>Git</em> tab of the <em>Environment/History/Build</em> pane.</p>
-<p><em>TODO: good place for a screenshot.</em></p>
-<p>Click on History (the clock icon) and, if you consented, you will see an initial commit made via <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>:</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#&gt; <span style="color: #555555;"># A tibble: 1 × 3</span></span>
-<span class="co">#&gt;   commit                                   author         message   </span>
-<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;chr&gt;</span>                                    <span style="color: #555555; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #555555; font-style: italic;">&lt;chr&gt;</span>     </span>
-<span class="co">#&gt; <span style="color: #555555;">1</span> 6c44ab55fafff0b30980790f7f2fa99e8024d610 Whole Game &lt;w… <span style="color: #555555;">"</span>Initial …</span></code></pre>
-</div>
+<p>The regexcite directory is an R source package and an RStudio Project.
+Now we make it also a Git repository, with <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_git.html">use_git</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; ✔ Setting active project to '/tmp/RtmpKX7l2c/regexcite'</span>
+<span class="co">#&gt; ✔ Initialising Git repo</span>
+<span class="co">#&gt; ✔ Adding '.Rhistory', '.Rdata', '.httr-oauth', '.DS_Store' to '.gitignore'</span></code></pre></div>
+<p>In an interactive session, you will be asked if you want to commit some files here and you should probably accept the offer.
+Behind the scenes, we’ll cause the same to happen for us.</p>
+<p>What’s new?
+Only the creation of a <code>.git</code> directory, which is hidden in most contexts, including the RStudio file browser.
+Its existence is evidence that we have indeed initialized a Git repo here.</p>
+<pre><code>#&gt; # A tibble: 1 × 2
+#&gt;   path       type     
+#&gt;   &lt;fs::path&gt; &lt;fct&gt;    
+#&gt; 1 .git       directory</code></pre>
+<p>If you’re using RStudio, it probably requested permission to relaunch itself in this Project, which you should do.
+You can do so manually by quitting, then relaunching RStudio by double clicking on <code>regexcite.Rproj</code>.
+Now, in addition to package development support, you have access to a basic Git client in the <em>Git</em> tab of the <em>Environment/History/Build</em> pane.</p>
+<!-- TODO: good place for a screenshot. -->
+<p>Click on History (the clock icon in the Git pane) and, if you consented, you will see an initial commit made via <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>:</p>
+<pre><code>#&gt; # A tibble: 1 × 3
+#&gt;   commit                                   author          message  
+#&gt;   &lt;chr&gt;                                    &lt;chr&gt;           &lt;chr&gt;    
+#&gt; 1 6cb9ad104c8e6fb76df78d0479303719f382c56d jennybc &lt;jenny… "Initial…</code></pre>
 <div class="rstudio-tip">
-<p>RStudio can initialize a Git repository, in any Project, even if it’s not an R package, as long you’ve set up RStudio + Git integration. Do <em>Tools &gt; Version Control &gt; Project Setup</em>. Then choose <em>Version control system: Git</em> and <em>initialize a new git repository for this project</em>.</p>
+<p>RStudio can initialize a Git repository, in any Project, even if it’s not an R package, as long you’ve set up RStudio + Git integration.
+Do <em>Tools &gt; Version Control &gt; Project Setup</em>.
+Then choose <em>Version control system: Git</em> and <em>initialize a new git repository for this project</em>.</p>
 </div>
 </div>
 <div id="write-the-first-function" class="section level2">
 <h2>
 <span class="header-section-number">2.6</span> Write the first function<a class="anchor" aria-label="anchor" href="#write-the-first-function"><i class="fas fa-link"></i></a>
 </h2>
-<p>It is not too hard to find a puzzling operation involving factors. Let’s see what happens when we catenate two factors.</p>
+<p>A fairly common task when dealing with strings is the need to split a single string into many parts.
+The <code><a href="https://rdrr.io/r/base/strsplit.html">strsplit()</a></code> function in base R does exactly this.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="op">(</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"alfa,bravo,charlie,delta"</span><span class="op">)</span>
+<span class="co">#&gt; [1] "alfa,bravo,charlie,delta"</span>
+<span class="fu"><a href="https://rdrr.io/r/base/strsplit.html">strsplit</a></span><span class="op">(</span><span class="va">x</span>, split <span class="op">=</span> <span class="st">","</span><span class="op">)</span>
+<span class="co">#&gt; [[1]]</span>
+<span class="co">#&gt; [1] "alfa"    "bravo"   "charlie" "delta"</span></code></pre></div>
+<p>Take a close look at the return value.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="op">(</span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"character"</span>, <span class="st">"hits"</span>, <span class="st">"your"</span>, <span class="st">"eyeballs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; [1] character hits      your      eyeballs </span>
-<span class="co">#&gt; Levels: character eyeballs hits your</span>
-<span class="op">(</span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"but"</span>, <span class="st">"integer"</span>, <span class="st">"where it"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; [1] but      integer  where it counts  </span>
-<span class="co">#&gt; Levels: but counts integer where it</span>
-<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
-<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
-<span class="co">#&gt; [7] where it  counts   </span>
-<span class="co">#&gt; 8 Levels: character eyeballs hits your but counts ... where it</span></code></pre></div>
-<p>NOTE: As of R 4.1.0 (released 2021-05-18), “using <code><a href="https://rdrr.io/r/base/c.html">c()</a></code> to combine a factor with other factors now gives a factor”, instead of an integer vector.
-Hallelujah!
-Here’s what <code>c(a, b)</code> looked like in R until May 2021, i.e. in R &lt; 4.1.0:</p>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strsplit.html">strsplit</a></span><span class="op">(</span><span class="va">x</span>, split <span class="op">=</span> <span class="st">","</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; List of 1</span>
+<span class="co">#&gt;  $ : chr [1:4] "alfa" "bravo" "charlie" "delta"</span></code></pre></div>
+<p>The shape of this return value often surprises people or, at least, inconveniences them.
+The input is a character vector of length one and the output is a list of length one.
+This makes total sense in light of R’s fundamental tendency towards vectorization.
+But sometimes it’s still a bit of a bummer.
+Often you know that your input is morally a scalar, i.e. it’s just a single string, and really want the output to be the character vector its parts.</p>
+<p>This leads R users to employ various methods of “unlist”-ing the result:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
-<span class="co">#&gt; [1] 1 3 4 2 1 3 4 2</span></code></pre></div>
-<p>NOTE continued: What puzzling thing about R should be the basis of a new toy package example? Who knows, featuring it here might help get it fixed in base R itself! You can record your ideas in this GitHub issue: <a href="https://github.com/hadley/r-pkgs/issues/709" class="uri">https://github.com/hadley/r-pkgs/issues/709</a>.</p>
-<p>Huh? Many people do not expect the result of catenating two factors to be an integer vector consisting of the numbers 1, 2, 3, and 4. What if we coerce each factor to character, catenate, then re-convert to factor?</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
-<span class="co">#&gt; [7] where it  counts   </span>
-<span class="co">#&gt; 8 Levels: but character counts eyeballs hits integer ... your</span></code></pre></div>
-<p>That seems to produce a result that makes more sense. Let’s drop that logic into the body of a function called <code>fbind()</code>:</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fbind</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span></code></pre>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strsplit.html">strsplit</a></span><span class="op">(</span><span class="va">x</span>, split <span class="op">=</span> <span class="st">","</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; [1] "alfa"    "bravo"   "charlie" "delta"</span>
+
+<span class="fu"><a href="https://rdrr.io/r/base/strsplit.html">strsplit</a></span><span class="op">(</span><span class="va">x</span>, split <span class="op">=</span> <span class="st">","</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
+<span class="co">#&gt; [1] "alfa"    "bravo"   "charlie" "delta"</span></code></pre></div>
+<p>The second, safer solution is the basis for the inaugural function of regexcite: <code>strsplit1()</code>.</p>
+<pre><code>strsplit1 &lt;- function(x, split) {
+  strsplit(x, split = split)[[1]]
+}</code></pre>
+<p>This book does not teach you how to write functions in R.
+To learn more about that take a look at the <a href="https://r4ds.had.co.nz/functions.html">Functions chapter</a> of R for Data Science and the <a href="https://adv-r.hadley.nz/functions.html">Functions chapter</a> of Advanced R.</p>
+<div class="tip">
+<p>The name of <code>strsplit1()</code> is a nod to the very handy <code><a href="https://rdrr.io/r/base/paste.html">paste0()</a></code>, which first appeared in R 2.15.0 in 2012.
+<code><a href="https://rdrr.io/r/base/paste.html">paste0()</a></code> was created to address the extremely common use case of <code><a href="https://rdrr.io/r/base/paste.html">paste()</a></code>-ing strings together <em>without</em> a separator.
+<code><a href="https://rdrr.io/r/base/paste.html">paste0()</a></code> has been lovingly described as <a href="https://simplystatistics.org/2013/01/31/paste0-is-statistical-computings-most-influential-contribution-of-the-21st-century/">“statistical computing’s most influential contribution of the 21st century”</a>.</p>
 </div>
-<p>This book does not teach you how to write functions in R. To learn more about that take a look at the <a href="https://r4ds.had.co.nz/functions.html">Functions chapter</a> of R for Data Science and the <a href="https://adv-r.hadley.nz/functions.html">Functions chapter</a> of Advanced R.</p>
 </div>
 <div id="use_r" class="section level2">
 <h2>
 <span class="header-section-number">2.7</span> <code>use_r()</code><a class="anchor" aria-label="anchor" href="#use_r"><i class="fas fa-link"></i></a>
 </h2>
-<p>Where shall we define <code>fbind()</code>? Save it in a <code>.R</code> file, in the <code>R/</code> subdirectory of your package. A reasonable starting position is to make a new <code>.R</code> file for each function in your package and name the file after the function. As you add more functions, you’ll want to relax this and begin to group related functions together. We’ll save the definition of <code>fbind()</code> in the file <code>R/fbind.R</code>.</p>
-<p>The helper <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> creates and/or opens a script below <code>R/</code>. It really shines in a more mature package, when navigating between <code>.R</code> files and the associated tests. But, even here, it’s useful to keep yourself from getting too carried away while working in <code>Untitled4</code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_r</a></span><span class="op">(</span><span class="st">"fbind"</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Edit <span style="color: #0000BB;">'R/fbind.R'</span></span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Call <span style="color: #555555;">`use_test()`</span> to create a matching test file</span></code></pre></div>
-<p>Put the definition of <code>fbind()</code> <strong>and only the definition of <code>fbind()</code></strong> in <code>R/fbind.R</code> and save it. The file <code>R/fbind.R</code> should NOT contain any of the other top-level code we have recently executed, such as the definitions of factors <code>a</code> and <code>b</code>, <code><a href="https://devtools.r-lib.org/">library(devtools)</a></code> or <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>. This foreshadows an adjustment you’ll need to make as you transition from writing R scripts to R packages. Packages and scripts use different mechanisms to declare their dependency on other packages and to store example or test code. We explore this further in chapter <a href="r.html#r">7</a>.</p>
+<p>Where shall we define <code>strsplit1()</code>?
+Save it in a <code>.R</code> file, in the <code>R/</code> subdirectory of your package.
+A reasonable starting position is to make a new <code>.R</code> file for each user-facing function in your package and name the file after the function.
+As you add more functions, you’ll want to relax this and begin to group related functions together.
+We’ll save the definition of <code>strsplit1()</code> in the file <code>R/strsplit1.R</code>.</p>
+<p>The helper <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> creates and/or opens a script below <code>R/</code>.
+It really shines in a more mature package, when navigating between <code>.R</code> files and the associated test file.
+But, even here, it’s useful to keep yourself from getting too carried away while working in <code>Untitled4</code>.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_r</a></span><span class="op">(</span><span class="st">"strsplit1"</span><span class="op">)</span>
+<span class="co">#&gt; • Edit 'R/strsplit1.R'</span>
+<span class="co">#&gt; • Call `use_test()` to create a matching test file</span></code></pre></div>
+<p>Put the definition of <code>strsplit1()</code> <strong>and only the definition of <code>strsplit1()</code></strong> in <code>R/strsplit1.R</code> and save it.
+The file <code>R/strsplit1.R</code> should NOT contain any of the other top-level code we have recently executed, such as the definition of our practice input <code>x</code>, <code><a href="https://devtools.r-lib.org/">library(devtools)</a></code>, or <code><a href="https://usethis.r-lib.org/reference/use_git.html">use_git()</a></code>.
+This foreshadows an adjustment you’ll need to make as you transition from writing R scripts to R packages.
+Packages and scripts use different mechanisms to declare their dependency on other packages and to store example or test code.
+We explore this further in chapter <a href="r.html#r">7</a>.</p>
 </div>
 <div id="whole-game-load-all" class="section level2">
 <h2>
 <span class="header-section-number">2.8</span> <code>load_all()</code><a class="anchor" aria-label="anchor" href="#whole-game-load-all"><i class="fas fa-link"></i></a>
 </h2>
-<p>How do we test drive <code>fbind()</code>? If this were a regular R script, we might use RStudio to send the function definition to the R Console and define <code>fbind()</code> in the global workspace. Or maybe we’d call <code>source("R/fbind.R")</code>. For package development, however, devtools offers a more robust approach. See section <a href="workflows101.html#load-all">5.4</a> for more.</p>
-<p>Call <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> to make <code>fbind()</code> available for experimentation.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<p>How do we test drive <code>strsplit1()</code>?
+If this were a regular R script, we might use RStudio to send the function definition to the R Console and define <code>strsplit1()</code> in the global environment.
+Or maybe we’d call <code>source("R/strsplit1.R")</code>.
+For package development, however, devtools offers a more robust approach.
+See section <a href="workflows101.html#load-all">5.4</a> for more.</p>
+<p>Call <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> to make <code>strsplit1()</code> available for experimentation.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span></code></pre></div>
-<p>Now call <code>fbind(a, b)</code> to see how it works.</p>
+<span class="co">#&gt; ℹ Loading regexcite</span></code></pre></div>
+<p>Now call <code>strsplit1(x)</code> to see how it works.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="op">(</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"alfa,bravo,charlie,delta"</span><span class="op">)</span>
+<span class="co">#&gt; [1] "alfa,bravo,charlie,delta"</span>
+<span class="fu">strsplit1</span><span class="op">(</span><span class="va">x</span>, split <span class="op">=</span> <span class="st">","</span><span class="op">)</span>
+<span class="co">#&gt; [1] "alfa"    "bravo"   "charlie" "delta"</span></code></pre></div>
+<p>Note that <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> has made the <code>strsplit1()</code> function available, although it does not exist in the global environment.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">fbind</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
-<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
-<span class="co">#&gt; [7] where it  counts   </span>
-<span class="co">#&gt; 8 Levels: but character counts eyeballs hits integer ... your</span></code></pre></div>
-<p>Note that <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> has made the <code>fbind()</code> function available, although it does not exist in the global workspace.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"fbind"</span>, where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">globalenv</a></span><span class="op">(</span><span class="op">)</span>, inherits <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"strsplit1"</span>, where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">globalenv</a></span><span class="op">(</span><span class="op">)</span>, inherits <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="co">#&gt; [1] FALSE</span></code></pre></div>
-<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> simulates the process of building, installing, and attaching the foofactors package. As your package accumulates more functions, some exported, some not, some of which call each other, some of which call functions from packages you depend on, <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> gives you a much more accurate sense of how the package is developing than test driving functions defined in the global workspace. Also <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> allows much faster iteration than actually building, installing, and attaching the package.</p>
+<p>If you see <code>TRUE</code> instead of <code>FALSE</code>, that indicates you’re still using a script-oriented workflow and sourcing your functions.
+Here’s how to get back on track:</p>
+<ul>
+<li>Clean out the global environment and restart R.</li>
+<li>Re-attach devtools with <code><a href="https://devtools.r-lib.org/">library(devtools)</a></code> and re-load regexcite with
+<code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>.</li>
+<li>Redefine the test input <code>x</code> and call <code>strsplit1(x, split = ",")</code> again.
+This should work!</li>
+<li>Run <code>exists("strsplit1", where = globalenv(), inherits = FALSE)</code> again and
+you should see <code>FALSE</code>.</li>
+</ul>
+<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> simulates the process of building, installing, and attaching the regexcite package.
+As your package accumulates more functions, some exported, some not, some of which call each other, some of which call functions from packages you depend on, <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> gives you a much more accurate sense of how the package is developing than test driving functions defined in the global environment.
+Also <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> allows much faster iteration than actually building, installing, and attaching the package.</p>
 <p>Review so far:</p>
 <ul>
-<li>We wrote our first function, <code>fbind()</code>, to catenate two factors.</li>
-<li>We used <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> to quickly make this function available for interactive use, as if we’d built and installed foofactors and attached it via <code><a href="https://rdrr.io/r/base/library.html">library(foofactors)</a></code>.</li>
+<li>We wrote our first function, <code>strsplit1()</code>, to split a string into a character
+vector (not a list containing a character vector).</li>
+<li>We used <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> to quickly make this function available for interactive
+use, as if we’d built and installed regexcite and attached it via
+<code><a href="https://rdrr.io/r/base/library.html">library(regexcite)</a></code>.</li>
 </ul>
 <div class="rstudio-tip">
 <p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>More &gt; Load All</em>, and in keyboard shortcuts Ctrl + Shift + L (Windows &amp; Linux) or Cmd + Shift + L (macOS).</p>
 </div>
-<div id="commit-fbind" class="section level3">
+<div id="commit-strsplit1" class="section level3">
 <h3>
-<span class="header-section-number">2.8.1</span> Commit <code>fbind()</code><a class="anchor" aria-label="anchor" href="#commit-fbind"><i class="fas fa-link"></i></a>
+<span class="header-section-number">2.8.1</span> Commit <code>strsplit1()</code><a class="anchor" aria-label="anchor" href="#commit-strsplit1"><i class="fas fa-link"></i></a>
 </h3>
-<p>If you’re using Git, use your preferred method to commit the new <code>R/fbind.R</code> file. We do so behind the scenes here and here’s the associated diff.</p>
-<pre><code>#&gt; diff --git a/R/fbind.R b/R/fbind.R
+<p>If you’re using Git, use your preferred method to commit the new <code>R/strsplit1.R</code> file.
+We do so behind the scenes here and here’s the associated diff.</p>
+<pre><code>#&gt; diff --git a/R/strsplit1.R b/R/strsplit1.R
 #&gt; new file mode 100644
-#&gt; index 0000000..7b03d75
+#&gt; index 0000000..29efb88
 #&gt; --- /dev/null
-#&gt; +++ b/R/fbind.R
+#&gt; +++ b/R/strsplit1.R
 #&gt; @@ -0,0 +1,3 @@
-#&gt; +fbind &lt;- function(a, b) {
-#&gt; +  factor(c(as.character(a), as.character(b)))
+#&gt; +strsplit1 &lt;- function(x, split) {
+#&gt; +  strsplit(x, split = split)[[1]]
 #&gt; +}</code></pre>
-<p>From this point on, we commit after each step. Remember <a href="https://github.com/jennybc/foofactors/commits/master">these commits</a> are available in the public repository.</p>
+<p>From this point on, we commit after each step.
+Remember <a href="https://github.com/jennybc/regexcite/commits/main">these commits</a> are available in the public repository.</p>
 </div>
 </div>
 <div id="check" class="section level2">
 <h2>
 <span class="header-section-number">2.9</span> <code>check()</code><a class="anchor" aria-label="anchor" href="#check"><i class="fas fa-link"></i></a>
 </h2>
-<p>We have empirical evidence that <code>fbind()</code> works. But how can we be sure that all the moving parts of the foofactors package still work? This may seem silly to check, after such a small addition, but it’s good to establish the habit of checking this often.</p>
-<p><code>R CMD check</code>, executed in the shell, is the gold standard for checking that an R package is in full working order. <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> is a convenient way to run this without leaving your R session.</p>
-<p>Note that <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> produces rather voluminous output, optimized for interactive consumption. We intercept that here and just reveal a summary. Your local <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> output will be different.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<p>We have informal, empirical evidence that <code>strsplit1()</code> works.
+But how can we be sure that all the moving parts of the regexcite package still work?
+This may seem silly to check, after such a small addition, but it’s good to establish the habit of checking this often.</p>
+<p><code>R CMD check</code>, executed in the shell, is the gold standard for checking that an R package is in full working order.
+<code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> is a convenient way to run this without leaving your R session.</p>
+<p>Note that <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> produces rather voluminous output, optimized for interactive consumption.
+We intercept that here and just reveal a summary.
+Your local <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> output will be different.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BBBB;">── R CMD check results ────────────────── foofactors 0.0.0.9000 ────</span></span>
-<span class="co">#&gt; Duration: 22.4s</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; <span style="color: #BB00BB;">❯ checking DESCRIPTION meta-information ... WARNING</span></span>
-<span class="co">#&gt;   Non-standard license specification:</span>
-<span class="co">#&gt;     `use_mit_license()`, `use_gpl3_license()` or friends to pick a</span>
-<span class="co">#&gt;     license</span>
-<span class="co">#&gt;   Standardizable: FALSE</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; <span style="color: #00BB00;">0 errors ✔</span> | <span style="color: #BB0000;">1 warning ✖</span> | <span style="color: #00BB00;">0 notes ✔</span></span></code></pre>
-</div>
-<p><strong>Read the output of the check!</strong> Deal with problems early and often. It’s just like incremental development of <code>.R</code> and <code>.Rmd</code> files. The longer you go between full checks that everything works, the harder it becomes to pinpoint and solve your problems.</p>
+<pre><code>#&gt; ── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────
+#&gt; Duration: 23.6s
+#&gt; 
+#&gt; ❯ checking DESCRIPTION meta-information ... WARNING
+#&gt;   Non-standard license specification:
+#&gt;     `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+#&gt;     license
+#&gt;   Standardizable: FALSE
+#&gt; 
+#&gt; 0 errors ✔ | 1 warning ✖ | 0 notes ✔</code></pre>
+<p><strong>Read the output of the check!</strong>
+Deal with problems early and often.
+It’s just like incremental development of <code>.R</code> and <code>.Rmd</code> files.
+The longer you go between full checks that everything works, the harder it becomes to pinpoint and solve your problems.</p>
 <p>At this point, we expect 1 warning (and 0 errors, 0 notes):</p>
-<ul>
-<li><code>Non-standard license specification</code></li>
-</ul>
-<p>We’ll address that soon.</p>
+<pre><code>Non-standard license specification:
+  `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+  license</code></pre>
+<p>We’ll address that soon, by doing exactly what it says.</p>
 <div class="rstudio-tip">
 <p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>Check</em>, and in keyboard shortcuts Ctrl + Shift + E (Windows &amp; Linux) or Cmd + Shift + E (macOS).</p>
 </div>
@@ -371,28 +449,33 @@ Here’s what <code>c(a, b)</code> looked like in R until May 2021, i.e. in R &
 <h2>
 <span class="header-section-number">2.10</span> Edit <code>DESCRIPTION</code><a class="anchor" aria-label="anchor" href="#edit-description"><i class="fas fa-link"></i></a>
 </h2>
-<p>Before we tackle the warning about the license, let’s work on the boilerplate content in <code>DESCRIPTION</code>. The <code>DESCRIPTION</code> file provides metadata about your package and is covered fully in chapter <a href="description.html#description">8</a>.</p>
+<p>The <code>DESCRIPTION</code> file provides metadata about your package and is covered fully in chapter <a href="description.html#description">8</a>.
+This is a good time to have a look at regexcite’s current <code>DESCRIPTION</code>.
+You’ll see it’s populated with boilerplate content, which needs to be replaced.</p>
 <p>Make these edits:</p>
 <ul>
-<li>Make yourself the author.</li>
+<li>Make yourself the author. If you don’t have an ORCID, you can omit the
+<code>comment = ...</code> portion.</li>
 <li>Write some descriptive text in the <code>Title</code> and <code>Description</code> fields.</li>
 </ul>
 <div class="rstudio-tip">
-<p>Use Ctrl + <code>.</code> in RStudio and start typing “DESCRIPTION” to activate a helper that makes it easy to open a file for editing. In addition to a filename, your hint can be a function name. This is very handy once a package has lots of functions and files below <code>R/</code>.</p>
+<p>Use Ctrl + <code>.</code> in RStudio and start typing “DESCRIPTION” to activate a helper that makes it easy to open a file for editing.
+In addition to a filename, your hint can be a function name.
+This is very handy once a package has lots of files.</p>
 </div>
 <p>When you’re done, <code>DESCRIPTION</code> should look similar to this:</p>
-<pre><code>Package: foofactors
-Title: Make Factors Less Aggravating
+<pre><code>Package: regexcite
+Title: Make Regular Expressions More Exciting
 Version: 0.0.0.9000
-Authors@R:
-    person("Jane", "Doe", email = "jane@example.com", role = c("aut", "cre"))
-Description: Factors have driven people to extreme measures, like ordering
-    custom conference ribbons and laptop stickers to express how HELLNO we
-    feel about stringsAsFactors. And yet, sometimes you need them. Can they
-    be made less maddening? Let's find out.
-License: What license it uses
+Authors@R: 
+    person("Jane", "Doe", , "jane@example.com", role = c("aut", "cre"))
+Description: Convenience functions to make some common tasks with string
+    manipulation and regular expressions a bit easier.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
 Encoding: UTF-8
-LazyData: true</code></pre>
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2</code></pre>
 </div>
 <div id="use_mit_license" class="section level2">
 <h2>
@@ -401,104 +484,115 @@ LazyData: true</code></pre>
 <blockquote>
 <p><a href="https://blog.codinghorror.com/pick-a-license-any-license/">Pick a License, Any License. – Jeff Atwood</a></p>
 </blockquote>
-<p>For foofactors, we use the MIT license. This requires specification in <code>DESCRIPTION</code> and an additional file called <code>LICENSE</code>, naming the copyright holder and year. We’ll use the helper <code><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license()</a></code>. Substitute your name here.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license</a></span><span class="op">(</span><span class="st">"Jane Doe"</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting <span style="color: #00BB00;">License</span> field in DESCRIPTION to <span style="color: #0000BB;">'MIT + file LICENSE'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'LICENSE'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'LICENSE.md'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^LICENSE\\.md$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span></code></pre></div>
-<p>Open the newly created <code>LICENSE</code> file and confirm it has the current year and your name.</p>
+<p>We currently have a placeholder in the <code>License</code> field of <code>DESCRIPTION</code> that’s deliberately invalid and suggests a resolution.</p>
+<pre><code>License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license</code></pre>
+<p>Let’s call <code><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license()</a></code>.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; ✔ Setting License field in DESCRIPTION to 'MIT + file LICENSE'</span>
+<span class="co">#&gt; ✔ Writing 'LICENSE'</span>
+<span class="co">#&gt; ✔ Writing 'LICENSE.md'</span>
+<span class="co">#&gt; ✔ Adding '^LICENSE\\.md$' to '.Rbuildignore'</span></code></pre></div>
+<p>This configures the <code>License</code> field correctly for the MIT license, which promises to name the copyright holders and year in a <code>LICENSE</code> file.
+Open the newly created <code>LICENSE</code> file and confirm it looks something like this:</p>
 <pre><code>YEAR: 2021
-COPYRIGHT HOLDER: Jane Doe</code></pre>
-<p>Like other license helpers, <code><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license()</a></code> also puts a copy of the full license in <code>LICENSE.md</code> and adds this file to <code>.Rbuildignore</code>. It’s considered a best practice to include a full license in your package’s source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.</p>
+COPYRIGHT HOLDER: regexcite authors</code></pre>
+<p>Like other license helpers, <code><a href="https://usethis.r-lib.org/reference/licenses.html">use_mit_license()</a></code> also puts a copy of the full license in <code>LICENSE.md</code> and adds this file to <code>.Rbuildignore</code>.
+It’s considered a best practice to include a full license in your package’s source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.</p>
 </div>
 <div id="whole-game-document" class="section level2">
 <h2>
 <span class="header-section-number">2.12</span> <code>document()</code><a class="anchor" aria-label="anchor" href="#whole-game-document"><i class="fas fa-link"></i></a>
 </h2>
-<p>Wouldn’t it be nice to get help on <code>fbind()</code>, just like we do with other R functions? This requires that your package have a special R documentation file, <code>man/fbind.Rd</code>, written in an R-specific markup language that is sort of like LaTeX. Luckily we don’t necessarily have to author that directly.</p>
-<p>We write a specially formatted comment right above <code>fbind()</code>, in its source file, and then let a package called <a href="https://roxygen2.r-lib.org">roxygen2</a> handle the creation of <code>man/fbind.Rd</code>. The motivation and mechanics of roxygen2 are covered in chapter <a href="man.html#man">10</a>.</p>
-<p>If you use RStudio, open <code>R/fbind.R</code> in the source editor and put the cursor somewhere in the <code>fbind()</code> function definition. Now do <em>Code &gt; Insert roxygen skeleton</em>. A very special comment should appear above your function, in which each line begins with <code>#'</code>. RStudio only inserts a barebones template, so you will need to edit it to look something like that below.</p>
-<p>If you don’t use RStudio, create the comment yourself. Regardless, you should modify it to look something like this:</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#' Bind two factors</span>
-<span class="co">#'</span>
-<span class="co">#' Create a new factor from two existing factors, where the new factor's levels</span>
-<span class="co">#' are the union of the levels of the input factors.</span>
-<span class="co">#'</span>
-<span class="co">#' @param a factor</span>
-<span class="co">#' @param b factor</span>
-<span class="co">#'</span>
-<span class="co">#' @return factor</span>
-<span class="co">#' @export</span>
-<span class="co">#' @examples</span>
-<span class="co">#' fbind(iris$Species[c(1, 51, 101)], PlantGrowth$group[c(1, 11, 21)])</span></code></pre>
-</div>
-<p><em>TODO: mention how RStudio helps you execute examples here?</em></p>
-<p>But we’re not done yet! We still need to trigger the conversion of this new roxygen comment into <code>man/fbind.Rd</code> with <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code>:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<p>Wouldn’t it be nice to get help on <code>strsplit1()</code>, just like we do with other R functions?
+This requires that your package have a special R documentation file, <code>man/strsplit1.Rd</code>, written in an R-specific markup language that is sort of like LaTeX.
+Luckily we don’t necessarily have to author that directly.</p>
+<p>We write a specially formatted comment right above <code>strsplit1()</code>, in its source file, and then let a package called <a href="https://roxygen2.r-lib.org">roxygen2</a> handle the creation of <code>man/strsplit1.Rd</code>.
+The motivation and mechanics of roxygen2 are covered in chapter <a href="man.html#man">10</a>.</p>
+<p>If you use RStudio, open <code>R/strsplit1.R</code> in the source editor and put the cursor somewhere in the <code>strsplit1()</code> function definition.
+Now do <em>Code &gt; Insert roxygen skeleton</em>.
+A very special comment should appear above your function, in which each line begins with <code>#'</code>.
+RStudio only inserts a barebones template, so you will need to edit it to look something like that below.</p>
+<p>If you don’t use RStudio, create the comment yourself.
+Regardless, you should modify it to look something like this:</p>
+<pre><code>#' Split a string
+#'
+#' @param x A character vector with one element.
+#' @param split What to split on.
+#'
+#' @return A character vector.
+#' @export
+#'
+#' @examples
+#' x &lt;- "alfa,bravo,charlie,delta"
+#' strsplit(x, split = ",")</code></pre>
+<!-- TODO: mention how RStudio helps you execute examples here? -->
+<p>But we’re not done yet!
+We still need to trigger the conversion of this new roxygen comment into <code>man/strsplit1.Rd</code> with <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code>:</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/document.html">document</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Updating <span style="color: #0000BB;">foofactors</span> documentation</span>
-<span class="co">#&gt; Updating roxygen version in /tmp/RtmpTmvjG1/foofactors/DESCRIPTION</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span>
+<span class="co">#&gt; ℹ Updating regexcite documentation</span>
+<span class="co">#&gt; ℹ Loading regexcite</span>
 <span class="co">#&gt; Writing NAMESPACE</span>
-<span class="co">#&gt; Writing fbind.Rd</span></code></pre></div>
+<span class="co">#&gt; Writing strsplit1.Rd</span></code></pre></div>
 <div class="rstudio-tip">
 <p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>More &gt; Document</em>, and in keyboard shortcuts Ctrl + Shift + D (Windows &amp; Linux) or Cmd + Shift + D (macOS).</p>
 </div>
 <p>You should now be able to preview your help file like so:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="op">?</span><span class="va">fbind</span></code></pre></div>
-<p>You’ll see a message like “Rendering development documentation for ‘fbind’”, which reminds that you are basically previewing draft documentation. That is, this documentation is present in your package’s source, but is not yet present in an installed package. In fact, we haven’t installed foofactors yet, but we will soon.</p>
-<p>Note also that your package’s documentation won’t be properly wired up until it has been formally built and installed. This polishes off niceties like the links between help files and the creation of a package index.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="op">?</span><span class="va">strsplit1</span></code></pre></div>
+<p>You’ll see a message like “Rendering development documentation for ‘strsplit1’”, which reminds that you are basically previewing draft documentation.
+That is, this documentation is present in your package’s source, but is not yet present in an installed package.
+In fact, we haven’t installed regexcite yet, but we will soon.</p>
+<p>Note also that your package’s documentation won’t be properly wired up until it has been formally built and installed.
+This polishes off niceties like the links between help files and the creation of a package index.</p>
 <div id="namespace-changes" class="section level3">
 <h3>
 <span class="header-section-number">2.12.1</span> <code>NAMESPACE</code> changes<a class="anchor" aria-label="anchor" href="#namespace-changes"><i class="fas fa-link"></i></a>
 </h3>
-<p>In addition to converting <code>fbind()</code>’s special comment into <code>man/fbind.Rd</code>, the call to <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> updates the <code>NAMESPACE</code> file, based on <code>@export</code> directives found in roxygen comments. Open <code>NAMESPACE</code> for inspection. The contents should be:</p>
+<p>In addition to converting <code>strsplit1()</code>’s special comment into <code>man/strsplit1.Rd</code>, the call to <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> updates the <code>NAMESPACE</code> file, based on <code>@export</code> directives found in roxygen comments.
+Open <code>NAMESPACE</code> for inspection.
+The contents should be:</p>
 <pre><code># Generated by roxygen2: do not edit by hand
 
-export(fbind)</code></pre>
-<p>The export directive in <code>NAMESPACE</code> is what makes <code>fbind()</code> available to a user after attaching foofactors via <code><a href="https://rdrr.io/r/base/library.html">library(foofactors)</a></code>. Just as it is entirely possible to author <code>.Rd</code> files “by hand”, you can manage <code>NAMESPACE</code> explicitly yourself. But we choose to delegate this to devtools (and roxygen2).</p>
+export(strsplit1)</code></pre>
+<p>The export directive in <code>NAMESPACE</code> is what makes <code>strsplit1()</code> available to a user after attaching regexcite via <code><a href="https://rdrr.io/r/base/library.html">library(regexcite)</a></code>.
+Just as it is entirely possible to author <code>.Rd</code> files “by hand”, you can manage <code>NAMESPACE</code> explicitly yourself.
+But we choose to delegate this to devtools (and roxygen2).</p>
 </div>
 </div>
 <div id="check-again" class="section level2">
 <h2>
 <span class="header-section-number">2.13</span> <code>check()</code> again<a class="anchor" aria-label="anchor" href="#check-again"><i class="fas fa-link"></i></a>
 </h2>
-<p>foofactors should pass <code>R CMD check</code> cleanly now and forever more: 0 errors, 0 warnings, 0 notes.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<p>regexcite should pass <code>R CMD check</code> cleanly now and forever more: 0 errors, 0 warnings, 0 notes.</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BBBB;">── R CMD check results ────────────────── foofactors 0.0.0.9000 ────</span></span>
-<span class="co">#&gt; Duration: 24s</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; <span style="color: #00BB00;">0 errors ✔</span> | <span style="color: #00BB00;">0 warnings ✔</span> | <span style="color: #00BB00;">0 notes ✔</span></span></code></pre>
-</div>
+<pre><code>#&gt; ── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────
+#&gt; Duration: 25.4s
+#&gt; 
+#&gt; 0 errors ✔ | 0 warnings ✔ | 0 notes ✔</code></pre>
 </div>
 <div id="install" class="section level2">
 <h2>
 <span class="header-section-number">2.14</span> <code>install()</code><a class="anchor" aria-label="anchor" href="#install"><i class="fas fa-link"></i></a>
 </h2>
-<p>Since we have a minimum viable product now, let’s install the foofactors package into your library via <code><a href="https://devtools.r-lib.org//reference/install.html">install()</a></code>:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<p>Since we have a minimum viable product now, let’s install the regexcite package into your library via <code><a href="https://devtools.r-lib.org//reference/install.html">install()</a></code>:</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>   checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’
-─  preparing ‘foofactors’:
+<pre><code>   checking for file ‘/tmp/RtmpKX7l2c/regexcite/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/RtmpKX7l2c/regexcite/DESCRIPTION’
+─  preparing ‘regexcite’:
    checking DESCRIPTION meta-information ...
 ✔  checking DESCRIPTION meta-information
 ─  checking for LF line-endings in source and make files and shell scripts
 ─  checking for empty or unneeded directories
-   Omitted ‘LazyData’ from DESCRIPTION
-─  building ‘foofactors_0.0.0.9000.tar.gz’
+─  building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpTmvjG1/foofactors_0.0.0.9000.tar.gz --install-tests 
+  /tmp/RtmpKX7l2c/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
-* installing *source* package ‘foofactors’ ...
+* installing *source* package ‘regexcite’ ...
 ** using staged installation
 ** R
 ** byte-compile and prepare package for lazy loading
@@ -508,159 +602,249 @@ Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
 ** testing if installed package can be loaded from temporary location
 ** testing if installed package can be loaded from final location
 ** testing if installed package keeps a record of temporary installation path
-* DONE (foofactors)</code></pre>
+* DONE (regexcite)</code></pre>
 <div class="rstudio-tip">
 <p>RStudio exposes similar functionality in the <em>Build</em> menu and in the <em>Build</em> pane via <em>Install and Restart</em>.</p>
 </div>
-<p>Now we can attach and use foofactors like any other package. Let’s revisit our small example from the top. This is a good time to restart your R session and ensure you have a clean workspace.</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">foofactors</span><span class="op">)</span>
+<p>Now we can attach and use regexcite like any other package.
+Let’s revisit our small example from the top.
+This is a good time to restart your R session and ensure you have a clean workspace.</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">regexcite</span><span class="op">)</span>
 
-<span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"character"</span>, <span class="st">"hits"</span>, <span class="st">"your"</span>, <span class="st">"eyeballs"</span><span class="op">)</span><span class="op">)</span>
-<span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"but"</span>, <span class="st">"integer"</span>, <span class="st">"where it"</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">)</span>
-
-<span class="fu">fbind</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>
-<span class="co">#&gt; [1] character hits      your      eyeballs  but       integer  </span>
-<span class="co">#&gt; [7] where it  counts   </span>
-<span class="co">#&gt; 8 Levels: but character counts eyeballs hits integer ... your</span></code></pre></div>
+<span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"alfa,bravo,charlie,delta"</span>
+<span class="fu">strsplit1</span><span class="op">(</span><span class="va">x</span>, split <span class="op">=</span> <span class="st">","</span><span class="op">)</span>
+<span class="co">#&gt; [1] "alfa"    "bravo"   "charlie" "delta"</span></code></pre></div>
 <p>Success!</p>
 </div>
 <div id="use_testthat" class="section level2">
 <h2>
 <span class="header-section-number">2.15</span> <code>use_testthat()</code><a class="anchor" aria-label="anchor" href="#use_testthat"><i class="fas fa-link"></i></a>
 </h2>
-<p>We’ve tested <code>fbind()</code> informally, in a single example. We can formalize and expand this with some unit tests. This means we express a few concrete expectations about the correct <code>fbind()</code> result for various inputs.</p>
+<p>We’ve tested <code>strsplit1()</code> informally, in a single example.
+We can formalize this as a unit test.
+This means we express a concrete expectation about the correct <code>strsplit1()</code> result for a specific input.</p>
 <p>First, we declare our intent to write unit tests and to use the testthat package for this, via <code><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat()</a></code>:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'testthat'</span> to <span style="color: #00BB00;">Suggests</span> field in DESCRIPTION</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Setting <span style="color: #00BB00;">Config/testthat/edition</span> field in DESCRIPTION to <span style="color: #0000BB;">'3'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Creating <span style="color: #0000BB;">'tests/testthat/'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'tests/testthat.R'</span></span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Call <span style="color: #555555;">`use_test()`</span> to initialize a basic test file and open it for editing.</span></code></pre></div>
-<p>This initializes the unit testing machinery for your package. It adds <code>Suggests: testthat</code> to <code>DESCRIPTION</code>, creates the directory <code>tests/testthat/</code>, and adds the script <code>tests/testthat.R</code>.</p>
-<p>However, it’s still up to YOU to write the actual tests!</p>
-<p>The helper <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> opens and/or creates a test file. You can provide the file’s basename or, if you are editing the relevant source file in RStudio, it will be automatically generated. Since this book is built non-interactively, we must provide the basename explicitly:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_test</a></span><span class="op">(</span><span class="st">"fbind"</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'tests/testthat/test-fbind.R'</span></span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Edit <span style="color: #0000BB;">'tests/testthat/test-fbind.R'</span></span></code></pre></div>
-<p>This creates the file <code>tests/testthat/test-fbind.R</code>. Put this content in it:</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"fbind() binds factor (or character)"</span>, <span class="op">{</span>
-  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>
-  <span class="va">x_fact</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
-  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span>
-  <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span><span class="op">)</span><span class="op">)</span>
-
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fu">fbind</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, <span class="va">z</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fu">fbind</span><span class="op">(</span><span class="va">x_fact</span>, <span class="va">y</span><span class="op">)</span>, <span class="va">z</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre>
-</div>
-<p>This tests that <code>fbind()</code> gives an expected result when combining two factors and a character vector and a factor.</p>
-<p>Run this test interactively, as you will when you write your own. Note you’ll have to attach testthat via <code><a href="https://testthat.r-lib.org">library(testthat)</a></code> in your R session first and you’ll probably want to <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>.</p>
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; ✔ Adding 'testthat' to Suggests field in DESCRIPTION</span>
+<span class="co">#&gt; ✔ Setting Config/testthat/edition field in DESCRIPTION to '3'</span>
+<span class="co">#&gt; ✔ Creating 'tests/testthat/'</span>
+<span class="co">#&gt; ✔ Writing 'tests/testthat.R'</span>
+<span class="co">#&gt; • Call `use_test()` to initialize a basic test file and open it for editing.</span></code></pre></div>
+<p>This initializes the unit testing machinery for your package.
+It adds <code>Suggests: testthat</code> to <code>DESCRIPTION</code>, creates the directory <code>tests/testthat/</code>, and adds the script <code>tests/testthat.R</code>.
+You’ll notice that testthat is probably added with a minimum version of 3.0.0 and a second DESCRIPTION field, <code>Config/testthat/edition: 3</code>.
+We’ll talk more about those details in chapter <a href="tests.html#tests">12</a>.</p>
+<p>However, it’s still up to YOU to write the actual tests!</p>
+<p>The helper <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> opens and/or creates a test file.
+You can provide the file’s basename or, if you are editing the relevant source file in RStudio, it will be automatically generated.
+For many of you, if <code>R/strsplit1.R</code> is the active file in RStudio, you can just call <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code>.
+However, since this book is built non-interactively, we must provide the basename explicitly:</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_test</a></span><span class="op">(</span><span class="st">"strsplit1"</span><span class="op">)</span>
+<span class="co">#&gt; ✔ Writing 'tests/testthat/test-strsplit1.R'</span>
+<span class="co">#&gt; • Edit 'tests/testthat/test-strsplit1.R'</span></code></pre></div>
+<p>This creates the file <code>tests/testthat/test-strsplit1.R</code>.
+If it had already existed, <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> would have just opened it.
+Put this content in:</p>
+<pre><code>test_that("strsplit1() splits a string", {
+  expect_equal(strsplit1("a,b,c", split = ","), c("a", "b", "c"))
+})</code></pre>
+<p>This tests that <code>strsplit1()</code> gives the expected result when splitting a string.</p>
+<p>Run this test interactively, as you will when you write your own.
+Note you’ll have to attach testthat via <code><a href="https://testthat.r-lib.org">library(testthat)</a></code> in your R session first and you’ll probably want to <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>.</p>
 <p>Going forward, your tests will mostly run <em>en masse</em> and at arm’s length via <code><a href="https://devtools.r-lib.org//reference/test.html">test()</a></code>:</p>
-<p><em>TODO: work on the aesthetics of this output. Or maybe testthat 3e will save me the trouble.</em></p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<!-- TODO: work on the aesthetics of this output. Or maybe testthat 3e will save me the trouble. -->
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/test.html">test</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <div class="rstudio-tip">
 <p>RStudio exposes <code><a href="https://devtools.r-lib.org//reference/test.html">test()</a></code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>More &gt; Test package</em>, and in keyboard shortcuts Ctrl + Shift + T (Windows &amp; Linux) or Cmd + Shift + T (macOS).</p>
 </div>
-<p>Your tests are also run whenever you <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> the package. In this way, you basically augment the standard checks with some of your own, that are specific to your package. It is a good idea to use the <a href="https://covr.r-lib.org">covr package</a> to track what proportion of your package’s source code is exercised by the tests. More details can be found in chapter <a href="tests.html#tests">12</a>.</p>
+<p>Your tests are also run whenever you <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> the package.
+In this way, you basically augment the standard checks with some of your own, that are specific to your package.
+It is a good idea to use the <a href="https://covr.r-lib.org">covr package</a> to track what proportion of your package’s source code is exercised by the tests.
+More details can be found in chapter <a href="tests.html#tests">12</a>.</p>
 </div>
 <div id="use_package" class="section level2">
 <h2>
 <span class="header-section-number">2.16</span> <code>use_package()</code><a class="anchor" aria-label="anchor" href="#use_package"><i class="fas fa-link"></i></a>
 </h2>
-<p>You will inevitably want to use a function from another package in your own package. Just as we needed to <strong>export</strong> <code>fbind()</code>, we need to <strong>import</strong> functions from the namespace of other packages. If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as “always available”, such as <code><a href="https://rdrr.io/r/stats/median.html">stats::median()</a></code> or <code><a href="https://rdrr.io/r/utils/head.html">utils::head()</a></code>.</p>
-<p>We’re going to add another function to foofactors that produces a sorted frequency table for a factor. We’ll borrow some smarts from the forcats package, specifically the function <code><a href="https://forcats.tidyverse.org/reference/fct_count.html">forcats::fct_count()</a></code>.</p>
-<p>First, declare your general intent to use some functions from the forcats namespace with <code><a href="https://usethis.r-lib.org/reference/use_package.html">use_package()</a></code>:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"forcats"</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'forcats'</span> to <span style="color: #00BB00;">Imports</span> field in DESCRIPTION</span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Refer to functions with <span style="color: #555555;">`forcats::fun()`</span></span></code></pre></div>
-<p>This adds the forcats package to the “Imports” section of <code>DESCRIPTION</code>. And that is all.</p>
-<p>Now we add a second function to foofactors: imagine we want a frequency table for a factor, as a regular data frame with nice variable names, versus as an object of class <code>table</code> or something with odd names. Let’s also sort the rows so that the most prevalent level is at the top.</p>
-<p>Initiate a new <code>.R</code> file below <code>R/</code> with <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code>:</p>
+<p>You will inevitably want to use a function from another package in your own package.
+Just as we needed to <strong>export</strong> <code>strsplit1()</code>, we need to <strong>import</strong> functions from the namespace of other packages.
+If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as “always available”, such as <code><a href="https://rdrr.io/r/stats/median.html">stats::median()</a></code> or <code><a href="https://rdrr.io/r/utils/head.html">utils::head()</a></code>.</p>
+<p>One common dilemma when using R’s regular expression functions is uncertainty about whether to request <code>perl = TRUE</code> or <code>perl = FALSE</code>.
+And then there are often, but not always, other arguments that alter how patterns are matched, such as <code>fixed</code>, <code>ignore.case</code>, and <code>invert</code>.
+It can be hard to keep track of which functions use which arguments and how the arguments interact, so many users never get to the point where they retain these details without rereading the docs.</p>
+<p>The stringr package “provides a cohesive set of functions designed to make working with strings as easy as possible”.
+In particular, stringr uses one regular expression system everywhere (ICU regular expressions) and uses the same interface in every function for controlling matching behaviors, such as case sensitivity.
+Some people find this easier to internalize and program around.
+Let’s imagine you decide you’d rather build regexcite based on stringr (and stringi) than base R’s regular expression functions.</p>
+<p>First, declare your general intent to use some functions from the stringr namespace with <code><a href="https://usethis.r-lib.org/reference/use_package.html">use_package()</a></code>:</p>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_r</a></span><span class="op">(</span><span class="st">"fcount"</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Edit <span style="color: #0000BB;">'R/fcount.R'</span></span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Call <span style="color: #555555;">`use_test()`</span> to create a matching test file</span></code></pre></div>
-<p>Put this content in the file <code>R/fcount.R</code>:</p>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#' Make a sorted frequency table for a factor</span>
-<span class="co">#'</span>
-<span class="co">#' @param x factor</span>
-<span class="co">#'</span>
-<span class="co">#' @return A tibble</span>
-<span class="co">#' @export</span>
-<span class="co">#' @examples</span>
-<span class="co">#' fcount(iris$Species)</span>
-<span class="va">fcount</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu">forcats</span><span class="fu">::</span><span class="fu"><a href="https://forcats.tidyverse.org/reference/fct_count.html">fct_count</a></span><span class="op">(</span><span class="va">x</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="op">}</span></code></pre>
-</div>
-<p>Notice how we preface the call to a forcats functions with <code>forcats::</code>. This specifies that we want to call the <code><a href="https://forcats.tidyverse.org/reference/fct_count.html">fct_count()</a></code> function from the forcats namespace. There is more than one way to call functions in other packages and the one we espouse here is explained fully in chapter <a href="namespace.html#namespace">13</a>.</p>
-<p>Try out the new <code>fcount()</code> function by simulating package installation via <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>:</p>
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"stringr"</span><span class="op">)</span>
+<span class="co">#&gt; ✔ Adding 'stringr' to Imports field in DESCRIPTION</span>
+<span class="co">#&gt; • Refer to functions with `stringr::fun()`</span></code></pre></div>
+<p>This adds the stringr package to the “Imports” section of <code>DESCRIPTION</code>.
+And that is all it does.</p>
+<p>Let’s revisit <code>strsplit1()</code> to make it more stringr-like.
+Here’s a new take on it:</p>
+<pre><code>str_split_one &lt;- function(string, pattern, n = Inf) {
+  stopifnot(is.character(string), length(string) &lt;= 1)
+  if (length(string) == 1) {
+    stringr::str_split(string = string, pattern = pattern, n = n)[[1]]
+  } else {
+    character()
+  }
+}</code></pre>
+<p>Notice that we:</p>
+<ul>
+<li>Rename the function to <code>str_split_one()</code>, to signal that that is a wrapper
+around <code><a href="https://stringr.tidyverse.org/reference/str_split.html">stringr::str_split()</a></code>.</li>
+<li>Adopt the argument names from <code><a href="https://stringr.tidyverse.org/reference/str_split.html">stringr::str_split()</a></code>. Now we have <code>string</code> and
+<code>pattern</code> (and <code>n</code>), instead of <code>x</code> and <code>split</code>.</li>
+<li>Introduce a bit of argument checking and edge case handling. This is
+unrelated to the switch to stringr and would be equally beneficial in the
+version built on <code><a href="https://rdrr.io/r/base/strsplit.html">strsplit()</a></code>.</li>
+<li>Use the <code>package::function()</code> form when calling <code><a href="https://stringr.tidyverse.org/reference/str_split.html">stringr::str_split()</a></code>. This
+specifies that we want to call the <code>str_split()</code> function from the stringr
+namespace. There is more than one way to call a function from another
+package and the one we endorse here is explained fully in chapter
+<a href="namespace.html#namespace">13</a>.</li>
+</ul>
+<!-- TODO: I mention usethis below. Have I avoided that otherwise here, i.e. always talking about devtools? --><p>Where should we write this new function definition?
+I’d like to keep following the convention where we name the <code>.R</code> file after the function it defines, so now we need to do some fiddly file shuffling.
+Because this comes up fairly often in real life, usethis has a function, <code><a href="https://usethis.r-lib.org/reference/rename_files.html">rename_files()</a></code>, to choreograph the renaming of a file in <code>R/</code> and its associated companion files below <code>test/</code>.</p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span>
-<span class="fu">fcount</span><span class="op">(</span><span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #555555;"># A tibble: 3 × 2</span></span>
-<span class="co">#&gt;   f              n</span>
-<span class="co">#&gt;   <span style="color: #555555; font-style: italic;">&lt;fct&gt;</span>      <span style="color: #555555; font-style: italic;">&lt;int&gt;</span></span>
-<span class="co">#&gt; <span style="color: #555555;">1</span> setosa        50</span>
-<span class="co">#&gt; <span style="color: #555555;">2</span> versicolor    50</span>
-<span class="co">#&gt; <span style="color: #555555;">3</span> virginica     50</span></code></pre></div>
-<p>Generate the associated help file via <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code>. This also adds <code>fcount()</code> to the <code>NAMESPACE</code> as an exported function.</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/rename_files.html">rename_files</a></span><span class="op">(</span><span class="st">"strsplit1"</span>, <span class="st">"str_split_one"</span><span class="op">)</span>
+<span class="co">#&gt; ✔ Moving 'R/strsplit1.R' to 'R/str_split_one.R'</span>
+<span class="co">#&gt; ✔ Moving 'tests/testthat/test-strsplit1.R' to 'tests/testthat/test-str_split_one.R'</span></code></pre></div>
+<p>Remember: the file name work is purely aspirational.
+We still need to update the contents of these files!</p>
+<p>Here are the updated contents of <code>R/str_split_one.R</code>.
+In addition to changing the function definition, we’ve also updated the roxygen header to reflect the new arguments and to include examples that show off the stringr features.</p>
+<pre><code>#' Split a string
+#'
+#' @param string A character vector with, at most, one element.
+#' @inheritParams stringr::str_split
+#'
+#' @return A character vector.
+#' @export
+#'
+#' @examples
+#' x &lt;- "alfa,bravo,charlie,delta"
+#' str_split_one(x, pattern = ",")
+#' str_split_one(x, pattern = ",", n = 2)
+#'
+#' y &lt;- "192.168.0.1"
+#' str_split_one(y, pattern = stringr::fixed("."))
+str_split_one &lt;- function(string, pattern, n = Inf) {
+  stopifnot(is.character(string), length(string) &lt;= 1)
+  if (length(string) == 1) {
+    stringr::str_split(string = string, pattern = pattern, n = n)[[1]]
+  } else {
+    character()
+  }
+}</code></pre>
+<p>Don’t forget to also update the test file!</p>
+<p>Here are the updated contents of <code>tests/testthat/test-str_split_one.R</code>.
+In addition to the change in the function’s name and arguments, we’ve added a couple more tests.</p>
+<pre><code>test_that("str_split_one() splits a string", {
+  expect_equal(str_split_one("a,b,c", ","), c("a", "b", "c"))
+})
+
+test_that("str_split_one() errors if input length &gt; 1", {
+  expect_error(str_split_one(c("a,b","c,d"), ","))
+})
+
+test_that("str_split_one() exposes features of stringr::str_split()", {
+  expect_equal(str_split_one("a,b,c", ",", n = 2), c("a", "b,c"))
+  expect_equal(str_split_one("a.b", stringr::fixed(".")), c("a", "b"))
+})</code></pre>
+<p>Before we take the new <code>str_split_done()</code> out for a test drive, we need to call <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code>.
+Why?
+Remember that <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> does two main jobs:</p>
+<ol style="list-style-type: decimal">
+<li>Converts our roxygen comments into proper R documentation.</li>
+<li>(Re)generates <code>NAMESPACE</code>.</li>
+</ol>
+<p>The second point is especially important here, since we will no longer export <code>strsplit1()</code> and we will newly export <code>str_split_one()</code>.
+Don’t be dismayed by the warning about <code>"Objects listed as exports, but not present in namespace: strsplit1"</code>.
+That always happens when you remove something from the namespace.</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/document.html">document</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Updating <span style="color: #0000BB;">foofactors</span> documentation</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">foofactors</span></span>
+<span class="co">#&gt; ℹ Updating regexcite documentation</span>
+<span class="co">#&gt; ℹ Loading regexcite</span>
+<span class="co">#&gt; Warning in setup_ns_exports(path, export_all, export_imports):</span>
+<span class="co">#&gt; Objects listed as exports, but not present in namespace: strsplit1</span>
 <span class="co">#&gt; Writing NAMESPACE</span>
 <span class="co">#&gt; Writing NAMESPACE</span>
-<span class="co">#&gt; Writing fcount.Rd</span></code></pre></div>
+<span class="co">#&gt; Writing str_split_one.Rd</span>
+<span class="co">#&gt; Deleting strsplit1.Rd</span></code></pre></div>
+<p>Try out the new <code>str_split_one()</code> function by simulating package installation via <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>:</p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
+<span class="co">#&gt; ℹ Loading regexcite</span>
+<span class="fu">str_split_one</span><span class="op">(</span><span class="st">"a, b, c"</span>, pattern <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>
+<span class="co">#&gt; [1] "a" "b" "c"</span></code></pre></div>
 </div>
 <div id="use_github" class="section level2">
 <h2>
 <span class="header-section-number">2.17</span> <code>use_github()</code><a class="anchor" aria-label="anchor" href="#use_github"><i class="fas fa-link"></i></a>
 </h2>
-<p>You’ve seen us making commits during the development process for foofactors. You can see an indicative history at <a href="https://github.com/jennybc/foofactors" class="uri">https://github.com/jennybc/foofactors</a>. Our use of version control and the decision to expose the development process means you can inspect the state of the foofactors source at each developmental stage. By looking at so-called diffs, you can see exactly how each devtools helper function modifies the source files that constitute the foofactors package.</p>
-<p>How would you connect your local foofactors package and Git repository to a companion repository on GitHub?</p>
+<p>You’ve seen us making commits during the development process for regexcite.
+You can see an indicative history at <a href="https://github.com/jennybc/regexcite" class="uri">https://github.com/jennybc/regexcite</a>.
+Our use of version control and the decision to expose the development process means you can inspect the state of the regexcite source at each developmental stage.
+By looking at so-called diffs, you can see exactly how each devtools helper function modifies the source files that constitute the regexcite package.</p>
+<p>How would you connect your local regexcite package and Git repository to a companion repository on GitHub?</p>
 <ol style="list-style-type: decimal">
 <li>
-<a href="https://usethis.r-lib.org/reference/use_github.html"><code>use_github()</code></a> is a helper that we recommend for the long-term. We won’t demonstrate it here because it requires some nontrivial setup on your end. We also don’t want to tear down and rebuild the public foofactors package every time we build this book.</li>
-<li>Set up the GitHub repo first! It sounds counterintuitive, but the easiest way to get your work onto GitHub is to initiate there, then use RStudio to start working in a synced local copy. This approach is described in Happy Git’s workflows <a href="https://happygitwithr.com/new-github-first.html">New project, GitHub first</a> and <a href="https://happygitwithr.com/existing-github-first.html">Existing project, GitHub first</a>.</li>
-<li>Command line Git can always be used to add a remote repository <em>post hoc</em>. This is described in the Happy Git workflow <a href="https://happygitwithr.com/existing-github-last.html">Existing project, GitHub last</a>.</li>
+<a href="https://usethis.r-lib.org/reference/use_github.html"><code>use_github()</code></a> is a
+helper that we recommend for the long-term. We won’t demonstrate it here
+because it requires some credential setup on your end. We also don’t want to
+tear down and rebuild the public regexcite package every time we build this
+book.</li>
+<li>Set up the GitHub repo first! It sounds counter-intuitive, but the easiest way
+to get your work onto GitHub is to initiate there, then use RStudio to start
+working in a synced local copy. This approach is described in Happy Git’s
+workflows <a href="https://happygitwithr.com/new-github-first.html">New project, GitHub first</a> and <a href="https://happygitwithr.com/existing-github-first.html">Existing project, GitHub first</a>.</li>
+<li>Command line Git can always be used to add a remote repository <em>post hoc</em>.
+This is described in the Happy Git workflow <a href="https://happygitwithr.com/existing-github-last.html">Existing project, GitHub last</a>.</li>
 </ol>
-<p>Any of these approaches will connect your local foofactors project to a GitHub repo, public or private, which you can push to or pull from using the Git client built into RStudio.</p>
+<p>Any of these approaches will connect your local regexcite project to a GitHub repo, public or private, which you can push to or pull from using the Git client built into RStudio.</p>
 </div>
 <div id="use_readme_rmd" class="section level2">
 <h2>
 <span class="header-section-number">2.18</span> <code>use_readme_rmd()</code><a class="anchor" aria-label="anchor" href="#use_readme_rmd"><i class="fas fa-link"></i></a>
 </h2>
-<p>Now that your package is on GitHub, the <code>README.md</code> file matters. It is the package’s home page and welcome mat, at least until you decide to give it a website (see <a href="https://pkgdown.r-lib.org">pkgdown</a>), add a vignette (see chapter <a href="vignettes.html#vignettes">11</a>), or submit it to CRAN (see chapter <a href="release.html#release">20</a>).</p>
+<p>Now that your package is on GitHub, the <code>README.md</code> file matters.
+It is the package’s home page and welcome mat, at least until you decide to give it a website (see <a href="https://pkgdown.r-lib.org">pkgdown</a>), add a vignette (see chapter <a href="vignettes.html#vignettes">11</a>), or submit it to CRAN (see chapter <a href="release.html#release">20</a>).</p>
 <p>The <code><a href="https://usethis.r-lib.org/reference/use_readme_rmd.html">use_readme_rmd()</a></code> function initializes a basic, executable <code>README.Rmd</code> ready for you to edit:</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_readme_rmd.html">use_readme_rmd</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'README.Rmd'</span></span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'^README\\.Rmd$'</span> to <span style="color: #0000BB;">'.Rbuildignore'</span></span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Update <span style="color: #0000BB;">'README.Rmd'</span> to include installation instructions.</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Writing <span style="color: #0000BB;">'.git/hooks/pre-commit'</span></span></code></pre></div>
+<span class="co">#&gt; ✔ Writing 'README.Rmd'</span>
+<span class="co">#&gt; ✔ Adding '^README\\.Rmd$' to '.Rbuildignore'</span>
+<span class="co">#&gt; • Update 'README.Rmd' to include installation instructions.</span>
+<span class="co">#&gt; ✔ Writing '.git/hooks/pre-commit'</span></code></pre></div>
 <p>In addition to creating <code>README.Rmd</code>, this adds some lines to <code>.Rbuildignore</code>, and creates a Git pre-commit hook to help you keep <code>README.Rmd</code> and <code>README.md</code> in sync.</p>
-<p><code>README.Rmd</code> already has sections that:</p>
+<p><code>README.Rmd</code> already has sections that prompt you to:</p>
 <ul>
-<li>Prompt you to describe the purpose of the package.</li>
-<li>Provide code to install your package.</li>
-<li>Prompt you to show a bit of usage.</li>
+<li>Describe the purpose of the package.</li>
+<li>Provide installation instructions. If a GitHub remote is detected when
+<code><a href="https://usethis.r-lib.org/reference/use_readme_rmd.html">use_readme_rmd()</a></code> is called, this section is pre-filled with instructions on
+how to install from GitHub.</li>
+<li>Show a bit of usage.</li>
 </ul>
-<p>How to populate this skeleton? Copy stuff liberally from <code>DESCRIPTION</code> and any formal and informal tests or examples you have. Anything is better than nothing. Otherwise … do you expect people to install your package and comb through individual help files to figure out how to use it? They probably won’t.</p>
-<p>We like to write the <code>README</code> in R Markdown, so it can feature actual usage. The inclusion of live code also makes it less likely that your <code>README</code> grows stale and out-of-sync with your actual package.</p>
-<p>If RStudio has not already done so, open <code>README.Rmd</code> for editing. Make sure it shows some usage of <code>fbind()</code> and/or <code>fcount()</code>, for example.</p>
-<p>The <code>README.Rmd</code> we use is here: <a href="https://raw.githubusercontent.com/jennybc/foofactors/master/README.Rmd">README.Rmd</a> and these are the contents:</p>
-<p><em>TODO: update this link after merge into r-pkgs.</em></p>
+<p>How to populate this skeleton?
+Copy stuff liberally from <code>DESCRIPTION</code> and any formal and informal tests or examples you have.
+Anything is better than nothing.
+Otherwise … do you expect people to install your package and comb through individual help files to figure out how to use it?
+They probably won’t.</p>
+<p>We like to write the <code>README</code> in R Markdown, so it can feature actual usage.
+The inclusion of live code also makes it less likely that your <code>README</code> grows stale and out-of-sync with your actual package.</p>
+<p>If RStudio has not already done so, open <code>README.Rmd</code> for editing.
+Make sure it shows some usage of <code>str_split_one()</code>.</p>
+<p>The <code>README.Rmd</code> we use is here: <a href="https://github.com/jennybc/regexcite/blob/main/README.Rmd">README.Rmd</a> and here’s what it contains:</p>
 <pre><code>---
 output: github_document
 ---
@@ -676,65 +860,68 @@ knitr::opts_chunk$set(
 )
 ```
 
-**NOTE: This is a toy package created for expository purposes, for the second edition of [R Packages](https://r-pkgs.org). It is not meant to actually be useful. If you want a package for factor handling, please see [forcats](https://forcats.tidyverse.org).**
+**NOTE: This is a toy package created for expository purposes, for the second edition of [R Packages](https://r-pkgs.org). It is not meant to actually be useful. If you want a package for factor handling, please see [stringr](https://stringr.tidyverse.org), [stringi](https://stringi.gagolewski.com/),
+[rex](https://cran.r-project.org/package=rex), and
+[rematch2](https://cran.r-project.org/package=rematch2).**
 
-# foofactors    
+# regexcite
 
 &lt;!-- badges: start --&gt;
 &lt;!-- badges: end --&gt;
 
-Factors are a very useful type of variable in R, but they can also be very aggravating. This package provides some helper functions for the care and feeding of factors.
+The goal of regexcite is to make regular expressions more exciting!
+It provides convenience functions to make some common tasks with string manipulation and regular expressions a bit easier.
 
 ## Installation
 
-You can install foofactors like so:
-
+You can install the development version of regexcite from [GitHub](https://github.com/) with:
+      
 ``` r
-devtools::install_github("jennybc/foofactors")
-```
-  
-## Quick demo
-
-Binding two factors via `fbind()`:
-
-```{r}
-library(foofactors)
-a &lt;- factor(c("character", "hits", "your", "eyeballs"))
-b &lt;- factor(c("but", "integer", "where it", "counts"))
+# install.packages("devtools")
+devtools::install_github("jennybc/regexcite")
 ```
 
-Simply catenating two factors leads to a result that most don't expect.
+## Usage
+
+A fairly common task when dealing with strings is the need to split a single string into many parts.
+This is what `base::strplit()` and `stringr::str_split()` do.
 
 ```{r}
-c(a, b)
+(x &lt;- "alfa,bravo,charlie,delta")
+strsplit(x, split = ",")
+stringr::str_split(x, pattern = ",")
 ```
 
-The `fbind()` function glues two factors together and returns factor.
+Notice how the return value is a **list** of length one, where the first element holds the character vector of parts.
+Often the shape of this output is inconvenient, i.e. we want the un-listed version.
+
+That's exactly what `regexcite::str_split_one()` does.
 
 ```{r}
-fbind(a, b)
+library(regexcite)
+
+str_split_one(x, pattern = ",")
 ```
 
-Often we want a table of frequencies for the levels of a factor. The base `table()` function returns an object of class `table`, which can be inconvenient for downstream work.
+Use `str_split_one()` when the input is known to be a single string.
+For safety, it will error if its input has length greater than one.
+
+`str_split_one()` is built on `stringr::str_split_one()`, so you can use its `n` argument and stringr's general interface for describing the `pattern` to be matched.
 
 ```{r}
-set.seed(1234)
-x &lt;- factor(sample(letters[1:5], size = 100, replace = TRUE))
-table(x)
-```
+str_split_one(x, pattern = ",", n = 2)
 
-The `fcount()` function returns a frequency table as a tibble with a column of factor levels and another of frequencies:
-
-```{r}
-fcount(x)
+y &lt;- "192.168.0.1"
+str_split_one(y, pattern = stringr::fixed("."))
 ```</code></pre>
-<p>Don’t forget to render it to make <code>README.md</code>! The pre-commit hook should remind you if you try to commit <code>README.Rmd</code> but not <code>README.md</code> and also when <code>README.md</code> appears to be out-of-date.</p>
+<p>Don’t forget to render it to make <code>README.md</code>!
+The pre-commit hook should remind you if you try to commit <code>README.Rmd</code>, but not <code>README.md</code>, and also when <code>README.md</code> appears to be out-of-date.</p>
 <p>The very best way to render <code>README.Rmd</code> is with <code><a href="https://devtools.r-lib.org//reference/build_rmd.html">build_readme()</a></code>, because it takes care to render with the the most current version of your package, i.e. it installs a temporary copy from the current source.</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/build_rmd.html">build_readme</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Installing <span style="color: #0000BB;">foofactors</span> in temporary library</span>
-<span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Building <span style="color: #0000BB;">/tmp/RtmpTmvjG1/foofactors/README.Rmd</span></span></code></pre></div>
-<p>You can see the rendered <code>README.md</code> simply by <a href="https://github.com/jennybc/foofactors#readme">visiting foofactors on GitHub</a>.</p>
+<span class="co">#&gt; ℹ Installing regexcite in temporary library</span>
+<span class="co">#&gt; ℹ Building '/tmp/RtmpKX7l2c/regexcite/README.Rmd'</span></code></pre></div>
+<p>You can see the rendered <code>README.md</code> simply by <a href="https://github.com/jennybc/regexcite#readme">visiting regexcite on GitHub</a>.</p>
 <p>Finally, don’t forget to do one last commit. And push, if you’re using GitHub.</p>
 </div>
 <div id="the-end-check-and-install" class="section level2">
@@ -742,32 +929,29 @@ fcount(x)
 <span class="header-section-number">2.19</span> The end: <code>check()</code> and <code>install()</code><a class="anchor" aria-label="anchor" href="#the-end-check-and-install"><i class="fas fa-link"></i></a>
 </h2>
 <p>Let’s run <code><a href="https://devtools.r-lib.org//reference/check.html">check()</a></code> again to make sure all is still well.</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<div class="downlit">
-<pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#&gt; <span style="color: #00BBBB;">── R CMD check results ────────────────── foofactors 0.0.0.9000 ────</span></span>
-<span class="co">#&gt; Duration: 25.5s</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; <span style="color: #00BB00;">0 errors ✔</span> | <span style="color: #00BB00;">0 warnings ✔</span> | <span style="color: #00BB00;">0 notes ✔</span></span></code></pre>
-</div>
-<p>foofactors should have no errors, warnings or notes. This would be a good time to re-build and install it properly. And celebrate!</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<pre><code>#&gt; ── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────
+#&gt; Duration: 26.2s
+#&gt; 
+#&gt; 0 errors ✔ | 0 warnings ✔ | 0 notes ✔</code></pre>
+<p>regexcite should have no errors, warnings or notes.
+This would be a good time to re-build and install it properly. And celebrate!</p>
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://devtools.r-lib.org//reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>   checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/RtmpTmvjG1/foofactors/DESCRIPTION’
-─  preparing ‘foofactors’:
+<pre><code>   checking for file ‘/tmp/RtmpKX7l2c/regexcite/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/RtmpKX7l2c/regexcite/DESCRIPTION’
+─  preparing ‘regexcite’:
    checking DESCRIPTION meta-information ...
 ✔  checking DESCRIPTION meta-information
 ─  checking for LF line-endings in source and make files and shell scripts
 ─  checking for empty or unneeded directories
-   Removed empty directory ‘foofactors/tests/testthat/_snaps’
-   Omitted ‘LazyData’ from DESCRIPTION
-─  building ‘foofactors_0.0.0.9000.tar.gz’
+   Removed empty directory ‘regexcite/tests/testthat/_snaps’
+─  building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpTmvjG1/foofactors_0.0.0.9000.tar.gz --install-tests 
+  /tmp/RtmpKX7l2c/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
-* installing *source* package ‘foofactors’ ...
+* installing *source* package ‘regexcite’ ...
 ** using staged installation
 ** R
 ** tests
@@ -778,8 +962,10 @@ Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
 ** testing if installed package can be loaded from temporary location
 ** testing if installed package can be loaded from final location
 ** testing if installed package keeps a record of temporary installation path
-* DONE (foofactors)</code></pre>
-<p>Feel free to visit the <a href="https://github.com/jennybc/foofactors">foofactors package</a> on GitHub, which is exactly as developed here. The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved. The rest of this book goes in greater detail for each step you’ve seen here and much more.</p>
+* DONE (regexcite)</code></pre>
+<p>Feel free to visit the <a href="https://github.com/jennybc/regexcite">regexcite package</a> on GitHub, which is exactly as developed here.
+The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved.
+The rest of this book goes in greater detail for each step you’ve seen here and much more.</p>
 
 </div>
 </div>
@@ -791,14 +977,14 @@ Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
       <ul class="nav navbar-nav">
 <li><a class="nav-link" href="#whole-game"><span class="header-section-number">2</span> The whole game</a></li>
 <li><a class="nav-link" href="#load-devtools-and-friends"><span class="header-section-number">2.1</span> Load devtools and friends</a></li>
-<li><a class="nav-link" href="#toy-package-foofactors"><span class="header-section-number">2.2</span> Toy package: foofactors</a></li>
+<li><a class="nav-link" href="#toy-package-regexcite"><span class="header-section-number">2.2</span> Toy package: regexcite</a></li>
 <li><a class="nav-link" href="#peek-at-the-finished-product"><span class="header-section-number">2.3</span> Peek at the finished product</a></li>
 <li><a class="nav-link" href="#create_package"><span class="header-section-number">2.4</span> create_package()</a></li>
 <li><a class="nav-link" href="#use_git"><span class="header-section-number">2.5</span> use_git()</a></li>
 <li><a class="nav-link" href="#write-the-first-function"><span class="header-section-number">2.6</span> Write the first function</a></li>
 <li><a class="nav-link" href="#use_r"><span class="header-section-number">2.7</span> use_r()</a></li>
 <li>
-<a class="nav-link" href="#whole-game-load-all"><span class="header-section-number">2.8</span> load_all()</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#commit-fbind"><span class="header-section-number">2.8.1</span> Commit fbind()</a></li></ul>
+<a class="nav-link" href="#whole-game-load-all"><span class="header-section-number">2.8</span> load_all()</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#commit-strsplit1"><span class="header-section-number">2.8.1</span> Commit strsplit1()</a></li></ul>
 </li>
 <li><a class="nav-link" href="#check"><span class="header-section-number">2.9</span> check()</a></li>
 <li><a class="nav-link" href="#edit-description"><span class="header-section-number">2.10</span> Edit DESCRIPTION</a></li>
