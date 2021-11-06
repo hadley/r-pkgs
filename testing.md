@@ -110,7 +110,7 @@ test_that("str_length is number of characters", {
   expect_equal(str_length("ab"), 2)
   expect_equal(str_length("abc"), 3)
 })
-#> Test passed 🥳
+#> Test passed 🌈
 
 test_that("str_length of factor is length of level", {
   expect_equal(str_length(factor("a")), 1)
@@ -364,7 +364,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> Test passed 🌈
+#> Test passed 😀
 ```
 
 We could go a step further and create a custom expectation function:
