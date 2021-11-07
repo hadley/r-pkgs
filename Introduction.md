@@ -185,7 +185,7 @@ library(testthat)
 #>     test_file
 devtools::session_info()
 #> ─ Session info  ──────────────────────────────────────────────────
-#>  hash: construction worker, man factory worker: medium-dark skin tone, flag: New Zealand
+#>  hash: man: medium-dark skin tone, woman pilot, kissing face with closed eyes
 #> 
 #>  setting  value
 #>  version  R version 4.1.2 (2021-11-01)
@@ -196,7 +196,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-11-06
+#>  date     2021-11-07
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
@@ -216,7 +216,7 @@ devtools::session_info()
 #>  fansi         0.5.0   2021-05-25 [1] Custom
 #>  fastmap       1.1.0   2021-01-25 [1] Custom
 #>  fs            1.5.0   2020-07-31 [1] Custom
-#>  glue          1.4.2   2020-08-27 [1] Custom
+#>  glue          1.5.0   2021-11-07 [1] CRAN (R 4.1.2)
 #>  htmltools     0.5.2   2021-08-25 [1] Custom
 #>  jquerylib     0.1.4   2021-04-26 [1] Custom
 #>  jsonlite      1.7.2   2020-12-09 [1] Custom
@@ -243,7 +243,7 @@ devtools::session_info()
 #>  stringi       1.7.5   2021-10-04 [1] Custom
 #>  stringr       1.4.0   2019-02-10 [1] Custom
 #>  testthat    * 3.1.0   2021-10-04 [1] Custom
-#>  tibble        3.1.5   2021-09-30 [1] Custom
+#>  tibble        3.1.6   2021-11-07 [1] CRAN (R 4.1.2)
 #>  usethis     * 2.1.3   2021-10-27 [1] Custom
 #>  utf8          1.2.2   2021-07-24 [1] Custom
 #>  vctrs         0.3.8   2021-04-29 [1] Custom
