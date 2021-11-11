@@ -50,62 +50,69 @@ This chapter will show you how to use the most important `DESCRIPTION` fields.
 
 It's the job of the `DESCRIPTION` to list the packages that your package needs to work.
 R has a rich set of ways of describing potential dependencies.
-For example, the following lines indicate that your package needs both ggvis and dplyr to work:
+For example, the following lines indicate that your package needs both dplyr and tidyr to work:
 
 ```yaml
 Imports:
     dplyr,
-    ggvis
+    tidyr
 ```
 
-Whereas, the lines below indicate that while your package can take advantage of ggvis and dplyr, they're not required to make it work:
+Whereas, the lines below indicate that, while your package can take advantage of dplyr and tidyr, they're not required to make it work:
 
 ```yaml
 Suggests:
     dplyr,
-    ggvis
+    tidyr
 ```
 
 Both `Imports` and `Suggests` take a comma separated list of package names.
-I recommend putting one package on each line, and keeping them in alphabetical order.
+We recommend putting one package on each line, and keeping them in alphabetical order.
 That makes it easy to skim.
 
 `Imports` and `Suggests` differ in their strength of dependency:
 
-*   `Imports`: packages listed here _must_ be present for your package to 
-    work. In fact, any time your package is installed, those packages will, if 
-    not already present, be installed on your computer (`devtools::load_all()`
-    also checks that the packages are installed).
+* `Imports`: packages listed here _must_ be present for your package to work.
+  In fact, any time your package is installed, those packages will also be
+  installed, if not already present.
+  `devtools::load_all()` also checks that all packages in `Imports` are
+  installed.
     
-    Adding a package dependency here ensures that it'll be installed. However, 
-    it does _not_ mean that it will be attached along with your package (i.e., 
-    `library(x)`). The best practice is to explicitly refer to external 
-    functions using the syntax `package::function()`. This makes it very easy to 
-    identify which functions live outside of your package. This is especially 
-    useful when you read your code in the future.
+  Adding a package to `Imports` ensures it will be installed, but it does *not*
+  mean that it will be attached along with your package, i.e. it does not do the
+  equivalent of `library(otherpkg)`.
+  Inside your package, the best practice is to explicitly refer to external
+  functions using the syntax `package::function()`.
+  This makes it very easy to identify which functions live outside of your
+  package.
+  This is especially useful when you read your code in the future.
   
-    If you use a lot of functions from other packages this is rather
-    verbose. There's also a minor performance penalty associated with `::` 
-    (on the order of 5µs, so it will only matter if you call the function
-    millions of times). You'll learn about alternative ways to call functions
-    in other packages in [namespace imports](#imports).
+  If you use a lot of functions from another package this is rather verbose.
+  There's also a minor performance penalty associated with `::` (on the order of
+  5µs, so it will only matter if you call the function millions of times).
+  You'll learn about alternative ways to call functions in other packages in
+  [namespace imports](#imports).
 
-*   `Suggests`: your package can use these packages, but doesn't require them.
-    You might use suggested packages for example datasets, to run tests, 
-    build vignettes, or maybe there's only one function that needs the package.
+* `Suggests`: your package can use these packages, but doesn't require them.
+  You might use suggested packages for example datasets, to run tests, build
+  vignettes, or maybe there's only one function that needs the package.
   
-    Packages listed in `Suggests` are not automatically installed along with
-    your package. This means that you need to check if the package is available 
-    before using it (use `requireNamespace(x, quietly = TRUE)`). There are
-    two basic scenarios:
+  Packages listed in `Suggests` are not automatically installed along with
+  your package.
+  This means that you need to check if the package is available before using it.
+  Do this with `requireNamespace(pkg, quietly = TRUE)`.
+  There are two basic scenarios:
     
     ```{r}
     # You need the suggested package for this function    
     my_fun <- function(a, b) {
       if (!requireNamespace("pkg", quietly = TRUE)) {
-        stop("Package \"pkg\" needed for this function to work. Please install it.",
-          call. = FALSE)
+        stop(
+          "Package \"pkg\" must be installed to use this function.",
+          call. = FALSE
+        )
       }
+      # code that includes calls such as pkg::f()
     }
     
     # There's a fallback method if the package isn't available
@@ -118,22 +125,55 @@ That makes it easy to skim.
     }
     ```
 
-When developing packages locally, you never need to use `Suggests`.
-When releasing your package, using `Suggests` is a courtesy to your users.
-It frees them from downloading rarely needed packages, and lets them get started with your package as quickly as possible.
+  rlang has some useful functions for checking if a package is available.
+  Here's how suggested package checks could look if you use rlang:
+  
+    ```{r}
+    # You need the suggested package for this function    
+    my_fun <- function(a, b) {
+      rlang::check_installed("pkg", reason = "to use `my_fun()`")
+      # code that includes calls such as pkg::f()
+    }
+    
+    # There's a fallback method if the package isn't available
+    my_fun <- function(a, b) {
+      if (rlang::is_installed("pkg")) {
+        pkg::f()
+      } else {
+        g()
+      }
+    }
+    ```
+    
+    These rlang functions have handy features, such as vectorization over `pkg`,
+    classed errors with a data payload, and, for `check_installed()`, an offer
+    to install the needed package in an interactive session.
+  
+    `Suggests` isn't very relevant for packages used by a small number of people
+    or in very specific context.
+    Using `Suggests` is mostly a courtesy to your external users.
+    It frees them from downloading rarely needed packages and lets them get
+    with your package as quickly as possible.
 
-The easiest way to add `Imports` and `Suggests` to your package is to use `usethis::use_package()`.
+The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
 This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
 
-```{r, eval = FALSE}
-usethis::use_package("dplyr") # Defaults to imports
-#> Adding dplyr to Imports
-#> Refer to functions with dplyr::fun()
-usethis::use_package("dplyr", "Suggests")
-#> Adding dplyr to Suggests
-#> Use requireNamespace("dplyr", quietly = TRUE) to test if package is 
-#>  installed, then use dplyr::fun() to refer to functions.
+```{r include = FALSE}
+op <- usethis::proj_get()
+usethis::proj_set(temp_pkg)
 ```
+
+```{r}
+usethis::use_package("dplyr") # Default is "Imports"
+
+usethis::use_package("tidyr", "Suggests")
+```
+
+```{r include = FALSE}
+usethis::proj_set(op)
+```
+
+<!-- TODO: if the package Imports rlang, should usethis suggest `rlang::check_installed()` and `rlang::is_installed()` instead? Also seem like the usethis message should be more parallel in these two cases.-->
 
 ### Versioning
 
@@ -141,21 +181,19 @@ If you need a specific version of a package, specify it in parentheses after the
 
 ```yaml
 Imports:
-    ggvis (>= 0.2),
-    dplyr (>= 0.3.0.1)
-Suggests:
-    MASS (>= 7.3.0)
+    dplyr (>= 1.0.0),
+    tidyr (>= 1.1.0)
 ```
 
-You almost always want to specify a minimum version rather than an exact version (`MASS (== 7.3.0)`).
+You almost always want to specify a minimum version (`dplyr (>= 1.0.0)`) rather than an exact version (`dplyr (== 1.0.0)`).
 Since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions.
 
 Versioning is most important when you release your package.
 Usually people don't have exactly the same versions of packages installed that you do.
 If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message.
-However, if you supply the version number, they'll get a error message that tells them exactly what the problem is: an out of date package. 
+However, if you supply a minimum version, they'll get a error message that tells them exactly what the problem is: an out-of-date package. 
 
-Think carefully if you declare a minimum version.
+Think carefully if you declare a minimum version for a dependency.
 In some sense, the safest thing to do is to require a version greater than or equal to the package's current version.
 For public work, this is most naturally defined as the current CRAN version of a package; private or personal projects may adopt some other convention.
 But it's important to appreciate the implications for people who try to install your package: if their local installation doesn't fulfill all of your requirements around versions, installation will either fail or force upgrades of these dependencies.
@@ -164,42 +202,44 @@ But if your stated requirements have a less solid rationale, this may be unneces
 
 In the absence of clear, hard requirements, you should set minimum versions (or not) based on your expected user base, the package versions they are likely to have, and a cost-benefit analysis of being too lax versus too conservative.
 
-<!-- TODO: return here and insert concrete details closer to publication. Thing 1: mention relevant usethis function(s). Today that is `use_tidy_version()` but it needs some work (https://github.com/r-lib/usethis/issues/771). Thing 2: See if Kirill's prototype of studying minimum version has matured into anything we can recommend for general use (https://github.com/r-lib/pillar/tree/c017f20476fce431ceee18cc3a637f7ed2884d3a/minver#readme) -->
-
 ### Other dependencies
 
 There are three other fields that allow you to express more specialised dependencies:
 
-  * `Depends`: Prior to the rollout of namespaces in R 2.14.0, `Depends` was 
-    the only way to "depend" on another package. Now, despite the name, you 
-    should almost always use `Imports`, not `Depends`. You'll learn why, and 
-    when you should still use `Depends`, in [namespaces](#namespace).
+* `Depends`: Prior to the rollout of namespaces in R 2.14.0 in 2011, `Depends`
+  was the only way to "depend" on another package.
+  Now, despite the name, you should almost always use `Imports`, not `Depends`.
+  You'll learn why, and when you should still use `Depends`, in
+  [namespaces](#namespace).
     
-    You can also use `Depends` to require a specific version of R, e.g.
-    `Depends: R (>= 3.4.0)`. Again, think carefully if you do this. This raises
-    the same issues as setting a minimum version for a package you depend on,
-    except the stakes are much higher when it comes to R itself. Users can't simply
-    consent to the necessary upgrade, so, if other packages depend on yours,
-    your minimum version requirement for R can cause a cascade of package
-    installation failures.
+  You can also use `Depends` to state a minimum version for R itself, e.g.
+  `Depends: R (>= 4.0.0)`.
+  Again, think carefully if you do this.
+  This raises the same issues as setting a minimum version for a package you
+  depend on, except the stakes are much higher when it comes to R itself.
+  Users can't simply consent to the necessary upgrade, so, if other packages
+  depend on yours, your minimum version requirement for R can cause a cascade of
+  package installation failures.
 
-      - The [backports package](https://cran.r-project.org/package=backports)
-      is useful if you want to use a function like `trimws()`, which was
-      introduced in 3.3.0, while still supporting older R versions.
-      - The tidyverse packages officially support the current R version, the
-      devel version, and four previous versions. We proactively test this 
-      support in the standard build matrix we use for continuous integration.
-      - Packages with a lower level of use may not need this level of rigour.
-      The main takeaway is: if you state a minimum, you should have a reason and
-      you should take reasonable measures to test your claim regularly.      
+  - The [backports package](https://cran.r-project.org/package=backports) is
+    useful if you want to use a function like `tools::R_user_dir(()`, which was
+    introduced in 4.0.0 in 2020, while still supporting older R versions.
+  - The tidyverse packages officially support the current R version, the devel
+    version, and four previous versions.
+    We proactively test this support in the standard build matrix we use for
+    continuous integration.
+  - Packages with a lower level of use may not need this level of rigour.
+    The main takeaway is: if you state a minimum of R, you should have a reason
+    and you should take reasonable measures to test your claim regularly.      
     
-  * `LinkingTo`: packages listed here rely on C or C++ code in another package. 
-    You'll learn more about `LinkingTo` in [compiled code](#src).
+* `LinkingTo`: packages listed here rely on C or C++ code in another package. 
+  You'll learn more about `LinkingTo` in [compiled code](#src).
     
-  * `Enhances`: packages listed here are "enhanced" by your package. Typically, 
-    this means you provide methods for classes defined in another package (a 
-    sort of reverse `Suggests`). But it's hard to define what that means, so I 
-    don't recommend using `Enhances`.
+* `Enhances`: packages listed here are "enhanced" by your package.
+  Typically, this means you provide methods for classes defined in another
+  package (a sort of reverse `Suggests`).
+  But it's hard to define what that means, so we don't recommend using
+  `Enhances`.
     
 You can also list things that your package needs outside of R in the `SystemRequirements` field.
 But this is just a plain text field and is not automatically checked.
