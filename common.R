@@ -28,7 +28,8 @@ options(
 options(
   digits = 3,
   width = 68,
-  str = strOptions(strict.width = "cut")
+  str = strOptions(strict.width = "cut"),
+  crayon.enabled = TRUE
 )
 knitr::opts_chunk$set(width = 68)
 
