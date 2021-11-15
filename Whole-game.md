@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/Rtmpzukwiv/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpzukwiv/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/RtmpLta4Yd/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpLta4Yd/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -186,7 +186,7 @@ Now we make it also a Git repository, with `use_git()`.
 
 ```r
 use_git()
-#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpzukwiv/regexcite'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpLta4Yd/regexcite'[39m
 #> [32m✔[39m Initialising Git repo
 #> [32m✔[39m Adding [34m'.Rhistory'[39m, [34m'.Rdata'[39m, [34m'.httr-oauth'[39m, [34m'.DS_Store'[39m to [34m'.gitignore'[39m
 ```
@@ -224,7 +224,7 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 #> [90m# A tibble: 1 × 3[39m
 #>   commit                                   author          message  
 #>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m           [3m[90m<chr>[39m[23m    
-#> [90m1[39m 7010804636a28402bff7a13fa1b1249da17c009a jennybc <jenny… [90m"[39mInitial…
+#> [90m1[39m e6bbfae3fe898f8cdff1ae1bcb06e6313f3590e8 jennybc <jenny… [90m"[39mInitial…
 ```
 :::
 
@@ -423,7 +423,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 25.6s
+#> Duration: 24.4s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -524,642 +524,112 @@ Open the newly created `LICENSE` file and confirm it looks something like this:
 <!-- This is a way to get the contents of a file displayed in a code-link chunk, with a copy button, but without syntax highlighting. -->
 
 
-```{.default .default}
-YEAR: 2021
-COPYRIGHT HOLDER: regexcite authors
-```
-
-Like other license helpers, `use_mit_license()` also puts a copy of the full license in `LICENSE.md` and adds this file to `.Rbuildignore`.
-It's considered a best practice to include a full license in your package's source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.
-
-
-
-## `document()` {#whole-game-document}
-
-Wouldn't it be nice to get help on `strsplit1()`, just like we do with other R functions?
-This requires that your package have a special R documentation file, `man/strsplit1.Rd`, written in an R-specific markup language that is sort of like LaTeX.
-Luckily we don't necessarily have to author that directly.
-
-We write a specially formatted comment right above `strsplit1()`, in its source file, and then let a package called [roxygen2](https://roxygen2.r-lib.org) handle the creation of `man/strsplit1.Rd`.
-The motivation and mechanics of roxygen2 are covered in chapter \@ref(man).
-
-If you use RStudio, open `R/strsplit1.R` in the source editor and put the cursor somewhere in the `strsplit1()` function definition.
-Now do *Code > Insert roxygen skeleton*.
-A very special comment should appear above your function, in which each line begins with `#'`.
-RStudio only inserts a barebones template, so you will need to edit it to look something like that below.
-
-If you don't use RStudio, create the comment yourself.
-Regardless, you should modify it to look something like this:
-
-
-```{.r .R}
-#' Split a string
-#'
-#' @param x A character vector with one element.
-#' @param split What to split on.
-#'
-#' @return A character vector.
-#' @export
-#'
-#' @examples
-#' x <- "alfa,bravo,charlie,delta"
-#' strsplit(x, split = ",")
-strsplit1 <- function(x, split) {
-  strsplit(x, split = split)[[1]]
-}
-```
-
-<!-- TODO: mention how RStudio helps you execute examples here? -->
-
-
-
-But we're not done yet!
-We still need to trigger the conversion of this new roxygen comment into `man/strsplit1.Rd` with `document()`:
-
-
 ```r
-document()
-#> [36mℹ[39m Updating [34m[34mregexcite[34m[39m documentation
-#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
-#> Writing NAMESPACE
-#> Writing strsplit1.Rd
-```
-
-:::rstudio-tip
-RStudio exposes `document()` in the *Build* menu, in the *Build* pane via *More > Document*, and in keyboard shortcuts Ctrl + Shift + D (Windows & Linux) or Cmd + Shift + D (macOS).
-:::
-
-You should now be able to preview your help file like so:
-
-
-```r
-?strsplit1
-```
-
-You'll see a message like "Rendering development documentation for 'strsplit1'", which reminds that you are basically previewing draft documentation.
-That is, this documentation is present in your package's source, but is not yet present in an installed package.
-In fact, we haven't installed regexcite yet, but we will soon.
-
-Note also that your package's documentation won't be properly wired up until it has been formally built and installed.
-This polishes off niceties like the links between help files and the creation of a package index.
-
-### `NAMESPACE` changes
-
-In addition to converting `strsplit1()`'s special comment into `man/strsplit1.Rd`, the call to `document()` updates the `NAMESPACE` file, based on `@export` directives found in roxygen comments.
-Open `NAMESPACE` for inspection.
-The contents should be:
-
-<!-- OK to use this approach here because I actively do not want a copy button. NAMESPACE should be managed by roxygen and I don't want to tempt anyone to edit it by hand. -->
-
-
-```
-# Generated by roxygen2: do not edit by hand
-
-export(strsplit1)
-```
-
-The export directive in `NAMESPACE` is what makes `strsplit1()` available to a user after attaching regexcite via `library(regexcite)`.
-Just as it is entirely possible to author `.Rd` files "by hand", you can manage `NAMESPACE` explicitly yourself.
-But we choose to delegate this to devtools (and roxygen2).
-
-
-
-## `check()` again
-
-regexcite should pass `R CMD check` cleanly now and forever more: 0 errors, 0 warnings, 0 notes.
-
-
-```r
-check()
-```
-
-:::downlit
-
-```
-#> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 26.3s
-#> 
-#> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
-```
-:::
-
-## `install()`
-
-Since we have a minimum viable product now, let's install the regexcite package into your library via `install()`:
-
-
-```r
-install()
-```
-
-
-```
-   checking for file ‘/tmp/Rtmpzukwiv/regexcite/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/Rtmpzukwiv/regexcite/DESCRIPTION’
-─  preparing ‘regexcite’:
-   checking DESCRIPTION meta-information ...
-✔  checking DESCRIPTION meta-information
-─  checking for LF line-endings in source and make files and shell scripts
-─  checking for empty or unneeded directories
-─  building ‘regexcite_0.0.0.9000.tar.gz’
-Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/Rtmpzukwiv/regexcite_0.0.0.9000.tar.gz --install-tests 
-* installing to library ‘/home/runner/work/_temp/Library’
-* installing *source* package ‘regexcite’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (regexcite)
-```
-
-:::rstudio-tip
-RStudio exposes similar functionality in the *Build* menu and in the *Build* pane via *Install and Restart*.
-:::
-
-Now we can attach and use regexcite like any other package.
-Let's revisit our small example from the top.
-This is a good time to restart your R session and ensure you have a clean workspace.
-
-
-```r
-library(regexcite)
-
-x <- "alfa,bravo,charlie,delta"
-strsplit1(x, split = ",")
-#> [1] "alfa"    "bravo"   "charlie" "delta"
-```
-
-Success!
-
-## `use_testthat()`
-
-We've tested `strsplit1()` informally, in a single example.
-We can formalize this as a unit test.
-This means we express a concrete expectation about the correct `strsplit1()` result for a specific input.
-
-First, we declare our intent to write unit tests and to use the testthat package for this, via `use_testthat()`:
-
-
-```r
-use_testthat()
-#> [32m✔[39m Adding [34m'testthat'[39m to [32mSuggests[39m field in DESCRIPTION
-#> [32m✔[39m Setting [32mConfig/testthat/edition[39m field in DESCRIPTION to [34m'3'[39m
-#> [32m✔[39m Creating [34m'tests/testthat/'[39m
-#> [32m✔[39m Writing [34m'tests/testthat.R'[39m
-#> [31m•[39m Call [90m`use_test()`[39m to initialize a basic test file and open it for editing.
-```
-
-This initializes the unit testing machinery for your package.
-It adds `Suggests: testthat` to `DESCRIPTION`, creates the directory `tests/testthat/`, and adds the script `tests/testthat.R`.
-You'll notice that testthat is probably added with a minimum version of 3.0.0 and a second DESCRIPTION field, `Config/testthat/edition: 3`.
-We'll talk more about those details in chapter \@ref(tests).
-
-
-
-However, it's still up to YOU to write the actual tests!
-
-The helper `use_test()` opens and/or creates a test file.
-You can provide the file's basename or, if you are editing the relevant source file in RStudio, it will be automatically generated.
-For many of you, if `R/strsplit1.R` is the active file in RStudio, you can just call `use_test()`.
-However, since this book is built non-interactively, we must provide the basename explicitly:
-
-
-```r
-use_test("strsplit1")
-#> [32m✔[39m Writing [34m'tests/testthat/test-strsplit1.R'[39m
-#> [31m•[39m Edit [34m'tests/testthat/test-strsplit1.R'[39m
-```
-
-This creates the file `tests/testthat/test-strsplit1.R`.
-If it had already existed, `use_test()` would have just opened it.
-Put this content in:
-
-
-
-
-```{.r .R}
-test_that("strsplit1() splits a string", {
-  expect_equal(strsplit1("a,b,c", split = ","), c("a", "b", "c"))
-})
-```
-
-This tests that `strsplit1()` gives the expected result when splitting a string.
-
-
-
-Run this test interactively, as you will when you write your own.
-Note you'll have to attach testthat via `library(testthat)` in your R session first and you'll probably want to `load_all()`.
-
-Going forward, your tests will mostly run *en masse* and at arm's length via `test()`:
-
-<!-- TODO: I have no idea why I have to disable crayon here, but if I don't, I guess raw ANSI escapes. Other chunks seem to work fine with downlig. It would also be nice to not see evidence of progress reporting, but the previous approach to turning that off keeps this chunk from showing any output at all :( The previous approach was `R.options = list(testthat.default_reporter = testthat::ProgressReporter$new(update_interval = Inf))`. -->
-
-
-```r
-test()
-#> ℹ Loading regexcite
-#> ℹ Testing regexcite
-#> ✔ | F W S  OK | Context
-#> ⠏ |         0 | strsplit1                                           ✔ |         1 | strsplit1
-#> 
-#> ══ Results ═════════════════════════════════════════════════════════
-#> [ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]
-```
-
-:::rstudio-tip
-RStudio exposes `test()` in the *Build* menu, in the *Build* pane via *More > Test package*, and in keyboard shortcuts Ctrl + Shift + T (Windows & Linux) or Cmd + Shift + T (macOS).
-:::
-
-Your tests are also run whenever you `check()` the package.
-In this way, you basically augment the standard checks with some of your own, that are specific to your package.
-It is a good idea to use the [covr package](https://covr.r-lib.org) to track what proportion of your package's source code is exercised by the tests.
-More details can be found in chapter \@ref(tests).
-
-## `use_package()`
-
-You will inevitably want to use a function from another package in your own package.
-Just as we needed to **export** `strsplit1()`, we need to **import** functions from the namespace of other packages.
-If you plan to submit a package to CRAN, note that this even applies to functions in packages that you think of as "always available", such as `stats::median()` or `utils::head()`.
-
-One common dilemma when using R's regular expression functions is uncertainty about whether to request `perl = TRUE` or `perl = FALSE`.
-And then there are often, but not always, other arguments that alter how patterns are matched, such as `fixed`, `ignore.case`, and `invert`.
-It can be hard to keep track of which functions use which arguments and how the arguments interact, so many users never get to the point where they retain these details without rereading the docs.
-
-The stringr package "provides a cohesive set of functions designed to make working with strings as easy as possible".
-In particular, stringr uses one regular expression system everywhere (ICU regular expressions) and uses the same interface in every function for controlling matching behaviors, such as case sensitivity.
-Some people find this easier to internalize and program around.
-Let's imagine you decide you'd rather build regexcite based on stringr (and stringi) than base R's regular expression functions.
-
-First, declare your general intent to use some functions from the stringr namespace with `use_package()`:
-
-
-```r
-use_package("stringr")
-#> [32m✔[39m Adding [34m'stringr'[39m to [32mImports[39m field in DESCRIPTION
-#> [31m•[39m Refer to functions with [90m`stringr::fun()`[39m
-```
-
-This adds the stringr package to the "Imports" section of `DESCRIPTION`.
-And that is all it does.
-
-
-
-Let's revisit `strsplit1()` to make it more stringr-like.
-Here's a new take on it:
-
-
-```r
-str_split_one <- function(string, pattern, n = Inf) {
-  stopifnot(is.character(string), length(string) <= 1)
-  if (length(string) == 1) {
-    stringr::str_split(string = string, pattern = pattern, n = n)[[1]]
-  } else {
-    character()
-  }
-}
-```
-
-Notice that we:
-
-* Rename the function to `str_split_one()`, to signal that that is a wrapper
-  around `stringr::str_split()`.
-* Adopt the argument names from `stringr::str_split()`. Now we have `string` and
-  `pattern` (and `n`), instead of `x` and `split`.
-* Introduce a bit of argument checking and edge case handling. This is
-  unrelated to the switch to stringr and would be equally beneficial in the
-  version built on `strsplit()`.
-* Use the `package::function()` form when calling `stringr::str_split()`. This
-  specifies that we want to call the `str_split()` function from the stringr
-  namespace. There is more than one way to call a function from another
-  package and the one we endorse here is explained fully in chapter
-  \@ref(namespace).
-
-Where should we write this new function definition?
-I'd like to keep following the convention where we name the `.R` file after the function it defines, so now we need to do some fiddly file shuffling.
-Because this comes up fairly often in real life, we have the `rename_files()` function, which choreographs the renaming of a file in `R/` and its associated companion files below `test/`.
-
-
-```r
-rename_files("strsplit1", "str_split_one")
-#> [32m✔[39m Moving [34m'R/strsplit1.R'[39m to [34m'R/str_split_one.R'[39m
-#> [32m✔[39m Moving [34m'tests/testthat/test-strsplit1.R'[39m to [34m'tests/testthat/test-str_split_one.R'[39m
-```
-
-Remember: the file name work is purely aspirational.
-We still need to update the contents of these files!
-
-Here are the updated contents of `R/str_split_one.R`.
-In addition to changing the function definition, we've also updated the roxygen header to reflect the new arguments and to include examples that show off the stringr features.
-
-
-```{.r .R}
-#' Split a string
-#'
-#' @param string A character vector with, at most, one element.
-#' @inheritParams stringr::str_split
-#'
-#' @return A character vector.
-#' @export
-#'
-#' @examples
-#' x <- "alfa,bravo,charlie,delta"
-#' str_split_one(x, pattern = ",")
-#' str_split_one(x, pattern = ",", n = 2)
-#'
-#' y <- "192.168.0.1"
-#' str_split_one(y, pattern = stringr::fixed("."))
-str_split_one <- function(string, pattern, n = Inf) {
-  stopifnot(is.character(string), length(string) <= 1)
-  if (length(string) == 1) {
-    stringr::str_split(string = string, pattern = pattern, n = n)[[1]]
-  } else {
-    character()
-  }
-}
-```
-
-Don't forget to also update the test file!
-
-Here are the updated contents of `tests/testthat/test-str_split_one.R`.
-In addition to the change in the function's name and arguments, we've added a couple more tests.
-
-
-```{.r .R}
-test_that("str_split_one() splits a string", {
-  expect_equal(str_split_one("a,b,c", ","), c("a", "b", "c"))
-})
-
-test_that("str_split_one() errors if input length > 1", {
-  expect_error(str_split_one(c("a,b","c,d"), ","))
-})
-
-test_that("str_split_one() exposes features of stringr::str_split()", {
-  expect_equal(str_split_one("a,b,c", ",", n = 2), c("a", "b,c"))
-  expect_equal(str_split_one("a.b", stringr::fixed(".")), c("a", "b"))
-})
-```
-
-Before we take the new `str_split_done()` out for a test drive, we need to call `document()`.
-Why?
-Remember that `document()` does two main jobs:
-
-1. Converts our roxygen comments into proper R documentation.
-1. (Re)generates `NAMESPACE`.
-
-The second point is especially important here, since we will no longer export `strsplit1()` and we will newly export `str_split_one()`.
-Don't be dismayed by the warning about `"Objects listed as exports, but not present in namespace: strsplit1"`.
-That always happens when you remove something from the namespace.
-
-
-```r
-document()
-#> [36mℹ[39m Updating [34m[34mregexcite[34m[39m documentation
-#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
-#> Warning in setup_ns_exports(path, export_all, export_imports):
-#> Objects listed as exports, but not present in namespace: strsplit1
-#> Writing NAMESPACE
-#> Writing NAMESPACE
-#> Writing str_split_one.Rd
-#> Deleting strsplit1.Rd
-```
-
-Try out the new `str_split_one()` function by simulating package installation via `load_all()`:
-
-
-```r
-load_all()
-#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
-str_split_one("a, b, c", pattern = ", ")
-#> [1] "a" "b" "c"
+getwd()
+#> [1] "/tmp/RtmpLta4Yd/regexcite"
+dir_info()
+#> [90m# A tibble: 7 × 18[39m
+#>   path         type       size permissions modification_time   user 
+#>   [3m[90m<fs::path>[39m[23m   [3m[90m<fct>[39m[23m  [3m[90m<fs::by>[39m[23m [3m[90m<fs::perms>[39m[23m [3m[90m<dttm>[39m[23m              [3m[90m<chr>[39m[23m
+#> [90m1[39m DESCRIPTION  file        391 rw-rw-rw-   2021-11-15 [90m23:42:21[39m runn…
+#> [90m2[39m LICENSE      file         47 rw-rw-rw-   2021-11-15 [90m23:42:21[39m runn…
+#> [90m3[39m LICENSE.md   file      1.05K rw-rw-rw-   2021-11-15 [90m23:42:21[39m runn…
+#> [90m4[39m NAMESPACE    file         46 rw-rw-rw-   2021-11-15 [90m23:41:54[39m runn…
+#> [90m5[39m [01;34mR[0m            direc…       4K rwxr-xr-x   2021-11-15 [90m23:41:55[39m runn…
+#> [90m6[39m [34;42mman[0m          direc…       4K rwxrwxrwx   2021-11-15 [90m23:41:55[39m runn…
+#> [90m7[39m regexcite.R… file        340 rw-rw-rw-   2021-11-15 [90m23:41:54[39m runn…
+#> [90m# … with 12 more variables: group <chr>, device_id <dbl>,[39m
+#> [90m#   hard_links <dbl>, special_device_id <dbl>, inode <dbl>,[39m
+#> [90m#   block_size <dbl>, blocks <dbl>, flags <int>, generation <dbl>,[39m
+#> [90m#   access_time <dttm>, change_time <dttm>, birth_time <dttm>[39m
+create
+#> [1] TRUE
+LICENSE_path
+#> [1] "/tmp/RtmpLta4Yd/regexcite/LICENSE"
+file_exists(LICENSE_path)
+#> /tmp/RtmpLta4Yd/regexcite/LICENSE 
+#>                              TRUE
+knitr::knit_exit()
 ```
 
 
 
-## `use_github()`
 
-You've seen us making commits during the development process for regexcite.
-You can see an indicative history at <https://github.com/jennybc/regexcite>.
-Our use of version control and the decision to expose the development process means you can inspect the state of the regexcite source at each developmental stage.
-By looking at so-called diffs, you can see exactly how each devtools helper function modifies the source files that constitute the regexcite package.
 
-How would you connect your local regexcite package and Git repository to a companion repository on GitHub?
 
-1. [`use_github()`](https://usethis.r-lib.org/reference/use_github.html) is a
-   helper that we recommend for the long-term. We won't demonstrate it here
-   because it requires some credential setup on your end. We also don't want to
-   tear down and rebuild the public regexcite package every time we build this
-   book.
-1. Set up the GitHub repo first! It sounds counter-intuitive, but the easiest way
-   to get your work onto GitHub is to initiate there, then use RStudio to start
-   working in a synced local copy. This approach is described in Happy Git's
-   workflows [New project, GitHub first](https://happygitwithr.com/new-github-first.html) and [Existing project, GitHub first](https://happygitwithr.com/existing-github-first.html).
-1. Command line Git can always be used to add a remote repository *post hoc*.
-   This is described in the Happy Git workflow [Existing project, GitHub last](https://happygitwithr.com/existing-github-last.html).
 
-Any of these approaches will connect your local regexcite project to a GitHub repo, public or private, which you can push to or pull from using the Git client built into RStudio.
 
-## `use_readme_rmd()`
 
-Now that your package is on GitHub, the `README.md` file matters.
-It is the package's home page and welcome mat, at least until you decide to give it a website (see [pkgdown](https://pkgdown.r-lib.org)), add a vignette (see chapter \@ref(vignettes)), or submit it to CRAN (see chapter \@ref(release)).
 
-The `use_readme_rmd()` function initializes a basic, executable `README.Rmd` ready for you to edit:
 
 
-```r
-use_readme_rmd()
-#> [32m✔[39m Writing [34m'README.Rmd'[39m
-#> [32m✔[39m Adding [34m'^README\\.Rmd$'[39m to [34m'.Rbuildignore'[39m
-#> [31m•[39m Update [34m'README.Rmd'[39m to include installation instructions.
-#> [32m✔[39m Writing [34m'.git/hooks/pre-commit'[39m
-```
 
-In addition to creating `README.Rmd`, this adds some lines to `.Rbuildignore`, and creates a Git pre-commit hook to help you keep `README.Rmd` and `README.md` in sync.
 
-`README.Rmd` already has sections that prompt you to:
 
-* Describe the purpose of the package.
-* Provide installation instructions. If a GitHub remote is detected when
-  `use_readme_rmd()` is called, this section is pre-filled with instructions on
-  how to install from GitHub.
-* Show a bit of usage.
 
-How to populate this skeleton?
-Copy stuff liberally from `DESCRIPTION` and any formal and informal tests or examples you have.
-Anything is better than nothing.
-Otherwise ... do you expect people to install your package and comb through individual help files to figure out how to use it?
-They probably won't.
 
-We like to write the `README` in R Markdown, so it can feature actual usage.
-The inclusion of live code also makes it less likely that your `README` grows stale and out-of-sync with your actual package.
 
-If RStudio has not already done so, open `README.Rmd` for editing.
-Make sure it shows some usage of `str_split_one()`.
 
-The `README.Rmd` we use is here: [README.Rmd](https://github.com/jennybc/regexcite/blob/main/README.Rmd) and here's what it contains:
 
 
 
 
 
-<!-- This is a way to get the contents of a file displayed in a code-link chunk, with a copy button, but without syntax highlighting. -->
 
 
-````{.default .default}
----
-output: github_document
----
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
 
-**NOTE: This is a toy package created for expository purposes, for the second edition of [R Packages](https://r-pkgs.org). It is not meant to actually be useful. If you want a package for factor handling, please see [stringr](https://stringr.tidyverse.org), [stringi](https://stringi.gagolewski.com/),
-[rex](https://cran.r-project.org/package=rex), and
-[rematch2](https://cran.r-project.org/package=rematch2).**
 
-# regexcite
 
-<!-- badges: start -->
-<!-- badges: end -->
 
-The goal of regexcite is to make regular expressions more exciting!
-It provides convenience functions to make some common tasks with string manipulation and regular expressions a bit easier.
 
-## Installation
 
-You can install the development version of regexcite from [GitHub](https://github.com/) with:
-      
-``` r
-# install.packages("devtools")
-devtools::install_github("jennybc/regexcite")
-```
 
-## Usage
 
-A fairly common task when dealing with strings is the need to split a single string into many parts.
-This is what `base::strplit()` and `stringr::str_split()` do.
 
-```{r}
-(x <- "alfa,bravo,charlie,delta")
-strsplit(x, split = ",")
-stringr::str_split(x, pattern = ",")
-```
 
-Notice how the return value is a **list** of length one, where the first element holds the character vector of parts.
-Often the shape of this output is inconvenient, i.e. we want the un-listed version.
 
-That's exactly what `regexcite::str_split_one()` does.
 
-```{r}
-library(regexcite)
 
-str_split_one(x, pattern = ",")
-```
 
-Use `str_split_one()` when the input is known to be a single string.
-For safety, it will error if its input has length greater than one.
 
-`str_split_one()` is built on `stringr::str_split()`, so you can use its `n` argument and stringr's general interface for describing the `pattern` to be matched.
 
-```{r}
-str_split_one(x, pattern = ",", n = 2)
 
-y <- "192.168.0.1"
-str_split_one(y, pattern = stringr::fixed("."))
-```
-````
 
-Don't forget to render it to make `README.md`!
-The pre-commit hook should remind you if you try to commit `README.Rmd`, but not `README.md`, and also when `README.md` appears to be out-of-date.
 
-The very best way to render `README.Rmd` is with `build_readme()`, because it takes care to render with the the most current version of your package, i.e. it installs a temporary copy from the current source.
 
 
-```r
-build_readme()
-#> [36mℹ[39m Installing [34m[34mregexcite[34m[39m in temporary library
-#> [36mℹ[39m Building [34m[34m/tmp/Rtmpzukwiv/regexcite/README.Rmd[34m[39m
-```
 
-You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
 
-Finally, don't forget to do one last commit. And push, if you're using GitHub.
 
 
 
 
 
-## The end: `check()` and `install()`
 
-Let's run `check()` again to make sure all is still well.
 
 
-```r
-check()
-```
 
-:::downlit
 
-```
-#> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 27.9s
-#> 
-#> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
-```
-:::
 
-regexcite should have no errors, warnings or notes.
-This would be a good time to re-build and install it properly. And celebrate!
 
 
-```r
-install()
-```
 
 
-```
-   checking for file ‘/tmp/Rtmpzukwiv/regexcite/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/Rtmpzukwiv/regexcite/DESCRIPTION’
-─  preparing ‘regexcite’:
-   checking DESCRIPTION meta-information ...
-✔  checking DESCRIPTION meta-information
-─  checking for LF line-endings in source and make files and shell scripts
-─  checking for empty or unneeded directories
-   Removed empty directory ‘regexcite/tests/testthat/_snaps’
-─  building ‘regexcite_0.0.0.9000.tar.gz’
-Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/Rtmpzukwiv/regexcite_0.0.0.9000.tar.gz --install-tests 
-* installing to library ‘/home/runner/work/_temp/Library’
-* installing *source* package ‘regexcite’ ...
-** using staged installation
-** R
-** tests
-** byte-compile and prepare package for lazy loading
-** help
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (regexcite)
-```
 
-Feel free to visit the [regexcite package](https://github.com/jennybc/regexcite) on GitHub, which is exactly as developed here.
-The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved.
-The rest of this book goes in greater detail for each step you've seen here and much more.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

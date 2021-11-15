@@ -139,7 +139,7 @@
 <p>In the rare case that you need to make a bundle from a package you’re developing locally, use <code><a href="https://devtools.r-lib.org//reference/build.html">devtools::build()</a></code>. Under the hood, this calls <code><a href="https://rdrr.io/pkg/pkgbuild/man/build.html">pkgbuild::build()</a></code> and, ultimately, <code>R CMD build</code>, which is described further in the <a href="https://cran.r-project.org/doc/manuals/R-exts.html#Building-package-tarballs">Building package tarballs</a> section of <a href="https://cran.r-project.org/doc/manuals/R-exts.html">Writing R Extensions</a>.</p>
 <p>This should tip you off that a package bundle or “source tarball” is not simply the result of making a tar archive of the source files, then compressing with gzip. By convention, in the R world, a few more operations are carried out when making the <code>.tar.gz</code> file and this is why we’ve elected to refer to this as a package bundle.</p>
 <p>Every CRAN package is available in bundled form, via the “Package source” field of individual landing pages. Continuing our examples from above, you could download the bundles <code>forcats_0.4.0.tar.gz</code> and <code>readxl_1.3.1.tar.gz</code> (or whatever the current versions may be). You could unpack such a bundle in the shell (not the R console) like so:</p>
-<div class="sourceCode" id="cb62"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb62-1"><a href="package-structure-state.html#cb62-1"></a><span class="fu">tar</span> xvf forcats_0.4.0.tar.gz</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="package-structure-state.html#cb35-1"></a><span class="fu">tar</span> xvf forcats_0.4.0.tar.gz</span></code></pre></div>
 <p>If you decompress a bundle, you’ll see it looks almost the same as a source package. This diagram summarises the files present in the top-level directory for source, bundled, and binary versions of devtools.</p>
 <p><em>TODO: Remake this figure <a href="https://github.com/hadley/r-pkgs/issues/587" class="uri">https://github.com/hadley/r-pkgs/issues/587</a>.</em></p>
 <div class="figure">
@@ -253,7 +253,7 @@ FIGURE 4.2: Many methods for converting between package states.
 <p>The built-in command line tool <code>R CMD INSTALL</code> powers all package installation. It can install a package from source files, a bundle (a.k.a. a source tarball), or a binary package. Details are available in the <a href="https://cran.r-project.org/doc/manuals/R-admin.html#Installing-packages">Installing packages section</a> of <a href="https://cran.r-project.org/doc/manuals/R-admin.html">R Installation and Administration</a>. Just like with <code><a href="https://devtools.r-lib.org//reference/build.html">devtools::build()</a></code>, devtools provides a wrapper function, <code><a href="https://devtools.r-lib.org//reference/install.html">devtools::install()</a></code>, that makes this tool available from within an R session.</p>
 <p>Most useRs understandably like to install packages from the comfort of an R session and directly from CRAN. The built-in function <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages()</a></code> meets this need. It can download the package, in various forms, install it, and optionally attend to the installation of dependencies.</p>
 <p>devtools exposes a family of <code>install_*()</code> functions to address some needs beyond the reach of <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages()</a></code> or to make existing capabilities easier to access. These functions are actually maintained in the <a href="https://remotes.r-lib.org">remotes package</a> and are re-exported by devtools.</p>
-<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org">remotes</a></span><span class="op">)</span>
 
 <span class="va">funs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/ls_str.html">lsf.str</a></span><span class="op">(</span><span class="st">"package:remotes"</span><span class="op">)</span><span class="op">)</span>
@@ -272,10 +272,10 @@ FIGURE 4.2: Many methods for converting between package states.
 <span class="header-section-number">4.6</span> In-memory package<a class="anchor" aria-label="anchor" href="#in-memory-package"><i class="fas fa-link"></i></a>
 </h2>
 <p>We finally arrive at a command familiar to everyone who uses R:</p>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://usethis.r-lib.org">usethis</a></span><span class="op">)</span></code></pre></div>
 <p>Assuming usethis is installed, this call makes its functions available for use, i.e. now we can do:</p>
-<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/create_package.html">create_package</a></span><span class="op">(</span><span class="st">"/path/to/my/coolpackage"</span><span class="op">)</span></code></pre></div>
 <p>The usethis package has been loaded into memory and, in fact, has also been attached to the search path. The distinction between loading and attaching packages is not important when you’re writing scripts, but it’s very important when you’re writing packages. You’ll learn more about the difference and why it’s important in <a href="namespace.html#search-path">search path</a>.</p>
 <p><code><a href="https://rdrr.io/r/base/library.html">library()</a></code> is not a great way to iteratively tweak and test drive a package you’re developing, because it only works for an installed package. In section <a href="workflows101.html#load-all">5.4</a>, you’ll learn how <code><a href="https://devtools.r-lib.org//reference/load_all.html">devtools::load_all()</a></code> accelerates development by allowing you to load a source package directly into memory.</p>
@@ -292,7 +292,7 @@ FIGURE 4.2: Many methods for converting between package states.
 
 <p>The distinction between the two is important and useful as you get involved in package development.</p>
 <p>You can have multiple libraries on your computer. In fact, many of you already do, especially if you’re on Windows. You can use <code><a href="https://rdrr.io/r/base/libPaths.html">.libPaths()</a></code> to see which libraries are currently active. Here’s how this might look on Windows:</p>
-<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># on Windows</span>
 <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html">.libPaths</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; [1] "C:/Users/jenny/Documents/R/win-library/3.6"</span>
@@ -314,7 +314,7 @@ FIGURE 4.2: Many methods for converting between package states.
 <span class="co">#&gt; [25] "stats4"       "survival"     "tcltk"        "tools"       </span>
 <span class="co">#&gt; [29] "translations" "utils"</span></code></pre></div>
 <p>Here’s a similar look on macOS (but your results may vary):</p>
-<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># on macOS</span>
 <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html">.libPaths</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; [1] "/Users/jenny/Library/R/3.6/library"</span>
