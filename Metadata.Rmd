@@ -89,7 +89,7 @@ That makes it easy to skim.
   package.
   This is especially useful when you read your code in the future.
   
-  If you use a lot of functions from another package this is rather verbose.
+  If you use a lot of functions from another package, this is rather verbose.
   There's also a minor performance penalty associated with `::` (on the order of
   5µs, so it will only matter if you call the function millions of times).
   You'll learn about alternative ways to call functions in other packages in
@@ -101,61 +101,8 @@ That makes it easy to skim.
   
   Packages listed in `Suggests` are not automatically installed along with
   your package.
-  This means that you need to check if the package is available before using it.
-  Do this with `requireNamespace(pkg, quietly = TRUE)`.
-  There are two basic scenarios:
-    
-    ```{r}
-    # You need the suggested package for this function    
-    my_fun <- function(a, b) {
-      if (!requireNamespace("pkg", quietly = TRUE)) {
-        stop(
-          "Package \"pkg\" must be installed to use this function.",
-          call. = FALSE
-        )
-      }
-      # code that includes calls such as pkg::f()
-    }
-    
-    # There's a fallback method if the package isn't available
-    my_fun <- function(a, b) {
-      if (requireNamespace("pkg", quietly = TRUE)) {
-        pkg::f()
-      } else {
-        g()
-      }
-    }
-    ```
-
-  rlang has some useful functions for checking if a package is available.
-  Here's how suggested package checks could look if you use rlang:
-  
-    ```{r}
-    # You need the suggested package for this function    
-    my_fun <- function(a, b) {
-      rlang::check_installed("pkg", reason = "to use `my_fun()`")
-      # code that includes calls such as pkg::f()
-    }
-    
-    # There's a fallback method if the package isn't available
-    my_fun <- function(a, b) {
-      if (rlang::is_installed("pkg")) {
-        pkg::f()
-      } else {
-        g()
-      }
-    }
-    ```
-    
-    These rlang functions have handy features, such as vectorization over `pkg`,
-    classed errors with a data payload, and, for `check_installed()`, an offer
-    to install the needed package in an interactive session.
-  
-    `Suggests` isn't very relevant for packages used by a small number of people
-    or in very specific context.
-    Using `Suggests` is mostly a courtesy to your external users.
-    It frees them from downloading rarely needed packages and lets them get
-    with your package as quickly as possible.
+  This means that you can't assume the package is available unconditionally.
+  Below we show various ways to handle these checks.
 
 The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
 This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
@@ -177,7 +124,112 @@ usethis::proj_set(op)
 
 <!-- TODO: if the package Imports rlang, should usethis suggest `rlang::check_installed()` and `rlang::is_installed()` instead? Also seem like the usethis message should be more parallel in these two cases.-->
 
-<!-- TODO: what about other places where you might use a Suggested package? In an example. In a test. In a vignette. -->
+### Guarding the use of a suggested package
+
+Inside a function in your own package, check for the availablility of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
+There are two basic scenarios:
+    
+```{r}
+# the suggested package is required 
+my_fun <- function(a, b) {
+  if (!requireNamespace("pkg", quietly = TRUE)) {
+    stop(
+      "Package \"pkg\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+  # code that includes calls such as pkg::f()
+}
+
+# the suggested package is optional; a fallback method is available
+my_fun <- function(a, b) {
+  if (requireNamespace("pkg", quietly = TRUE)) {
+    pkg::f()
+  } else {
+    g()
+  }
+}
+```
+
+rlang has some useful functions for checking package availability.
+Here's how the checks around a suggested package could look if you use rlang:
+  
+```{r}
+# the suggested package is required 
+my_fun <- function(a, b) {
+  rlang::check_installed("pkg", reason = "to use `my_fun()`")
+  # code that includes calls such as pkg::f()
+}
+
+# the suggested package is optional; a fallback method is available
+my_fun <- function(a, b) {
+  if (rlang::is_installed("pkg")) {
+    pkg::f()
+  } else {
+    g()
+  }
+}
+```
+    
+These rlang functions are have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
+  
+`Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context
+Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
+It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
+
+Another common place to use a suggested package is in an example and here we often guard with `require()` (but you'll also see `requireNamespace()` used for this).
+This example is from `glue::glue_col()`.
+
+```{r eval = FALSE}
+#' @examples
+#' if (require(crayon)) {
+#'   glue_col("{blue foo bar}")
+#' ...
+#' }
+```
+
+An example is basically the only place where we would use `require()` inside a package.
+
+Inside a test, testthat users can use `testthat::skip_if_not_installed()` to gracefully skip tests that exercise suggested packages.
+Here's an example from ggplot2, which tests some functions that use the suggested sf package: 
+
+```{r eval = FALSE}
+test_that("basic plot builds without error", {
+  skip_if_not_installed("sf")
+
+  nc_tiny_coords <- matrix(
+    c(-81.473, -81.741, -81.67, -81.345, -81.266, -81.24, -81.473,
+      36.234, 36.392, 36.59, 36.573, 36.437, 36.365, 36.234),
+    ncol = 2
+  )
+
+  nc <- sf::st_as_sf(
+    data_frame(
+      NAME = "ashe",
+      geometry = sf::st_sfc(sf::st_polygon(list(nc_tiny_coords)), crs = 4326)
+    )
+  )
+
+  expect_doppelganger("sf-polygons", ggplot(nc) + geom_sf() + coord_sf())
+})
+```
+
+The example above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
+That is, in general, we assume all suggested packages are available when writing tests.
+So what justifies making an exception?
+In the example above, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
+
+The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because that is, indeed, true for testthat itself.
+If the tests are being run, that implies that testthat is installed and that, in turn, implies that suggested packages have been installed.
+This is a matter of convention and not a hard-and-fast rule enforced by externally.
+Other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests.
+
+Also note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
+
+Finally, another place you might use a suggested package is in a vignette.
+Similar to tests, the tidyverse team generally writes vignettes as if all suggested packages are available.
+But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
+See chapter \@ref(vignettes) for more discussion of vignettes.
 
 ### Versioning
 
