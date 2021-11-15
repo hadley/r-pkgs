@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/RtmpxaXili/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpxaXili/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/Rtmpzr3MRT/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpzr3MRT/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -186,7 +186,7 @@ Now we make it also a Git repository, with `use_git()`.
 
 ```r
 use_git()
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpxaXili/regexcite'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpzr3MRT/regexcite'[39m
 #> [32m✔[39m Initialising Git repo
 #> [32m✔[39m Adding [34m'.Rhistory'[39m, [34m'.Rdata'[39m, [34m'.httr-oauth'[39m, [34m'.DS_Store'[39m to [34m'.gitignore'[39m
 ```
@@ -224,7 +224,7 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 #> [90m# A tibble: 1 × 3[39m
 #>   commit                                   author          message  
 #>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m           [3m[90m<chr>[39m[23m    
-#> [90m1[39m 83f0b486b74df7f01a41aad50d7af2ff91936e5d jennybc <jenny… [90m"[39mInitial…
+#> [90m1[39m ebd15935ee98edcd74c6307cbda4e47eb5f59629 jennybc <jenny… [90m"[39mInitial…
 ```
 :::
 
@@ -289,7 +289,7 @@ To learn more about that take a look at the [Functions chapter](https://r4ds.had
 :::tip
 The name of `strsplit1()` is a nod to the very handy `paste0()`, which first appeared in R 2.15.0 in 2012.
 `paste0()` was created to address the extremely common use case of `paste()`-ing strings together *without* a separator.
-`paste0()` has been lovingly described as ["statistical computing's most influential contribution of the 21st century"](https://simplystatistics.org/2013/01/31/paste0-is-statistical-computings-most-influential-contribution-of-the-21st-century/).
+`paste0()` has been lovingly described as ["statistical computing's most influential contribution of the 21st century"](https://simplystatistics.org/posts/2013-01-31-paste0-is-statistical-computings-most-influential-contribution-of-the-21st-century/).
 :::
 
 ## `use_r()`
@@ -423,7 +423,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 22.4s
+#> Duration: 26.6s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -637,7 +637,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 23.5s
+#> Duration: 28.5s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -654,8 +654,8 @@ install()
 
 
 ```
-   checking for file ‘/tmp/RtmpxaXili/regexcite/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/RtmpxaXili/regexcite/DESCRIPTION’
+   checking for file ‘/tmp/Rtmpzr3MRT/regexcite/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/Rtmpzr3MRT/regexcite/DESCRIPTION’
 ─  preparing ‘regexcite’:
    checking DESCRIPTION meta-information ...
 ✔  checking DESCRIPTION meta-information
@@ -663,7 +663,7 @@ install()
 ─  checking for empty or unneeded directories
 ─  building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpxaXili/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/Rtmpzr3MRT/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
@@ -739,6 +739,8 @@ use_test("strsplit1")
 This creates the file `tests/testthat/test-strsplit1.R`.
 If it had already existed, `use_test()` would have just opened it.
 Put this content in:
+
+
 
 
 ```{.r .R}
@@ -1090,7 +1092,7 @@ The very best way to render `README.Rmd` is with `build_readme()`, because it ta
 ```r
 build_readme()
 #> [36mℹ[39m Installing [34m[34mregexcite[34m[39m in temporary library
-#> [36mℹ[39m Building [34m[34m/tmp/RtmpxaXili/regexcite/README.Rmd[34m[39m
+#> [36mℹ[39m Building [34m[34m/tmp/Rtmpzr3MRT/regexcite/README.Rmd[34m[39m
 ```
 
 You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
@@ -1114,7 +1116,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 28s
+#> Duration: 29s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -1130,8 +1132,8 @@ install()
 
 
 ```
-   checking for file ‘/tmp/RtmpxaXili/regexcite/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/RtmpxaXili/regexcite/DESCRIPTION’
+   checking for file ‘/tmp/Rtmpzr3MRT/regexcite/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/Rtmpzr3MRT/regexcite/DESCRIPTION’
 ─  preparing ‘regexcite’:
    checking DESCRIPTION meta-information ...
 ✔  checking DESCRIPTION meta-information
@@ -1140,7 +1142,7 @@ install()
    Removed empty directory ‘regexcite/tests/testthat/_snaps’
 ─  building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpxaXili/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/Rtmpzr3MRT/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
