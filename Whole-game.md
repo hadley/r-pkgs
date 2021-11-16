@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/RtmpXJRII0/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpXJRII0/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/Rtmp7314T8/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/Rtmp7314T8/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -186,7 +186,7 @@ Now we make it also a Git repository, with `use_git()`.
 
 ```r
 use_git()
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpXJRII0/regexcite'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/Rtmp7314T8/regexcite'[39m
 #> [32m✔[39m Initialising Git repo
 #> [32m✔[39m Adding [34m'.Rhistory'[39m, [34m'.Rdata'[39m, [34m'.httr-oauth'[39m, [34m'.DS_Store'[39m to [34m'.gitignore'[39m
 ```
@@ -224,7 +224,7 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 #> [90m# A tibble: 1 × 3[39m
 #>   commit                                   author          message  
 #>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m           [3m[90m<chr>[39m[23m    
-#> [90m1[39m 60344f2db98ed091d5473ea72e610e9314cc8816 jennybc <jenny… [90m"[39mInitial…
+#> [90m1[39m 8fb59157a718ce98401c3999b54452301eea2b9b jennybc <jenny… [90m"[39mInitial…
 ```
 :::
 
@@ -423,7 +423,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 27s
+#> Duration: 18.1s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -635,7 +635,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 29s
+#> Duration: 19.4s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -652,8 +652,8 @@ install()
 
 
 ```
-   checking for file ‘/tmp/RtmpXJRII0/regexcite/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/RtmpXJRII0/regexcite/DESCRIPTION’
+   checking for file ‘/tmp/Rtmp7314T8/regexcite/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/Rtmp7314T8/regexcite/DESCRIPTION’
 ─  preparing ‘regexcite’:
    checking DESCRIPTION meta-information ...
 ✔  checking DESCRIPTION meta-information
@@ -661,7 +661,7 @@ install()
 ─  checking for empty or unneeded directories
 ─  building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpXJRII0/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/Rtmp7314T8/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
@@ -1006,77 +1006,77 @@ The `README.Rmd` we use is here: [README.Rmd](https://github.com/jennybc/regexci
 
 :::sourceCode
 
+````
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
 ```
-#> ---
-#> output: github_document
-#> ---
-#> 
-#> <!-- README.md is generated from README.Rmd. Please edit that file -->
-#> 
-#> ```{r, include = FALSE}
-#> knitr::opts_chunk$set(
-#>   collapse = TRUE,
-#>   comment = "#>",
-#>   fig.path = "man/figures/README-",
-#>   out.width = "100%"
-#> )
-#> ```
-#> 
-#> **NOTE: This is a toy package created for expository purposes, for the second edition of [R Packages](https://r-pkgs.org). It is not meant to actually be useful. If you want a package for factor handling, please see [stringr](https://stringr.tidyverse.org), [stringi](https://stringi.gagolewski.com/),
-#> [rex](https://cran.r-project.org/package=rex), and
-#> [rematch2](https://cran.r-project.org/package=rematch2).**
-#> 
-#> # regexcite
-#> 
-#> <!-- badges: start -->
-#> <!-- badges: end -->
-#> 
-#> The goal of regexcite is to make regular expressions more exciting!
-#> It provides convenience functions to make some common tasks with string manipulation and regular expressions a bit easier.
-#> 
-#> ## Installation
-#> 
-#> You can install the development version of regexcite from [GitHub](https://github.com/) with:
-#>       
-#> ``` r
-#> # install.packages("devtools")
-#> devtools::install_github("jennybc/regexcite")
-#> ```
-#> 
-#> ## Usage
-#> 
-#> A fairly common task when dealing with strings is the need to split a single string into many parts.
-#> This is what `base::strplit()` and `stringr::str_split()` do.
-#> 
-#> ```{r}
-#> (x <- "alfa,bravo,charlie,delta")
-#> strsplit(x, split = ",")
-#> stringr::str_split(x, pattern = ",")
-#> ```
-#> 
-#> Notice how the return value is a **list** of length one, where the first element holds the character vector of parts.
-#> Often the shape of this output is inconvenient, i.e. we want the un-listed version.
-#> 
-#> That's exactly what `regexcite::str_split_one()` does.
-#> 
-#> ```{r}
-#> library(regexcite)
-#> 
-#> str_split_one(x, pattern = ",")
-#> ```
-#> 
-#> Use `str_split_one()` when the input is known to be a single string.
-#> For safety, it will error if its input has length greater than one.
-#> 
-#> `str_split_one()` is built on `stringr::str_split()`, so you can use its `n` argument and stringr's general interface for describing the `pattern` to be matched.
-#> 
-#> ```{r}
-#> str_split_one(x, pattern = ",", n = 2)
-#> 
-#> y <- "192.168.0.1"
-#> str_split_one(y, pattern = stringr::fixed("."))
-#> ```
+
+**NOTE: This is a toy package created for expository purposes, for the second edition of [R Packages](https://r-pkgs.org). It is not meant to actually be useful. If you want a package for factor handling, please see [stringr](https://stringr.tidyverse.org), [stringi](https://stringi.gagolewski.com/),
+[rex](https://cran.r-project.org/package=rex), and
+[rematch2](https://cran.r-project.org/package=rematch2).**
+
+# regexcite
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of regexcite is to make regular expressions more exciting!
+It provides convenience functions to make some common tasks with string manipulation and regular expressions a bit easier.
+
+## Installation
+
+You can install the development version of regexcite from [GitHub](https://github.com/) with:
+      
+``` r
+# install.packages("devtools")
+devtools::install_github("jennybc/regexcite")
 ```
+
+## Usage
+
+A fairly common task when dealing with strings is the need to split a single string into many parts.
+This is what `base::strplit()` and `stringr::str_split()` do.
+
+```{r}
+(x <- "alfa,bravo,charlie,delta")
+strsplit(x, split = ",")
+stringr::str_split(x, pattern = ",")
+```
+
+Notice how the return value is a **list** of length one, where the first element holds the character vector of parts.
+Often the shape of this output is inconvenient, i.e. we want the un-listed version.
+
+That's exactly what `regexcite::str_split_one()` does.
+
+```{r}
+library(regexcite)
+
+str_split_one(x, pattern = ",")
+```
+
+Use `str_split_one()` when the input is known to be a single string.
+For safety, it will error if its input has length greater than one.
+
+`str_split_one()` is built on `stringr::str_split()`, so you can use its `n` argument and stringr's general interface for describing the `pattern` to be matched.
+
+```{r}
+str_split_one(x, pattern = ",", n = 2)
+
+y <- "192.168.0.1"
+str_split_one(y, pattern = stringr::fixed("."))
+```
+````
 :::
 
 Don't forget to render it to make `README.md`!
@@ -1088,7 +1088,7 @@ The very best way to render `README.Rmd` is with `build_readme()`, because it ta
 ```r
 build_readme()
 #> [36mℹ[39m Installing [34m[34mregexcite[34m[39m in temporary library
-#> [36mℹ[39m Building [34m[34m/tmp/RtmpXJRII0/regexcite/README.Rmd[34m[39m
+#> [36mℹ[39m Building [34m[34m/tmp/Rtmp7314T8/regexcite/README.Rmd[34m[39m
 ```
 
 You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
@@ -1112,7 +1112,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 30.4s
+#> Duration: 20.3s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -1128,8 +1128,8 @@ install()
 
 
 ```
-   checking for file ‘/tmp/RtmpXJRII0/regexcite/DESCRIPTION’ ...
-✔  checking for file ‘/tmp/RtmpXJRII0/regexcite/DESCRIPTION’
+   checking for file ‘/tmp/Rtmp7314T8/regexcite/DESCRIPTION’ ...
+✔  checking for file ‘/tmp/Rtmp7314T8/regexcite/DESCRIPTION’
 ─  preparing ‘regexcite’:
    checking DESCRIPTION meta-information ...
 ✔  checking DESCRIPTION meta-information
@@ -1138,7 +1138,7 @@ install()
    Removed empty directory ‘regexcite/tests/testthat/_snaps’
 ─  building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpXJRII0/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/Rtmp7314T8/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
