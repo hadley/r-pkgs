@@ -231,7 +231,7 @@ Similar to tests, the tidyverse team generally writes vignettes as if all sugges
 But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
 See chapter \@ref(vignettes) for more discussion of vignettes.
 
-### Versioning
+### Minimum versions
 
 If you need a specific version of a package, specify it in parentheses after the package name:
 
@@ -304,6 +304,34 @@ But this is just a plain text field and is not automatically checked.
 Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
 
 <!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. Should we rephrase? -->
+
+### An R version gotcha
+
+Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
+The `saveRDS()` function writes a single R object as an `.rds` file, an R-specific format.
+For almost 20 years, `.rds` files used the "version 2" serialization format.
+"Version 3" became the new default in R 3.6.0 (released April 2019) and cannot be read by R versions prior to 3.5.0 (released April 2018).
+
+Many R packages have at least one `.rds` file lurking within and, if that gets re-generated with a modern R version, by default, the new `.rds` file will have the "version 3" format.
+When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signalled by this message:
+
+```console
+NB: this package now depends on R (>= 3.5.0)
+  WARNING: Added dependency on R >= 3.5.0 because serialized objects in
+  serialize/load version 3 cannot be read in older versions of R.
+  File(s) containing such objects:
+    'path/to/some_file.rds'
+```
+
+Literally, the `DESCRIPTION` file in the bundled package says `Depends: R (>= 3.5.0)`, even if `DESCRIPTION` in the source package says differently.
+
+When such a package is released on CRAN, the new minimum R version is viral, in the sense that all packages listing the original package in `Imports` or even `Suggests` have, to varying degrees, inherited the new dependency on R >= 3.5.0.
+
+The immediate take-away is to be very deliberate about the `version` of `.rds` files until R versions prior to 3.5.0 have fallen off the edge of what you intend to support.
+This particular `.rds` issue won't be with us forever, but similar issues crop up elsewhere, such as in the standards implicit in compiled C or C++ source code.
+The broader message is that the more reverse dependencies your package has, the more thought you need to give to your package's stated minimum versions, especially for R itself.
+
+<!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
 
 ## Title and description: What does your package do? {#pkg-description}
 
