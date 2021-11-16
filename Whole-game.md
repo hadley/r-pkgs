@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/RtmpsRdNv8/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpsRdNv8/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/RtmpQJxQ7q/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpQJxQ7q/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -186,7 +186,7 @@ Now we make it also a Git repository, with `use_git()`.
 
 ```r
 use_git()
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpsRdNv8/regexcite'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpQJxQ7q/regexcite'[39m
 #> [32m✔[39m Initialising Git repo
 #> [32m✔[39m Adding [34m'.Rhistory'[39m, [34m'.Rdata'[39m, [34m'.httr-oauth'[39m, [34m'.DS_Store'[39m to [34m'.gitignore'[39m
 ```
@@ -224,7 +224,7 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 #> [90m# A tibble: 1 × 3[39m
 #>   commit                                   author          message  
 #>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m           [3m[90m<chr>[39m[23m    
-#> [90m1[39m afb5be05913fb14d2167e72861eced776d7166d4 jennybc <jenny… [90m"[39mInitial…
+#> [90m1[39m 009de2233df91c008df7531097fbea600688e146 jennybc <jenny… [90m"[39mInitial…
 ```
 :::
 
@@ -423,7 +423,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 24.2s
+#> Duration: 22.5s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -526,18 +526,18 @@ Open the newly created `LICENSE` file and confirm it looks something like this:
 
 ```r
 getwd()
-#> [1] "/tmp/RtmpsRdNv8/regexcite"
+#> [1] "/tmp/RtmpQJxQ7q/regexcite"
 dir_info()
 #> [90m# A tibble: 7 × 18[39m
 #>   path         type       size permissions modification_time   user 
 #>   [3m[90m<fs::path>[39m[23m   [3m[90m<fct>[39m[23m  [3m[90m<fs::by>[39m[23m [3m[90m<fs::perms>[39m[23m [3m[90m<dttm>[39m[23m              [3m[90m<chr>[39m[23m
-#> [90m1[39m DESCRIPTION  file        391 rw-rw-rw-   2021-11-15 [90m23:53:59[39m runn…
-#> [90m2[39m LICENSE      file         47 rw-rw-rw-   2021-11-15 [90m23:53:59[39m runn…
-#> [90m3[39m LICENSE.md   file      1.05K rw-rw-rw-   2021-11-15 [90m23:53:59[39m runn…
-#> [90m4[39m NAMESPACE    file         46 rw-rw-rw-   2021-11-15 [90m23:53:33[39m runn…
-#> [90m5[39m [01;34mR[0m            direc…       4K rwxr-xr-x   2021-11-15 [90m23:53:33[39m runn…
-#> [90m6[39m [34;42mman[0m          direc…       4K rwxrwxrwx   2021-11-15 [90m23:53:33[39m runn…
-#> [90m7[39m regexcite.R… file        340 rw-rw-rw-   2021-11-15 [90m23:53:33[39m runn…
+#> [90m1[39m DESCRIPTION  file        391 rw-rw-rw-   2021-11-16 [90m00:18:41[39m runn…
+#> [90m2[39m LICENSE      file         47 rw-rw-rw-   2021-11-16 [90m00:18:41[39m runn…
+#> [90m3[39m LICENSE.md   file      1.05K rw-rw-rw-   2021-11-16 [90m00:18:41[39m runn…
+#> [90m4[39m NAMESPACE    file         46 rw-rw-rw-   2021-11-16 [90m00:18:17[39m runn…
+#> [90m5[39m [01;34mR[0m            direc…       4K rwxr-xr-x   2021-11-16 [90m00:18:18[39m runn…
+#> [90m6[39m [34;42mman[0m          direc…       4K rwxrwxrwx   2021-11-16 [90m00:18:18[39m runn…
+#> [90m7[39m regexcite.R… file        340 rw-rw-rw-   2021-11-16 [90m00:18:17[39m runn…
 #> [90m# … with 12 more variables: group <chr>, device_id <dbl>,[39m
 #> [90m#   hard_links <dbl>, special_device_id <dbl>, inode <dbl>,[39m
 #> [90m#   block_size <dbl>, blocks <dbl>, flags <int>, generation <dbl>,[39m
@@ -545,9 +545,9 @@ dir_info()
 create
 #> [1] TRUE
 LICENSE_path
-#> [1] "/tmp/RtmpsRdNv8/regexcite/LICENSE"
+#> [1] "/tmp/RtmpQJxQ7q/regexcite/LICENSE"
 file_exists(LICENSE_path)
-#> /tmp/RtmpsRdNv8/regexcite/LICENSE 
+#> /tmp/RtmpQJxQ7q/regexcite/LICENSE 
 #>                              TRUE
 knitr::knit_exit()
 ```
