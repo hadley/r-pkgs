@@ -29,7 +29,7 @@ withr::with_options(
 ```{cat, code = readLines(fs::path(temp_pkg, "DESCRIPTION")), class.source = "yaml"}
 ```
 
-If you create a lot of packages, you can customize the default content of new DESCRIPTION files by setting the global option `usethis.description` to a named list.
+If you create a lot of packages, you can customize the default content of new `DESCRIPTION` files by setting the global option `usethis.description` to a named list.
 You can pre-configure your preferred name, email, license, etc.
 See the [article on usethis setup](https://usethis.r-lib.org/articles/articles/usethis-setup.html) for more details.
 
@@ -107,7 +107,7 @@ That makes it easy to skim.
 The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
 This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
 
-```{r include = FALSE}
+```{r create-temp-pkg, include = FALSE}
 op <- usethis::proj_get()
 usethis::proj_set(temp_pkg)
 ```
@@ -126,7 +126,7 @@ usethis::proj_set(op)
 
 ### Guarding the use of a suggested package
 
-Inside a function in your own package, check for the availablility of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
+Inside a function in your own package, check for the availabilility of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
 There are two basic scenarios:
     
 ```{r}
@@ -171,9 +171,9 @@ my_fun <- function(a, b) {
 }
 ```
     
-These rlang functions are have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
+These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
   
-`Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context
+`Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context.
 Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
 
@@ -305,7 +305,7 @@ Think of it as a quick reference; you'll also need to include detailed system re
 
 <!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. Should we rephrase? -->
 
-### An R version gotcha
+#### An R version gotcha
 
 Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
 The `saveRDS()` function writes a single R object as an `.rds` file, an R-specific format.
@@ -332,6 +332,41 @@ This particular `.rds` issue won't be with us forever, but similar issues crop u
 The broader message is that the more reverse dependencies your package has, the more thought you need to give to your package's stated minimum versions, especially for R itself.
 
 <!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
+
+### Nonstandard dependencies
+
+In packages developed with devtools, you may see `DESCRIPTION` files that use a couple other nonstandard fields for package dependencies specific to development tasks.
+
+The `Remotes` field can be used when you need to install a dependency from a nonstandard place, i.e. from somewhere besides CRAN or Bioconductor.
+One common example of this is when you're developing against a development version of one of your dependencies.
+During this time, you'll want to install the dependency from its development repository, which is often GitHub (but other remote sources are also supported).
+The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
+`usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
+Here's how the affected `DESCRIPTION` fields might look when depending on the development version of usethis:
+
+```
+Imports: 
+    usethis (>= 2.1.3.9000)
+Remotes:  
+    r-lib/usethis
+```
+
+It's important to note that you should not submit your package to CRAN in this state, meaning with a `Remotes˜` field and with a dependency required at a version that's not available from CRAN or Bioconductor.
+For packages destined for CRAN, this is just a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.
+
+You may also see devtools-developed packages with `DESCRIPTION` fields that start with `Config/` or `Config/Needs/`.
+This phenomenon is not directly related to devtools; it's more accurate to say that it's *associated* with the use of devtools.
+`Config/Needs/` fields are used by some standard continuous integration workflows made available to the community at <https://github.com/r-lib/actions/> and exposed via functions such as `usethis::use_github_actions()`.
+
+`Config/Needs/website` is the most common and it provides a place to specify packages that aren't a formal dependency, but that must be present in order to build the package's website.
+Continuous integration and package websites are discussed more in ?? and ??, respectively.
+*These chapters are a yet-to-be-(re)written task for the 2nd edition.*
+
+<!-- TODO: Link to CI and pkgdown material when it exists. -->
+
+The `Config/Needs/website` convention is handy because it allows a developer to use `DESCRIPTION` as their definitive record of package dependencies, while maintaining a clean distinction between runtime dependencies versus those that are only needed for specialized development tasks.
+
+<!-- re: describing different types of dependencies, another term you see for "runtime" dependency is "production" -->
 
 ## Title and description: What does your package do? {#pkg-description}
 
