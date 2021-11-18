@@ -445,16 +445,24 @@ person("Hadley", "Wickham", email = "hadley@rstudio.com",
 ```
 
 This command says that both the author (aut) and the maintainer (cre) is Hadley Wickham, and that his email address is `hadley@rstudio.com`.
-The `person()` function has four main arguments:
+The `person()` function has four main inputs:
 
 * The name, specified by the first two arguments, `given` and `family` (these
-  are normally supplied by position, not name). In English cultures, `given` 
-  (first name) comes before `family` (last name). In many cultures, this 
-  convention does not hold.
+  are normally supplied by position, not name).
+  In English cultures, `given` (first name) comes before `family` (last name).
+  In many cultures, this convention does not hold.
+  For a non-person entity, such as "R Core Team" or "RStudio", use the `given`
+  argument (and omit `family`).
   
 * The `email` address.
+  It's important to note that this is the address CRAN uses to let you know
+  if your package needs to be fixed in order to stay on CRAN.
+  Make sure to use an email address that's likely to be around for a while.
+  CRAN policy requires that this be for a person, as opposed to, e.g., a
+  mailing list.
 
-* A three letter code specifying the `role`. There are four important roles:
+* One or more three letter codes specifying the `role`.
+  There are four important roles:
 
     * `cre`: the creator or maintainer, the person you should bother 
       if you have problems.
@@ -469,26 +477,48 @@ The `person()` function has four main arguments:
       other than the author, typically a company (i.e. the author's employer).
     
     (The [full list of roles](https://www.loc.gov/marc/relators/relaterm.html) is
-    extremely comprehensive. Should your package have a woodcutter ("wdc"), 
-    lyricist ("lyr") or costume designer ("cst"), rest comfortably that you can 
-    correctly describe their role in creating your package.)
+    extremely comprehensive.
+    Should your package have a woodcutter ("wdc"), lyricist ("lyr") or costume
+    designer ("cst"), rest comfortably that you can correctly describe their
+    role in creating your package.
+    However, note that packages destined for CRAN must limit themselves to the
+    subset of MARC roles listed in the documentation for `person()`.
+    )
 
-If you need to add further clarification, you can also use the `comment` argument and supply the desired information in plain text.
+* The optional `comment` argument has become more relevant, since `person()` and
+  CRAN landing pages have gained some nice features around
+  [ORCID identifiers](https://orcid.org).
+  Here's an example of such usage (note the auto-generated URI):
+
+    ```{r}
+    person(
+      "Jennifer", "Bryan",
+      email = "jenny@rstudio.com",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0002-6983-2759")
+    )
+    ```
 
 You can list multiple authors with `c()`:
 
 ```yaml
 Authors@R: c(
     person("Hadley", "Wickham", email = "hadley@rstudio.com", role = "cre"),
-    person("Winston", "Chang", email = "winston@rstudio.com", role = "aut"))
+    person("Winston", "Chang", email = "winston@rstudio.com", role = "aut"),
+    person("RStudio", role = c("cph", "fnd")))
 ```
 
 Every package must have at least one author (aut) and one maintainer (cre) (they might be the same person).
-The creator must have an email address.
+The maintainer (cre) must have an email address.
 These fields are used to generate the basic citation for the package (e.g. `citation("pkgname")`).
 Only people listed as authors will be included in the auto-generated citation.
 There are a few extra details if you're including code that other people have written.
 Since this typically occurs when you're wrapping a C library, it's discussed in [compiled code](#src).
+
+An older, still valid approach is to have separate `Maintainer` and `Author` fields in `DESCRIPTION`.
+However, we strongly recommend the more modern approach of `Authors@R` and the `person()` function, because it offers richer metadata for various downstream uses.
+
+<!-- Pull this out into a more readily-identifiable subsection -->
 
 As well as your email address, it's also a good idea to list other resources available for help.
 You can list URLs in `URL`.
@@ -500,14 +530,6 @@ For example, knitr has:
 URL: https://yihui.name/knitr/
 BugReports: https://github.com/yihui/knitr/issues
 ```
-
-You can also use separate `Maintainer` and `Author` fields. I prefer not to use these fields because `Authors@R` offers richer metadata. 
-
-### On CRAN
-
-The most important thing to note is that your email address (i.e., the address of `cre`) is the address that CRAN will use to contact you about your package.
-So make sure you use an email address that's likely to be around for a while.
-Also, because this address will be used for automated mailings, CRAN policies require that this be for a single person (not a mailing list) and that it does not require any confirmation or use any filtering.
 
 ## License: Who can use your package? {#description-license}
 
