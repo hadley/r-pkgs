@@ -16,7 +16,7 @@ To get your package ready to release, follow these steps:
 
 ## Version number {#release-version}
 
-If you've been following the advice in [versioning](#description-version), the version number of your in-development package will have four components, `major.minor.patch.dev`, where `dev` is at least 9000. The number 9000 is arbitrary, but provides a strong visual signal there's something different about this version number. Released packages don't have a `dev` component, so now you need to drop that and pick a version number based on the changes you've made. For example, if the current version is `0.8.1.9000` will the next CRAN version be `0.8.2`, `0.9.0` or `1.0.0`? Use this advice to decide:
+If you've been following the advice in [versioning](#version), the version number of your in-development package will have four components, `major.minor.patch.dev`, where `dev` is at least 9000. The number 9000 is arbitrary, but provides a strong visual signal there's something different about this version number. Released packages don't have a `dev` component, so now you need to drop that and pick a version number based on the changes you've made. For example, if the current version is `0.8.1.9000` will the next CRAN version be `0.8.2`, `0.9.0` or `1.0.0`? Use this advice to decide:
   
   * Increment `patch`, e.g. `0.8.2` for a __patch__: you've fixed
     bugs without adding any significant new features. I'll often do a patch 

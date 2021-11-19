@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2021-November-19_06-23-43_swim_clean.csv"
+#> [1] "2021-November-19_07-13-49_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -122,14 +122,14 @@ f_to_c <- function(x) (x - 32) * 5/9
 dat <- dat %>% 
   mutate(temp = if_else(english == "US", f_to_c(temp), temp))
 dat
-#> [90m# A tibble: 5 × 4[39m
+#> # A tibble: 5 × 4
 #>   name  where     temp english
-#>   [3m[90m<chr>[39m[23m [3m[90m<chr>[39m[23m    [3m[90m<dbl>[39m[23m [3m[90m<chr>[39m[23m  
-#> [90m1[39m Adam  beach     35   US     
-#> [90m2[39m Bess  coast     32.8 US     
-#> [90m3[39m Cora  seashore  28   UK     
-#> [90m4[39m Dale  beach     29.4 US     
-#> [90m5[39m Evan  seaside   31   UK
+#>   <chr> <chr>    <dbl> <chr>  
+#> 1 Adam  beach     35   US     
+#> 2 Bess  coast     32.8 US     
+#> 3 Cora  seashore  28   UK     
+#> 4 Dale  beach     29.4 US     
+#> 5 Evan  seaside   31   UK
 
 now <- Sys.time()
 timestamp <- function(time) format(time, "%Y-%B-%d_%H-%M-%S")
@@ -221,14 +221,14 @@ dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
     localize_beach() %>% 
     celsify_temp())
 #> Joining, by = "where"
-#> [90m# A tibble: 5 × 4[39m
+#> # A tibble: 5 × 4
 #>   name  where     temp english
-#>   [3m[90m<chr>[39m[23m [3m[90m<chr>[39m[23m    [3m[90m<dbl>[39m[23m [3m[90m<chr>[39m[23m  
-#> [90m1[39m Adam  beach     35   US     
-#> [90m2[39m Bess  coast     32.8 US     
-#> [90m3[39m Cora  seashore  28   UK     
-#> [90m4[39m Dale  beach     29.4 US     
-#> [90m5[39m Evan  seaside   31   UK
+#>   <chr> <chr>    <dbl> <chr>  
+#> 1 Adam  beach     35   US     
+#> 2 Bess  coast     32.8 US     
+#> 3 Cora  seashore  28   UK     
+#> 4 Dale  beach     29.4 US     
+#> 5 Evan  seaside   31   UK
 
 write_csv(dat, outfile_path(infile))
 ```
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2021-November-19_06-23-45"
+#> [1] "2021-November-19_07-13-50"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -651,17 +651,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 #> Warning in (function (category = "LC_ALL", locale = "") : OS reports
 #> request to set locale to "pt_BR" cannot be honored
-#> [1] "2021-November-19_03-23-45"
+#> [1] "2021-November-19_04-13-51"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2021-November-19_06-23-45_INFILE_clean.csv"
+#> [1] "2021-November-19_07-13-50_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2021-November-19_06-23-45"
+#> [1] "2021-November-19_07-13-51"
 ```
 
 
