@@ -72,7 +72,7 @@ Both `Imports` and `Suggests` take a comma separated list of package names.
 We recommend putting one package on each line, and keeping them in alphabetical order.
 That makes it easy to skim.
 
-<-- Is this the place to mention `usethis::use_tidy_description()`? -->
+<!-- Is this the place to mention `usethis::use_tidy_description()`? -->
 
 `Imports` and `Suggests` differ in their strength of dependency:
 
@@ -536,75 +536,20 @@ BugReports: https://github.com/yihui/knitr/issues
 ## License: Who can use your package? {#description-license}
 
 The `License` field can be either a standard abbreviation for an open source license, like `GPL-2` or `BSD`, or a pointer to a file containing more information, `file LICENSE`.
-The license is really only important if you're planning on releasing your package.
-If you don't, you can ignore this section.
-If you want to make it clear that your package is not open source, use `License: file LICENSE` and then create a file called `LICENSE`, containing for example:
+Or sometimes both!
+If you have no plans to share your package, you can ignore this section.
+But if you plan to share, even if only by putting the code where others can see it, you really should specify a license.
 
-    Proprietary 
-
-    Do not distribute outside of Widgets Incorporated.
-
-Open source software licensing is a rich and complex field. Fortunately, in my opinion, there are only three licenses that you should consider for your R package:
-
-  * [MIT](https://tldrlegal.com/license/mit-license) 
-    (v. similar: to BSD 2 and 3 clause licenses). This is a simple and
-    permissive license. It lets people use  and freely distribute your code
-    subject to only one restriction: the license must always be distributed
-    with the code.
-  
-    The MIT license is a "template", so if you use it, you need 
-    `License: MIT + file LICENSE`, and a `LICENSE` file that looks like this:
-    
-    ```yaml
-    YEAR: <Year or years when changes have been made>
-    COPYRIGHT HOLDER: <Name of the copyright holder>
-    ```
-
-  * [GPL-2](https://tldrlegal.com/license/gnu-general-public-license-v2) or 
-    [GPL-3](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)). 
-    These are "copy-left" licenses. This means that anyone who distributes your
-    code in a bundle must license the whole bundle in a GPL-compatible way. 
-    Additionally, anyone who distributes modified versions of your code 
-    (derivative works) must also make the source code available. GPL-3 is a 
-    little stricter than GPL-2, closing some older loopholes.
-
-  * [CC0](https://tldrlegal.com/license/creative-commons-cc0-1.0-universal). 
-    It relinquishes all your rights on the code and data so that it can be 
-    freely used by anyone for any purpose. This is sometimes called putting it 
-    in the public domain, a term which is neither well-defined nor meaningful in 
-    all countries.
-  
-    This license is most appropriate for data packages. Data, at least in the US, 
-    is not copyrightable, so you're not really giving up much. This 
-    license just makes this point clear.
-  
-If you'd like to learn more about other common licenses, Github's [choosealicense.com](https://choosealicense.com/licenses/) is a good place to start.
-Another good resource is <https://tldrlegal.com/>, which explains the most important parts of each license.
-If you use a license other than the three I suggest, make sure you consult the "Writing R Extensions" section on [licensing][R-exts].
-
-If your package includes code that you didn't write, you need to make sure you're in compliance with its license.
-Since this occurs most commonly when you're including C source code, it's discussed in more detail in [compiled code](#src).
-
-### On CRAN
-
-If you want to release your package to CRAN, you must pick a standard license.
-Otherwise it's difficult for CRAN to determine whether or not it's legal to distribute your package!
-You can find a complete list of licenses that CRAN considers valid at <https://svn.r-project.org/R/trunk/share/licenses/license.db>.
-
-```{r, results='asis', echo = FALSE, eval = FALSE}
-licenses <- read.dcf(file.path(R.home("share"), "licenses", "license.db"))
-licenses <- as.data.frame(licenses, stringsAsFactors = FALSE)
-licenses <- licenses[order(licenses$Name, licenses$Version), ]
-licenses[is.na(licenses)] <- ""
-has_abbrev <- subset(licenses, Abbrev != "")
-knitr::kable(has_abbrev[c("Name", "Version", "Abbrev")], row.names = FALSE)
-```
+Licensing is a big enough topic that it has a dedicated chapter (chapter \@ref(license)).
+Most maintainers will settle on a permissive license like MIT, one of the GPL copyleft licenses, or CC0.
+These (and more) can all be configured by usethis, via functions like `use_mit_license()`, `use_gpl_license()`, or `use_cc0_license()`.
+Read the [licensing chapter](#license) to learn more.
 
 ## Version {#version}
 
 Formally, an R package version is a sequence of at least two integers separated by either `.` or `-`.
-For example, `1.0` and `0.9.1-10` are valid versions, but `1` or `1.0-devel` are not.
-You can parse a version number with `numeric_version`.
+For example, `1.0` and `0.9.1-10` are valid versions, but `1` and `1.0-devel` are not.
+You can parse a version number with `numeric_version()`.
 
 ```{r}
 numeric_version("1.9") == numeric_version("1.9.0")
@@ -624,28 +569,43 @@ Instead always use `.` to separate version numbers.
 * A released version number consists of three numbers, `<major>.<minor>.<patch>`. 
   For version number 1.9.2, 1 is the major number, 9 is the minor number, and 
   2 is the patch number. Never use versions like `1.0`, instead always spell
-  out the three components, `1.0.0.`
+  out the three components, `1.0.0`.
 
 * An in-development package has a fourth component: the development version.
   This should start at 9000. For example, the first version of the package
   should be `0.0.0.9000`. There are two reasons for this recommendation:
   first, it makes it easy to see if a package is released or in-development,
   and the use of the fourth place means that you're not limited to what the
-  next version will be. `0.0.1`, `0.1.0` and `1.0.0` are all greater than 
+  next version will be. `0.0.1`, `0.1.0`, and `1.0.0` are all greater than 
   `0.0.0.9000`.
   
-    Increment the development version, e.g. from `9000` to `9001` if you've
-    added an important feature that another development package needs to depend 
-    on.
+  Increment the development version, e.g. from `9000` to `9001` if you've
+  added an important feature that another development package needs to depend 
+  on.
     
-    If you're using svn, instead of using the arbitrary `9000`, you can
-    embed the sequential revision identifier.
+  If you're using svn, instead of using the arbitrary `9000`, you can
+  embed the sequential revision identifier.
 
 This advice here is inspired in part by [Semantic Versioning](https://semver.org) and by the [X.Org](https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
 Read them if you'd like to understand more about the standards of versioning used by many open source projects.
 
 We'll come back to version numbers in the context of releasing your package, [picking a version number](#release-version).
 For now, just remember that the first version of your package should be `0.0.0.9000`.
+`usethis::create_package()` does this, by default.
+`usethis::use_version()` increments the package version; when called interactively, with no argument, it presents a helpful menu:
+
+```{r, eval = FALSE}
+usethis::use_version()
+#> Current version is 0.1.
+#> What should the new version be? (0 to exit) 
+#> 
+#> 1: major --> 1.0
+#> 2: minor --> 0.2
+#> 3: patch --> 0.1.1
+#> 4:   dev --> 0.1.0.9000
+#> 
+#> Selection: 
+```
 
 ## Other components {#description-misc}
 
