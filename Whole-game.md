@@ -1082,7 +1082,7 @@ str_split_one(y, pattern = stringr::fixed("."))
 Don't forget to render it to make `README.md`!
 The pre-commit hook should remind you if you try to commit `README.Rmd`, but not `README.md`, and also when `README.md` appears to be out-of-date.
 
-The very best way to render `README.Rmd` is with `build_readme()`, because it takes care to render with the the most current version of your package, i.e. it installs a temporary copy from the current source.
+The very best way to render `README.Rmd` is with `build_readme()`, because it takes care to render with the most current version of your package, i.e. it installs a temporary copy from the current source.
 
 
 ```r
