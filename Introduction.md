@@ -185,7 +185,7 @@ library(testthat)
 #>     test_file
 devtools::session_info()
 #> ─ Session info  ──────────────────────────────────────────────────
-#>  hash: man: medium-dark skin tone, woman pilot, kissing face with closed eyes
+#>  hash: girl: medium-dark skin tone, flag: Bahamas, notebook with decorative cover
 #> 
 #>  setting  value
 #>  version  R version 4.1.2 (2021-11-01)
@@ -196,7 +196,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-11-26
+#>  date     2021-11-27
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
@@ -223,7 +223,7 @@ devtools::session_info()
 #>  knitr         1.36    2021-09-29 [1] Custom
 #>  lifecycle     1.0.1   2021-09-24 [1] Custom
 #>  magrittr      2.0.1   2020-11-17 [1] Custom
-#>  memoise       2.0.0   2021-01-26 [1] Custom
+#>  memoise       2.0.1   2021-11-26 [1] CRAN (R 4.1.2)
 #>  pillar        1.6.4   2021-10-18 [1] Custom
 #>  pkgbuild      1.2.0   2020-12-15 [1] Custom
 #>  pkgconfig     2.0.3   2019-09-22 [1] Custom
