@@ -903,7 +903,7 @@ test_that("str_split_one() exposes features of stringr::str_split()", {
 })
 ```
 
-Before we take the new `str_split_done()` out for a test drive, we need to call `document()`.
+Before we take the new `str_split_one()` out for a test drive, we need to call `document()`.
 Why?
 Remember that `document()` does two main jobs:
 

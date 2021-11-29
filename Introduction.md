@@ -185,7 +185,7 @@ library(testthat)
 #>     test_file
 devtools::session_info()
 #> ─ Session info  ──────────────────────────────────────────────────
-#>  hash: girl: medium-dark skin tone, flag: Bahamas, notebook with decorative cover
+#>  hash: person in steamy room: medium skin tone, flag: Qatar, running shirt
 #> 
 #>  setting  value
 #>  version  R version 4.1.2 (2021-11-01)
@@ -240,7 +240,7 @@ devtools::session_info()
 #>  rprojroot     2.0.2   2020-11-15 [1] Custom
 #>  sass          0.4.0   2021-05-12 [1] Custom
 #>  sessioninfo   1.2.1   2021-11-02 [1] CRAN (R 4.1.2)
-#>  stringi       1.7.5   2021-10-04 [1] Custom
+#>  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.2)
 #>  stringr       1.4.0   2019-02-10 [1] Custom
 #>  testthat    * 3.1.0   2021-10-04 [1] Custom
 #>  tibble        3.1.6   2021-11-07 [1] CRAN (R 4.1.2)
