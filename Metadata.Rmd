@@ -135,7 +135,7 @@ usethis::proj_set(op)
 
 ### Guarding the use of a suggested package
 
-Inside a function in your own package, check for the availabilility of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
+Inside a function in your own package, check for the availability of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
 There are two basic scenarios:
     
 ```{r}
@@ -183,6 +183,7 @@ my_fun <- function(a, b) {
 These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
   
 `Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context.
+In that case, it's reasonable to just use `Imports` for everything.
 Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
 
@@ -228,12 +229,12 @@ test_that("basic plot builds without error", {
 })
 ```
 
-The example above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
+The test shown above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
 That is, in general, we assume all suggested packages are available when writing tests.
 So what justifies making an exception?
 In the example above, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
 
-The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because that is, indeed, true for testthat itself.
+The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because testthat itself appears in `Suggests`.
 If the tests are being run, that implies that testthat is installed and that, in turn, implies that suggested packages have been installed.
 This is a matter of convention and not a hard-and-fast rule enforced by externally.
 Other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests.
@@ -260,7 +261,7 @@ Since R can't have multiple versions of the same package loaded at the same time
 
 <!-- Is this a good place to mention renv for people who think this level of control does not suit their use case? -->
 
-Versioning is most important when you release your package.
+Versioning is most important if you will release your package for use by others.
 Usually people don't have exactly the same versions of packages installed that you do.
 If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message if your package does not advertise the minimum version it needs.
 However, if you state a minimum version, they'll learn about this problem clearly, probably at the time of installing your package.
@@ -278,7 +279,7 @@ In the absence of clear, hard requirements, you should set minimum versions (or 
 
 There are three other fields that allow you to express more specialised dependencies:
 
-* `Depends`: Prior to the rollout of namespaces in R 2.14.0 in 2011, `Depends`
+* `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends`
   was the only way to "depend" on another package.
   Now, despite the name, you should almost always use `Imports`, not `Depends`.
   You'll learn why, and when you should still use `Depends`, in
@@ -327,7 +328,7 @@ For almost 20 years, `.rds` files used the "version 2" serialization format.
 "Version 3" became the new default in R 3.6.0 (released April 2019) and cannot be read by R versions prior to 3.5.0 (released April 2018).
 
 Many R packages have at least one `.rds` file lurking within and, if that gets re-generated with a modern R version, by default, the new `.rds` file will have the "version 3" format.
-When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signalled by this message:
+When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signaled by this message:
 
 ```console
 NB: this package now depends on R (>= 3.5.0)
@@ -356,11 +357,13 @@ One common example of this is when you're developing against a development versi
 During this time, you'll want to install the dependency from its development repository, which is often GitHub.
 The way to specify various remote sources is described in a [devtools vignette](https://devtools.r-lib.org/articles/dependencies.html).
 
-<!-- TODO: long-term, a better link might be https://pak.r-lib.org/reference/pak_package_sources.html, but the formatting is wonky there right now (fixed in pak's dev site, so should self-resolve). -->
+<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along.. -->
 
 The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
 `usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
 If your package temporarily relies on a development version of usethis, the affected `DESCRIPTION` fields might evolve like this:
+
+<!-- This is unlovely, but I just wanted to get the content down "on paper". It's easier to convey with a concrete example. -->
 
 ```
 Stable -->               Dev -->                       Stable again
