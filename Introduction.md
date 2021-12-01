@@ -185,7 +185,7 @@ library(testthat)
 #>     test_file
 devtools::session_info()
 #> ─ Session info  ──────────────────────────────────────────────────
-#>  hash: person in steamy room: medium skin tone, flag: Qatar, running shirt
+#>  hash: man: medium-light skin tone, white hair, backhand index pointing down: dark skin tone, raised back of hand: dark skin tone
 #> 
 #>  setting  value
 #>  version  R version 4.1.2 (2021-11-01)
@@ -196,7 +196,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-11-30
+#>  date     2021-12-01
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
@@ -208,15 +208,14 @@ devtools::session_info()
 #>  cli           3.1.0   2021-10-27 [1] Custom
 #>  crayon        1.4.2   2021-10-29 [1] Custom
 #>  desc          1.4.0   2021-09-28 [1] Custom
-#>  devtools    * 2.4.2   2021-06-07 [1] Custom
+#>  devtools    * 2.4.3   2021-11-30 [1] CRAN (R 4.1.2)
 #>  digest        0.6.28  2021-09-23 [1] Custom
 #>  downlit       0.4.0   2021-10-29 [1] Custom
 #>  ellipsis      0.3.2   2021-04-29 [1] Custom
 #>  evaluate      0.14    2019-05-28 [1] Custom
-#>  fansi         0.5.0   2021-05-25 [1] Custom
 #>  fastmap       1.1.0   2021-01-25 [1] Custom
-#>  fs            1.5.0   2020-07-31 [1] Custom
-#>  glue          1.5.0   2021-11-07 [1] CRAN (R 4.1.2)
+#>  fs            1.5.1   2021-11-30 [1] CRAN (R 4.1.2)
+#>  glue          1.5.1   2021-11-30 [1] CRAN (R 4.1.2)
 #>  htmltools     0.5.2   2021-08-25 [1] Custom
 #>  jquerylib     0.1.4   2021-04-26 [1] Custom
 #>  jsonlite      1.7.2   2020-12-09 [1] Custom
@@ -224,16 +223,14 @@ devtools::session_info()
 #>  lifecycle     1.0.1   2021-09-24 [1] Custom
 #>  magrittr      2.0.1   2020-11-17 [1] Custom
 #>  memoise       2.0.1   2021-11-26 [1] CRAN (R 4.1.2)
-#>  pillar        1.6.4   2021-10-18 [1] Custom
-#>  pkgbuild      1.2.0   2020-12-15 [1] Custom
-#>  pkgconfig     2.0.3   2019-09-22 [1] Custom
-#>  pkgload       1.2.3   2021-10-13 [1] Custom
+#>  pkgbuild      1.2.1   2021-11-30 [1] CRAN (R 4.1.2)
+#>  pkgload       1.2.4   2021-11-30 [1] CRAN (R 4.1.2)
 #>  prettyunits   1.1.1   2020-01-24 [1] Custom
 #>  processx      3.5.2   2021-04-30 [1] Custom
 #>  ps            1.6.0   2021-02-28 [1] Custom
 #>  purrr         0.3.4   2020-04-17 [1] Custom
 #>  R6            2.5.1   2021-08-19 [1] Custom
-#>  remotes       2.4.1   2021-09-29 [1] Custom
+#>  remotes       2.4.2   2021-11-30 [1] CRAN (R 4.1.2)
 #>  rlang         0.4.12  2021-10-18 [1] Custom
 #>  rmarkdown     2.11    2021-09-14 [1] Custom
 #>  roxygen2    * 7.1.2   2021-09-08 [1] Custom
@@ -243,13 +240,10 @@ devtools::session_info()
 #>  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.2)
 #>  stringr       1.4.0   2019-02-10 [1] Custom
 #>  testthat    * 3.1.0   2021-10-04 [1] Custom
-#>  tibble        3.1.6   2021-11-07 [1] CRAN (R 4.1.2)
 #>  usethis     * 2.1.3   2021-10-27 [1] Custom
-#>  utf8          1.2.2   2021-07-24 [1] Custom
-#>  vctrs         0.3.8   2021-04-29 [1] Custom
-#>  withr         2.4.2   2021-04-18 [1] Custom
+#>  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.2)
 #>  xfun          0.28    2021-11-04 [1] CRAN (R 4.1.2)
-#>  xml2          1.3.2   2020-04-23 [1] Custom
+#>  xml2          1.3.3   2021-11-30 [1] CRAN (R 4.1.2)
 #>  yaml          2.2.1   2020-02-01 [1] Custom
 #> 
 #>  [1] /home/runner/work/_temp/Library
