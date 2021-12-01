@@ -139,7 +139,7 @@ usethis::use_package("tidyr", "Suggests")
 
 ### Guarding the use of a suggested package
 
-Inside a function in your own package, check for the availabilility of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
+Inside a function in your own package, check for the availability of a suggested package with `requireNamespace(pkg, quietly = TRUE)`.
 There are two basic scenarios:
     
 
@@ -189,18 +189,24 @@ my_fun <- function(a, b) {
 These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
   
 `Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context.
+In that case, it's reasonable to just use `Imports` for everything.
 Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
 
 Another common place to use a suggested package is in an example and here we often guard with `require()` (but you'll also see `requireNamespace()` used for this).
-This example is from `glue::glue_col()`.
+This example is from `ggplot2::coord_map()`.
 
 
 ```r
 #' @examples
-#' if (require(crayon)) {
-#'   glue_col("{blue foo bar}")
-#' ...
+#' if (require("maps")) {
+#'   nz <- map_data("nz")
+#'   # Prepare a map of NZ
+#'   nzmap <- ggplot(nz, aes(x = long, y = lat, group = group)) +
+#'     geom_polygon(fill = "white", colour = "black")
+#'  
+#'   # Plot it in cartesian coordinates
+#'   nzmap
 #' }
 ```
 
@@ -231,12 +237,12 @@ test_that("basic plot builds without error", {
 })
 ```
 
-The example above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
+The test shown above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
 That is, in general, we assume all suggested packages are available when writing tests.
 So what justifies making an exception?
 In the example above, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
 
-The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because that is, indeed, true for testthat itself.
+The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because testthat itself appears in `Suggests`.
 If the tests are being run, that implies that testthat is installed and that, in turn, implies that suggested packages have been installed.
 This is a matter of convention and not a hard-and-fast rule enforced by externally.
 Other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests.
@@ -263,7 +269,7 @@ Since R can't have multiple versions of the same package loaded at the same time
 
 <!-- Is this a good place to mention renv for people who think this level of control does not suit their use case? -->
 
-Versioning is most important when you release your package.
+Versioning is most important if you will release your package for use by others.
 Usually people don't have exactly the same versions of packages installed that you do.
 If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message if your package does not advertise the minimum version it needs.
 However, if you state a minimum version, they'll learn about this problem clearly, probably at the time of installing your package.
@@ -281,7 +287,7 @@ In the absence of clear, hard requirements, you should set minimum versions (or 
 
 There are three other fields that allow you to express more specialised dependencies:
 
-* `Depends`: Prior to the rollout of namespaces in R 2.14.0 in 2011, `Depends`
+* `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends`
   was the only way to "depend" on another package.
   Now, despite the name, you should almost always use `Imports`, not `Depends`.
   You'll learn why, and when you should still use `Depends`, in
@@ -330,7 +336,7 @@ For almost 20 years, `.rds` files used the "version 2" serialization format.
 "Version 3" became the new default in R 3.6.0 (released April 2019) and cannot be read by R versions prior to 3.5.0 (released April 2018).
 
 Many R packages have at least one `.rds` file lurking within and, if that gets re-generated with a modern R version, by default, the new `.rds` file will have the "version 3" format.
-When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signalled by this message:
+When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signaled by this message:
 
 ```console
 NB: this package now depends on R (>= 3.5.0)
@@ -359,11 +365,13 @@ One common example of this is when you're developing against a development versi
 During this time, you'll want to install the dependency from its development repository, which is often GitHub.
 The way to specify various remote sources is described in a [devtools vignette](https://devtools.r-lib.org/articles/dependencies.html).
 
-<!-- TODO: long-term, a better link might be https://pak.r-lib.org/reference/pak_package_sources.html, but the formatting is wonky there right now (fixed in pak's dev site, so should self-resolve). -->
+<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along.. -->
 
 The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
 `usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
 If your package temporarily relies on a development version of usethis, the affected `DESCRIPTION` fields might evolve like this:
+
+<!-- This is unlovely, but I just wanted to get the content down "on paper". It's easier to convey with a concrete example. -->
 
 ```
 Stable -->               Dev -->                       Stable again
@@ -616,20 +624,27 @@ usethis::use_version()
 #> Selection: 
 ```
 
-## Other components {#description-other-fields}
+## Other fields {#description-other-fields}
 
-<!-- TODO: integrate these better. Currently just transplanted from an earlier miscellany section. -->
+A few other `DESCRIPTION` fields are heavily used and worth knowing about.
 
-As well as your email address, it's also a good idea to list other resources available for help.
-You can list URLs in `URL`.
+As well as the maintainer's email address, it's a good idea to list other places people can learn more about your package.
+The `URL` field is commonly used to advertise the package's website and to link to a public source repository, where development happens.
 Multiple URLs are separated with a comma.
-`BugReports` is the URL where bug reports should be submitted.
-For example, knitr has:
+`BugReports` is the URL where bug reports should be submitted, e.g., as GitHub issues.
+For example, devtools has:
 
 ```yaml
-URL: https://yihui.name/knitr/
-BugReports: https://github.com/yihui/knitr/issues
+URL: https://devtools.r-lib.org/, https://github.com/r-lib/devtools
+BugReports: https://github.com/r-lib/devtools/issues
 ```
+
+If you use `usethis::use_github()` to connect your local package to a remote GitHub repository, it will automatically populate `URL` and `BugReports` for you.
+If a package is already connected to a remote GitHub repository, `usethis::use_github_links()` can be called to just add the relevant links to `DESCRIPTION`.
+
+The `Encoding` field is required if `DESCRIPTION` does not consist entirely of ASCII characters.
+If specified, this `Encoding` is interpreted as applying more broadly throughout the package.
+By default, `create_package()` uses `Encoding: UTF-8`, which should be interpreted as our very strong recommendation to use UTF-8 encoding.
 
 A number of other fields are described elsewhere in the book:
 
@@ -637,12 +652,24 @@ A number of other fields are described elsewhere in the book:
   matters if your code has side-effects; most commonly because you're
   using S4. This is described in more depth in [documenting S4](#man-s4).
 
-* `LazyData` makes it easier to access data in your package. Because it's so 
-  important, it's included in the minimal description created by devtools. It's
-  described in more detail in [external data](#data).
+* `LazyData` makes it easier to access data in your package.
+  Because it's so important, it's added automatically by `usethis::use_data()`,
+  when relevant. More detail is given when we talk about [external data](#data).
 
-There are actually many other rarely, if ever, used fields. A complete list can be found in the "The DESCRIPTION file" section of the [R extensions manual][R-exts].
+There are actually many other rarely, if ever, used fields.
+A complete list can be found in the "The DESCRIPTION file" section of the [R extensions manual][R-exts].
+
 You can also create your own fields to add additional metadata.
 The only restrictions are that you shouldn't use existing names and that, if you plan to submit to CRAN, the names you use should be valid English words (so a spell-checking NOTE won't be generated).
+The `Config/Needs/*` fields described earlier are an example of recording custom metadata.
+
+By default, `create_package()` writes two more such fields relating to the use of the roxygen2 package for documentation:
+
+```yaml
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+```
+
+You can read more about this in [Object documentation](#man).
 
 [R-exts]: https://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file
