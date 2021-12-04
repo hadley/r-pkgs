@@ -185,7 +185,7 @@ library(testthat)
 #>     test_file
 devtools::session_info()
 #> ─ Session info  ──────────────────────────────────────────────────
-#>  hash: t-shirt, raising hands: light skin tone, woman student: dark skin tone
+#>  hash: slot machine, person taking bath: light skin tone, woman dancing: medium skin tone
 #> 
 #>  setting  value
 #>  version  R version 4.1.2 (2021-11-01)
@@ -196,7 +196,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-12-03
+#>  date     2021-12-04
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
@@ -239,7 +239,7 @@ devtools::session_info()
 #>  sessioninfo   1.2.1   2021-11-02 [1] CRAN (R 4.1.2)
 #>  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.2)
 #>  stringr       1.4.0   2019-02-10 [1] Custom
-#>  testthat    * 3.1.0   2021-10-04 [1] Custom
+#>  testthat    * 3.1.1   2021-12-03 [1] CRAN (R 4.1.2)
 #>  usethis     * 2.1.3   2021-10-27 [1] Custom
 #>  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.2)
 #>  xfun          0.28    2021-11-04 [1] CRAN (R 4.1.2)

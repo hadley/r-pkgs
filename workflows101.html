@@ -373,7 +373,7 @@ PackageRoxygenize: rd,collate,namespace</code></pre>
 <h2>
 <span class="header-section-number">5.3</span> Working directory and filepath discipline<a class="anchor" aria-label="anchor" href="#working-directory-and-filepath-discipline"><i class="fas fa-link"></i></a>
 </h2>
-<p>As you develop your package, you will be executing R code. This will be a mix of workflow calls (e.g., <code><a href="https://devtools.r-lib.org//reference/document.html">document()</a></code> or <code><a href="https://devtools.r-lib.org//reference/test.html">test()</a></code>) and <em>ad hoc</em> calls that help you write your functions, examples, and tests. We <em>strongly recommend</em> that you leave the working directory of your R process set to the top-level of the source package.</p>
+<p>As you develop your package, you will be executing R code. This will be a mix of workflow calls (e.g., <code><a href="https://devtools.r-lib.org/reference/document.html">document()</a></code> or <code><a href="https://devtools.r-lib.org/reference/test.html">test()</a></code>) and <em>ad hoc</em> calls that help you write your functions, examples, and tests. We <em>strongly recommend</em> that you leave the working directory of your R process set to the top-level of the source package.</p>
 <p>If you’re totally new to package development, you don’t have much basis for supporting or resisting this proposal. But those with some experience may find it somewhat upsetting. How are we supposed to express paths when working in subdirectories, like <code>tests/</code>? As it becomes relevant, we’ll show you how to exploit path-building helpers, such as <code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code>, that determine paths at execution time.</p>
 <p>The basic idea is that by leaving working directory alone, you are encouraged to write paths that convey intent explicitly (“read <code>foo.csv</code> from the test directory”) instead of implicitly (“read <code>foo.csv</code> from current working directory, which I <em>think</em> is going to be the test directory”). A sure sign of reliance on implicit paths is incessant fiddling with your working directory, because you’re using <code><a href="https://rdrr.io/r/base/getwd.html">setwd()</a></code> to manually fulfill the assumptions that are implicit in your paths.</p>
 <p>This mentality can design away a whole class of path headaches and makes day-to-day development more pleasant as well. There are two reasons why implicit paths are hard to get right:</p>
@@ -394,28 +394,28 @@ every stage of these processes.</li>
 <h2>
 <span class="header-section-number">5.4</span> Test drive with <code>load_all()</code><a class="anchor" aria-label="anchor" href="#load-all"><i class="fas fa-link"></i></a>
 </h2>
-<p>The <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> function is arguably the most important part of the devtools workflow.</p>
+<p>The <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> function is arguably the most important part of the devtools workflow.</p>
 <div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># with devtools attached and</span>
 <span class="co"># working directory set to top-level of your source package ...</span>
 
-<span class="fu"><a href="https://devtools.r-lib.org//reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
+<span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
 
 <span class="co"># ... now experiment with the functions in your package</span></code></pre></div>
-<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> is the key step in this “lather, rinse, repeat” cycle of package development:</p>
+<p><code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> is the key step in this “lather, rinse, repeat” cycle of package development:</p>
 <ol style="list-style-type: decimal">
 <li>Tweak a function definition.</li>
-<li><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code></li>
+<li><code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code></li>
 <li>Try out the change by running a small example or some tests.</li>
 </ol>
-<p>When you’re new to package development or to devtools, it’s easy to overlook the importance of <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> and fall into some awkward habits from a data analysis workflow.</p>
+<p>When you’re new to package development or to devtools, it’s easy to overlook the importance of <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> and fall into some awkward habits from a data analysis workflow.</p>
 <div id="benefits-of-load_all" class="section level3">
 <h3>
 <span class="header-section-number">5.4.1</span> Benefits of <code>load_all()</code><a class="anchor" aria-label="anchor" href="#benefits-of-load_all"><i class="fas fa-link"></i></a>
 </h3>
 <p>When you first start to use a development environment, like RStudio or Emacs + ESS, the biggest win is the ability to send lines of code from an <code>.R</code> script for execution in R console. The fluidity of this is what makes it tolerable to follow the best practice of regarding your source code as real<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;Quoting the usage philosophy favored by &lt;a href="https://ess.r-project.org/Manual/ess.html#Philosophies-for-using-ESS_0028R_0029"&gt;Emacs Speaks Statistics&lt;/a&gt; (ESS).&lt;/p&gt;'><sup>5</sup></a> (as opposed to objects in the workspace) and saving <code>.R</code> files (as opposed to saving and reloading <code>.Rdata</code>).</p>
 
-<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> has the same significance for package development and, ironically, requires that you NOT test drive package code in the same way as script code. <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> <em>simulates</em> the fullblown process for seeing the effect of a source code change, which is clunky enough<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The command line approach is to quit R, go to the shell, do &lt;code&gt;R CMD build foo&lt;/code&gt; in the package’s parent directory, then &lt;code&gt;R CMD INSTALL foo_x.y.x.tar.gz&lt;/code&gt;, restart R, and call &lt;code&gt;library(foo&lt;/code&gt;). From R, an approximation is to &lt;code&gt;detach("package:foo", unload = TRUE); install.packages(".", repos = NULL, type = "source"); library(foo)&lt;/code&gt;.&lt;/p&gt;'><sup>6</sup></a> that you won’t want to do it very often. The main benefits of <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>:</p>
+<p><code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> has the same significance for package development and, ironically, requires that you NOT test drive package code in the same way as script code. <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> <em>simulates</em> the fullblown process for seeing the effect of a source code change, which is clunky enough<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The command line approach is to quit R, go to the shell, do &lt;code&gt;R CMD build foo&lt;/code&gt; in the package’s parent directory, then &lt;code&gt;R CMD INSTALL foo_x.y.x.tar.gz&lt;/code&gt;, restart R, and call &lt;code&gt;library(foo&lt;/code&gt;). From R, an approximation is to &lt;code&gt;detach("package:foo", unload = TRUE); install.packages(".", repos = NULL, type = "source"); library(foo)&lt;/code&gt;.&lt;/p&gt;'><sup>6</sup></a> that you won’t want to do it very often. The main benefits of <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code>:</p>
 <ul>
 <li>You can iterate quickly, which encourages exploration and incremental
 progress.
@@ -436,19 +436,19 @@ your <code>NAMESPACE</code>, without being tempted to attach these dependencies 
 </ul>
 </li>
 </ul>
-<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> removes friction from the development workflow and eliminates the temptation to use workarounds that often lead to mistakes around namespace and dependency management.</p>
+<p><code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> removes friction from the development workflow and eliminates the temptation to use workarounds that often lead to mistakes around namespace and dependency management.</p>
 </div>
 <div id="other-ways-to-call-load_all" class="section level3">
 <h3>
 <span class="header-section-number">5.4.2</span> Other ways to call <code>load_all()</code><a class="anchor" aria-label="anchor" href="#other-ways-to-call-load_all"><i class="fas fa-link"></i></a>
 </h3>
-<p>When working in a Project that is a package, RStudio offers several ways to call <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code>:</p>
+<p>When working in a Project that is a package, RStudio offers several ways to call <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code>:</p>
 <ul>
 <li>Keyboard shortcut: Cmd+Shift+L (macOS), Ctrl+Shift+L (Windows, Linux)</li>
 <li>Build pane’s <em>More …</em> menu</li>
 <li><em>Build &gt; Load All</em></li>
 </ul>
-<p><code><a href="https://devtools.r-lib.org//reference/load_all.html">devtools::load_all()</a></code> is a thin wrapper around <code><a href="https://rdrr.io/pkg/pkgload/man/load_all.html">pkgload::load_all()</a></code> that adds a bit of user-friendliness. It is unlikely you will use <code><a href="https://devtools.r-lib.org//reference/load_all.html">load_all()</a></code> programatically or inside another package, but if you do, you should probably use <code><a href="https://rdrr.io/pkg/pkgload/man/load_all.html">pkgload::load_all()</a></code> directly.</p>
+<p><code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> is a thin wrapper around <code><a href="https://rdrr.io/pkg/pkgload/man/load_all.html">pkgload::load_all()</a></code> that adds a bit of user-friendliness. It is unlikely you will use <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> programatically or inside another package, but if you do, you should probably use <code><a href="https://rdrr.io/pkg/pkgload/man/load_all.html">pkgload::load_all()</a></code> directly.</p>
 <p><em>TODO: Decide how to update this diagram and then reposition and re-integrate it with the prose. For example, figure out how to frame w.r.t. RStudio Install and Restart vs. Clean and Rebuild.</em></p>
 <div class="inline-figure">
 <img src="diagrams/loading.png"><!-- -->
