@@ -196,7 +196,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-12-05
+#>  date     2021-12-06
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
