@@ -61,8 +61,11 @@ We discuss a few other useful fields, some of which are sufficiently important t
 ## Dependencies: What does your package need? {#description-dependencies}
 
 It's the job of the `DESCRIPTION` to list the packages that your package needs to work.
-R has a rich set of ways of describing potential dependencies.
-For example, the following lines indicate that your package needs both dplyr and tidyr to work:
+R has a rich set of ways to describe different types of dependencies.
+A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.
+
+Packages listed in `Imports` are needed by your users at runtime.
+The following lines indicate that your package absolutely needs both dplyr and tidyr to work.
 
 ```yaml
 Imports:
@@ -70,7 +73,8 @@ Imports:
     tidyr
 ```
 
-Whereas, the lines below indicate that, while your package can take advantage of ggplot2 and testthat, they're not required to make it work:
+Packages listed in `Suggests` are either needed for development tasks or *might* unlock optional functionality for your users.
+The lines below indicate that, while your package can take advantage of ggplot2 and testthat, they're not absolutely required:
 
 ```yaml
 Suggests:
@@ -78,28 +82,29 @@ Suggests:
     testthat
 ```
 
-Both `Imports` and `Suggests` take a comma separated list of package names.
-We recommend putting one package on each line, and keeping them in alphabetical order.
-That makes it easy to skim.
-In general, it can be nice to run `usethis::use_tidy_description()` periodically, to tidy up a `DESCRIPTION` file.
-
-The packages listed in `Imports` are required by package users at runtime, whereas packages listed in `Suggests` are needed by the developers of the package and *might* be useful to users.
 For example, the [withr package](https://withr.r-lib.org) is very useful for writing tests that clean up after themselves.
-Such usage is compatible with listing withr in `Suggests`.
+Such usage is compatible with listing withr in `Suggests`, since regular users don't need to run the tests.
 But sometimes a package might also use withr in its own functions, perhaps to offer its own `with_*()` and `local_*()` functions.
-In that case, withr should almost certainly be listed in `Imports`.
+In that case, withr should be listed in `Imports`.
 
-`Imports` and `Suggests` differ in their strength of dependency:
+Both `Imports` and `Suggests` take a comma-separated list of package names.
+We recommend putting one package on each line, and keeping them in alphabetical order.
+A non-haphazard order makes it easier for humans to parse this field and appreciate changes.
+The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
+If the dependencies are already in alphabetical order, `use_package()` will keep it that way. 
+In general, it can be nice to run `usethis::use_tidy_description()` regularly, which orders and formats `DESCRIPTION` fields according to a fixed standard.
+
+`Imports` and `Suggests` differ in the strength and nature of dependency:
 
 * `Imports`: packages listed here _must_ be present for your package to work.
-  In fact, any time your package is installed, those packages will also be
-  installed, if not already present.
+  Any time your package is installed, those packages will also be installed, if
+  not already present.
   `devtools::load_all()` also checks that all packages in `Imports` are
   installed.
     
   Adding a package to `Imports` ensures it will be installed, but it does *not*
   mean that it will be attached along with your package, i.e. it does not do the
-  equivalent of `library(otherpkg)`.
+  equivalent of `library(otherpkg)`[^load-vs-attach].
   Inside your package, the best practice is to explicitly refer to external
   functions using the syntax `package::function()`.
   This makes it very easy to identify which functions live outside of your
@@ -109,8 +114,8 @@ In that case, withr should almost certainly be listed in `Imports`.
   If you use a lot of functions from another package, this is rather verbose.
   There's also a minor performance penalty associated with `::` (on the order of
   5µs, so it will only matter if you call the function millions of times).
-  You'll learn about alternative ways to call functions in other packages in
-  [namespace imports](#imports).
+  You'll learn about alternative ways to make functions in other packages
+  available inside your package in section \@ref{imports}.
 
 * `Suggests`: your package can use these packages, but doesn't require them.
   You might use suggested packages for example datasets, to run tests, build
@@ -121,8 +126,9 @@ In that case, withr should almost certainly be listed in `Imports`.
   This means that you can't assume the package is available unconditionally.
   Below we show various ways to handle these checks.
 
-The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
-This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
+[^load-vs-attach]: The difference between loading and attaching a package is covered in more detail in \@ref(search-path).
+
+If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
 
 ```{r create-temp-pkg, include = FALSE}
 op <- usethis::proj_get()
@@ -132,14 +138,12 @@ usethis::proj_set(temp_pkg)
 ```{r}
 usethis::use_package("dplyr") # Default is "Imports"
 
-usethis::use_package("tidyr", "Suggests")
+usethis::use_package("ggplot2", "Suggests")
 ```
 
 ```{r include = FALSE}
 usethis::proj_set(op)
 ```
-
-<!-- TODO: if the package Imports rlang, should usethis suggest `rlang::check_installed()` and `rlang::is_installed()` instead? Also seem like the usethis message should be more parallel in these two cases.-->
 
 ### Guarding the use of a suggested package
 
