@@ -194,7 +194,7 @@ my_fun <- function(a, b) {
     
 These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
   
-`Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context.
+`Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
 Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
@@ -217,8 +217,23 @@ This example is from `ggplot2::coord_map()`.
 
 An example is basically the only place where we would use `require()` inside a package.
 
-Inside a test, testthat users can use `testthat::skip_if_not_installed()` to gracefully skip tests that exercise suggested packages.
-Here's an example from ggplot2, which tests some functions that use the suggested sf package: 
+Another place you might use a suggested package is in a vignette.
+The tidyverse team generally writes vignettes as if all suggested packages are available.
+But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
+See Chapter \@ref(vignettes) for more discussion of vignettes.
+
+#### Whether and how to guard in a test
+
+As with vignettes, the tidyverse team does not usually guard the use of a suggested package in a test.
+In general, for vignettes and tests, we assume all suggested packages are available.
+The motivation for this posture is self-consistency and pragmatism.
+The key packages needed to run tests or build vignettes (e.g. testthat or knitr) appear in `Suggests`, not in `Imports` or `Depends`.
+Therefore, if the tests are actually executing or the vignettes are being built, that implies that an expansive notion of package dependencies has been applied.
+Also, empirically, in every common scenario of running `R CMD check`, the suggested packages are installed.
+However, it's important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.
+
+Sometimes even the tidyverse team makes an exception and guards the use of a suggested package in a test.
+Here's a test from ggplot2, which uses `testthat::skip_if_not_installed()` to skip execution if the suggested sf package is not available.
 
 ```{r eval = FALSE}
 test_that("basic plot builds without error", {
@@ -241,22 +256,10 @@ test_that("basic plot builds without error", {
 })
 ```
 
-The test shown above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
-That is, in general, we assume all suggested packages are available when writing tests.
-So what justifies making an exception?
-In the example above, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
+What might justify the use of `skip_if_not_installed()`?
+In this case, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
 
-The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because testthat itself appears in `Suggests`.
-If the tests are being run, that implies that testthat is installed and that, in turn, implies that suggested packages have been installed.
-This is a matter of convention and not a hard-and-fast rule enforced by externally.
-Other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests.
-
-Also note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
-
-Finally, another place you might use a suggested package is in a vignette.
-Similar to tests, the tidyverse team generally writes vignettes as if all suggested packages are available.
-But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
-See chapter \@ref(vignettes) for more discussion of vignettes.
+Finally, note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
 
 ### Minimum versions
 
