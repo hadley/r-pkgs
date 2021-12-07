@@ -59,7 +59,7 @@ If you ever need to work with a `DESCRIPTION` file programmatically, take a look
 This chapter will show you how to use the most important `DESCRIPTION` fields.
 `Imports` and, to a lesser extent, `Suggests` are the key fields for declaring your dependencies.
 `Title` and `Description` provide concise information about your package, suitable for inclusion in package lists.
-We discuss a few other useful fields, some of which are sufficiently important to merit dedicated treatment elsewhere in the book, such as licensing (covered in chapter \@ref(license)).
+We discuss a few other useful fields, some of which are sufficiently important to merit dedicated treatment elsewhere in the book, such as licensing (covered in Chapter \@ref(license)).
 
 ## Dependencies: What does your package need? {#description-dependencies}
 
@@ -568,10 +568,10 @@ Or sometimes both!
 If you have no plans to share your package, you can ignore this section.
 But if you plan to share, even if only by putting the code where others can see it, you really should specify a license.
 
-Licensing is a big enough topic that it has a dedicated chapter (chapter \@ref(license)).
+Licensing is a big enough topic that it has a dedicated chapter (Chapter \@ref(license)).
 Most maintainers will settle on a permissive license like MIT, one of the GPL copyleft licenses, or CC0.
 These (and more) can all be configured by usethis, via functions like `use_mit_license()`, `use_gpl_license()`, or `use_cc0_license()`.
-Read the [licensing chapter](#license) to learn more.
+Read the licensing chapter (Chapter \@ref(license)) to learn more.
 
 ## Version {#description-version}
 
