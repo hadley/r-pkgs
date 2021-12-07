@@ -64,8 +64,11 @@ We discuss a few other useful fields, some of which are sufficiently important t
 ## Dependencies: What does your package need? {#description-dependencies}
 
 It's the job of the `DESCRIPTION` to list the packages that your package needs to work.
-R has a rich set of ways of describing potential dependencies.
-For example, the following lines indicate that your package needs both dplyr and tidyr to work:
+R has a rich set of ways to describe different types of dependencies.
+A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.
+
+Packages listed in `Imports` are needed by your users at runtime.
+The following lines indicate that your package absolutely needs both dplyr and tidyr to work.
 
 ```yaml
 Imports:
@@ -73,7 +76,8 @@ Imports:
     tidyr
 ```
 
-Whereas, the lines below indicate that, while your package can take advantage of ggplot2 and testthat, they're not required to make it work:
+Packages listed in `Suggests` are either needed for development tasks or *might* unlock optional functionality for your users.
+The lines below indicate that, while your package can take advantage of ggplot2 and testthat, they're not absolutely required:
 
 ```yaml
 Suggests:
@@ -81,28 +85,29 @@ Suggests:
     testthat
 ```
 
-Both `Imports` and `Suggests` take a comma separated list of package names.
-We recommend putting one package on each line, and keeping them in alphabetical order.
-That makes it easy to skim.
-In general, it can be nice to run `usethis::use_tidy_description()` periodically, to tidy up a `DESCRIPTION` file.
-
-The packages listed in `Imports` are required by package users at runtime, whereas packages listed in `Suggests` are needed by the developers of the package and *might* be useful to users.
 For example, the [withr package](https://withr.r-lib.org) is very useful for writing tests that clean up after themselves.
-Such usage is compatible with listing withr in `Suggests`.
+Such usage is compatible with listing withr in `Suggests`, since regular users don't need to run the tests.
 But sometimes a package might also use withr in its own functions, perhaps to offer its own `with_*()` and `local_*()` functions.
-In that case, withr should almost certainly be listed in `Imports`.
+In that case, withr should be listed in `Imports`.
 
-`Imports` and `Suggests` differ in their strength of dependency:
+Both `Imports` and `Suggests` take a comma-separated list of package names.
+We recommend putting one package on each line, and keeping them in alphabetical order.
+A non-haphazard order makes it easier for humans to parse this field and appreciate changes.
+The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
+If the dependencies are already in alphabetical order, `use_package()` will keep it that way. 
+In general, it can be nice to run `usethis::use_tidy_description()` regularly, which orders and formats `DESCRIPTION` fields according to a fixed standard.
+
+`Imports` and `Suggests` differ in the strength and nature of dependency:
 
 * `Imports`: packages listed here _must_ be present for your package to work.
-  In fact, any time your package is installed, those packages will also be
-  installed, if not already present.
+  Any time your package is installed, those packages will also be installed, if
+  not already present.
   `devtools::load_all()` also checks that all packages in `Imports` are
   installed.
     
   Adding a package to `Imports` ensures it will be installed, but it does *not*
   mean that it will be attached along with your package, i.e. it does not do the
-  equivalent of `library(otherpkg)`.
+  equivalent of `library(otherpkg)`[^load-vs-attach].
   Inside your package, the best practice is to explicitly refer to external
   functions using the syntax `package::function()`.
   This makes it very easy to identify which functions live outside of your
@@ -112,8 +117,8 @@ In that case, withr should almost certainly be listed in `Imports`.
   If you use a lot of functions from another package, this is rather verbose.
   There's also a minor performance penalty associated with `::` (on the order of
   5µs, so it will only matter if you call the function millions of times).
-  You'll learn about alternative ways to call functions in other packages in
-  [namespace imports](#imports).
+  You'll learn about alternative ways to make functions in other packages
+  available inside your package in section \@ref{imports}.
 
 * `Suggests`: your package can use these packages, but doesn't require them.
   You might use suggested packages for example datasets, to run tests, build
@@ -124,8 +129,9 @@ In that case, withr should almost certainly be listed in `Imports`.
   This means that you can't assume the package is available unconditionally.
   Below we show various ways to handle these checks.
 
-The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
-This automatically puts them in the right place in your `DESCRIPTION`, and reminds you how to use them.
+[^load-vs-attach]: The difference between loading and attaching a package is covered in more detail in \@ref(search-path).
+
+If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
 
 
 
@@ -135,15 +141,13 @@ usethis::use_package("dplyr") # Default is "Imports"
 #> [32m✔[39m Adding [34m'dplyr'[39m to [32mImports[39m field in DESCRIPTION
 #> [31m•[39m Refer to functions with [90m`dplyr::fun()`[39m
 
-usethis::use_package("tidyr", "Suggests")
-#> [32m✔[39m Adding [34m'tidyr'[39m to [32mSuggests[39m field in DESCRIPTION
-#> [31m•[39m Use [90m`requireNamespace("tidyr", quietly = TRUE)`[39m to test if package is installed
-#> [31m•[39m Then directly refer to functons like [90m`tidyr::fun()`[39m (replacing [90m`fun()`[39m).
+usethis::use_package("ggplot2", "Suggests")
+#> [32m✔[39m Adding [34m'ggplot2'[39m to [32mSuggests[39m field in DESCRIPTION
+#> [31m•[39m Use [90m`requireNamespace("ggplot2", quietly = TRUE)`[39m to test if package is installed
+#> [31m•[39m Then directly refer to functons like [90m`ggplot2::fun()`[39m (replacing [90m`fun()`[39m).
 ```
 
 
-
-<!-- TODO: if the package Imports rlang, should usethis suggest `rlang::check_installed()` and `rlang::is_installed()` instead? Also seem like the usethis message should be more parallel in these two cases.-->
 
 ### Guarding the use of a suggested package
 
@@ -196,7 +200,7 @@ my_fun <- function(a, b) {
     
 These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
   
-`Suggests` isn't terribly relevant for packages used by a modest number of people or in a very predictable context.
+`Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
 Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
@@ -220,8 +224,23 @@ This example is from `ggplot2::coord_map()`.
 
 An example is basically the only place where we would use `require()` inside a package.
 
-Inside a test, testthat users can use `testthat::skip_if_not_installed()` to gracefully skip tests that exercise suggested packages.
-Here's an example from ggplot2, which tests some functions that use the suggested sf package: 
+Another place you might use a suggested package is in a vignette.
+The tidyverse team generally writes vignettes as if all suggested packages are available.
+But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
+See Chapter \@ref(vignettes) for more discussion of vignettes.
+
+#### Whether and how to guard in a test
+
+As with vignettes, the tidyverse team does not usually guard the use of a suggested package in a test.
+In general, for vignettes and tests, we assume all suggested packages are available.
+The motivation for this posture is self-consistency and pragmatism.
+The key packages needed to run tests or build vignettes (e.g. testthat or knitr) appear in `Suggests`, not in `Imports` or `Depends`.
+Therefore, if the tests are actually executing or the vignettes are being built, that implies that an expansive notion of package dependencies has been applied.
+Also, empirically, in every common scenario of running `R CMD check`, the suggested packages are installed.
+However, it's important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.
+
+Sometimes even the tidyverse team makes an exception and guards the use of a suggested package in a test.
+Here's a test from ggplot2, which uses `testthat::skip_if_not_installed()` to skip execution if the suggested sf package is not available.
 
 
 ```r
@@ -245,22 +264,10 @@ test_that("basic plot builds without error", {
 })
 ```
 
-The test shown above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
-That is, in general, we assume all suggested packages are available when writing tests.
-So what justifies making an exception?
-In the example above, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
+What might justify the use of `skip_if_not_installed()`?
+In this case, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
 
-The motivation for the tidyverse team's policy of writing tests as if all suggested packages are present is because testthat itself appears in `Suggests`.
-If the tests are being run, that implies that testthat is installed and that, in turn, implies that suggested packages have been installed.
-This is a matter of convention and not a hard-and-fast rule enforced by externally.
-Other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests.
-
-Also note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
-
-Finally, another place you might use a suggested package is in a vignette.
-Similar to tests, the tidyverse team generally writes vignettes as if all suggested packages are available.
-But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
-See chapter \@ref(vignettes) for more discussion of vignettes.
+Finally, note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
 
 ### Minimum versions
 

@@ -130,35 +130,39 @@ We discuss a few other useful fields, some of which are sufficiently important t
 <span class="header-section-number">8.1</span> Dependencies: What does your package need?<a class="anchor" aria-label="anchor" href="#description-dependencies"><i class="fas fa-link"></i></a>
 </h2>
 <p>It’s the job of the <code>DESCRIPTION</code> to list the packages that your package needs to work.
-R has a rich set of ways of describing potential dependencies.
-For example, the following lines indicate that your package needs both dplyr and tidyr to work:</p>
+R has a rich set of ways to describe different types of dependencies.
+A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.</p>
+<p>Packages listed in <code>Imports</code> are needed by your users at runtime.
+The following lines indicate that your package absolutely needs both dplyr and tidyr to work.</p>
 <div class="sourceCode" id="cb121"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb121-1"><a href="description.html#cb121-1"></a><span class="fu">Imports</span><span class="kw">:</span></span>
 <span id="cb121-2"><a href="description.html#cb121-2"></a><span class="at">    dplyr,</span></span>
 <span id="cb121-3"><a href="description.html#cb121-3"></a><span class="at">    tidyr</span></span></code></pre></div>
-<p>Whereas, the lines below indicate that, while your package can take advantage of ggplot2 and testthat, they’re not required to make it work:</p>
+<p>Packages listed in <code>Suggests</code> are either needed for development tasks or <em>might</em> unlock optional functionality for your users.
+The lines below indicate that, while your package can take advantage of ggplot2 and testthat, they’re not absolutely required:</p>
 <div class="sourceCode" id="cb122"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb122-1"><a href="description.html#cb122-1"></a><span class="fu">Suggests</span><span class="kw">:</span></span>
 <span id="cb122-2"><a href="description.html#cb122-2"></a><span class="at">    ggplot2,</span></span>
 <span id="cb122-3"><a href="description.html#cb122-3"></a><span class="at">    testthat</span></span></code></pre></div>
-<p>Both <code>Imports</code> and <code>Suggests</code> take a comma separated list of package names.
-We recommend putting one package on each line, and keeping them in alphabetical order.
-That makes it easy to skim.
-In general, it can be nice to run <code><a href="https://usethis.r-lib.org/reference/tidyverse.html">usethis::use_tidy_description()</a></code> periodically, to tidy up a <code>DESCRIPTION</code> file.</p>
-<p>The packages listed in <code>Imports</code> are required by package users at runtime, whereas packages listed in <code>Suggests</code> are needed by the developers of the package and <em>might</em> be useful to users.
-For example, the <a href="https://withr.r-lib.org">withr package</a> is very useful for writing tests that clean up after themselves.
-Such usage is compatible with listing withr in <code>Suggests</code>.
+<p>For example, the <a href="https://withr.r-lib.org">withr package</a> is very useful for writing tests that clean up after themselves.
+Such usage is compatible with listing withr in <code>Suggests</code>, since regular users don’t need to run the tests.
 But sometimes a package might also use withr in its own functions, perhaps to offer its own <code>with_*()</code> and <code>local_*()</code> functions.
-In that case, withr should almost certainly be listed in <code>Imports</code>.</p>
-<p><code>Imports</code> and <code>Suggests</code> differ in their strength of dependency:</p>
+In that case, withr should be listed in <code>Imports</code>.</p>
+<p>Both <code>Imports</code> and <code>Suggests</code> take a comma-separated list of package names.
+We recommend putting one package on each line, and keeping them in alphabetical order.
+A non-haphazard order makes it easier for humans to parse this field and appreciate changes.
+The easiest way to add a package to <code>Imports</code> or <code>Suggests</code> is with <code><a href="https://usethis.r-lib.org/reference/use_package.html">usethis::use_package()</a></code>.
+If the dependencies are already in alphabetical order, <code><a href="https://usethis.r-lib.org/reference/use_package.html">use_package()</a></code> will keep it that way.
+In general, it can be nice to run <code><a href="https://usethis.r-lib.org/reference/tidyverse.html">usethis::use_tidy_description()</a></code> regularly, which orders and formats <code>DESCRIPTION</code> fields according to a fixed standard.</p>
+<p><code>Imports</code> and <code>Suggests</code> differ in the strength and nature of dependency:</p>
 <ul>
 <li>
 <p><code>Imports</code>: packages listed here <em>must</em> be present for your package to work.
-In fact, any time your package is installed, those packages will also be
-installed, if not already present.
+Any time your package is installed, those packages will also be installed, if
+not already present.
 <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> also checks that all packages in <code>Imports</code> are
 installed.</p>
 <p>Adding a package to <code>Imports</code> ensures it will be installed, but it does <em>not</em>
 mean that it will be attached along with your package, i.e. it does not do the
-equivalent of <code><a href="https://rdrr.io/r/base/library.html">library(otherpkg)</a></code>.
+equivalent of <code><a href="https://rdrr.io/r/base/library.html">library(otherpkg)</a></code><a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The difference between loading and attaching a package is covered in more detail in &lt;a href="namespace.html#search-path"&gt;13.2&lt;/a&gt;.&lt;/p&gt;'><sup>18</sup></a>.
 Inside your package, the best practice is to explicitly refer to external
 functions using the syntax <code>package::function()</code>.
 This makes it very easy to identify which functions live outside of your
@@ -167,8 +171,8 @@ This is especially useful when you read your code in the future.</p>
 <p>If you use a lot of functions from another package, this is rather verbose.
 There’s also a minor performance penalty associated with <code>::</code> (on the order of
 5µs, so it will only matter if you call the function millions of times).
-You’ll learn about alternative ways to call functions in other packages in
-<a href="namespace.html#imports">namespace imports</a>.</p>
+You’ll learn about alternative ways to make functions in other packages
+available inside your package in section @ref{imports}.</p>
 </li>
 <li>
 <p><code>Suggests</code>: your package can use these packages, but doesn’t require them.
@@ -180,18 +184,16 @@ This means that you can’t assume the package is available unconditionally.
 Below we show various ways to handle these checks.</p>
 </li>
 </ul>
-<p>The easiest way to add a package to <code>Imports</code> or <code>Suggests</code> is with <code><a href="https://usethis.r-lib.org/reference/use_package.html">usethis::use_package()</a></code>.
-This automatically puts them in the right place in your <code>DESCRIPTION</code>, and reminds you how to use them.</p>
+<p>If you add packages to <code>DESCRIPTION</code> with <code><a href="https://usethis.r-lib.org/reference/use_package.html">usethis::use_package()</a></code>, it will also remind you of the recommended way to call them.</p>
 <div class="sourceCode" id="cb123"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"dplyr"</span><span class="op">)</span> <span class="co"># Default is "Imports"</span>
 <span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'dplyr'</span> to <span style="color: #00BB00;">Imports</span> field in DESCRIPTION</span>
 <span class="co">#&gt; <span style="color: #BB0000;">•</span> Refer to functions with <span style="color: #555555;">`dplyr::fun()`</span></span>
 
-<span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"tidyr"</span>, <span class="st">"Suggests"</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'tidyr'</span> to <span style="color: #00BB00;">Suggests</span> field in DESCRIPTION</span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Use <span style="color: #555555;">`requireNamespace("tidyr", quietly = TRUE)`</span> to test if package is installed</span>
-<span class="co">#&gt; <span style="color: #BB0000;">•</span> Then directly refer to functons like <span style="color: #555555;">`tidyr::fun()`</span> (replacing <span style="color: #555555;">`fun()`</span>).</span></code></pre></div>
-<!-- TODO: if the package Imports rlang, should usethis suggest `rlang::check_installed()` and `rlang::is_installed()` instead? Also seem like the usethis message should be more parallel in these two cases.-->
+<span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, <span class="st">"Suggests"</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'ggplot2'</span> to <span style="color: #00BB00;">Suggests</span> field in DESCRIPTION</span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Use <span style="color: #555555;">`requireNamespace("ggplot2", quietly = TRUE)`</span> to test if package is installed</span>
+<span class="co">#&gt; <span style="color: #BB0000;">•</span> Then directly refer to functons like <span style="color: #555555;">`ggplot2::fun()`</span> (replacing <span style="color: #555555;">`fun()`</span>).</span></code></pre></div>
 <div id="guarding-the-use-of-a-suggested-package" class="section level3">
 <h3>
 <span class="header-section-number">8.1.1</span> Guarding the use of a suggested package<a class="anchor" aria-label="anchor" href="#guarding-the-use-of-a-suggested-package"><i class="fas fa-link"></i></a>
@@ -236,7 +238,7 @@ Here’s how the checks around a suggested package could look if you use rlang:<
   <span class="op">}</span>
 <span class="op">}</span></code></pre></div>
 <p>These rlang functions have handy features for programming, such as vectorization over <code>pkg</code>, classed errors with a data payload, and, for <code>check_installed()</code>, an offer to install the needed package in an interactive session.</p>
-<p><code>Suggests</code> isn’t terribly relevant for packages used by a modest number of people or in a very predictable context.
+<p><code>Suggests</code> isn’t terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it’s reasonable to just use <code>Imports</code> for everything.
 Using <code>Suggests</code> is mostly a courtesy to external users or to accommodate very lean installations.
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.</p>
@@ -254,8 +256,23 @@ This example is from <code><a href="https://ggplot2.tidyverse.org/reference/coor
 <span class="co">#'   nzmap</span>
 <span class="co">#' }</span></code></pre></div>
 <p>An example is basically the only place where we would use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> inside a package.</p>
-<p>Inside a test, testthat users can use <code><a href="https://testthat.r-lib.org/reference/skip.html">testthat::skip_if_not_installed()</a></code> to gracefully skip tests that exercise suggested packages.
-Here’s an example from ggplot2, which tests some functions that use the suggested sf package:</p>
+<p>Another place you might use a suggested package is in a vignette.
+The tidyverse team generally writes vignettes as if all suggested packages are available.
+But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options <code>purl</code> and <code>eval</code> may be useful for achieving this.
+See Chapter <a href="vignettes.html#vignettes">11</a> for more discussion of vignettes.</p>
+<div id="whether-and-how-to-guard-in-a-test" class="section level4">
+<h4>
+<span class="header-section-number">8.1.1.1</span> Whether and how to guard in a test<a class="anchor" aria-label="anchor" href="#whether-and-how-to-guard-in-a-test"><i class="fas fa-link"></i></a>
+</h4>
+<p>As with vignettes, the tidyverse team does not usually guard the use of a suggested package in a test.
+In general, for vignettes and tests, we assume all suggested packages are available.
+The motivation for this posture is self-consistency and pragmatism.
+The key packages needed to run tests or build vignettes (e.g. testthat or knitr) appear in <code>Suggests</code>, not in <code>Imports</code> or <code>Depends</code>.
+Therefore, if the tests are actually executing or the vignettes are being built, that implies that an expansive notion of package dependencies has been applied.
+Also, empirically, in every common scenario of running <code>R CMD check</code>, the suggested packages are installed.
+However, it’s important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.</p>
+<p>Sometimes even the tidyverse team makes an exception and guards the use of a suggested package in a test.
+Here’s a test from ggplot2, which uses <code><a href="https://testthat.r-lib.org/reference/skip.html">testthat::skip_if_not_installed()</a></code> to skip execution if the suggested sf package is not available.</p>
 <div class="sourceCode" id="cb127"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"basic plot builds without error"</span>, <span class="op">{</span>
   <span class="fu"><a href="https://testthat.r-lib.org/reference/skip.html">skip_if_not_installed</a></span><span class="op">(</span><span class="st">"sf"</span><span class="op">)</span>
@@ -275,19 +292,10 @@ Here’s an example from ggplot2, which tests some functions that use the sugges
 
   <span class="fu">expect_doppelganger</span><span class="op">(</span><span class="st">"sf-polygons"</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">nc</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">coord_sf</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>The test shown above is actually a bit of an exception, as the tidyverse team does not typically guard use of a suggested package in tests.
-That is, in general, we assume all suggested packages are available when writing tests.
-So what justifies making an exception?
-In the example above, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.</p>
-<p>The motivation for the tidyverse team’s policy of writing tests as if all suggested packages are present is because testthat itself appears in <code>Suggests</code>.
-If the tests are being run, that implies that testthat is installed and that, in turn, implies that suggested packages have been installed.
-This is a matter of convention and not a hard-and-fast rule enforced by externally.
-Other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests.</p>
-<p>Also note that <code>testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")</code> can be used to conditionally skip a test based on the version of the other package.</p>
-<p>Finally, another place you might use a suggested package is in a vignette.
-Similar to tests, the tidyverse team generally writes vignettes as if all suggested packages are available.
-But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options <code>purl</code> and <code>eval</code> may be useful for achieving this.
-See chapter <a href="vignettes.html#vignettes">11</a> for more discussion of vignettes.</p>
+<p>What might justify the use of <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_if_not_installed()</a></code>?
+In this case, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.</p>
+<p>Finally, note that <code>testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")</code> can be used to conditionally skip a test based on the version of the other package.</p>
+</div>
 </div>
 <div id="minimum-versions" class="section level3">
 <h3>
