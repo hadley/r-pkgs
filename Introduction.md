@@ -194,7 +194,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2021-12-08
+#>  date     2021-12-09
 #>  pandoc   2.7.3 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ devtools::session_info()
 #>  ellipsis      0.3.2   2021-04-29 [1] RSPM
 #>  evaluate      0.14    2019-05-28 [1] RSPM
 #>  fastmap       1.1.0   2021-01-25 [1] RSPM
-#>  fs            1.5.1   2021-11-30 [1] CRAN (R 4.1.2)
+#>  fs            1.5.2   2021-12-08 [1] CRAN (R 4.1.2)
 #>  glue          1.5.1   2021-11-30 [1] CRAN (R 4.1.2)
 #>  htmltools     0.5.2   2021-08-25 [1] RSPM
 #>  jquerylib     0.1.4   2021-04-26 [1] RSPM
