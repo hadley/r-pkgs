@@ -369,7 +369,7 @@ But it’s hard to define what that means, so we don’t recommend using
 <p>You can also list things that your package needs outside of R in the <code>SystemRequirements</code> field.
 But this is just a plain text field and is not automatically checked.
 Think of it as a quick reference; you’ll also need to include detailed system requirements (and how to install them) in your README.</p>
-<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. Should we rephrase? -->
+<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
 <div id="an-r-version-gotcha" class="section level4">
 <h4>
 <span class="header-section-number">8.1.3.1</span> An R version gotcha<a class="anchor" aria-label="anchor" href="#an-r-version-gotcha"><i class="fas fa-link"></i></a>
@@ -385,7 +385,7 @@ When that R package is next built, such as for a CRAN submission, the required R
   serialize/load version 3 cannot be read in older versions of R.
   File(s) containing such objects:
     'path/to/some_file.rds'</code></pre>
-<p>Literally, the <code>DESCRIPTION</code> file in the bundled package says <code>Depends: R (&gt;= 3.5.0)</code>, even if <code>DESCRIPTION</code> in the source package says differently.</p>
+<p>Literally, the <code>DESCRIPTION</code> file in the bundled package says <code>Depends: R (&gt;= 3.5.0)</code>, even if <code>DESCRIPTION</code> in the source package says differently<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The different package states, such as source vs. bundled, are explained in section &lt;a href="package-structure-state.html#package-states"&gt;4.1&lt;/a&gt;.&lt;/p&gt;'><sup>20</sup></a>.</p>
 <p>When such a package is released on CRAN, the new minimum R version is viral, in the sense that all packages listing the original package in <code>Imports</code> or even <code>Suggests</code> have, to varying degrees, inherited the new dependency on R &gt;= 3.5.0.</p>
 <p>The immediate take-away is to be very deliberate about the <code>version</code> of <code>.rds</code> files until R versions prior to 3.5.0 have fallen off the edge of what you intend to support.
 This particular <code>.rds</code> issue won’t be with us forever, but similar issues crop up elsewhere, such as in the standards implicit in compiled C or C++ source code.
@@ -402,7 +402,7 @@ The broader message is that the more reverse dependencies your package has, the 
 One common example of this is when you’re developing against a development version of one of your dependencies.
 During this time, you’ll want to install the dependency from its development repository, which is often GitHub.
 The way to specify various remote sources is described in a <a href="https://devtools.r-lib.org/articles/dependencies.html">devtools vignette</a>.</p>
-<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along.. -->
+<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along. -->
 <p>The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., <code>Imports</code>.
 <code><a href="https://usethis.r-lib.org/reference/use_package.html">usethis::use_dev_package()</a></code> helps to make the necessary changes in <code>DESCRIPTION</code>.
 If your package temporarily relies on a development version of usethis, the affected <code>DESCRIPTION</code> fields might evolve like this:</p>
@@ -418,11 +418,16 @@ Imports:                 Imports:                      Imports:
 <p>It’s important to note that you should not submit your package to CRAN in the intermediate state, meaning with a <code>Remotes</code> field and with a dependency required at a version that’s not available from CRAN or Bioconductor.
 For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.</p>
 <p>You may also see devtools-developed packages with packages listed in <code>DESCRIPTION</code> fields in the form of <code>Config/Needs/*</code>.
-This phenomenon is not directly related to devtools; it’s more accurate to say that it’s associated with the use of <a href="https://github.com/r-lib/actions">our GitHub actions</a> .
-<code>Config/Needs/*</code> fields are used by some standard continuous integration workflows made available to the community at <a href="https://github.com/r-lib/actions/" class="uri">https://github.com/r-lib/actions/</a> and exposed via functions such as <code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_actions()</a></code>.
-Specifically, <code>Config/Needs/*</code> fields are a way to inform the <a href="https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme"><code>setup-r-dependencies</code></a> GitHub Action of extra packages it should install.</p>
+The <code>Config/Needs/*</code> pattern takes advantage of the fact that fields prefixed with <code>Config/</code> are ignored by CRAN and also do not trigger a NOTE about “Unknown, possibly mis-spelled, fields in <code>DESCRIPTION</code>”.</p>
+<!--
+https://github.com/wch/r-source/blob/de49776d9fe54cb4580fbbd04906b40fe2f6117e/src/library/tools/R/QC.R#L7133
+https://github.com/wch/r-source/blob/efacf56dcf2f880b9db8eafa28d49a08d56e861e/src/library/tools/R/utils.R#L1316-L1389
+-->
+<p>The use of <code>Config/Needs/*</code> is not directly related to devtools.
+It’s more accurate to say that it’s associated with continuous integration workflows made available to the community at <a href="https://github.com/r-lib/actions/" class="uri">https://github.com/r-lib/actions/</a> and exposed via functions such as <code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_actions()</a></code>.
+A <code>Config/Needs/*</code> field tells the <a href="https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme"><code>setup-r-dependencies</code></a> GitHub Action about extra packages that need to be installed.</p>
 <p><code>Config/Needs/website</code> is the most common and it provides a place to specify packages that aren’t a formal dependency, but that must be present in order to build the package’s website.
-On the left is an example of what might appear in <code>DESCRIPTION</code> for a package that uses various tidyverse packages in the non-vignette articles on its website, which is also formatted with styling that lives in <code>tidyverse/template</code>.
+On the left is an example of what might appear in <code>DESCRIPTION</code> for a package that uses various tidyverse packages in the non-vignette articles on its website, which is also formatted with styling that lives in the <code>tidyverse/template</code> GitHub repo.
 On the right is the corresponding excerpt from the configuration of the workflow that builds and deploys the website.</p>
 <pre><code>in DESCRIPTION                  in .github/workflows/pkgdown.yaml
 --------------------------      ---------------------------------

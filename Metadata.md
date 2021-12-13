@@ -347,7 +347,7 @@ You can also list things that your package needs outside of R in the `SystemRequ
 But this is just a plain text field and is not automatically checked.
 Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
 
-<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. Should we rephrase? -->
+<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
 
 #### An R version gotcha
 
@@ -367,7 +367,9 @@ NB: this package now depends on R (>= 3.5.0)
     'path/to/some_file.rds'
 ```
 
-Literally, the `DESCRIPTION` file in the bundled package says `Depends: R (>= 3.5.0)`, even if `DESCRIPTION` in the source package says differently.
+Literally, the `DESCRIPTION` file in the bundled package says `Depends: R (>= 3.5.0)`, even if `DESCRIPTION` in the source package says differently[^recall-package-states].
+
+[^recall-package-states]: The different package states, such as source vs. bundled, are explained in section \@ref(package-states).
 
 When such a package is released on CRAN, the new minimum R version is viral, in the sense that all packages listing the original package in `Imports` or even `Suggests` have, to varying degrees, inherited the new dependency on R >= 3.5.0.
 
@@ -386,7 +388,7 @@ One common example of this is when you're developing against a development versi
 During this time, you'll want to install the dependency from its development repository, which is often GitHub.
 The way to specify various remote sources is described in a [devtools vignette](https://devtools.r-lib.org/articles/dependencies.html).
 
-<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along.. -->
+<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along. -->
 
 The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
 `usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
@@ -409,12 +411,19 @@ It's important to note that you should not submit your package to CRAN in the in
 For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.
 
 You may also see devtools-developed packages with packages listed in `DESCRIPTION` fields in the form of `Config/Needs/*`.
-This phenomenon is not directly related to devtools; it's more accurate to say that it's associated with the use of [our GitHub actions](https://github.com/r-lib/actions) .
-`Config/Needs/*` fields are used by some standard continuous integration workflows made available to the community at <https://github.com/r-lib/actions/> and exposed via functions such as `usethis::use_github_actions()`.
-Specifically, `Config/Needs/*` fields are a way to inform the [`setup-r-dependencies`](https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme) GitHub Action of extra packages it should install.
+The `Config/Needs/*` pattern takes advantage of the fact that fields prefixed with `Config/` are ignored by CRAN and also do not trigger a NOTE about "Unknown, possibly mis-spelled, fields in `DESCRIPTION`".
+
+<!--
+https://github.com/wch/r-source/blob/de49776d9fe54cb4580fbbd04906b40fe2f6117e/src/library/tools/R/QC.R#L7133
+https://github.com/wch/r-source/blob/efacf56dcf2f880b9db8eafa28d49a08d56e861e/src/library/tools/R/utils.R#L1316-L1389
+-->
+
+The use of `Config/Needs/*` is not directly related to devtools.
+It's more accurate to say that it's associated with continuous integration workflows made available to the community at <https://github.com/r-lib/actions/> and exposed via functions such as `usethis::use_github_actions()`.
+A `Config/Needs/*` field tells the [`setup-r-dependencies`](https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme) GitHub Action about extra packages that need to be installed.
 
 `Config/Needs/website` is the most common and it provides a place to specify packages that aren't a formal dependency, but that must be present in order to build the package's website.
-On the left is an example of what might appear in `DESCRIPTION` for a package that uses various tidyverse packages in the non-vignette articles on its website, which is also formatted with styling that lives in `tidyverse/template`.
+On the left is an example of what might appear in `DESCRIPTION` for a package that uses various tidyverse packages in the non-vignette articles on its website, which is also formatted with styling that lives in the `tidyverse/template` GitHub repo.
 On the right is the corresponding excerpt from the configuration of the workflow that builds and deploys the website.
 
 ```
