@@ -286,7 +286,7 @@ Since R can't have multiple versions of the same package loaded at the same time
 [^pointer-to-renv]: The need to specify the exact versions of packages, rather than minimum versions, comes up more often in the development of non-package projects.
 The [renv package](https://rstudio.github.io/renv/) provides a way to do this, by implementing project-specific environments (package libraries).
 renv is a reboot of an earlier package called packrat.
-If you want to freeze the dependencies of a project at exact versions, use renv instead of (or possibly in addition to) a `DESCRIPTION` file.
+If you want to freeze the dependencies of a project at exact versions, use renv instead of (or possibly in addition to) a `DESCRIPTION` file.   
 
 Versioning is most important if you will release your package for use by others.
 Usually people don't have exactly the same versions of packages installed that you do.
@@ -301,6 +301,8 @@ This is desirable if your minimum version requirements are genuine, i.e. your pa
 But if your stated requirements have a less solid rationale, this may be unnecessarily conservative and inconvenient.
 
 In the absence of clear, hard requirements, you should set minimum versions (or not) based on your expected user base, the package versions they are likely to have, and a cost-benefit analysis of being too lax versus too conservative.
+The *de facto* policy of the tidyverse team is to specify a minimum version when using a known new feature or when someone encounters a version problem in authentic use.
+This isn't perfect, but we don't currently have the tooling to do better, and it seems to work fairly well in practice.
 
 ### Other dependencies
 
