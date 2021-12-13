@@ -479,6 +479,24 @@ A good title and description are important, especially if you plan to release yo
 <p class="caption">(\#fig:cran-package-page)The CRAN page for ggplot2, highlighting Title and Description.</p>
 </div>
 
+If you plan to submit your package to CRAN, both the `Title` and `Description` are a frequent source of rejections for reasons not covered by the automated `R CMD check`.
+In addition to the basics above, here are a few more tips:
+
+* Put the names of R packages, software, and APIs inside single quotes.
+  This goes for both the `Title` and the `Description`.
+  See the ggplot2 example above.
+* If you need to use an acronym, try to do so in `Description`, not in `Title`.
+  In either case, explain the acronym in `Description`, i.e. fully expand it.
+* Don't include the package name, especially in `Title`, which is often
+  prefixed with the package name.
+* Do not start with "A package for ..." or "This package does ...".
+  This rule makes sense once you look at [the list of CRAN packages by name](https://cran.r-project.org/web/packages/available_packages_by_name.html).
+  The information density of such a listing is much higher without a universal
+  prefix like "A package for ...".
+  
+If these constraints give you writer's block, it often helps to spend a few minutes reading `Title` and `Description` of packages already on CRAN.
+Once you read a couple dozen, you can usually find a way to say what you want to say about your package that is also likely to pass CRAN's human-enforced checks.
+
 You'll notice that `Description` only gives you a small amount of space to describe what your package does.
 This is why it's so important to also include a `README.md` file that goes into much more depth and shows a few examples.
 You'll learn about that in [README.md](#readme).
