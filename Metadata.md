@@ -518,7 +518,7 @@ person("Hadley", "Wickham", email = "hadley@rstudio.com",
 #> [1] "Hadley Wickham <hadley@rstudio.com> [aut, cre]"
 ```
 
-This command says that both the author (aut) and the maintainer (cre) is Hadley Wickham, and that his email address is `hadley@rstudio.com`.
+This command says that Hadley Wickham is both the maintainer (`cre`) and an author (`aut`) and that his email address is `hadley@rstudio.com`.
 The `person()` function has four main inputs:
 
 * The name, specified by the first two arguments, `given` and `family` (these
@@ -536,10 +536,12 @@ The `person()` function has four main inputs:
   mailing list.
 
 * One or more three letter codes specifying the `role`.
-  There are four important roles:
+  These are the most important roles to know about:
 
     * `cre`: the creator or maintainer, the person you should bother 
-      if you have problems.
+      if you have problems. Despite being short for "creator", this is the
+      correct role to use for the current maintainer, even if they are not
+      not the initial creator of the package.
       
     * `aut`: authors, those who have made significant contributions to the 
       package.
@@ -549,15 +551,17 @@ The `person()` function has four main inputs:
     
     * `cph`: copyright holder. This is used if the copyright is held by someone 
       other than the author, typically a company (i.e. the author's employer).
+      
+    * `fnd`: funder, the people or organizations that have provided financial
+      support for the development of the package.
     
-    (The [full list of roles](https://www.loc.gov/marc/relators/relaterm.html) is
-    extremely comprehensive.
-    Should your package have a woodcutter ("wdc"), lyricist ("lyr") or costume
-    designer ("cst"), rest comfortably that you can correctly describe their
+    (The [full list of roles](https://www.loc.gov/marc/relators/relaterm.html)
+    is extremely comprehensive.
+    Should your package have a woodcutter (`wdc`), lyricist (`lyr`) or costume
+    designer (`cst`), rest comfortably that you can correctly describe their
     role in creating your package.
     However, note that packages destined for CRAN must limit themselves to the
-    subset of MARC roles listed in the documentation for `person()`.
-    )
+    subset of MARC roles listed in the documentation for `person()`.)
 
 * The optional `comment` argument has become more relevant, since `person()` and
   CRAN landing pages have gained some nice features around
@@ -575,6 +579,8 @@ The `person()` function has four main inputs:
     #> [1] "Jennifer Bryan <jenny@rstudio.com> [aut, cre] (<https://orcid.org/0000-0002-6983-2759>)"
     ```
 
+
+
 You can list multiple authors with `c()`:
 
 ```yaml
@@ -584,8 +590,8 @@ Authors@R: c(
     person("RStudio", role = c("cph", "fnd")))
 ```
 
-Every package must have at least one author (aut) and one maintainer (cre) (they might be the same person).
-The maintainer (cre) must have an email address.
+Every package must have at least one author (`aut`) and one maintainer (`cre`) (they might be the same person).
+The maintainer (`cre`) must have an email address.
 These fields are used to generate the basic citation for the package (e.g. `citation("pkgname")`).
 Only people listed as authors will be included in the auto-generated citation.
 There are a few extra details if you're including code that other people have written.
