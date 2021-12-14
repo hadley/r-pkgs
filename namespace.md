@@ -25,7 +25,7 @@ Namespaces make your packages self-contained in two ways: the __imports__ and th
 nrow
 #> function (x) 
 #> dim(x)[1L]
-#> <bytecode: 0x556c52c21e50>
+#> <bytecode: 0x5632b7c9ee50>
 #> <environment: namespace:base>
 ```
 
