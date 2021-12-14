@@ -497,7 +497,7 @@ Once you read a couple dozen, you can usually find a way to say what you want to
 
 You'll notice that `Description` only gives you a small amount of space to describe what your package does.
 This is why it's so important to also include a `README.md` file that goes into much more depth and shows a few examples.
-You'll learn about that in [README.md](#readme).
+You'll learn about that in section \@ref(readme).
 
 ## Author: who are you? {#description-authors}
 
