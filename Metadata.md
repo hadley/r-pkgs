@@ -632,33 +632,34 @@ A package might, for example, import package `devtools (>= 1.9.2)`, in which cas
 
 The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
 
-I don't recommend taking full advantage of R's flexibility.
-Instead always use `.` to separate version numbers. 
+Here is our recommended framework for managing the package version number:
+
+* Always use `.` as the separator, never `-`.
 
 * A released version number consists of three numbers, `<major>.<minor>.<patch>`. 
   For version number 1.9.2, 1 is the major number, 9 is the minor number, and 
-  2 is the patch number. Never use versions like `1.0`, instead always spell
-  out the three components, `1.0.0`.
-
-* An in-development package has a fourth component: the development version.
-  This should start at 9000. For example, the first version of the package
-  should be `0.0.0.9000`. There are two reasons for this recommendation:
-  first, it makes it easy to see if a package is released or in-development,
-  and the use of the fourth place means that you're not limited to what the
-  next version will be. `0.0.1`, `0.1.0`, and `1.0.0` are all greater than 
-  `0.0.0.9000`.
+  2 is the patch number.
+  Never use versions like `1.0`, instead always spell out the three components,
+  `1.0.0`.
   
-  Increment the development version, e.g. from `9000` to `9001` if you've
+* An in-development package has a fourth component: the development version.
+  This should start at 9000.
+  For example, the first version of the package should be `0.0.0.9000`.
+  There are two reasons for this recommendation:
+  First, it makes it easy to see if a package is released or in-development.
+  Also, the use of the fourth place means that you're not limited to what the
+  next version will be.
+  `0.0.1`, `0.1.0`, and `1.0.0` are all greater than `0.0.0.9000`.
+  
+  Increment the development version, e.g. from `9000` to `9001`, if you've
   added an important feature that another development package needs to depend 
   on.
-    
-  If you're using svn, instead of using the arbitrary `9000`, you can
-  embed the sequential revision identifier.
 
-This advice here is inspired in part by [Semantic Versioning](https://semver.org) and by the [X.Org](https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
+The advice above is inspired in part by [Semantic Versioning](https://semver.org) and by the [X.Org](https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
 Read them if you'd like to understand more about the standards of versioning used by many open source projects.
+Finally, know that other maintainers follow different philosophies on how to manage the package version number.
 
-We'll come back to version numbers in the context of releasing your package, [picking a version number](#release-version).
+We'll come back to version numbers in the context of releasing your package, in Section \@ref(release-version).
 For now, just remember that the first version of your package should be `0.0.0.9000`.
 `usethis::create_package()` does this, by default.
 `usethis::use_version()` increments the package version; when called interactively, with no argument, it presents a helpful menu:
