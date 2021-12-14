@@ -327,7 +327,7 @@ There are three other fields that allow you to express more specialised dependen
     and you should take reasonable measures to test your claim regularly.      
     
 * `LinkingTo`: packages listed here rely on C or C++ code in another package. 
-  You'll learn more about `LinkingTo` in [compiled code](#src).
+  You'll learn more about `LinkingTo` in Chapter \@ref(src).
     
 * `Enhances`: packages listed here are "enhanced" by your package.
   Typically, this means you provide methods for classes defined in another
@@ -602,7 +602,7 @@ The maintainer (`cre`) must have an email address.
 These fields are used to generate the basic citation for the package (e.g. `citation("pkgname")`).
 Only people listed as authors will be included in the auto-generated citation.
 There are a few extra details if you're including code that other people have written.
-Since this typically occurs when you're wrapping a C library, it's discussed in [compiled code](#src).
+Since this typically occurs when you're wrapping a C library, it's discussed in Chapter \@ref(src).
 
 An older, still valid approach is to have separate `Maintainer` and `Author` fields in `DESCRIPTION`.
 However, we strongly recommend the more modern approach of `Authors@R` and the `person()` function, because it offers richer metadata for various downstream uses.
@@ -634,8 +634,6 @@ This version number is considered by R to be the same as 1.9.0, less than versio
 R uses version numbers to determine whether package dependencies are satisfied.
 A package might, for example, import package `devtools (>= 1.9.2)`, in which case version 1.9 or 1.9.0 wouldn't work.
 
-The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
-
 Here is our recommended framework for managing the package version number:
 
 * Always use `.` as the separator, never `-`.
@@ -663,7 +661,8 @@ The advice above is inspired in part by [Semantic Versioning](https://semver.org
 Read them if you'd like to understand more about the standards of versioning used by many open source projects.
 Finally, know that other maintainers follow different philosophies on how to manage the package version number.
 
-We'll come back to version numbers in the context of releasing your package, in Section \@ref(release-version).
+The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
+We discuss this and more in Section \@ref(release-version).
 For now, just remember that the first version of your package should be `0.0.0.9000`.
 `usethis::create_package()` does this, by default.
 `usethis::use_version()` increments the package version; when called interactively, with no argument, it presents a helpful menu:
@@ -707,26 +706,38 @@ A number of other fields are described elsewhere in the book:
 
 * `Collate` controls the order in which R files are sourced. This only
   matters if your code has side-effects; most commonly because you're
-  using S4. This is described in more depth in [documenting S4](#man-s4).
+  using S4. This is described in more depth in Section \@ref(man-s4).
 
-* `LazyData` makes it easier to access data in your package.
-  Because it's so important, it's added automatically by `usethis::use_data()`,
-  when relevant. More detail is given when we talk about [external data](#data).
+* `LazyData` is relevant if your package makes data available to the user.
+  If you specify `LazyData: true`, the datasets are lazy-loaded, which
+  makes them more immediately available, i.e. users don't have to use `data()`.
+  The addition of `LazyData: true` is handled automatically by
+  `usethis::use_data()`.
+  More detail is given when we talk about external data in Chapter \@ref(data).
 
 There are actually many other rarely, if ever, used fields.
 A complete list can be found in the "The DESCRIPTION file" section of the [R extensions manual][R-exts].
 
-You can also create your own fields to add additional metadata.
-The only restrictions are that you shouldn't use existing names and that, if you plan to submit to CRAN, the names you use should be valid English words (so a spell-checking NOTE won't be generated).
-The `Config/Needs/*` fields described earlier are an example of recording custom metadata.
+There is also some flexibility to create your own fields to add additional metadata.
+In the narrowest sense, the only restriction is that you shouldn't re-purpose the official field names used by R.
+But in practice, if you plan to submit to CRAN, there are more constraints.
+First, only use valid English words, so the field names aren't flagged by the spell-check.
+Beyond that, custom fields should follow one of these two patterns:
 
-By default, `create_package()` writes two more such fields relating to the use of the roxygen2 package for documentation:
+* `Config/` prefix: We featured an example of this earlier, where
+  `Config/Needs/website` is used to record additional packages needed to build
+  a package's website.
+* `Note` suffix: You can add `Note` to any standard field name, e.g.,
+  `SuggestsNote`.
+  It is also permitted to use `Note`, alone, as a field name.
+
+By default, `create_package()` writes two more fields we haven't discussed yet, relating to the use of the roxygen2 package for documentation:
 
 ```yaml
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 ```
 
-You can read more about this in [Object documentation](#man).
+You will learn more about these in Chapter \@ref(man).
 
 [R-exts]: https://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file
