@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2021-December-29_07-25-41_swim_clean.csv"
+#> [1] "2021-December-30_07-25-49_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2021-December-29_07-25-43"
+#> [1] "2021-December-30_07-25-50"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -651,17 +651,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 #> Warning in (function (category = "LC_ALL", locale = "") : OS reports
 #> request to set locale to "pt_BR" cannot be honored
-#> [1] "2021-December-29_04-25-43"
+#> [1] "2021-December-30_04-25-51"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2021-December-29_07-25-43_INFILE_clean.csv"
+#> [1] "2021-December-30_07-25-50_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2021-December-29_07-25-43"
+#> [1] "2021-December-30_07-25-51"
 ```
 
 
