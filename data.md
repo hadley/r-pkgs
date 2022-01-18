@@ -36,7 +36,7 @@ If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loa
 
 ```r
 pryr::mem_used()
-#> 49.1 MB
+#> 49.2 MB
 library(nycflights13)
 pryr::mem_used()
 #> 56.9 MB
