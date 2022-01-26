@@ -43,7 +43,7 @@ pryr::mem_used()
 
 invisible(flights)
 pryr::mem_used()
-#> 97.6 MB
+#> 97.7 MB
 ```
 
 I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.
