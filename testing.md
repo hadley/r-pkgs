@@ -110,21 +110,21 @@ test_that("str_length is number of characters", {
   expect_equal(str_length("ab"), 2)
   expect_equal(str_length("abc"), 3)
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎊
 
 test_that("str_length of factor is length of level", {
   expect_equal(str_length(factor("a")), 1)
   expect_equal(str_length(factor("ab")), 2)
   expect_equal(str_length(factor("abc")), 3)
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🌈
 
 test_that("str_length of missing is missing", {
   expect_equal(str_length(NA), NA_integer_)
   expect_equal(str_length(c(NA, 1)), c(NA, 1))
   expect_equal(str_length("NA"), 2)
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🥇
 ```
 
 Tests are organised hierarchically: __expectations__ are grouped into __tests__ which are organised in __files__:
@@ -344,7 +344,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😀
 ```
 
 I'd start by defining a couple of helper functions to make each expectation more concise. That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:
@@ -364,7 +364,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎉
 ```
 
 We could go a step further and create a custom expectation function:
@@ -416,7 +416,7 @@ test_that("floor_date works for different units", {
   expect_floor_equal("month",  "2009-08-01 00:00:00")
   expect_floor_equal("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥇
 ```
 
 ## Test files {#test-files}
