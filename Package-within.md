@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2022-February-08_07-13-33_swim_clean.csv"
+#> [1] "2022-February-09_07-13-33_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -115,7 +115,7 @@ lookup_table <- tribble(
 
 dat <- dat %>% 
   left_join(lookup_table)
-#> Joining, by = "where"
+#> [1m[22mJoining, by = "where"
 
 f_to_c <- function(x) (x - 32) * 5/9
 
@@ -220,7 +220,7 @@ dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
 (dat <- dat %>% 
     localize_beach() %>% 
     celsify_temp())
-#> Joining, by = "where"
+#> [1m[22mJoining, by = "where"
 #> [90m# A tibble: 5 × 4[39m
 #>   name  where     temp english
 #>   [3m[90m<chr>[39m[23m [3m[90m<chr>[39m[23m    [3m[90m<dbl>[39m[23m [3m[90m<chr>[39m[23m  
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-February-08_07-13-34"
+#> [1] "2022-February-09_07-13-35"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -651,17 +651,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 #> Warning in (function (category = "LC_ALL", locale = "") : OS reports
 #> request to set locale to "pt_BR" cannot be honored
-#> [1] "2022-February-08_04-13-35"
+#> [1] "2022-February-09_04-13-35"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2022-February-08_07-13-34_INFILE_clean.csv"
+#> [1] "2022-February-09_07-13-35_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-February-08_07-13-35"
+#> [1] "2022-February-09_07-13-35"
 ```
 
 
