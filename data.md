@@ -46,7 +46,7 @@ pryr::mem_used()
 #> 98.7 MB
 ```
 
-I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.
+~~I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.~~ *This text is slated for revision for the 2nd edition. TL;DR do NOT include `LazyData: true` in `DESCRIPTION` unless you actually ship data in your package. usethis v2.1.0 changes the behaviour of `create_package()` and `use_data()` accordingly.*
 
 Often, the data you include in `data/` is a cleaned up version of raw data you've gathered from elsewhere. I highly recommend taking the time to include the code used to do this in the source version of your package. This will make it easy for you to update or reproduce your version of the data. I suggest that you put this code in `data-raw/`. You don't need it in the bundled version of your package, so also add it to `.Rbuildignore`. Do all this in one step with:
 
