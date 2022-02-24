@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/RtmpOdlRpJ/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpOdlRpJ/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/RtmpKQpxWW/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpKQpxWW/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -186,7 +186,7 @@ Now we make it also a Git repository, with `use_git()`.
 
 ```r
 use_git()
-#> [32m✔[39m Setting active project to [34m'/tmp/RtmpOdlRpJ/regexcite'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpKQpxWW/regexcite'[39m
 #> [32m✔[39m Initialising Git repo
 #> [32m✔[39m Adding [34m'.Rhistory'[39m, [34m'.Rdata'[39m, [34m'.httr-oauth'[39m, [34m'.DS_Store'[39m to [34m'.gitignore'[39m
 ```
@@ -222,9 +222,9 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 
 ```
 #> [90m# A tibble: 1 × 3[39m
-#>   commit                                   author          message  
-#>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m           [3m[90m<chr>[39m[23m    
-#> [90m1[39m 6351f888debbe35184d8a5f0a4702f58100b20f2 jennybc <jenny… [90m"[39mInitial…
+#>   commit                                   author            message
+#>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m             [3m[90m<chr>[39m[23m  
+#> [90m1[39m 81a7ca9de06de6472db3271ec03d744860126c55 jennybc <jennybc… [90m"[39mIniti…
 ```
 :::
 
@@ -277,7 +277,7 @@ strsplit(x, split = ",")[[1]]
 The second, safer solution is the basis for the inaugural function of regexcite: `strsplit1()`.
 
 
-```{.r .R}
+```r
 strsplit1 <- function(x, split) {
   strsplit(x, split = split)[[1]]
 }
@@ -423,7 +423,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 22.2s
+#> Duration: 20.6s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -477,7 +477,7 @@ When you're done, `DESCRIPTION` should look similar to this:
 <!-- I use an unknown language engine intentionally ("default") because I don't want any syntax highlighting. -->
 
 
-```{.default .default}
+```default
 Package: regexcite
 Title: Make Regular Expressions More Exciting
 Version: 0.0.0.9000
@@ -522,7 +522,7 @@ Open the newly created `LICENSE` file and confirm it looks something like this:
 :::sourceCode
 
 ```
-YEAR: 2021
+YEAR: 2022
 COPYRIGHT HOLDER: regexcite authors
 ```
 :::
@@ -550,7 +550,7 @@ If you don't use RStudio, create the comment yourself.
 Regardless, you should modify it to look something like this:
 
 
-```{.r .R}
+```r
 #' Split a string
 #'
 #' @param x A character vector with one element.
@@ -561,7 +561,7 @@ Regardless, you should modify it to look something like this:
 #'
 #' @examples
 #' x <- "alfa,bravo,charlie,delta"
-#' strsplit(x, split = ",")
+#' strsplit1(x, split = ",")
 strsplit1 <- function(x, split) {
   strsplit(x, split = split)[[1]]
 }
@@ -635,7 +635,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 23.2s
+#> Duration: 21.9s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -652,14 +652,14 @@ install()
 
 
 ```
-* checking for file ‘/tmp/RtmpOdlRpJ/regexcite/DESCRIPTION’ ... OK
+* checking for file ‘/tmp/RtmpKQpxWW/regexcite/DESCRIPTION’ ... OK
 * preparing ‘regexcite’:
 * checking DESCRIPTION meta-information ... OK
 * checking for LF line-endings in source and make files and shell scripts
 * checking for empty or unneeded directories
 * building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpOdlRpJ/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/RtmpKQpxWW/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
@@ -739,7 +739,7 @@ Put this content in:
 
 
 
-```{.r .R}
+```r
 test_that("strsplit1() splits a string", {
   expect_equal(strsplit1("a,b,c", split = ","), c("a", "b", "c"))
 })
@@ -762,7 +762,9 @@ test()
 #> ℹ Loading regexcite
 #> ℹ Testing regexcite
 #> ✔ | F W S  OK | Context
-#> ⠏ |         0 | strsplit1                                           ✔ |         1 | strsplit1
+#> 
+#> ⠏ |         0 | strsplit1                                           
+#> ✔ |         1 | strsplit1
 #> 
 #> ══ Results ═════════════════════════════════════════════════════════
 #> [ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]
@@ -854,7 +856,7 @@ Here are the updated contents of `R/str_split_one.R`.
 In addition to changing the function definition, we've also updated the roxygen header to reflect the new arguments and to include examples that show off the stringr features.
 
 
-```{.r .R}
+```r
 #' Split a string
 #'
 #' @param string A character vector with, at most, one element.
@@ -886,7 +888,7 @@ Here are the updated contents of `tests/testthat/test-str_split_one.R`.
 In addition to the change in the function's name and arguments, we've added a couple more tests.
 
 
-```{.r .R}
+```r
 test_that("str_split_one() splits a string", {
   expect_equal(str_split_one("a,b,c", ","), c("a", "b", "c"))
 })
@@ -1086,7 +1088,7 @@ The very best way to render `README.Rmd` is with `build_readme()`, because it ta
 ```r
 build_readme()
 #> [36mℹ[39m Installing [34m[34mregexcite[34m[39m in temporary library
-#> [36mℹ[39m Building [34m[34m/tmp/RtmpOdlRpJ/regexcite/README.Rmd[34m[39m
+#> [36mℹ[39m Building [34m[34m/tmp/RtmpKQpxWW/regexcite/README.Rmd[34m[39m
 ```
 
 You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
@@ -1110,7 +1112,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 24.3s
+#> Duration: 23s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -1126,7 +1128,7 @@ install()
 
 
 ```
-* checking for file ‘/tmp/RtmpOdlRpJ/regexcite/DESCRIPTION’ ... OK
+* checking for file ‘/tmp/RtmpKQpxWW/regexcite/DESCRIPTION’ ... OK
 * preparing ‘regexcite’:
 * checking DESCRIPTION meta-information ... OK
 * checking for LF line-endings in source and make files and shell scripts
@@ -1134,7 +1136,7 @@ install()
 Removed empty directory ‘regexcite/tests/testthat/_snaps’
 * building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.1.2/lib/R/bin/R CMD INSTALL \
-  /tmp/RtmpOdlRpJ/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/RtmpKQpxWW/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
