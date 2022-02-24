@@ -213,7 +213,7 @@ When checking your package you need to make sure that it passed with the current
 
 It's painful to manage multiple R versions, especially since you'll need to reinstall all your packages. Instead, you can run `R CMD check` on CRAN's servers with the `devtools::check_win_*()` family of functions.  They build your package and submit it to the CRAN win-builder. 10-20 minutes after submission, you'll receive an e-mail telling you the check results.
 
-CRAN runs on multiple platforms: Windows, Mac OS X, Linux, and Solaris. You don't need to run `R CMD check` on every one of these platforms, but it's a really good idea to do it on at least two. This increases your chances of spotting code that relies on the idiosyncrasies of specific platform. There are two easy ways to checks on different platforms:
+CRAN runs on multiple platforms: Windows, Mac OS X, Linux, and Solaris. You don't need to run `R CMD check` on every one of these platforms, but it's a really good idea to do it on at least two. This increases your chances of spotting code that relies on the idiosyncrasies of specific platform. There are two easy ways to check on different platforms:
 
 * `rhub::check()` which lets you manually run `R CMD check` on the platform of
    your choosing.
