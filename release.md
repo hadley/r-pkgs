@@ -253,7 +253,7 @@ You've already learned how to use `R CMD check` and why it's important in [autom
 
 ### Reverse dependencies {#release-deps}
 
-Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work. To help you do this, devtools provides `devtools::revdep_check()`. This:
+Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work. To help you do this, ~~devtools provides `devtools::revdep_check()`~~. *This section is slated for revision for the 2nd edition. In the meantime, know that this functionality is now provided by the [revdepcheck](https://r-lib.github.io/revdepcheck/) package.* This:
 
 1. Sets up a temporary library so it doesn't clobber any existing packages you
    have installed.
@@ -264,7 +264,7 @@ Finally, if you're releasing a new version of an existing package, it's your res
 
 1. Summarises the results in a single file.
 
-Run `use_revdep()` to set up your package with a useful template.
+Run `usethis::use_revdep()` to set up your package with a useful template.
 
 If any packages fail `R CMD check`, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN (you can easily get all maintainer e-mail addresses with `revdep_maintainers()`). After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`. Each package should be accompanied by a brief explanation that either tells CRAN that it's a false positive in `R CMD check` (e.g. you couldn't install a dependency locally) or that it's a legitimate change in the API (which the maintainer hasn't fixed yet). 
 
