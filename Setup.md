@@ -132,14 +132,27 @@ Make sure you've installed not only R, but also the R development tools. For exa
 
 ### Verify system prep
 
-You can check that you have everything installed and working by running the following code:
+You can request a "(package) development situation report" with `devtools::dev_sitrep()`:
 
 
 ```r
-# TODO: replace with whatever results from https://github.com/r-lib/devtools/issues/1970
-library(devtools)
-has_devel()
-#> [1] TRUE
+devtools::dev_sitrep()
+#> ── R ───────────────────────────────────────────────────────────────────────
+#> • version: 4.1.2
+#> • path: '/Library/Frameworks/R.framework/Versions/4.1/Resources/'
+#> ── RStudio ─────────────────────────────────────────────────────────────────
+#> • version: 2022.2.0.443
+#> ── devtools ────────────────────────────────────────────────────────────────
+#> • version: 2.4.3.9000
+#> • devtools or its dependencies out of date:
+#>   'gitcreds', 'gh'
+#>   Update them with `devtools::update_packages("devtools")`
+#> ── dev package ─────────────────────────────────────────────────────────────
+#> • package: 'rpkgs'
+#> • path: '/Users/jenny/rrr/r-pkgs/'
+#> • rpkgs dependencies out of date:
+#>   'gitcreds', 'generics', 'tidyselect', 'dplyr', 'tidyr', 'broom', 'gh'
+#>  Update them with `devtools::install_dev_deps()`
 ```
 
-If everything is ok, it returns `TRUE`. Otherwise, it will reveal some diagnostic info about the problem.
+If this reveals that certain tools or packages are missing or out-of-date, you are encouraged to update them.
