@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2022-February-24_23-37-14_swim_clean.csv"
+#> [1] "2022-February-25_04-44-25_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-February-24_23-37-16"
+#> [1] "2022-February-25_04-44-27"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -612,13 +612,13 @@ Here's such a timestamp produced by a few hypothetical colleagues cleaning some 
 
 
 
-|location           |timestamp                  |LC_TIME |tz                |
-|:------------------|:--------------------------|:-------|:-----------------|
-|Rome, Italy        |2020-September-05_00-30-00 |it_IT   |Europe/Rome       |
-|Warsaw, Poland     |2020-September-05_00-30-00 |pl_PL   |Europe/Warsaw     |
-|Sao Paulo, Brazil  |2020-September-04_19-30-00 |pt_BR   |America/Sao_Paulo |
-|Greenwich, England |2020-September-04_23-30-00 |en_GB   |Europe/London     |
-|"Computer World!"  |2020-September-04_22-30-00 |C       |UTC               |
+|location           |timestamp                  |LC_TIME     |tz                |
+|:------------------|:--------------------------|:-----------|:-----------------|
+|Rome, Italy        |2020-settembre-05_00-30-00 |it_IT.UTF-8 |Europe/Rome       |
+|Warsaw, Poland     |2020-września-05_00-30-00  |pl_PL.UTF-8 |Europe/Warsaw     |
+|Sao Paulo, Brazil  |2020-setembro-04_19-30-00  |pt_BR.UTF-8 |America/Sao_Paulo |
+|Greenwich, England |2020-September-04_23-30-00 |en_GB.UTF-8 |Europe/London     |
+|"Computer World!"  |2020-September-04_22-30-00 |C           |UTC               |
 
 We see that the month names vary, as does the time, and even the date!
 The safest choice is to form timestamps with respect to a fixed locale and time zone (presumably the non-geographic choices represented by "Computer World!" above).
@@ -651,17 +651,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 #> Warning in (function (category = "LC_ALL", locale = "") : OS reports
 #> request to set locale to "pt_BR" cannot be honored
-#> [1] "2022-February-24_20-37-16"
+#> [1] "2022-February-25_01-44-28"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2022-February-24_23-37-16_INFILE_clean.csv"
+#> [1] "2022-February-25_04-44-27_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-February-24_23-37-16"
+#> [1] "2022-February-25_04-44-28"
 ```
 
 
