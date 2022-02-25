@@ -78,7 +78,7 @@ The first few lines of the vignette contain important metadata. The default temp
     vignette: >
       %\VignetteIndexEntry{Vignette Title}
       %\VignetteEngine{knitr::rmarkdown}
-      \usepackage[utf8]{inputenc}
+      %\VignetteEncoding{UTF-8}
     ---
 
 This metadata is written in [yaml](https://yaml.org/), a format designed to be both human and computer readable. The basics of the syntax is much like the `DESCRIPTION` file, where each line consists of a field name, a colon, then the value of the field. The one special YAML feature we're using here is `>`. It indicates the following lines of text are plain text and shouldn't use any special YAML features.
@@ -225,7 +225,7 @@ To add syntax highlighting to the code, put the language name after the backtick
     }
     ```
 
-(At time of printing, languages supported by pandoc were: actionscript, ada, apache, asn1, asp, awk, bash, bibtex, boo, c, changelog, clojure, cmake, coffee, coldfusion, commonlisp, cpp, cs, css, curry, d, diff, djangotemplate, doxygen, doxygenlua, dtd, eiffel, email, erlang, fortran, fsharp, gnuassembler, go, haskell, haxe, html, ini, java, javadoc, javascript, json, jsp, julia, latex, lex, literatecurry, literatehaskell, lua, makefile, mandoc, matlab, maxima, metafont, mips, modula2, modula3, monobasic, nasm, noweb, objectivec, objectivecpp, ocaml, octave, pascal, perl, php, pike, postscript, prolog, python, r, relaxngcompact, rhtml, ruby, rust, scala, scheme, sci, sed, sgml, sql, sqlmysql, sqlpostgresql, tcl, texinfo, verilog, vhdl, xml, xorg, xslt, xul, yacc, yaml. Syntax highlighting is done by the haskell package [highlighting-kate](http://johnmacfarlane.net/highlighting-kate); see the website for current list.)
+(At time of printing, languages supported by pandoc were: actionscript, ada, apache, asn1, asp, awk, bash, bibtex, boo, c, changelog, clojure, cmake, coffee, coldfusion, commonlisp, cpp, cs, css, curry, d, diff, djangotemplate, doxygen, doxygenlua, dtd, eiffel, email, erlang, fortran, fsharp, gnuassembler, go, haskell, haxe, html, ini, java, javadoc, javascript, json, jsp, julia, latex, lex, literatecurry, literatehaskell, lua, makefile, mandoc, matlab, maxima, metafont, mips, modula2, modula3, monobasic, nasm, noweb, objectivec, objectivecpp, ocaml, octave, pascal, perl, php, pike, postscript, prolog, python, r, relaxngcompact, rhtml, ruby, rust, scala, scheme, sci, sed, sgml, sql, sqlmysql, sqlpostgresql, tcl, texinfo, verilog, vhdl, xml, xorg, xslt, xul, yacc, yaml. Syntax highlighting is done by the haskell package [skylighting](https://github.com/jgm/skylighting); see the website for current list.)
 
 When you include R code in your vignette, you usually won't use ```` ```r ````. Instead, you'll use ```` ```{r} ````, which is specially processed by knitr, as described next.
 
