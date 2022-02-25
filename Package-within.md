@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2022-February-25_04-44-25_swim_clean.csv"
+#> [1] "2022-February-25_05-02-42_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -509,7 +509,7 @@ The package works, which is great, but group members notice something odd about 
 
 ```r
 Sys.time()
-#> [1] "2020-09-03 16:12:29 PDT"
+#> [1] "2022-02-24 20:49:59 PST"
 
 outfile_path("INFILE.csv")
 #> [1] "2020-September-03_11-06-33_INFILE_clean.csv"
@@ -568,7 +568,7 @@ outfile_path <- function(infile) {
 There are four top-level `<-` assignments in this excerpt.
 The top-level definitions of the data frame `lookup_table` and the functions `timestamp()` and `outfile_path()` are correct.
 It is appropriate that these be defined exactly once, at build time.
-The top-level definition of `now`, which is then used inside `outfile_path()`, is incorrect.
+The top-level definition of `now`, which is then used inside `outfile_path()`, is regrettable.
 
 Here are better versions of `outfile_path()`:
 
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-February-25_04-44-27"
+#> [1] "2022-February-25_05-02-44"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -649,19 +649,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 
 
 ```
-#> Warning in (function (category = "LC_ALL", locale = "") : OS reports
-#> request to set locale to "pt_BR" cannot be honored
-#> [1] "2022-February-25_01-44-28"
+#> [1] "2022-fevereiro-25_02-02-44"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2022-February-25_04-44-27_INFILE_clean.csv"
+#> [1] "2022-February-25_05-02-44_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-February-25_04-44-28"
+#> [1] "2022-February-25_05-02-44"
 ```
 
 
