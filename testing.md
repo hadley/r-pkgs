@@ -102,7 +102,9 @@ A test file lives in `tests/testthat/`. Its name must start with `test`. Here's 
 
 
 ```r
-context("String length")
+# In an actual test file, in a package, you will NOT need to do this.
+# The various ways you run your tests will take care of making the
+# functions in the package you are testing available.
 library(stringr)
 
 test_that("str_length is number of characters", {
@@ -110,7 +112,7 @@ test_that("str_length is number of characters", {
   expect_equal(str_length("ab"), 2)
   expect_equal(str_length("abc"), 3)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎊
 
 test_that("str_length of factor is length of level", {
   expect_equal(str_length(factor("a")), 1)
@@ -141,8 +143,10 @@ Tests are organised hierarchically: __expectations__ are grouped into __tests__ 
   across multiple functions. This is why they are sometimes called __unit__
   as they test one unit of functionality. A test is created with `test_that()` .
 
-* A __file__ groups together multiple related tests. Files are given a human 
-  readable name with `context()`.
+* A __file__ groups together multiple related tests. ~~Files are given a human 
+  readable name with `context()`.~~  *This chapter has not yet been revised for
+  the 2nd edition. But the use of `testthat::context()` is now discouraged.
+  Don't add it in new code and remove it if you're working on a package.*
 
 These are described in detail below. 
 
@@ -344,7 +348,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎉
 ```
 
 I'd start by defining a couple of helper functions to make each expectation more concise. That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:
@@ -364,7 +368,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 😸
 ```
 
 We could go a step further and create a custom expectation function:
@@ -421,7 +425,7 @@ test_that("floor_date works for different units", {
 
 ## Test files {#test-files}
 
-The highest-level structure of tests is the file. Each file should contain a single `context()` call that provides a brief description of its contents. Just like the files in the `R/` directory, you are free to organise your tests any way that you like. But again, the two extremes are clearly bad (all tests in one file, one file per test). You need to find a happy medium that works for you. A good starting place is to have one file of tests for each complicated function.
+The highest-level structure of tests is the file. ~~Each file should contain a single `context()` call that provides a brief description of its contents.~~  *This chapter has not yet been revised for the 2nd edition. But the use of `testthat::context()` is now discouraged. Don't add it in new code and remove it if you're working on a package.* Just like the files in the `R/` directory, you are free to organise your tests any way that you like. But again, the two extremes are clearly bad (all tests in one file, one file per test). You need to find a happy medium that works for you. A good starting place is to have one file of tests for each complicated function.
 
 ## CRAN notes {#test-cran}
 
