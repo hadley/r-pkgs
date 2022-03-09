@@ -467,13 +467,10 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
     get the name of the package author, and know that a sensible default value
     has already been set.
     
-*   To connect R to another programming language. For example, if you use rJava
-    to talk to a `.jar` file, you need to call `rJava::.jpackage()`. To
-    make C++ classes available as reference classes in R with Rcpp modules,
-    you call `Rcpp::loadRcppModules()`. *TODO: update / remove this?*
-
 *   To register vignette engines with `tools::vignetteEngine()`.
      *TODO: update / remove this?*
+     
+<!-- TODO: Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. -->
 
 As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`.
 They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code).
