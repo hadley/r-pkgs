@@ -126,7 +126,7 @@ test_that("str_length of missing is missing", {
   expect_equal(str_length(c(NA, 1)), c(NA, 1))
   expect_equal(str_length("NA"), 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😸
 ```
 
 Tests are organised hierarchically: __expectations__ are grouped into __tests__ which are organised in __files__:
