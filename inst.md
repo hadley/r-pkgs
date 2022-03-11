@@ -33,7 +33,7 @@ citation()
 #> 
 #> To cite R in publications use:
 #> 
-#>   R Core Team (2021). R: A language and environment for
+#>   R Core Team (2022). R: A language and environment for
 #>   statistical computing. R Foundation for Statistical
 #>   Computing, Vienna, Austria. URL
 #>   https://www.R-project.org/.
@@ -45,7 +45,7 @@ citation()
 #>     author = {{R Core Team}},
 #>     organization = {R Foundation for Statistical Computing},
 #>     address = {Vienna, Austria},
-#>     year = {2021},
+#>     year = {2022},
 #>     url = {https://www.R-project.org/},
 #>   }
 #> 

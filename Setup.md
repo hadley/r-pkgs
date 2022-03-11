@@ -4,7 +4,7 @@
 
 ## Prepare your system {#setup-prep}
 
-To get started, make sure you have the latest version of R (at least 4.1.2, which is the version being used to render this book), then run the following code to get the packages you'll need:
+To get started, make sure you have the latest version of R (at least 4.1.3, which is the version being used to render this book), then run the following code to get the packages you'll need:
 
 
 ```r
