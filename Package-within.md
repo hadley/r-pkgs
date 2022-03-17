@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2022-March-16_07-14-51_swim_clean.csv"
+#> [1] "2022-March-17_07-14-06_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-March-16_07-14-53"
+#> [1] "2022-March-17_07-14-07"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -649,17 +649,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 
 
 ```
-#> [1] "2022-março-16_04-14-53"
+#> [1] "2022-março-17_04-14-07"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2022-March-16_07-14-53_INFILE_clean.csv"
+#> [1] "2022-March-17_07-14-07_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-March-16_07-14-53"
+#> [1] "2022-March-17_07-14-07"
 ```
 
 
