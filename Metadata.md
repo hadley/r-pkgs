@@ -22,7 +22,7 @@ This off-label use of `DESCRIPTION` makes it easy to piggy-back on package devel
 
 
 
-```yaml
+```{.yaml .yaml}
 Package: mypackage
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000

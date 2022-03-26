@@ -74,7 +74,7 @@ They like to capture a timestamp in the filename when they do this[^format-posix
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2022-March-25_07-14-05_swim_clean.csv"
+#> [1] "2022-March-26_07-14-38_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -177,7 +177,7 @@ seaside,UK
 Here is the content of `cleaning-helpers.R`:
 
 
-```r
+```{.r .R}
 library(tidyverse)
 
 localize_beach <- function(dat) {
@@ -265,7 +265,7 @@ Concretely, we do this:
 Here's the version of the script that you hope will run after successfully installing this package.
 
 
-```r
+```{.r .R}
 library(tidyverse)
 library(delta)
 
@@ -410,7 +410,7 @@ Here is the new version of `R/cleaning-helpers.R`[^bad-file-name]:
 We discuss organising and naming the files below `R/` in section \@ref(code-organising).
 
 
-```r
+```{.r .R}
 lookup_table <- dplyr::tribble(
       ~where, ~english,
      "beach",     "US",
@@ -600,7 +600,7 @@ The heart of the timestamp strategy is this format string[^format-posixct]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-March-25_07-14-06"
+#> [1] "2022-March-26_07-14-39"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
@@ -649,17 +649,17 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 
 
 ```
-#> [1] "2022-março-25_04-14-07"
+#> [1] "2022-março-26_04-14-39"
 ```
 
 After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2022-March-25_07-14-06_INFILE_clean.csv"
+#> [1] "2022-March-26_07-14-39_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-March-25_07-14-07"
+#> [1] "2022-March-26_07-14-40"
 ```
 
 
