@@ -112,7 +112,7 @@ test_that("str_length is number of characters", {
   expect_equal(str_length("ab"), 2)
   expect_equal(str_length("abc"), 3)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🎉
 
 test_that("str_length of factor is length of level", {
   expect_equal(str_length(factor("a")), 1)
@@ -126,7 +126,7 @@ test_that("str_length of missing is missing", {
   expect_equal(str_length(c(NA, 1)), c(NA, 1))
   expect_equal(str_length("NA"), 2)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🎊
 ```
 
 Tests are organised hierarchically: __expectations__ are grouped into __tests__ which are organised in __files__:
@@ -420,7 +420,7 @@ test_that("floor_date works for different units", {
   expect_floor_equal("month",  "2009-08-01 00:00:00")
   expect_floor_equal("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🎊
 ```
 
 ## Test files {#test-files}
