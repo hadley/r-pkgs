@@ -39,11 +39,11 @@ pryr::mem_used()
 #> 50.3 MB
 library(nycflights13)
 pryr::mem_used()
-#> 58.5 MB
+#> 58.7 MB
 
 invisible(flights)
 pryr::mem_used()
-#> 99.2 MB
+#> 99.4 MB
 ```
 
 ~~I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.~~ *This text is slated for revision for the 2nd edition. TL;DR do NOT include `LazyData: true` in `DESCRIPTION` unless you actually ship data in your package. usethis v2.1.0 changes the behaviour of `create_package()` and `use_data()` accordingly.*
