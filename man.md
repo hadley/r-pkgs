@@ -71,9 +71,9 @@ Pressing Ctrl/Cmd + Shift + D (or running `devtools::document()`) will generate 
 add(x, y)
 }
 \arguments{
-  \item{x}{A number}
+  \item{x}{A number.}
 
-  \item{y}{A number}
+  \item{y}{A number.}
 }
 \value{
 The sum of \code{x} and \code{y}
@@ -414,10 +414,10 @@ You can inherit parameter descriptions from other functions using `@inheritParam
 
 
 ```r
-#' @param a This is the first argument
+#' @param a This is the first argument.
 foo <- function(a) a + 10
 
-#' @param b This is the second argument
+#' @param b This is the second argument.
 #' @inheritParams foo
 bar <- function(a, b) {
   foo(a) * 10
@@ -428,8 +428,8 @@ is equivalent to
 
 
 ```r
-#' @param a This is the first argument
-#' @param b This is the second argument
+#' @param a This is the first argument.
+#' @param b This is the second argument.
 bar <- function(a, b) {
   foo(a) * 10
 }
