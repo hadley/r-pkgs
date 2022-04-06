@@ -97,10 +97,20 @@ It ensures that your code does what you want it to do.
 Testing, however, adds an additional step to your development workflow.
 The goal of this chapter is to show you how to make this task easier and more effective by doing formal automated testing using the testthat package.
 
+The first stage of your testing journey is to become convinced that testing has enough benefits to justify the work.
+For some of us, this is easy to accept.
+Others must learn the hard way.
+
+Once you've decided to embrace automated testing, it's time to learn some mechanics and figure out where testing fits into your development workflow.
+
+As you and your R packages evolve, you'll start to encounter testing situations where it's fruitful to use techniques that are somewhat specific to testing and differ from what we do below `R/`.
+
+## Why is formal testing worth the trouble?
+
 Up until now, your workflow probably looks like this:
 
 1. Write a function.
-1. Load it with Ctrl/Cmd + Shift + L or `devtools::load_all()`.
+1. Load it with `devtools::load_all()`, maybe via Ctrl/Cmd + Shift + L.
 1. Experiment with it in the console to see if it works.
 1. Rinse and repeat.
 
@@ -108,52 +118,71 @@ While you _are_ testing your code in this workflow, you're only doing it informa
 The problem with this approach is that when you come back to this code in 3 months time to add a new feature, you've probably forgotten some of the informal tests you ran the first time around.
 This makes it very easy to break code that used to work. 
 
+<!-- This next paragraph is very "I" based. But it's also hard to rephrase. Let's discuss. -->
+
 I started using automated tests because I discovered I was spending too much time re-fixing bugs that I'd already fixed before.
 While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked.
 But I never had a system which could store those tests so I could re-run them as needed.
 I think that this is a common practice among R programmers.
 It's not that you don't test your code, it's that you don't automate your tests.
 
-In this chapter you'll learn how to graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing).
-While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:
+In this chapter you'll learn how to transition from informal *ad hoc* testing, done interactively in the console, to automated testing (aka unit testing).
+While turning casual interactive tests into formal tests requires a little more work up front, it pays off in four ways:
 
 * Fewer bugs.
-  Because you're explicit about how your code should behave you will have fewer
+  Because you're explicit about how your code should behave, you will have fewer
   bugs.
   The reason why is a bit like the reason double entry book-keeping works:
   because you describe the behaviour of your code in two places, both in your
   code and in your tests, you are able to check one against the other.
-  By following this approach to testing, you can be sure that bugs that you've
-  fixed in the past will never come back to haunt you.
+  If you always introduce new tests when you add a new feature or function,
+  you'll prevent many bugs from being created in the first place,
+  because you will proactively address pesky edge cases.
+  Tests also keep you from (re-)breaking one feature, when you're tinkering with
+  another.
+  
+  <!-- More thoughts re: why "fewer bugs": with informal example-type tests, it's tempting to just explore whatever *you* think of as typical usage / the ideal scenario. In contrast, with formal unit tests, you are much more likely to systematically explore edge cases, like what happens when the inputs are affected by various forms of missingness (which eventually does happen in real life). -->
 
 * Better code structure.
-  Code that's easy to test is usually better designed.
-  This is because writing tests forces you to break up complicated parts of 
-  your code into separate functions that can work in isolation.
-  This reduces duplication in your code.
-  As a result, functions will be easier to test, understand and work with (it'll
-  be easier to combine them in new ways).
+  Code that is well designed tends to be easy to test and you can turn this to
+  your advantage.
+  Whenever you're struggling to write tests, consider if the problem is
+  actually the design of your function(s).
+  The process of writing tests is a great way to get free, private, and
+  personalized feedback on how well-factored your code is.
+  If you integrate testing into your development workflow (versus planning to
+  slap tests on "later"), you'll subject yourself to constant pressure to break
+  complicated operations into separate functions that work in isolation.
+  Functions that are easier to test are usually easier to understand and
+  re-combine in new ways.
 
 * Easier restarts.
   If you always finish a coding session by creating a failing test (e.g. for the
   next feature you want to implement), testing makes it easier for you to pick
   up where you left off: your tests will let you know what to do next.
+  
+  <!-- I never do this. Do you, Hadley? But here's something closely related that happens often: I turn a bug into a (failing) test. Which confirms/establishes that the bug exists. Now I have a very concrete goal: make this test pass. Once I get there, I also have confidence that I have actually fixed the bug. Maybe this is a better real-world pattern to describe? -->
 
 * Robust code.
-  If you know that all the major functionality of your package has an associated
-  test, you can confidently make big changes without worrying about accidentally
-  breaking something.
-  For me, this is particularly useful when I think I have a simpler way to
-  accomplish a task (usually the reason my solution is simpler is that I've
-  forgotten an important use case!).
+  If you know that all the major functionality of your package is well covered
+  by the tests, you can confidently make big changes without worrying about
+  accidentally breaking something.
+  This provides a great reality check when you think you've discovered some
+  brilliant new way to simplify your package.
+  Sometimes such "simplifications" fail to account for some important use case
+  and your tests will save you from yourself.
 
-If you're familiar with unit testing in other languages, you should note that there are some fundamental differences with testthat.
-This is because R is, at heart, more a functional programming language than an object oriented programming language.
-For instance, because R's main OO systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
+<!-- Is there a more natural location for the next paragraph? -->
 
-## Test workflow {#test-workflow}
+If you're familiar with frameworks for unit testing in other languages, you should note that there are some fundamental differences with testthat.
+This is because R is, at heart, more a functional programming language than an object-oriented programming language.
+For instance, because R's main object-oriented systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
 
-To set up your package to use testthat, run:
+## Test mechanics and workflow
+
+### Initial setup
+
+To setup your package to use testthat, run:
 
 ```{r, eval = FALSE}
 usethis::use_testthat()
@@ -161,23 +190,140 @@ usethis::use_testthat()
 
 This will:
 
-1.  Create a `tests/testthat` directory.
+1.  Create a `tests/testthat/` directory.
 
 1.  Add testthat to the `Suggests` field in the `DESCRIPTION`.
+    Record a testthat edition in the `Config/testthat/edition` field (more
+    below).
 
 1.  Create a file `tests/testthat.R` that runs all your tests when
     `R CMD check` runs. (You'll learn more about that in 
     [automated checking](#r-cmd-check).)
+    
+This initial setup is something you do once per package.
 
-Once you're set up the workflow is simple:
+The `tests/testthat.R` script is something you should generally regard as fixed.
+It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in other test-running scenarios (such as `devtools::test()` or `devtools::test_active_file()`).
+If you want to do something that affects all of your tests, there is usually a better mechanism than modifying the standard `tests/testthat.R` script.
+You'll see this below when we discuss test setup and helper files.
 
-1.  Modify your code or tests.
+### Create a test
 
-2.  Test your package with Ctrl/Cmd + Shift + T or `devtools::test()`.
+As you define functions in your package, in the files below `R/`, you'll add the corresponding tests to `.R` files in `tests/testthat/`.
+We recommend that the organisation of test files should match the organisation of `R/` files (discussed in section \@ref(code-organising)):
+The `foofy()` function (and its friends and helpers) should be defined in `R/foofy.R` and their tests should live in `tests/testthat/test-foofy.R`.
 
-3.  Repeat until all tests pass.
+```
+R                                     tests/testthat
+└── foofy.R                           └── test-foofy.R
+    foofy <-- function(...) {...}         test_that("foofy does this", {...})
+                                          test_that("foofy does that", {...})
+```
 
-The testing output looks like this:
+Even if you have different conventions for file organisation and naming, note that testthat tests **must** live in files below `tests/testthat/` and these file names **must** begin with `test-`.
+The test file name is displayed in testthat output, which provides helpful context[^bye-bye-context].
+
+[^bye-bye-context]: The legacy function `testthat::context()` is superseded now and its use in new or actively maintained code is discouraged.
+In the third edition of testthat, `context()` is formally deprecated; you should just remove it.
+Once you adopt an intentional, synchronised approach to the organisation of files below `R/` and `tests/testthat/`, the necessary contextual information is right there in the file name, rendering the legacy `context()` superfluous.
+
+usethis offers a helpful pair of functions:
+
+* `usethis::use_r()`
+* `usethis::use_test()`
+
+Either one can be called with a file (base) name, in order to create a file *de novo* and open it for editing:
+
+```{r, eval = FALSE}
+use_r("foofy")    # creates and opens R/foofy.R
+use_test("blarg") # creates and opens tests/testthat/test-blarg.R
+```
+
+The `use_r()` / `use_test()` duo has some convenience features that make them "just work" in many common situations:
+
+* When determining the target file, they can deal with the presence or absence
+  of the `.R` extension and the `test-` prefix.
+  - Equivalent: `use_r("foofy.R")`, `use_r("foofy")`
+  - Equivalent: `use_test("test-blarg.R")`, `use_test("blarg.R")`, `use_test("blarg")`
+* If the target file already exists, it is opened for editing. Otherwise, the
+  target is created and then opened for editing.
+
+:::rstudio-tip
+If `R/foofy.R` is the active file in your source editor, you can even call `use_test()` with no arguments!
+The target test file can be inferred: you must want to work on the companion test file, namely, `tests/testthat/test-foofy.R`.
+If it doesn't exist yet, it is created and, either way, the test file is opened for editing.
+This all works the other way around also.
+If you're editing `tests/testthat/test-foofy.R`, a call to `use_r()` (optionally, creates and) opens `R/foofy.R`.
+:::
+
+Bottom line: `use_r()` / `use_test()` are handy for initially creating these file pairs and, later, for switching your attention between them.
+
+When `use_test()` initiates a test file for you, it inserts a dummy test:
+
+```{r, eval = FALSE}
+test_that("multiplication works", {
+  expect_equal(2 * 2, 4)
+})
+```
+
+This is just meant to remind you of the basics:
+
+* A test file holds one or more `test_that()` tests.
+* Each test describes what it tests for: e.g. "multiplication works".
+* Each test has one or more expectations: e.g. `expect_equal(2 * 2, 4)`.
+
+Below we go into much more detail about how to test your own functions, which is a big and important topic.
+
+### Run tests
+
+Depending on where you are in the development cycle, you'll run your tests at various scales.
+When you are rapidly iterating on a function, you might work at the level of individual tests.
+As the code settles down, you'll run entire test files and eventually the entire test suite.
+
+**Micro-iteration**: This is the interactive phase where you initiate and refine a function and its tests in tandem.
+Here you will run `load_all()` often, and then execute individual expectations or whole tests interactively in the console.
+
+```{r, eval = FALSE}
+# tweak the foofy() function and re-load it
+devtools::load_all()
+
+# interactively explore and refine expectations and tests
+expect_equal(foofy(...), EXPECTED_FOOFY_OUTPUT)
+
+testthat("foofy does good things", {...})
+```
+
+**Mezzo-iteration**: As one file's-worth of functions and their associated tests start to shape up, you will want to execute the entire file of associated tests, perhaps with `testthat::test_file()`:
+
+```{r, eval = FALSE}
+testthat::test_file("tests/testthat/test-foofy.R")
+```
+
+:::rstudio-tip
+In RStudio, you don't even have to specify the full filepath!
+`devtools::test_active_file()` infers the target test file from the file you are actively editing, similar to how `use_r()` and `use_test()` work.
+The easiest way to invoke this is via "Run a test file" in the Addins menu or with the keyboard shortcut Ctrl/Cmd + T.
+:::
+
+**Macro-iteration**: As you near the completion of a new feature or bug fix, you will want to run the entire test suite.
+
+Most frequently, you'll do this with `devtools::test()`:
+
+```{r, eval = FALSE}
+devtools::test()
+```
+
+Then eventually, as part of `R CMD check` with `devtools::check()`:
+
+```{r, eval = FALSE}
+devtools::check()
+```
+:::rstudio-tip
+`devtools::test()` is mapped to Ctrl/Cmd + Shift + T.
+`devtools::check()` is mapped to  Ctrl/Cmd + Shift + E.
+:::
+
+The output of `devtools::test()` looks like this:
 
     devtools::test()
     ℹ Loading usethis
@@ -198,7 +344,7 @@ The testing output looks like this:
     
     [ FAIL 1 | WARN 0 | SKIP 3 | PASS 728 ]
 
-A test failure looks something like this:
+Test failure is reported like this:
 
     Failure (test-release.R:108:3): get_release_data() works if no file found
     res$Version (`actual`) not equal to "0.0.0.9000" (`expected`).
@@ -207,7 +353,8 @@ A test failure looks something like this:
     `expected`: "0.0.0.9000"
 
 Each failure gives a description of the test (e.g., "get_release_data() works if no file found"), its location (e.g., "test-release.R:108:3"), and the reason for the failure (e.g., "res$Version (`actual`) not equal to "0.0.0.9000" (`expected`)").
-The goal is to pass all the tests.
+
+The idea is that you'll modify your code (either the functions defined below `R/` or the tests in `tests/testthat/`) until all tests are passing.
 
 ## Test structure {#test-structure}
 
