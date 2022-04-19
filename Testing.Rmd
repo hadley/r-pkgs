@@ -1,34 +1,17 @@
 <!--
-Thought dump re: revision
+Thought dump re: revision, stuff I haven't added yet (and maybe never will?)
 
 Mentality: you're visiting a wild, uninhabited nature preserve.
 Bring your own supplies.
 Leave everything as you found it.
 Practice conservatism, minimalism.
 
-Idea of practicing certain patterns at different levels of granularity:
-- individual test
-- single test file
-- tests for a single package
 
-When in doubt, do setup/teardown as close as possible to the need, create
-stuff you need as close as possible to that need, in as narrow a scope as
-practical, and delete ASAP.
-
-Where to define test helpers/supporters/artefacts, that aren't actually tests?
-
-I interpret this to cover stuff like:
-
-- test fixtures: simple vs. complex, persistent vs. ephemeral, create
-  on-the-fly vs. in advance, create "by hand" vs. with a helper
-- snapshot tests
-- test helper functions: discuss putting below R/ vs. tests/testthat/helper.R
-  vs. defining in a particular test file (outside a test) or inside a test
-
-setup, teardown: both the principle and the mechanics
 
 mocking, giving yourself a way to exercise code in various "as if" scenarios
   
+
+
 When does our file naming / organisation  advise not work? sometimes a package has one main function and following the convention would result in having one monster file of tests.
 
 Example: reprex::reprex(), (to a lesser extent) readxl::read_excel()
@@ -37,8 +20,6 @@ specific arguments (reprex) or the challenges presented by specific inputs
 (readxl).
 
 
-files/folder created/used by testthat and what they are for
-load_all() sources helper.R
 
 namespace and scope thoughts:
 * you have full access to the package-under-testing, even unexported functions
@@ -59,15 +40,8 @@ CRAN specific matters
 
 Why Good Developers Write Bad Unit Tests
 https://mtlynch.io/good-developers-bad-tests/
-"Good production code is well-factored; good test code is obvious."
-"Keep the reader in your test function"
-"think about what will make the problem obvious when a test fails"
 "Your natural inclination might be to delegate all the uninteresting code to test helper methods, but you should first ask a more vital question: why is the system so difficult to test? Excessive boilerplate code is often a symptom of weak architecture."
 "When tempted to write test helper methods, try refactoring your production code instead."
-"Embrace magic numbers"
-
-http://wiki.c2.com/?ArrangeActAssert
-Arrange Act Assert
 -->
 
 # Testing {#tests}
@@ -714,10 +688,17 @@ In real life, snapshot tests are a great way to stay informed about changes to y
 > --- Brian Kernighan
 
 Above is a well-known quote about debugging and we suspect something similar holds true for testing.
-That is, writing good tests for a code base can sometimes feel more challenging than writing the code in the first place.
-Even if it's not more difficult *per se*, testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "main code".
+Writing good tests for a code base can sometimes feel more challenging than writing the code in the first place.
+Even if it's not strictly more difficult, it absolutely has a different feel.
+Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "main code".
 
 ### Test hygiene
+
+<!-- I feel ambivalent about "self-contained" here.
+Technically, it's not quite right or, at least, it's an incomplete description.
+It also feels as much a piece of aspirational advice re: mindset, as an observation about how things are rigged.
+Like, it's sort of self-contained, but to the extent it's not, we urge you to behave in such a way to promote test-self-contained-ness.
+-->
 
 Each `test_that()` test is executed in its own environment and is self-contained.
 For example, an R object you create inside a test does not exist after the test exits:
@@ -738,7 +719,7 @@ However, testthat doesn't know how to cleanup after actions that affect other as
 * The filesystem: creating and deleting files, changing the working directory,
   etc.
 * The search path: `library()`, `attach()`.
-* Global options, like `options()` and `par()`, and environent variables.
+* Global options, like `options()` and `par()`, and environment variables.
 
 If it's easy to avoid making such changes in your test code, that is the best strategy.
 But if it's unavoidable, then you have to make sure that you clean up after yourself.
@@ -752,7 +733,24 @@ When possible, make each test self-sufficient:
   implicit, silent way.
   Check for and/or create the conditions necessary for your test to do its job.
 
-This is often referred to as *setup and teardown* and we'll describe various ways to do this, at various scopes.
+In the testing domain, this is sometimes referred to as *setup and teardown* and we'll describe several official testthat ways to do this, at various scopes.
+
+But first, let's connect this back to very similar advice offered in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
+
+The `.R` files below `R/` should consist almost entirely of function definitions.
+Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
+Similarly, the `test-*.R` files below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
+Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving whatever its goal is.
+
+Two concrete examples:
+
+* `source()` should not appear in your tests.
+  There are several special files with an official role in testthat workflows
+  (see below), not to mention the entire R package machinery, that provide
+  betterways to make functions, objects, and other logic available in your tests.
+* `library()` should (almost certainly) not appear in your tests.
+  Similar to advice for the code below `R/`, it's usually better to access
+  functions from a dependency via `otherpkg::fun()`.
 
 #### Self-sufficient tests
 
@@ -769,24 +767,27 @@ test_that("side-by-side diffs work", {
 ```
 
 This test requires the display width to be set at 20 columns, which is considerably less than the default width.
-We like to use the withr package (<https://withr.r-lib.org>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration.[^on-exit]
-In this case, `withr::local_options(width = 20)` sets the `width` option to 20 and, at the end of the test, resets the option fo whatever its original value was.
+We like to use the withr package (<https://withr.r-lib.org>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration.
+In this case, `withr::local_options(width = 20)` sets the `width` option to 20 and, at the end of the test, resets the option to whatever its original value was.
+withr is also pleasant to use during interactive development:
+deferred actions are still captured on the global environment and can be executed explicitly via `withr::deferred_run()` or implicitly by restarting R.
 
-<!-- Say something about:
-Put withr in Suggests.
-Call its functions like `withr::local_*()`.
-Link back to the place where we outline our attitude towards unconditional use of Suggested packages in tests.
--->
+We recommend including withr in `Suggests`, if you're only going to use it in your tests, or in `Imports`, if you also use it below `R/`.
+Call withr functions as we do above, e.g. like `withr::local_whatever()`, in either case.
+We generally use suggested packages (such as withr) unconditionally in tests, but reasonable people can disagree on this point.
+See section \@ref(suggested-packages-and-tests) for a full discussion.
 
-[^on-exit]: Base R's `on.exit()` is another alternative, but it requires more from you.
-You need to capture the original state and write the restoration code yourself.
-Also remember to do `on.exit(..., add = TRUE)` if there's *any* chance a second `on.exit()` call could be added in the test.
+::: tip
+The easiest way to add a package to DESCRIPTION is with, e.g., `usethis::use_package("withr", type = "Suggests")`.
+For tidyverse packages, withr is considered a "free dependency", i.e. the tidyverse uses withr so 
+extensively that we don't hesitate to use it whenever it would be useful.
+:::
 
-withr has a large set of pre-implemented `local_*()` functions that should handle most of your testing needs.
-Here a couple of the most useful functions:
+withr has a large set of pre-implemented `local_*()` / `with_*()` functions that should handle most of your testing needs.
+Here are a couple of the functions most useful when writing tests:
 
-* `local_options()` (see above)
-* `local_envvar()` for temporarily setting an environment variable
+* `local_options()` / `with_options()` (see above)
+* `local_envvar()` / `with_envvar()` for temporarily setting an environment variable
     ```{r, eval = FALSE}
     # from tibble, in tests/testthat/test-utils.R
     test_that("is_rstudio()", {
@@ -808,18 +809,34 @@ Here a couple of the most useful functions:
     ```
 
 There are many other functions in withr, so check there before you write your own.
-If nothing exists that meets your need, `withr::defer()` is the general way to schedule some action at the end of a test.
+If nothing exists that meets your need, `withr::defer()` is the general way to schedule some action at the end of a test.[^on-exit]
 
-What about the things you need to do before you can execute your expectations?
+[^on-exit]: Base R's `on.exit()` is another alternative, but it requires more from you.
+You need to capture the original state and write the restoration code yourself.
+Also remember to do `on.exit(..., add = TRUE)` if there's *any* chance a second `on.exit()` call could be added in the test.
+You probably also want to default to `after = FALSE`.
+
+What if you need to do more than, e.g., set an option, before you can execute your expectations?
 We're going to make the controversial recommendation that you tolerate a fair amount of duplication in test code, i.e. you can relax some of your DRY ("don't repeat yourself") tendencies.
 
-Sometimes there's a certain type of setup that is needed across several tests.
-You might be tempted to create an object in a test file, but outside of any specific test.
-Due to environment chaining, that object is, indeed, visible inside the individual tests.
-But the affected tests work more by coincidence, than by definition.
-
 Here's a toy example to make things concrete.
-Notice how `useful_thing` is defined outside of any test, then used in 2 subsequent tests.
+
+```{r}
+test_that("multiplication works", {
+  useful_thing <- 3
+  expect_equal(2 * useful_thing, 6)
+})
+
+test_that("subtraction works", {
+  useful_thing <- 3
+  expect_equal(5 - useful_thing, 2)
+})
+```
+
+In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
+Notice how `useful_thing <- 3` appears in more than once place.
+Conventional wisdom says we should DRY this code out.
+It's tempting to just move `useful_thing`'s definition outside of the tests:
 
 ```{r}
 useful_thing <- 3
@@ -833,33 +850,61 @@ test_that("subtraction works", {
 })
 ```
 
-In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
-Consider:
-Is it truly expensive to create a `useful_thing` or does it just bug you to see `useful_thing <- 3` in multiple places?
+This does sort of work, because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
+When testthat executes an entire test file, `useful_thing` will get defined and made available for subsequent tests in that file.
+However, during interactive development, there is no gesture to systematically identify and execute such code.
+Top-level code, outside of any test, is in a sort of No Man's Land and the tests relying on it work more by coincidence, than by definition.
+Below we recommend various robust and structured solutions to this problem.
 
-If a `useful_thing` is costly to create, in terms of time or memory, do you really need to re-create it for each test run?
-If not, then you can make it once, store it as a static test fixture, and load it in the tests that need it.
+But first, seriously consider inlining the creation of a `useful_thing` whenever you need it.
+Is it truly expensive to create a `useful_thing` or does it just bug you to see `useful_thing <- 3` in multiple places?
+The blog post [Why Good Developers Write Bad Unit Tests](https://mtlynch.io/good-developers-bad-tests/) makes a compelling argument that the requirements of test code and production code are different:
+
+> Keep the reader in your test function.
+> Good production code is well-factored; good test code is obvious.
+> ... think about what will make the problem obvious when a test fails.
+
+This captures why we advocate inlining logic and objects, where practical.
+Imagine yourself troubleshooting a test that's suddenly started failing on CRAN or on GitHub Actions.
+If the test is self-sufficient, you can basically focus your attention to the universe contained within `test_that("your code works", { ... })`.
+The code inside `{ ... }` will either explicitly create all the necessary objects and conditions or make explicit calls to specific helpers or fixtures (explained below).
+We find this a more sustainable workflow than hunting through a test file for top-level calls that need to be executed in order to work on the tests.
+
+### Test fixtures
+
+When it's not practical to make your test entirely self-sufficient, prefer making the necessary object or logic available in a structured, explicit way.
+We describe several specific solutions.
+
+#### Store a concrete `useful_thing` persistently
+
+If a `useful_thing` is costly to create, in terms of time or memory, maybe you don't actually need to re-create it for each test run.
+You could make the `useful_thing` once, store it as a static test fixture, and load it in the tests that need it.
 Here's a sketch of how this could look:
 
 ```{r eval = FALSE}
 test_that("foofy() does this", {
-  useful_thing <- readRDS(test_path("fixtures", "useful_thing.rds"))
-  expect_equal(foofy(useful_thing, x = "this"), EXPECTED_FOOFY_OUTPUT)
+  useful_thing1 <- readRDS(test_path("fixtures", "useful_thing.rds"))
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
 })
 
 test_that("foofy() does that", {
-  useful_thing <- readRDS(test_path("fixtures", "useful_thing.rds"))
-  expect_equal(foofy(useful_thing, x = "that"), EXPECTED_FOOFY_OUTPUT)
+  useful_thing2 <- readRDS(test_path("fixtures", "useful_thing.rds"))
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
 })
 ```
 
 :::tip
 `testthat::test_path()` is a handy function for building robust paths for files that live below `tests/testthat/`.
-The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory could conceivably be different.
+The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory is more likely to be `tests/testthat/`.
 :::
 
+<!-- I feel like we should say something about storing the code that creates `tests/testthat/fixtures/useful_thing.rds`, similar to what we advocate for data / `use_data()`, `data_raw/`. -->
+
+#### Create `useful_thing`s with a helper function
+
 Is it fiddly to create a `useful_thing`?
-In that case, write a helper function to create instances of `useful_thing`:
+Does it take several lines of code, but not much time or memory?
+In that case, write a helper function to create a `useful_thing` on-demand:
 
 ```{r eval = FALSE}
 new_useful_thing <- function() {
@@ -867,80 +912,138 @@ new_useful_thing <- function() {
 }
 ```
 
-and call the helper in the affected tests:
+and call that helper in the affected tests:
 
 ```{r eval = FALSE}
 test_that("foofy() does this", {
-  useful_thing <- new_useful_thing()
-  expect_equal(foofy(useful_thing, x = "this"), EXPECTED_FOOFY_OUTPUT)
+  useful_thing1 <- new_useful_thing()
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
 })
 
 test_that("foofy() does that", {
-  useful_thing <- new_useful_thing()
-  expect_equal(foofy(useful_thing, x = "that"), EXPECTED_FOOFY_OUTPUT)
+  useful_thing2 <- new_useful_thing()
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
 })
 ```
 
 Where should the `new_useful_thing()` helper be defined?
-There are a couple of reasonable locations:
-* `tests/testthat/helper.R`:
-  Any `.R` file below `tests/testthat/` that starts with `helper` gets very
-  special treatment by testthat and devtools.
-  By default, such files are sourced by `load_all()` and when you run entire
-  test file or the entire test suite.
-* `R/utils-testing.R` or any other logical `.R` file below `R/`.
-  An internal helper like `new_useful_thing()` might have uses beyond testing,
-  e.g. behind-the-scenes in a vignette, and can simply be one of your package's
-  unexported functions.
-  Sometimes this makes you realize you should just export and document such a
-  helper, so you can use it freely in documentation and tests.
-
-<!-- Drafting this made me realize how hard it is to learn about the role of `tests/testthat/helper.*.[rR]` files. It's really not spelled out in any obvious way in the testthat docs. -->
-
-A key feature shared by the locations described above is that the `new_useful_thing()` helper is available to you during interactive development after `load_all()` and during automated test runs.
+For new code and actively maintained code, we recommend defining it like any other internal helper, i.e. in a file below `R/`.
+If it logically fits into an existing `.R` file, put it there.
+Otherwise, consider making a file for test utilities, such as `R/utils-testing.R`.
+A key advantage of this solution is that the `new_useful_thing()` helper is available to you during interactive development after `devtools::load_all()` and during automated test runs (`devtools::test_active_file()`, `devtools::test()`, etc.), because this is true of all unexported functions.
 Helper code that is lying around in other places, e.g. sprinkled around in test files, does not have this property.
 
-If it's fiddly AND costly to create a `useful_thing`, the helper function could even use memoisation to avoid unnecessary re-computation.
+If it's fiddly AND costly to create a `useful_thing`, your helper function could even use memoisation to avoid unnecessary re-computation.
+Once you have a helper like `new_useful_thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
+Sometimes you even realize you should just export and document it, so you can use it freely in documentation and tests.
 
-Finally, remember, if a `useful_thing` can be created on-the-fly, without much fuss, then just inline it into the affected tests and don't worry about the repetition.
+Another, older location for defining test helpers is `tests/testthat/helper.R`.
+Any `.R` file below `tests/testthat/` that starts with `helper` gets special treatment by testthat and devtools.
+By default, such files are sourced by `load_all()` and when you run entire test file or the entire test suite.
+This is a legacy approach which still works, but it has no advantage over defining helpers below `R/`.
+Avoid this in new code and consider relocating any existing code in `tests/testthat/helper.R` files when updating a package.
+
+<!-- The way I load a token in gargle-using packages in helper.R is actually something that does NOT work "just as well" below `R/`. It could happen in setup.R I suppose, but I actually want / need it to be executed by `load_all()`. I'm not entirely sold on the deprecation of helper.R. -->
+
+<!-- Drafting this made me realize how hard it is to learn about the role of special files in testthat. It's really not spelled out in any obvious way in the testthat docs. 
+Update: I am wrong. I eventually found it here! But I still think lots of people don't find this.
+
+https://testthat.r-lib.org/reference/test_file.html?q=setup#special-files
+
+There are two types of .R file that have special behaviour:
+
+Test files start with test and are executed in alphabetical order.
+
+Setup files start with setup and are executed before tests. If clean up is needed after all tests have been run, you can use withr::defer(clean_up(), teardown_env()). See vignette("test-fixtures") for more details.
+
+There are two other types of special file that we no longer recommend using:
+
+Helper files start with helper and are executed before tests are run. They're also loaded by devtools::load_all(), so there's no real point to them and you should just put your helper code in R/.
+
+Teardown files start with teardown and are executed after the tests are run. Now we recommend interleave setup and cleanup code in setup- files, making it easier to check that you automatically clean up every mess that you make.
+
+All other files are ignored by testthat.
+-->
+
+#### Create (and destroy) a "local" `useful_thing`
+
+So far, our example of a `useful_thing` was a regular R object, which is cleaned-up automatically at the end of each test.
+What if the creation of a `useful_thing` has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like?
+Then your helper function should create a `useful_thing` **and clean up afterwards**.
+Instead of a simple `new_useful_thing()` constructor, you'll write a customized function in the style of withr's `local_*()` functions:
 
 ```{r}
-test_that("multiplication works", {
-  useful_thing <- 3
-  expect_equal(2 * useful_thing, 6)
+local_useful_thing <- function(..., env = parent.frame()) {
+  # your fiddly code to create a useful_thing goes here
+  withr::defer(
+    # your fiddly code to clean up after a useful_thing goes here
+    envir = env
+  )
+}
+```
+
+Use it in your tests like this:
+
+```{r eval = FALSE}
+test_that("foofy() does this", {
+  useful_thing1 <- local_useful_thing()
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
 })
 
-test_that("subtraction works", {
-  useful_thing <- 3
-  expect_equal(5 - useful_thing, 2)
+test_that("foofy() does that", {
+  useful_thing2 <- local_useful_thing()
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
 })
 ```
 
-The blog post [Why Good Developers Write Bad Unit Tests](https://mtlynch.io/good-developers-bad-tests/) makes a compelling argument that the requirements of test code and production code are different:
+Just like `new_useful_thing()`, the best place to define `local_useful_thing()` is in a file below `R/`, making it available during interactive development and and during automated testing.
+To learn more about writing custom helpers like `local_useful_thing()`, see the [testthat vignette on test fixtures](https://testthat.r-lib.org/articles/test-fixtures.html).
 
-> Keep the reader in your test function.
-> Good production code is well-factored; good test code is obvious.
-> ... think about what will make the problem obvious when a test fails.
+<!-- 
+Quoting from https://testthat.r-lib.org/articles/test-fixtures.html#test-fixtures
 
-This is why we advocate inlining logic and objects, where practical.
-When inlining is not practical, prefer making that object or logic available to all of your tests in a structured, explicit way.
-The key point is to define the necessary object or function such that it's readily available after `devtools::load_all()`, `devtools::test_active_file()`, `devtools::test()`, etc.
+> A test fixture is just a local_ function that you use to change state in such a way that you can reach inside and test parts of your code that would otherwise be challenging.
 
-Imagine yourself troubleshooting a test that's suddenly started failing on CRAN or on GitHub Actions.
-If the test is self-sufficient, you can basically focus your attention to the universe contained within `test_that(desc, { ... })`.
-The code inside `{ ... }` will either explicitly create all the necessary objects and conditions or make explicit calls to specific helpers or fixtures.
-We find this a more sustainable workflow than hunting through a test file for top-level calls that need to be executed in order to work on the tests.
+Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R package) is the fixture.
 
-<!-- Do we need to explicitly say that a top-level call to `source()`, inside a test file, is even more beyond the pale? -->
+The local_*() function instantiates a fixture and schedules it's destruction.
+-->
 
 ### Setup and teardown
 
+Sometimes there is truly global test setup that would be impractical to build into every single test and that might be tailored for test execution in non-interactive or remote environments.
+Examples:
 
+* Turning off behaviour aimed at an interactive user, such as messaging or
+  writing to the clipboard.
+* Loading a credential for auth.
+* Setting up a cache folder.
 
-I AM HERE
+Put such code in `tests/testthat/setup.R`.
+In fact, any file in that directory whose name starts with "setup" is treated as a setup file.
+Setup files are run by testthat before running whole test files.
+Note that setup code is *not* run by `devtools::load_all()`.
 
-While many other testing packages have set-up and teardown methods that are run automatically before and after each test, these are not so important with testthat because you can create objects outside of the tests and you can rely on R's copy-on-modify semantics to keep them unchanged between test runs.
-To clean up other actions you can use regular R functions.
+If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`.
+We recommend maintaining teardown code with the setup code, in `setup.R`, which makes it easier to ensure they stay in sync.
+A legacy approach which still works, but is no longer recommended, is to put teardown code in `tests/testthat/teardown.R`.
+
+Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
+
+```{r eval = FALSE}
+op <- options(reprex.clipboard = FALSE, reprex.html_preview = FALSE)
+
+withr::defer(options(op), teardown_env())
+```
+
+Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local_options()`:
+
+```{r eval = FALSE}
+withr::local_options(
+  list(reprex.clipboard = FALSE, reprex.html_preview = FALSE),
+  teardown_env()
+)
+```
 
 ### What to test
 
@@ -1093,18 +1196,6 @@ test_that("floor_date works for different units", {
   expect_floor_equal("year",   "2009-01-01 00:00:00")
 })
 ```
-
-## Test files {#test-files}
-
-The highest-level structure of tests is the file.
-~~Each file should contain a single `context()` call that provides a brief description of its contents.~~
-*We are in the process of revising this chapter for the 2nd edition.
-Let it be known that the use of `testthat::context()` is now discouraged.
-Don't use `context()` in new code and remove `context()` when you come across it during package maintenance.*
-Just like the files in the `R/` directory, you are free to organise your tests any way that you like.
-But again, the two extremes are clearly bad (all tests in one file, one file per test).
-You need to find a happy medium that works for you.
-A good starting place is to have one file of tests for each complicated function.
 
 ## CRAN notes {#test-cran}
 
