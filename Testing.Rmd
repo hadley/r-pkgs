@@ -1,16 +1,9 @@
 <!--
 Thought dump re: revision, stuff I haven't added yet (and maybe never will?)
 
-Mentality: you're visiting a wild, uninhabited nature preserve.
-Bring your own supplies.
-Leave everything as you found it.
-Practice conservatism, minimalism.
-
-
 
 mocking, giving yourself a way to exercise code in various "as if" scenarios
   
-
 
 When does our file naming / organisation  advise not work? sometimes a package has one main function and following the convention would result in having one monster file of tests.
 
@@ -30,18 +23,10 @@ namespace and scope thoughts:
   same below R/
 
 
-skipping
-
-
 web, APIs, auth, secrets
 
 
 CRAN specific matters
-
-Why Good Developers Write Bad Unit Tests
-https://mtlynch.io/good-developers-bad-tests/
-"Your natural inclination might be to delegate all the uninteresting code to test helper methods, but you should first ask a more vital question: why is the system so difficult to test? Excessive boilerplate code is often a symptom of weak architecture."
-"When tempted to write test helper methods, try refactoring your production code instead."
 -->
 
 # Testing {#tests}
@@ -164,7 +149,11 @@ This will:
 1.  Create a `tests/testthat/` directory.
 
 1.  Add testthat to the `Suggests` field in the `DESCRIPTION`.
-    Specifies testthat 3e in the `Config/testthat/edition` field.
+    Specify testthat 3e in the `Config/testthat/edition` field.
+    Here are what the relevant `DESCRIPTION` fields might look like:
+    
+    Suggests: testthat (>= 3.0.0)
+    Config/testthat/edition: 3
 
 1.  Create a file `tests/testthat.R` that runs all your tests when
     `R CMD check` runs. (You'll learn more about that in 
@@ -175,7 +164,7 @@ This initial setup is something you do once per package.
 The `tests/testthat.R` script is something you should generally regard as fixed.
 It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in other test-running scenarios (such as `devtools::test()` or `devtools::test_active_file()`).
 If you want to do something that affects all of your tests, there is usually a better mechanism than modifying the standard `tests/testthat.R` script.
-You'll see this below when we discuss mechanisms for test setup / teardown and test helper files.
+You'll see this below when we discuss different types of test helpers and mechanisms for setup / teardown.
 
 ### Create a test
 
@@ -714,6 +703,7 @@ test_that("thingy exists", {
 exists("thingy")
 ```
 
+The `thingy` object lives and dies entirely within the confines of `test_that()`.
 However, testthat doesn't know how to cleanup after actions that affect other aspects of the R landscape:
 
 * The filesystem: creating and deleting files, changing the working directory,
@@ -723,7 +713,7 @@ However, testthat doesn't know how to cleanup after actions that affect other as
 
 If it's easy to avoid making such changes in your test code, that is the best strategy.
 But if it's unavoidable, then you have to make sure that you clean up after yourself.
-This mindset is very similar to one we advocated for in section \@ref(#code-r-landscape), when discussing how to design well-mannered functions.
+This mindset is very similar to one we advocated for in section \@ref(code-r-landscape), when discussing how to design well-mannered functions.
 
 When possible, make each test self-sufficient:
 
@@ -737,9 +727,10 @@ In the testing domain, this is sometimes referred to as *setup and teardown* and
 
 But first, let's connect this back to very similar advice offered in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
 
-The `.R` files below `R/` should consist almost entirely of function definitions.
-Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
-Similarly, the `test-*.R` files below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
+> The `.R` files below `R/` should consist almost entirely of function definitions.
+> Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
+
+Similarly, `tests/testthat/test-*.R` files should consist almost entirely of calls to `test_that()`.
 Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving whatever its goal is.
 
 Two concrete examples:
@@ -747,7 +738,8 @@ Two concrete examples:
 * `source()` should not appear in your tests.
   There are several special files with an official role in testthat workflows
   (see below), not to mention the entire R package machinery, that provide
-  betterways to make functions, objects, and other logic available in your tests.
+  better ways to make functions, objects, and other logic available in your
+  tests.
 * `library()` should (almost certainly) not appear in your tests.
   Similar to advice for the code below `R/`, it's usually better to access
   functions from a dependency via `otherpkg::fun()`.
@@ -929,7 +921,8 @@ test_that("foofy() does that", {
 Where should the `new_useful_thing()` helper be defined?
 For new code and actively maintained code, we recommend defining it like any other internal helper, i.e. in a file below `R/`.
 If it logically fits into an existing `.R` file, put it there.
-Otherwise, consider making a file for test utilities, such as `R/utils-testing.R`.
+Otherwise, consider making a file for test utilities, such as `R/utils-testing.R` or `R/test-helpers.R`.
+
 A key advantage of this solution is that the `new_useful_thing()` helper is available to you during interactive development after `devtools::load_all()` and during automated test runs (`devtools::test_active_file()`, `devtools::test()`, etc.), because this is true of all unexported functions.
 Helper code that is lying around in other places, e.g. sprinkled around in test files, does not have this property.
 
@@ -1025,8 +1018,9 @@ Setup files are run by testthat before running whole test files.
 Note that setup code is *not* run by `devtools::load_all()`.
 
 If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`.
-We recommend maintaining teardown code with the setup code, in `setup.R`, which makes it easier to ensure they stay in sync.
-A legacy approach which still works, but is no longer recommended, is to put teardown code in `tests/testthat/teardown.R`.
+We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync.
+The artificial environment `teatdown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
+A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
 
 Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
 
@@ -1087,27 +1081,91 @@ In short, there are times when, instead of getting a failure, you just want to s
 To do that, you can use the `skip()` function - rather than throwing an error it simply prints an `S` in the output.
 
 ```{r, eval = FALSE}
-check_api <- function() {
-  if (not_working()) {
+skip_if_no_api() <- function() {
+  if (api_unavailable()) {
     skip("API not available")
   }
 }
 
 test_that("foo api returns bar when given baz", {
-  check_api()
+  skip_if_no_api()
   ...
 })
 ```
 
+The custom skipper `skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
+Likewise, we lean towards calling `skip_if_no_api()` in each test where it's needed, even though this might lead to repetition.
+This is another type of call that is tempting to hoist to the top-level of a test file:
+
+```{r eval = FALSE}
+skip_if_no_api()
+
+test_that("foo api returns bar when given baz", {...})
+
+test_that("foo api returns an errors when given qux", {...})
+```
+
+We have mixed feelings about this practice.
+Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
+But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
+
+At the complete other extreme, another practice that can make sense in very specific situations is to build a `skip()` directly into a package function.
+Here's an example from pkgdown, in `convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
+
+<https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106>
+
+```{r eval = FALSE}
+# in r-lib/pkgdown/R/markdown.R
+convert_markdown_to_html <- function(in_path, out_path, ...) {
+  if (rmarkdown::pandoc_available("2.0")) {
+    from <- "markdown+gfm_auto_identifiers-citations+emoji+autolink_bare_uris"
+  } else if (rmarkdown::pandoc_available("1.12.3")) {
+    from <- "markdown_github-hard_line_breaks+tex_math_dollars+tex_math_single_backslash+header_attributes"
+  } else {
+    if (is_testing()) {
+      testthat::skip("Pandoc not available")
+    } else {
+      abort("Pandoc not available")
+    }
+  }
+  
+  rmarkdown::pandoc_convert(...)
+  invisible()
+}
+```
+
+When this function executes, in the absence of Pandoc, it throws an error *unless* it appears to part of a test run, in which it skips the test.
+This is an alternative to implementing a custom skipper, e.g. `skip_if_no_pandoc()`, and inserting it into many of pkgdown's tests.
+
+Advantages of this approach: Feels elegant and concise.
+
+Disadvantages of this approach: Seems to violate "Good production code is well-factored; good test code is obvious", i.e. when you're focused on the tests, the existence of this skip is easy to miss.
+
+<!-- I want to talk about the danger of skipping, i.e. when you think everything's "green", but actually you're not running any / many tests, because some pre-condition is not met. -->
+
 ### Building your own testing tools
 
-As you start to write more tests, you might notice duplication in your code.
+<!--
+Why Good Developers Write Bad Unit Tests
+https://mtlynch.io/good-developers-bad-tests/
+"Your natural inclination might be to delegate all the uninteresting code to test helper methods, but you should first ask a more vital question: why is the system so difficult to test? Excessive boilerplate code is often a symptom of weak architecture."
+"When tempted to write test helper methods, try refactoring your production code instead."
+-->
+
+Let's return to the topic of duplication in your test code.
+We've encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious.
+But there's still a limit to how much repetition to tolerate.
+We've covered techniques such as loading static objects with `test_path()`, writing a constructor like `new_useful_thing()`, or implementing a test fixture like `local_useful_thing()`.
+There are even more types of test helpers that can be useful in certain situations.
+
 For example, the following code shows one test of the `floor_date()` function from `library(lubridate)`.
 There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.
-There's a lot of duplication (which increases the chance of bugs), so we might want to extract common behaviour into a new function.
+There's a lot of duplication here, which increases the chance of copy / paste errors and generally makes your eyes glaze over.
 
 ```{r}
+# this library call would NOT appear in a real test file for lubridate
 library(lubridate)
+
 test_that("floor_date works for different units", {
   base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
 
@@ -1128,14 +1186,17 @@ test_that("floor_date works for different units", {
 })
 ```
 
-I'd start by defining a couple of helper functions to make each expectation more concise.
-That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:
+A nice move here is to create some hyper-local helper functions to make each expectation more concise.
+Now each expectation fits on one line, which allows us read the actual and expected value like a table.
+This makes it easier to see the expected floor evolve, as we vary the `unit` from `second` to `year`:
+
+<!-- I actually think that, for THIS SPECIFIC EXAMPLE, this is exactly the right level of customization. When we take the next step, below, it feels weird. -->
 
 ```{r}
 test_that("floor_date works for different units", {
-  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
-  floor_base <- function(unit) floor_date(base, unit)
   as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  base <- as_time("2009-08-03 12:01:59.23")
+  floor_base <- function(unit) floor_date(base, unit)
 
   expect_equal(floor_base("second"), as_time("2009-08-03 12:01:59"))
   expect_equal(floor_base("minute"), as_time("2009-08-03 12:01:00"))
@@ -1147,53 +1208,103 @@ test_that("floor_date works for different units", {
 })
 ```
 
-We could go a step further and create a custom expectation function:
+<!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
+
+* Fall in with the `object, expected, details` pattern the most expectations have.
+* Modern approach to NSE / metaprogramming.
+
+But the basically fixed "base" the primary actual input and the need to as_time() everything adds a lot of fiddliness.
+-->
+
+We could go a step further and create a custom expectation function that wraps `expect_equal()`:
 
 ```{r}
-base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
-
-expect_floor_equal <- function(unit, time) {
-  expect_equal(floor_date(base, unit), as.POSIXct(time, tz = "UTC"))
+expect_floor_date <- function(object, expected, unit) {
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  expect_equal(floor_date(as_time(object), unit), as_time(expected))
 }
-expect_floor_equal("year", "2009-01-01 00:00:00")
+
+expect_floor_date("2009-08-03 12:01:59.23", "2009-01-01 00:00:00", "year")
 ```
 
-However, if the expectation fails this doesn't give very informative output:
+However, if this expectation fails, the output of such a super-simple wrapper is less than ideal:
 
-```{r, error = TRUE, eval = FALSE}
-expect_floor_equal("year", "2008-01-01 00:00:00")
+```{r, error = TRUE}
+expect_floor_date("2009-08-03 12:01:59.23", "2222-02-01 00:00:00", "year")
 ```
 
-Instead you can use a little [non-standard evaluation](https://adv-r.hadley.nz/metaprogramming.html) to produce something more informative.
+If you're going to create a custom expectation, you should probably take the next step and do the non-standard evaluation or meta-programming work to give yourself an intelligible and actionable failure message.
+
+```{r, error = TRUE}
+expect_floor_date <- function(object, expected, unit) {
+  act <- quasi_label(rlang::enquo(object), arg = "object")
+  exp <- quasi_label(rlang::enquo(expected), arg = "expected")
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  
+  # I want to do a modern waldo-y comparison
+  # is that possible without `testthat:::`?
+  comp <- testthat:::waldo_compare(
+    floor_date(as_time(object), unit = unit),
+    as_time(expected),
+    x_arg = "actual", y_arg = "expected"
+  )
+
+  expect(
+    length(comp) == 0,
+    c(
+      # could just use object here? I don't see why act$lab is needed
+      glue::glue("floor_date({act$lab}, \"{unit}\") not equal to {exp$lab}"),
+      comp
+    ),
+    trace_env = rlang::caller_env()
+  )
+
+  invisible(act$val)
+}
+
+# success
+expect_floor_date("2009-08-03 12:01:59.23", "2009-01-01 00:00:00", "year")
+
+# failure
+expect_floor_date("2009-08-03 12:01:59.23", "2222-02-01 00:00:00", "year")
+```
+
+*I'm keeping the "old way" here, so we can see how the previous custom expectation example played out.*
+
 The key is to use `bquote()` and `eval()`.
 In the `bquote()` call below, note the use of `.(x)` - the contents of `()` will be inserted into the call.
 
-```{r, error = TRUE, eval = FALSE}
-expect_floor_equal <- function(unit, time) {
+```{r, error = TRUE}
+expect_floor_old_skool <- function(unit, time) {
   as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  base <- as_time("2009-08-03 12:01:59.23")
   eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
 }
-expect_floor_equal("year", "2008-01-01 00:00:00")
+expect_floor_old_skool("year", "2008-01-01 00:00:00")
+# Error: floor_date(base, "year") not equal to as_time("2008-01-01 00:00:00").
+# 1/1 mismatches
+# [1] 2009-01-01 - 2008-01-01 == 366 days
 ```
 
 This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what's changing.
 Readable tests give you more confidence that they're correct.
 
-```{r}
+```{r error = TRUE}
 test_that("floor_date works for different units", {
   as_time <- function(x) as.POSIXct(x, tz = "UTC")
-  expect_floor_equal <- function(unit, time) {
+  
+  expect_floor_old_skool <- function(unit, time) {
     eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
   }
-
+  
   base <- as_time("2009-08-03 12:01:59.23")
-  expect_floor_equal("second", "2009-08-03 12:01:59")
-  expect_floor_equal("minute", "2009-08-03 12:01:00")
-  expect_floor_equal("hour",   "2009-08-03 12:00:00")
-  expect_floor_equal("day",    "2009-08-03 00:00:00")
-  expect_floor_equal("week",   "2009-08-02 00:00:00")
-  expect_floor_equal("month",  "2009-08-01 00:00:00")
-  expect_floor_equal("year",   "2009-01-01 00:00:00")
+  expect_floor_old_skool("second", "2009-08-03 12:01:59")
+  expect_floor_old_skool("minute", "2009-08-03 12:01:00")
+  expect_floor_old_skool("hour",   "2009-08-03 12:00:00")
+  expect_floor_old_skool("day",    "2009-08-03 00:00:00")
+  expect_floor_old_skool("week",   "2009-08-02 00:00:00")
+  expect_floor_old_skool("month",  "2009-08-01 00:00:00")
+  expect_floor_old_skool("year",   "2009-01-01 00:00:00")
 })
 ```
 
