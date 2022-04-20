@@ -137,7 +137,7 @@ You'll see this below when we discuss different types of test helpers and mechan
 ### Create a test
 
 As you define functions in your package, in the files below `R/`, you add the corresponding tests to `.R` files in `tests/testthat/`.
-We recommend that the organisation of test files match the organisation of `R/` files, discussed in section \@ref(code-organising):
+We strongly recommend that the organisation of test files match the organisation of `R/` files, discussed in section \@ref(code-organising):
 The `foofy()` function (and its friends and helpers) should be defined in `R/foofy.R` and their tests should live in `tests/testthat/test-foofy.R`.
 
 ```
@@ -331,18 +331,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎉
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 😀
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎉
 ```
 
 This file shows a typical mix of tests:
@@ -357,9 +357,7 @@ __expectations__ are grouped into __tests__ which are organised in __files__:
 
 * A __file__ holds multiple related tests.
   In this example, the file `tests/testthat/test-dup.r` has all of the tests
-  for `stringr::str_dup()`, which is defined in `R/dup.r`.
-  A test failure is always reported by file name, which is why the file name
-  should convey the general context, e.g. the function that is being tested.
+  for the code in `R/dup.r`.
 
 * A __test__ groups together multiple expectations to test the output from a
   simple function, a range of possibilities for a single parameter from a more
@@ -422,8 +420,7 @@ Here we highlight some of the most important expectations.
     #> `expected`: [32m11[39m
     ```
   
-  If you want to test for exact equivalence or need to compare more exotic
-  objects like environments, use `expect_identical()`.
+  If you want to test for exact equivalence, use `expect_identical()`.
 
     
     ```r
@@ -719,7 +716,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🌈
 
 exists("thingy")
 #> [1] FALSE
@@ -740,7 +737,7 @@ This mindset is very similar to one we advocated for in section \@ref(code-r-lan
 When possible, make each test self-sufficient:
 
 * Don't change the surrounding landscape.
-  More realistically, make sure any changes are reversed upon exit.
+  More realistically, make sure any changes are reversed when the test is done.
 * Don't depend on specific aspects of the landscape, especially not in some
   implicit, silent way.
   Check for and/or create the conditions necessary for your test to do its job.
@@ -798,7 +795,6 @@ deferred actions are still captured on the global environment and can be execute
 
 We recommend including withr in `Suggests`, if you're only going to use it in your tests, or in `Imports`, if you also use it below `R/`.
 Call withr functions as we do above, e.g. like `withr::local_whatever()`, in either case.
-We generally use suggested packages (such as withr) unconditionally in tests, but reasonable people can disagree on this point.
 See section \@ref(suggested-packages-and-tests) for a full discussion.
 
 ::: tip
@@ -853,13 +849,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥇
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😸
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -874,18 +870,18 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥇
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥳
 ```
 
-This does sort of work, because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
+This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
 When testthat executes an entire test file, `useful_thing` will get defined and made available for subsequent tests in that file.
 However, during interactive development, there is no gesture to systematically identify and execute such code.
-Top-level code, outside of any test, is in a sort of No Man's Land and the tests relying on it work more by coincidence, than by definition.
+Top-level code, outside of any test, is in a sort of No Man's Land: it's fine when your tests are all passing, but when something goes wrong and a test fails you now have to encounter a bunch of extra pain when it need the least.
 Below we recommend various robust and structured solutions to this problem.
 
 But first, seriously consider inlining the creation of a `useful_thing` whenever you need it.
@@ -1240,7 +1236,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1264,7 +1260,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎉
 ```
 
 <!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
@@ -1381,7 +1377,7 @@ test_that("floor_date works for different units", {
   expect_floor_old_skool("month",  "2009-08-01 00:00:00")
   expect_floor_old_skool("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥇
 ```
 
 ## CRAN notes {#test-cran}
