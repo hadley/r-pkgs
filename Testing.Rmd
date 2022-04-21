@@ -391,7 +391,9 @@ Finally, try to avoid putting too many expectations in one test - it's better to
 ### Expectations
 
 An expectation is the finest level of testing.
-It makes a binary assertion about whether or not a function call does what you expect.
+It makes a binary assertion about whether or not an object has the properties you expect.
+This object is usually the return value from a function in your package.
+
 All expectations have a similar structure:
 
 * They start with `expect_`.
@@ -407,34 +409,78 @@ All expectations have a similar structure:
 While you'll normally put expectations inside tests inside files, you can also run them directly.
 This makes it easy to explore expectations interactively.
 There are more than 40 expectations in the testthat package, which can be explored in testthat's [reference index](https://testthat.r-lib.org/reference/index.html).
-Here we highlight some of the most important expectations.
 
-* There are two basic ways to test for equality: `expect_equal()`, and
-  `expect_identical()`.
-  `expect_equal()` is the most commonly used and should be your default:
-  it checks for equality within a numerical tolerance:
+We believe these are the most important expectations:
 
-    ```{r, error = TRUE}
-    expect_equal(10, 10)
-    expect_equal(10, 10L)
-    expect_equal(10, 10 + 1e-7)
-    expect_equal(10, 11)
-    ```
+* `expect_equal()`
+* `expect_error()`
+* `expect_snapshot()`
+
+`expect_equal()` checks for equality, with some reasonable amount of numeric tolerance:
+
+```{r, error = TRUE}
+expect_equal(10, 10)
+expect_equal(10, 10L)
+expect_equal(10, 10 + 1e-7)
+expect_equal(10, 11)
+```
+
+If you want to test for exact equivalence, use `expect_identical()`.
+
+```{r, error = TRUE}
+expect_equal(10, 10 + 1e-7)
+expect_identical(10, 10 + 1e-7)
+
+expect_equal(2, 2L)
+expect_identical(2, 2L)
+```
+
+`expect_error()`, `expect_warning()` and `expect_message()` check for side effects, i.e. whether the code triggers an error, warning, or message.
+
+```{r, warning = TRUE, error = TRUE}
+log(-1)
+expect_warning(log(-1))
+
+1 / "a"
+expect_error(1 / "a") 
+```
   
-  If you want to test for exact equivalence, use `expect_identical()`.
+You can specify the second argument `regexp` to assert something about the text of the message.
+This is often a good idea, to make sure you're catching the condition you intended.
+    
+```{r}
+expect_warning(log(-1), "NaNs produced")
+expect_error(1 / "a", "non-numeric argument")
+```
+  
+It is increasingly common to throw classed errors, both within the tidyverse and in base R.
+If that is the case, checking your error's class is better than checking its message.
+We saw an example of this above in the stringr tests.
+This is what the `class` argument is for:
+    
+```{r, error = TRUE}  
+expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
+```
+  
+To check for the *absence* of an error, warning, or message, use `regexp = NA`:
+  
+```{r}
+expect_error(1 / 2, regexp = NA)
+```
 
-    ```{r, error = TRUE}
-    expect_equal(10, 10 + 1e-7)
-    expect_identical(10, 10 + 1e-7)
-    expect_equal(2, 2L)
-    expect_identical(2, 2L)
-    ```
+`expect_snapshot()` is new in testthat 3e and merits its own treatment below.
+We conclude this section with a few more expectations that come up frequently.
+But remember that testthat has many more pre-built expectations than we can demonstrate here.
 
-* `expect_match()` matches a character vector against a regular expression. 
-   The optional `all` argument controls whether all elements or just one 
-   element needs to match.
-   This is powered by `grepl()` and additional arguments like
-   `ignore.case = FALSE` or `fixed = TRUE` are passed on down.
+Several expectations can be described as "shortcuts", i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.
+
+* `expect_match(object, regexp, ...)` is a shortcut that wraps
+  `grepl(pattern = regexp, x = object, ...)`.
+  It matches a character vector input against a regular expression `regexp`.
+  The optional `all` argument controls whether all elements or just one element
+  needs to match.
+  Read the `expect_match()` documentation to see how additional arguments, like
+  `ignore.case = FALSE` or `fixed = TRUE`, can be passed down to `grepl()`.
    
     ```{r, error = TRUE}
     string <- "Testing is fun!"
@@ -447,7 +493,12 @@ Here we highlight some of the most important expectations.
     # Passes because additional arguments are passed to grepl():
     expect_match(string, "testing", ignore.case = TRUE)
     ```
-
+* `expect_length(object, n)` is a shortcut for
+  `expect_equal(length(object), n)`.
+* `expect_setequal(x, y)` tests that every element of `x` occurs in `y`, and
+  that every element of `y` occurs in `x`.
+  But it won't fail if `x` and `y` happen to have their elements in a different
+  order.
 * `expect_s3_class()` and `expect_s4_class()` check that an object `inherit()`s
   from a specified class. `expect_type()`checks the `typeof()` an object.
 
@@ -457,45 +508,7 @@ Here we highlight some of the most important expectations.
     expect_s3_class(model, "glm")
     ```
 
-* `expect_error()`, `expect_warning()` and `expect_message()` check for side
-  effects, i.e. whether the code triggers an error, warning, or message.
-
-    ```{r, warning = TRUE, error = TRUE}
-    log(-1)
-    expect_warning(log(-1))
-    
-    1 / "a"
-    expect_error(1 / "a") 
-    ```
-  
-  You can specify the second argument `regexp` to assert something about the
-  text of the message.
-  This is often a good idea, to make sure you're catching the condition you
-  intended.
-    
-    ```{r}
-    expect_warning(log(-1), "NaNs produced")
-    expect_error(1 / "a", "non-numeric argument")
-    ```
-  
-  It is increasingly common to throw classed errors and, if that is the case,
-  checking your error's class is better than checking its message.
-  We saw an example of this above in the stringr tests.
-  This is what the `class` argument is for:
-    
-    ```{r, error = TRUE}  
-    expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
-    ```
-  
-  To check for the *absence* of an error, warning, or message, use
-  `regexp = NA`:
-  
-    ```{r}
-    expect_error(1 / 2, regexp = NA)
-    ```
-
-* `expect_true()` and `expect_false()` are useful catchalls if none of the 
-   other expectations does what you need.
+`expect_true()` and `expect_false()` are useful catchalls if none of the other expectations does what you need.
 
 ### Snapshot tests
 
