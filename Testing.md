@@ -124,12 +124,21 @@ This will:
     Specify testthat 3e in the `Config/testthat/edition` field.
     The affected `DESCRIPTION` fields might look like:
     
-    Suggests: testthat (>= 3.0.0)
-    Config/testthat/edition: 3
+        Suggests: testthat (>= 3.0.0)
+        Config/testthat/edition: 3
 
 1.  Create a file `tests/testthat.R` that runs all your tests when
     `R CMD check` runs. (You'll learn more about that in 
     [automated checking](#r-cmd-check).)
+    The contents of this file will be something like:
+    
+    
+    ```r
+    library(testthat)
+    library(abcde)
+    
+    test_check("abcde")
+    ```
     
 This initial setup is something you do once per package.
 In a package that already uses testthat, `use_testthat(3)` is safe to run, when you're ready to opt-in to testthat 3e.
@@ -193,7 +202,7 @@ If you're editing `tests/testthat/test-foofy.R`, a call to `use_r()` (optionally
 
 Bottom line: `use_r()` / `use_test()` are handy for initially creating these file pairs and, later, for shifting your attention from one to the other.
 
-When `use_test()` initiates a test file *de novo*, it inserts a dummy test:
+When `use_test()` creates a new test file, it inserts a dummy test:
 
 
 ```r
@@ -347,18 +356,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥳
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥇
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 ```
 
 This file shows a typical mix of tests:
@@ -748,7 +757,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 
 exists("thingy")
 #> [1] FALSE
@@ -881,13 +890,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥇
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎊
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -902,12 +911,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🎉
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
@@ -1268,7 +1277,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥇
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1292,7 +1301,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🎊
 ```
 
 <!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
