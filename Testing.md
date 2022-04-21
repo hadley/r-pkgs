@@ -45,18 +45,22 @@ While turning casual interactive tests into formal tests requires a little more 
   The reason why is a bit like the reason double entry book-keeping works:
   because you describe the behaviour of your code in two places, both in your
   code and in your tests, you are able to check one against the other.
+  
+  With informal testing, it's tempting to just explore typical and authentic
+  usage, similar to writing examples.
+  However, when writing formal tests, it's natural to adopt a more adversarial
+  mindset and to anticipate how unexpected inputs could break your code.
+  
   If you always introduce new tests when you add a new feature or function,
   you'll prevent many bugs from being created in the first place,
   because you will proactively address pesky edge cases.
   Tests also keep you from (re-)breaking one feature, when you're tinkering with
   another.
-  
-  <!-- More thoughts re: why "fewer bugs": with informal example-type tests, it's tempting to just explore whatever *you* think of as typical usage / the ideal scenario. In contrast, with formal unit tests, you are much more likely to systematically explore edge cases, like what happens when the inputs are affected by various forms of missingness (which eventually does happen in real life). -->
 
 * Better code structure.
   Code that is well designed tends to be easy to test and you can turn this to
   your advantage.
-  Whenever you're struggling to write tests, consider if the problem is
+  If you are struggling to write tests, consider if the problem is
   actually the design of your function(s).
   The process of writing tests is a great way to get free, private, and
   personalized feedback on how well-factored your code is.
@@ -66,13 +70,13 @@ While turning casual interactive tests into formal tests requires a little more 
   Functions that are easier to test are usually easier to understand and
   re-combine in new ways.
 
-* Easier restarts.
-  If you always finish a coding session by creating a failing test (e.g. for the
-  next feature you want to implement), testing makes it easier for you to pick
-  up where you left off: your tests will let you know what to do next.
+* Call to action.
+  When we start to fix a bug, we first like to convert it into a (failing) test.
+  This is wonderfully effective at making your goal very concrete:
+  make this test pass.
+  This is basically a special case of a general methodology known as test driven
+  development.
   
-  <!-- I never do this. Do you, Hadley? But here's something closely related that happens often: I turn a bug into a (failing) test. Which confirms/establishes that the bug exists. Now I have a very concrete goal: make this test pass. Once I get there, I also have confidence that I have actually fixed the bug. Maybe this is a better real-world pattern to describe? -->
-
 * Robust code.
   If you know that all the major functionality of your package is well covered
   by the tests, you can confidently make big changes without worrying about
@@ -118,7 +122,7 @@ This will:
 
 1.  Add testthat to the `Suggests` field in the `DESCRIPTION`.
     Specify testthat 3e in the `Config/testthat/edition` field.
-    Here are what the relevant `DESCRIPTION` fields might look like:
+    The affected `DESCRIPTION` fields might look like:
     
     Suggests: testthat (>= 3.0.0)
     Config/testthat/edition: 3
@@ -128,11 +132,12 @@ This will:
     [automated checking](#r-cmd-check).)
     
 This initial setup is something you do once per package.
+In a package that already uses testthat, `use_testthat(3)` is safe to run, when you're ready to opt-in to testthat 3e.
 
-The `tests/testthat.R` script is something you should generally regard as fixed.
-It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in other test-running scenarios (such as `devtools::test()` or `devtools::test_active_file()`).
-If you want to do something that affects all of your tests, there is usually a better mechanism than modifying the standard `tests/testthat.R` script.
-You'll see this below when we discuss different types of test helpers and mechanisms for setup / teardown.
+Do not edit `tests/testthat.R`.
+It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in most other test-running scenarios (such as `devtools::test()` or `devtools::test_active_file()`).
+If you want to do something that affects all of your tests, there is almost always a better way than modifying the boilerplate `tests/testthat.R` script.
+This chapter details many different ways to make objects and logic available during testing.
 
 ### Create a test
 
@@ -153,6 +158,8 @@ The test file name is displayed in testthat output, which provides helpful conte
 [^bye-bye-context]: The legacy function `testthat::context()` is superseded now and its use in new or actively maintained code is discouraged.
 In the testthat 3e, `context()` is formally deprecated; you should just remove it.
 Once you adopt an intentional, synchronised approach to the organisation of files below `R/` and `tests/testthat/`, the necessary contextual information is right there in the file name, rendering the legacy `context()` superfluous.
+
+<!-- Hadley thinks this is too much detail. I will likely agree when I revisit this later. Leaving it for now. -->
 
 usethis offers a helpful pair of functions for creating or toggling between files:
 
@@ -198,7 +205,7 @@ test_that("multiplication works", {
 You will replace this with your own logic, but it's a nice reminder of the basic form:
 
 * A test file holds one or more `test_that()` tests.
-* Each test describes what it tests for: e.g. "multiplication works".
+* Each test describes what it's testing: e.g. "multiplication works".
 * Each test has one or more expectations: e.g. `expect_equal(2 * 2, 4)`.
 
 Below we go into much more detail about how to test your own functions, which is a big and important topic.
@@ -226,6 +233,10 @@ testthat("foofy does good things", {...})
 
 **Mezzo-iteration**: As one file's-worth of functions and their associated tests start to shape up, you will want to execute the entire file of associated tests, perhaps with `testthat::test_file()`:
 
+<!-- `devtools::test_file()` exists, but is deprecated, because of the collision.
+
+Consider marking as defunct / removing before the book is published. -->
+
 
 ```r
 testthat::test_file("tests/testthat/test-foofy.R")
@@ -234,7 +245,8 @@ testthat::test_file("tests/testthat/test-foofy.R")
 :::rstudio-tip
 In RStudio, you don't even have to specify the full filepath!
 `devtools::test_active_file()` infers the target test file from the file you are actively editing, similar to how `use_r()` and `use_test()` work.
-The easiest way to invoke this is via "Run a test file" in the Addins menu or with the keyboard shortcut Ctrl/Cmd + T.
+The easiest way to invoke this is via "Run a test file" in the Addins menu.
+We recommend [binding this to a keyboard shortcut](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE); we use Ctrl/Cmd + T.
 :::
 
 **Macro-iteration**: As you near the completion of a new feature or bug fix, you will want to run the entire test suite.
@@ -300,10 +312,12 @@ A test file lives in `tests/testthat/`.
 Its name must start with `test`.
 We will inspect and execute a test file from the stringr package.
 
+<!-- https://github.com/hadley/r-pkgs/issues/778 -->
+
 But first, for the purposes of rendering this book, we must attach stringr and testthat.
 Note that in real-life test-running situations, this is taken care of by your package development tooling:
 
-* During interactive development, `load_all()` makes testthat and the
+* During interactive development, `devtools::load_all()` makes testthat and the
   package-under-development available (both its exported and unexported
   functions).
 * During arms-length test execution, this is taken care of by
@@ -319,6 +333,8 @@ library(stringr)
 local_edition(3)
 ```
 
+<!-- TODO: check if stringr has released and, if so, remove this footnote and edit DESCRIPTION. -->
+
 Here are the contents of `tests/testthat/test-dup.r` from stringr[^dev-stringr]:
 
 [^dev-stringr]: Note that we are building the book against a dev version of stringr.
@@ -331,18 +347,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥳
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🥳
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🌈
 ```
 
 This file shows a typical mix of tests:
@@ -385,7 +401,9 @@ Finally, try to avoid putting too many expectations in one test - it's better to
 ### Expectations
 
 An expectation is the finest level of testing.
-It makes a binary assertion about whether or not a function call does what you expect.
+It makes a binary assertion about whether or not an object has the properties you expect.
+This object is usually the return value from a function in your package.
+
 All expectations have a similar structure:
 
 * They start with `expect_`.
@@ -401,48 +419,99 @@ All expectations have a similar structure:
 While you'll normally put expectations inside tests inside files, you can also run them directly.
 This makes it easy to explore expectations interactively.
 There are more than 40 expectations in the testthat package, which can be explored in testthat's [reference index](https://testthat.r-lib.org/reference/index.html).
-Here we highlight some of the most important expectations.
 
-* There are two basic ways to test for equality: `expect_equal()`, and
-  `expect_identical()`.
-  `expect_equal()` is the most commonly used and should be your default:
-  it checks for equality within a numerical tolerance:
+We believe these are the most important expectations:
 
-    
-    ```r
-    expect_equal(10, 10)
-    expect_equal(10, 10L)
-    expect_equal(10, 10 + 1e-7)
-    expect_equal(10, 11)
-    #> Error: 10 (`actual`) not equal to 11 (`expected`).
-    #> 
-    #>   `actual`: [32m10[39m
-    #> `expected`: [32m11[39m
-    ```
+* `expect_equal()`
+* `expect_error()`
+* `expect_snapshot()`
+
+`expect_equal()` checks for equality, with some reasonable amount of numeric tolerance:
+
+
+```r
+expect_equal(10, 10)
+expect_equal(10, 10L)
+expect_equal(10, 10 + 1e-7)
+expect_equal(10, 11)
+#> Error: 10 (`actual`) not equal to 11 (`expected`).
+#> 
+#>   `actual`: [32m10[39m
+#> `expected`: [32m11[39m
+```
+
+If you want to test for exact equivalence, use `expect_identical()`.
+
+
+```r
+expect_equal(10, 10 + 1e-7)
+expect_identical(10, 10 + 1e-7)
+#> Error: 10 (`actual`) not identical to 10 + 1e-07 (`expected`).
+#> 
+#>   `actual`: [32m10.0000000[39m
+#> `expected`: [32m10.0000001[39m
+
+expect_equal(2, 2L)
+expect_identical(2, 2L)
+#> Error: 2 (`actual`) not identical to 2L (`expected`).
+#> 
+#> `actual` is [32ma double vector[39m (2)
+#> `expected` is [32man integer vector[39m (2)
+```
+
+`expect_error()`, `expect_warning()` and `expect_message()` check for side effects, i.e. whether the code triggers an error, warning, or message.
+
+
+```r
+log(-1)
+#> Warning in log(-1): NaNs produced
+#> [1] NaN
+expect_warning(log(-1))
+
+1 / "a"
+#> Error in 1/"a": non-numeric argument to binary operator
+expect_error(1 / "a") 
+```
   
-  If you want to test for exact equivalence, use `expect_identical()`.
-
+You can specify the second argument `regexp` to assert something about the text of the message.
+This is often a good idea, to make sure you're catching the condition you intended.
     
-    ```r
-    expect_equal(10, 10 + 1e-7)
-    expect_identical(10, 10 + 1e-7)
-    #> Error: 10 (`actual`) not identical to 10 + 1e-07 (`expected`).
-    #> 
-    #>   `actual`: [32m10.0000000[39m
-    #> `expected`: [32m10.0000001[39m
-    expect_equal(2, 2L)
-    expect_identical(2, 2L)
-    #> Error: 2 (`actual`) not identical to 2L (`expected`).
-    #> 
-    #> `actual` is [32ma double vector[39m (2)
-    #> `expected` is [32man integer vector[39m (2)
-    ```
 
-* `expect_match()` matches a character vector against a regular expression. 
-   The optional `all` argument controls whether all elements or just one 
-   element needs to match.
-   This is powered by `grepl()` and additional arguments like
-   `ignore.case = FALSE` or `fixed = TRUE` are passed on down.
+```r
+expect_warning(log(-1), "NaNs produced")
+expect_error(1 / "a", "non-numeric argument")
+```
+  
+It is increasingly common to throw classed errors, both within the tidyverse and in base R.
+If that is the case, checking your error's class is better than checking its message.
+We saw an example of this above in the stringr tests.
+This is what the `class` argument is for:
+    
+
+```r
+expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
+```
+  
+To check for the *absence* of an error, warning, or message, use `regexp = NA`:
+  
+
+```r
+expect_error(1 / 2, regexp = NA)
+```
+
+`expect_snapshot()` is new in testthat 3e and merits its own treatment below.
+We conclude this section with a few more expectations that come up frequently.
+But remember that testthat has many more pre-built expectations than we can demonstrate here.
+
+Several expectations can be described as "shortcuts", i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.
+
+* `expect_match(object, regexp, ...)` is a shortcut that wraps
+  `grepl(pattern = regexp, x = object, ...)`.
+  It matches a character vector input against a regular expression `regexp`.
+  The optional `all` argument controls whether all elements or just one element
+  needs to match.
+  Read the `expect_match()` documentation to see how additional arguments, like
+  `ignore.case = FALSE` or `fixed = TRUE`, can be passed down to `grepl()`.
    
     
     ```r
@@ -458,7 +527,12 @@ Here we highlight some of the most important expectations.
     # Passes because additional arguments are passed to grepl():
     expect_match(string, "testing", ignore.case = TRUE)
     ```
-
+* `expect_length(object, n)` is a shortcut for
+  `expect_equal(length(object), n)`.
+* `expect_setequal(x, y)` tests that every element of `x` occurs in `y`, and
+  that every element of `y` occurs in `x`.
+  But it won't fail if `x` and `y` happen to have their elements in a different
+  order.
 * `expect_s3_class()` and `expect_s4_class()` check that an object `inherit()`s
   from a specified class. `expect_type()`checks the `typeof()` an object.
 
@@ -470,52 +544,7 @@ Here we highlight some of the most important expectations.
     #> Error: `model` inherits from 'lm' not 'glm'.
     ```
 
-* `expect_error()`, `expect_warning()` and `expect_message()` check for side
-  effects, i.e. whether the code triggers an error, warning, or message.
-
-    
-    ```r
-    log(-1)
-    #> Warning in log(-1): NaNs produced
-    #> [1] NaN
-    expect_warning(log(-1))
-    
-    1 / "a"
-    #> Error in 1/"a": non-numeric argument to binary operator
-    expect_error(1 / "a") 
-    ```
-  
-  You can specify the second argument `regexp` to assert something about the
-  text of the message.
-  This is often a good idea, to make sure you're catching the condition you
-  intended.
-    
-    
-    ```r
-    expect_warning(log(-1), "NaNs produced")
-    expect_error(1 / "a", "non-numeric argument")
-    ```
-  
-  It is increasingly common to throw classed errors and, if that is the case,
-  checking your error's class is better than checking its message.
-  We saw an example of this above in the stringr tests.
-  This is what the `class` argument is for:
-    
-    
-    ```r
-    expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
-    ```
-  
-  To check for the *absence* of an error, warning, or message, use
-  `regexp = NA`:
-  
-    
-    ```r
-    expect_error(1 / 2, regexp = NA)
-    ```
-
-* `expect_true()` and `expect_false()` are useful catchalls if none of the 
-   other expectations does what you need.
+`expect_true()` and `expect_false()` are useful catchalls if none of the other expectations does what you need.
 
 ### Snapshot tests
 
@@ -716,7 +745,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥇
 
 exists("thingy")
 #> [1] FALSE
@@ -849,7 +878,7 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   useful_thing <- 3
@@ -1236,7 +1265,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥳
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1377,7 +1406,7 @@ test_that("floor_date works for different units", {
   expect_floor_old_skool("month",  "2009-08-01 00:00:00")
   expect_floor_old_skool("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🎉
 ```
 
 ## CRAN notes {#test-cran}
@@ -1473,6 +1502,8 @@ Move that content?
 
 `testing_package()`
 
+### Test coverage
+
 <!--
 Thought dump re: revision, stuff I haven't added yet (and maybe never will?)
 
@@ -1486,6 +1517,3 @@ Instead, in those cases, you might organize your tests around the use of
 specific arguments (reprex) or the challenges presented by specific inputs
 (readxl).
 -->
-
-[tdd]:https://en.wikipedia.org/wiki/Test-driven_development
-[extreme-programming]:https://en.wikipedia.org/wiki/Extreme_programming
