@@ -94,242 +94,76 @@
 It ensures that your code does what you want it to do.
 Testing, however, adds an additional step to your development workflow.
 The goal of this chapter is to show you how to make this task easier and more effective by doing formal automated testing using the testthat package.</p>
-<p>The first stage of your testing journey is to become convinced that testing has enough benefits to justify the work.
-For some of us, this is easy to accept.
-Others must learn the hard way.</p>
-<p>Once you’ve decided to embrace automated testing, it’s time to learn some mechanics and figure out where testing fits into your development workflow.</p>
-<p>As you and your R packages evolve, you’ll start to encounter testing situations where it’s fruitful to use techniques that are somewhat specific to testing and differ from what we do below <code>R/</code>.</p>
-<div id="why-is-formal-testing-worth-the-trouble" class="section level2">
-<h2>
-<span class="header-section-number">12.1</span> Why is formal testing worth the trouble?<a class="anchor" aria-label="anchor" href="#why-is-formal-testing-worth-the-trouble"><i class="fas fa-link"></i></a>
-</h2>
 <p>Up until now, your workflow probably looks like this:</p>
 <ol style="list-style-type: decimal">
 <li>Write a function.</li>
-<li>Load it with <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>, maybe via Ctrl/Cmd + Shift + L.</li>
+<li>Load it with Ctrl/Cmd + Shift + L or <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</li>
 <li>Experiment with it in the console to see if it works.</li>
 <li>Rinse and repeat.</li>
 </ol>
 <p>While you <em>are</em> testing your code in this workflow, you’re only doing it informally.
 The problem with this approach is that when you come back to this code in 3 months time to add a new feature, you’ve probably forgotten some of the informal tests you ran the first time around.
 This makes it very easy to break code that used to work.</p>
-<!-- This next paragraph is very "I" based. But it's also hard to rephrase. Let's discuss. -->
 <p>I started using automated tests because I discovered I was spending too much time re-fixing bugs that I’d already fixed before.
 While writing code or fixing bugs, I’d perform interactive tests to make sure the code worked.
 But I never had a system which could store those tests so I could re-run them as needed.
 I think that this is a common practice among R programmers.
 It’s not that you don’t test your code, it’s that you don’t automate your tests.</p>
-<p>In this chapter you’ll learn how to transition from informal <em>ad hoc</em> testing, done interactively in the console, to automated testing (aka unit testing).
-While turning casual interactive tests into formal tests requires a little more work up front, it pays off in four ways:</p>
+<p>In this chapter you’ll learn how to graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing).
+While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:</p>
 <ul>
-<li>
-<p>Fewer bugs.
-Because you’re explicit about how your code should behave, you will have fewer
+<li><p>Fewer bugs.
+Because you’re explicit about how your code should behave you will have fewer
 bugs.
 The reason why is a bit like the reason double entry book-keeping works:
 because you describe the behaviour of your code in two places, both in your
-code and in your tests, you are able to check one against the other.</p>
-<p>With informal testing, it’s tempting to just explore typical and authentic
-usage, similar to writing examples.
-However, when writing formal tests, it’s natural to adopt a more adversarial
-mindset and to anticipate how unexpected inputs could break your code.</p>
-<p>If you always introduce new tests when you add a new feature or function,
-you’ll prevent many bugs from being created in the first place,
-because you will proactively address pesky edge cases.
-Tests also keep you from (re-)breaking one feature, when you’re tinkering with
-another.</p>
-</li>
+code and in your tests, you are able to check one against the other.
+By following this approach to testing, you can be sure that bugs that you’ve
+fixed in the past will never come back to haunt you.</p></li>
 <li><p>Better code structure.
-Code that is well designed tends to be easy to test and you can turn this to
-your advantage.
-If you are struggling to write tests, consider if the problem is
-actually the design of your function(s).
-The process of writing tests is a great way to get free, private, and
-personalized feedback on how well-factored your code is.
-If you integrate testing into your development workflow (versus planning to
-slap tests on “later”), you’ll subject yourself to constant pressure to break
-complicated operations into separate functions that work in isolation.
-Functions that are easier to test are usually easier to understand and
-re-combine in new ways.</p></li>
-<li><p>Call to action.
-When we start to fix a bug, we first like to convert it into a (failing) test.
-This is wonderfully effective at making your goal very concrete:
-make this test pass.
-This is basically a special case of a general methodology known as test driven
-development.</p></li>
+Code that’s easy to test is usually better designed.
+This is because writing tests forces you to break up complicated parts of
+your code into separate functions that can work in isolation.
+This reduces duplication in your code.
+As a result, functions will be easier to test, understand and work with (it’ll
+be easier to combine them in new ways).</p></li>
+<li><p>Easier restarts.
+If you always finish a coding session by creating a failing test (e.g. for the
+next feature you want to implement), testing makes it easier for you to pick
+up where you left off: your tests will let you know what to do next.</p></li>
 <li><p>Robust code.
-If you know that all the major functionality of your package is well covered
-by the tests, you can confidently make big changes without worrying about
-accidentally breaking something.
-This provides a great reality check when you think you’ve discovered some
-brilliant new way to simplify your package.
-Sometimes such “simplifications” fail to account for some important use case
-and your tests will save you from yourself.</p></li>
+If you know that all the major functionality of your package has an associated
+test, you can confidently make big changes without worrying about accidentally
+breaking something.
+For me, this is particularly useful when I think I have a simpler way to
+accomplish a task (usually the reason my solution is simpler is that I’ve
+forgotten an important use case!).</p></li>
 </ul>
-</div>
-<div id="introducing-testthat" class="section level2">
+<p>If you’re familiar with unit testing in other languages, you should note that there are some fundamental differences with testthat.
+This is because R is, at heart, more a functional programming language than an object oriented programming language.
+For instance, because R’s main OO systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don’t make much sense.</p>
+<div id="test-workflow" class="section level2">
 <h2>
-<span class="header-section-number">12.2</span> Introducing testthat<a class="anchor" aria-label="anchor" href="#introducing-testthat"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.1</span> Test workflow<a class="anchor" aria-label="anchor" href="#test-workflow"><i class="fas fa-link"></i></a>
 </h2>
-<p>This chapter describes how to test your R package using the testthat package:
-<a href="https://testthat.r-lib.org" class="uri">https://testthat.r-lib.org</a></p>
-<p>If you’re familiar with frameworks for unit testing in other languages, you should note that there are some fundamental differences with testthat.
-This is because R is, at heart, more a functional programming language than an object-oriented programming language.
-For instance, because R’s main object-oriented systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don’t make much sense.</p>
-<p>testthat 3.0.0 (released 2020-10-31) introduced the idea of an <strong>edition</strong> of testthat, specifically the 3rd edition of testhat, which we refer to as testthat 3e.
-An edition is a bundle of behaviours that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes.
-This is particularly important for testthat since it has a very large number of packages that use it (almost 5,000 at last count).
-To use testthat 3e, you must have a version of testthat &gt;= 3.0.0 <strong>and</strong> explicitly opt-in to the third edition behaviours.
-This allows testthat to continue to evolve and improve without breaking historical packages that are in a rather passive maintenance phase.
-You can learn more in the <a href="https://testthat.r-lib.org/articles/third-edition.html">testthat 3e article</a>.</p>
-<p>We recommend testthat 3e for all new packages and we recommend updating existing, actively maintained packages to use testthat 3e.
-Unless we say otherwise, this chapter describes testthat 3e.</p>
-</div>
-<div id="test-mechanics-and-workflow" class="section level2">
-<h2>
-<span class="header-section-number">12.3</span> Test mechanics and workflow<a class="anchor" aria-label="anchor" href="#test-mechanics-and-workflow"><i class="fas fa-link"></i></a>
-</h2>
-<div id="initial-setup" class="section level3">
-<h3>
-<span class="header-section-number">12.3.1</span> Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"><i class="fas fa-link"></i></a>
-</h3>
-<p>To setup your package to use testthat, run:</p>
+<p>To set up your package to use testthat, run:</p>
 <div class="sourceCode" id="cb183"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p>This will:</p>
 <ol style="list-style-type: decimal">
-<li><p>Create a <code>tests/testthat/</code> directory.</p></li>
-<li>
-<p>Add testthat to the <code>Suggests</code> field in the <code>DESCRIPTION</code>.
-Specify testthat 3e in the <code>Config/testthat/edition</code> field.
-The affected <code>DESCRIPTION</code> fields might look like:</p>
-<pre><code>Suggests: testthat (&gt;= 3.0.0)
-Config/testthat/edition: 3</code></pre>
-</li>
-<li>
-<p>Create a file <code>tests/testthat.R</code> that runs all your tests when
+<li><p>Create a <code>tests/testthat</code> directory.</p></li>
+<li><p>Add testthat to the <code>Suggests</code> field in the <code>DESCRIPTION</code>.</p></li>
+<li><p>Create a file <code>tests/testthat.R</code> that runs all your tests when
 <code>R CMD check</code> runs. (You’ll learn more about that in
-<a href="r-cmd-check.html#r-cmd-check">automated checking</a>.)
-The contents of this file will be something like:</p>
-<div class="sourceCode" id="cb185"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org">testthat</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">abcde</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_package.html">test_check</a></span><span class="op">(</span><span class="st">"abcde"</span><span class="op">)</span></code></pre></div>
-</li>
+<a href="r-cmd-check.html#r-cmd-check">automated checking</a>.)</p></li>
 </ol>
-<p>This initial setup is something you do once per package.
-In a package that already uses testthat, <code>use_testthat(3)</code> is safe to run, when you’re ready to opt-in to testthat 3e.</p>
-<p>Do not edit <code>tests/testthat.R</code>.
-It is run during <code>R CMD check</code> (and, therefore, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>), but is not used in most other test-running scenarios (such as <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code> or <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_active_file()</a></code>).
-If you want to do something that affects all of your tests, there is almost always a better way than modifying the boilerplate <code>tests/testthat.R</code> script.
-This chapter details many different ways to make objects and logic available during testing.</p>
-</div>
-<div id="create-a-test" class="section level3">
-<h3>
-<span class="header-section-number">12.3.2</span> Create a test<a class="anchor" aria-label="anchor" href="#create-a-test"><i class="fas fa-link"></i></a>
-</h3>
-<p>As you define functions in your package, in the files below <code>R/</code>, you add the corresponding tests to <code>.R</code> files in <code>tests/testthat/</code>.
-We strongly recommend that the organisation of test files match the organisation of <code>R/</code> files, discussed in section <a href="r.html#code-organising">7.1</a>:
-The <code>foofy()</code> function (and its friends and helpers) should be defined in <code>R/foofy.R</code> and their tests should live in <code>tests/testthat/test-foofy.R</code>.</p>
-<pre><code>R                                     tests/testthat
-└── foofy.R                           └── test-foofy.R
-    foofy &lt;- function(...) {...}          test_that("foofy does this", {...})
-                                          test_that("foofy does that", {...})</code></pre>
-<p>Even if you have different conventions for file organisation and naming, note that testthat tests <strong>must</strong> live in files below <code>tests/testthat/</code> and these file names <strong>must</strong> begin with <code>test</code>.
-The test file name is displayed in testthat output, which provides helpful context<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content="&lt;p&gt;The legacy function &lt;code&gt;testthat::context()&lt;/code&gt; is superseded now and its use in new or actively maintained code is discouraged.
-In the testthat 3e, &lt;code&gt;context()&lt;/code&gt; is formally deprecated; you should just remove it.
-Once you adopt an intentional, synchronised approach to the organisation of files below &lt;code&gt;R/&lt;/code&gt; and &lt;code&gt;tests/testthat/&lt;/code&gt;, the necessary contextual information is right there in the file name, rendering the legacy &lt;code&gt;context()&lt;/code&gt; superfluous.&lt;/p&gt;"><sup>28</sup></a>.</p>
-<!-- Hadley thinks this is too much detail. I will likely agree when I revisit this later. Leaving it for now. -->
-<p>usethis offers a helpful pair of functions for creating or toggling between files:</p>
-<ul>
-<li><code><a href="https://usethis.r-lib.org/reference/use_r.html">usethis::use_r()</a></code></li>
-<li><code><a href="https://usethis.r-lib.org/reference/use_r.html">usethis::use_test()</a></code></li>
-</ul>
-<p>Either one can be called with a file (base) name, in order to create a file <em>de novo</em> and open it for editing:</p>
-<div class="sourceCode" id="cb187"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_r</a></span><span class="op">(</span><span class="st">"foofy"</span><span class="op">)</span>    <span class="co"># creates and opens R/foofy.R</span>
-<span class="fu"><a href="https://usethis.r-lib.org/reference/use_r.html">use_test</a></span><span class="op">(</span><span class="st">"blarg"</span><span class="op">)</span> <span class="co"># creates and opens tests/testthat/test-blarg.R</span></code></pre></div>
-<p>The <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> / <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> duo has some convenience features that make them “just work” in many common situations:</p>
-<ul>
-<li>When determining the target file, they can deal with the presence or absence
-of the <code>.R</code> extension and the <code>test-</code> prefix.
-<ul>
-<li>Equivalent: <code>use_r("foofy.R")</code>, <code>use_r("foofy")</code>
-</li>
-<li>Equivalent: <code>use_test("test-blarg.R")</code>, <code>use_test("blarg.R")</code>, <code>use_test("blarg")</code>
-</li>
-</ul>
-</li>
-<li>If the target file already exists, it is opened for editing. Otherwise, the
-target is created and then opened for editing.</li>
-</ul>
-<div class="rstudio-tip">
-<p>If <code>R/foofy.R</code> is the active file in your source editor, you can even call <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> with no arguments!
-The target test file can be inferred: if you’re editing <code>R/foofy.R</code>, you probably want to work on the companion test file, <code>tests/testthat/test-foofy.R</code>.
-If it doesn’t exist yet, it is created and, either way, the test file is opened for editing.
-This all works the other way around also.
-If you’re editing <code>tests/testthat/test-foofy.R</code>, a call to <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> (optionally, creates and) opens <code>R/foofy.R</code>.</p>
-</div>
-<p>Bottom line: <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> / <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> are handy for initially creating these file pairs and, later, for shifting your attention from one to the other.</p>
-<p>When <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> creates a new test file, it inserts a dummy test:</p>
-<div class="sourceCode" id="cb188"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"multiplication works"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>You will replace this with your own logic, but it’s a nice reminder of the basic form:</p>
-<ul>
-<li>A test file holds one or more <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> tests.</li>
-<li>Each test describes what it’s testing: e.g. “multiplication works”.</li>
-<li>Each test has one or more expectations: e.g. <code>expect_equal(2 * 2, 4)</code>.</li>
-</ul>
-<p>Below we go into much more detail about how to test your own functions, which is a big and important topic.</p>
-</div>
-<div id="run-tests" class="section level3">
-<h3>
-<span class="header-section-number">12.3.3</span> Run tests<a class="anchor" aria-label="anchor" href="#run-tests"><i class="fas fa-link"></i></a>
-</h3>
-<p>Depending on where you are in the development cycle, you’ll run your tests at various scales.
-When you are rapidly iterating on a function, you might work at the level of individual tests.
-As the code settles down, you’ll run entire test files and eventually the entire test suite.</p>
-<p><strong>Micro-iteration</strong>: This is the interactive phase where you initiate and refine a function and its tests in tandem.
-Here you will run <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> often, and then execute individual expectations or whole tests interactively in the console.
-Note that <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> attaches testthat, so it puts you in the perfect position to test drive your functions and to execute individual tests and expectations.</p>
-<div class="sourceCode" id="cb189"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># tweak the foofy() function and re-load it</span>
-<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span>
-
-<span class="co"># interactively explore and refine expectations and tests</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/testthat-package.html">testthat</a></span><span class="op">(</span><span class="st">"foofy does good things"</span>, <span class="op">{</span><span class="va">...</span><span class="op">}</span><span class="op">)</span></code></pre></div>
-<p><strong>Mezzo-iteration</strong>: As one file’s-worth of functions and their associated tests start to shape up, you will want to execute the entire file of associated tests, perhaps with <code><a href="https://testthat.r-lib.org/reference/test_file.html">testthat::test_file()</a></code>:</p>
-<!-- `devtools::test_file()` exists, but is deprecated, because of the collision.
-
-Consider marking as defunct / removing before the book is published. -->
-<div class="sourceCode" id="cb190"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_file.html">test_file</a></span><span class="op">(</span><span class="st">"tests/testthat/test-foofy.R"</span><span class="op">)</span></code></pre></div>
-<div class="rstudio-tip">
-<p>In RStudio, you don’t even have to specify the full filepath!
-<code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_active_file()</a></code> infers the target test file from the file you are actively editing, similar to how <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_r()</a></code> and <code><a href="https://usethis.r-lib.org/reference/use_r.html">use_test()</a></code> work.
-The easiest way to invoke this is via “Run a test file” in the Addins menu.
-We recommend <a href="https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE">binding this to a keyboard shortcut</a>; we use Ctrl/Cmd + T.</p>
-</div>
-<p><strong>Macro-iteration</strong>: As you near the completion of a new feature or bug fix, you will want to run the entire test suite.</p>
-<p>Most frequently, you’ll do this with <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>:</p>
-<div class="sourceCode" id="cb191"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/test.html">test</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p>Then eventually, as part of <code>R CMD check</code> with <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>:</p>
-<div class="sourceCode" id="cb192"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<div class="rstudio-tip">
-<p><code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code> is mapped to Ctrl/Cmd + Shift + T.
-<code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code> is mapped to Ctrl/Cmd + Shift + E.</p>
-</div>
-<!-- We'll probably want to replace this example eventually, but it's a decent placeholder.
-The test failure is something highly artificial I created very quickly. 
-It would be better to use an example that actually makes sense, if someone elects to really read and think about it.-->
-<p>The output of <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code> looks like this:</p>
+<p>Once you’re set up the workflow is simple:</p>
+<ol style="list-style-type: decimal">
+<li><p>Modify your code or tests.</p></li>
+<li><p>Test your package with Ctrl/Cmd + Shift + T or <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>.</p></li>
+<li><p>Repeat until all tests pass.</p></li>
+</ol>
+<p>The testing output looks like this:</p>
 <pre><code>devtools::test()
 ℹ Loading usethis
 ℹ Testing usethis
@@ -348,711 +182,204 @@ Duration: 31.3 s
 • Not on GitHub Actions, Travis, or Appveyor (3)
 
 [ FAIL 1 | WARN 0 | SKIP 3 | PASS 728 ]</code></pre>
-<p>Test failure is reported like this:</p>
+<p>A test failure looks something like this:</p>
 <pre><code>Failure (test-release.R:108:3): get_release_data() works if no file found
 res$Version (`actual`) not equal to "0.0.0.9000" (`expected`).
 
 `actual`:   "0.0.0.1234"
 `expected`: "0.0.0.9000"</code></pre>
-<p>Each failure gives a description of the test (e.g., “get_release_data() works if no file found”), its location (e.g., “test-release.R:108:3”), and the reason for the failure (e.g., “res$Version (<code>actual</code>) not equal to”0.0.0.9000" (<code>expected</code>)").</p>
-<p>The idea is that you’ll modify your code (either the functions defined below <code>R/</code> or the tests in <code>tests/testthat/</code>) until all tests are passing.</p>
-</div>
+<p>Each failure gives a description of the test (e.g., “get_release_data() works if no file found”), its location (e.g., “test-release.R:108:3”), and the reason for the failure (e.g., “res$Version (<code>actual</code>) not equal to”0.0.0.9000" (<code>expected</code>)").
+The goal is to pass all the tests.</p>
 </div>
 <div id="test-structure" class="section level2">
 <h2>
-<span class="header-section-number">12.4</span> Test structure<a class="anchor" aria-label="anchor" href="#test-structure"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.2</span> Test structure<a class="anchor" aria-label="anchor" href="#test-structure"><i class="fas fa-link"></i></a>
 </h2>
 <p>A test file lives in <code>tests/testthat/</code>.
 Its name must start with <code>test</code>.
-We will inspect and execute a test file from the stringr package.</p>
-<!-- https://github.com/hadley/r-pkgs/issues/778 -->
-<p>But first, for the purposes of rendering this book, we must attach stringr and testthat.
-Note that in real-life test-running situations, this is taken care of by your package development tooling:</p>
-<ul>
-<li>During interactive development, <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> makes testthat and the
-package-under-development available (both its exported and unexported
-functions).</li>
-<li>During arms-length test execution, this is taken care of by
-<code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_active_file()</a></code>, <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>, and <code>tests/testthat.R</code>.</li>
-</ul>
-<p><strong>Your test files should not include these <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> calls.
-We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.</strong></p>
-<div class="sourceCode" id="cb195"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org">testthat</a></span><span class="op">)</span>
+Here’s an example of a test file from the stringr package:</p>
+<div class="sourceCode" id="cb186"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># In an actual test file, in a package, you will NOT include `library(stringr)`!</span>
+<span class="co"># The various ways you run your tests will take care of making the</span>
+<span class="co"># functions in the package you are testing available.</span>
+<span class="co"># But we must do it here.</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://stringr.tidyverse.org">stringr</a></span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/local_edition.html">local_edition</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></code></pre></div>
-<!-- TODO: check if stringr has released and, if so, remove this footnote and edit DESCRIPTION. -->
-<p>Here are the contents of <code>tests/testthat/test-dup.r</code> from stringr<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content="&lt;p&gt;Note that we are building the book against a dev version of stringr.&lt;/p&gt;"><sup>29</sup></a>:</p>
-<div class="sourceCode" id="cb196"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"basic duplication works"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"aaa"</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="st">"abc"</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"abcabc"</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"aa"</span>, <span class="st">"bb"</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"aa"</span>, <span class="st">"bbb"</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🥳</span>
 
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"0 duplicates equals empty string"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="fl">0</span><span class="op">)</span>, <span class="st">""</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">""</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"str_length is number of characters"</span>, <span class="op">{</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="st">"a"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="st">"ab"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="st">"abc"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span>
 <span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🥇</span>
 
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"uses tidyverse recycling rules"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, class <span class="op">=</span> <span class="st">"vctrs_error_incompatible_size"</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"str_length of factor is length of level"</span>, <span class="op">{</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="st">"a"</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="st">"ab"</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="st">"abc"</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 😸</span></code></pre></div>
-<p>This file shows a typical mix of tests:</p>
+<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🎊</span>
+
+<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"str_length of missing is missing"</span>, <span class="op">{</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="cn">NA</span><span class="op">)</span>, <span class="cn">NA_integer_</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_length.html">str_length</a></span><span class="op">(</span><span class="st">"NA"</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>
+<span class="op">}</span><span class="op">)</span>
+<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 😀</span></code></pre></div>
+<p>Tests are organised hierarchically: <strong>expectations</strong> are grouped into <strong>tests</strong> which are organised in <strong>files</strong>:</p>
 <ul>
-<li>“basic duplication works” tests typical usage of <code><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup()</a></code>.</li>
-<li>“0 duplicates equals empty string” probes a specific edge case.</li>
-<li>“uses tidyverse recycling rules” checks that malformed input results in a
-specific kind of error.</li>
-</ul>
-<p>Tests are organised hierarchically:
-<strong>expectations</strong> are grouped into <strong>tests</strong> which are organised in <strong>files</strong>:</p>
-<ul>
-<li><p>A <strong>file</strong> holds multiple related tests.
-In this example, the file <code>tests/testthat/test-dup.r</code> has all of the tests
-for the code in <code>R/dup.r</code>.</p></li>
+<li><p>An <strong>expectation</strong> is the atom of testing.
+It describes the expected result of a computation:
+Does it have the right value and right class?
+Does it produce error messages when it should?
+An expectation automates visual checking of results in the console.
+Expectations are functions that start with <code>expect_</code>.</p></li>
 <li><p>A <strong>test</strong> groups together multiple expectations to test the output from a
 simple function, a range of possibilities for a single parameter from a more
 complicated function, or tightly related functionality from across multiple
 functions.
-This is why they are sometimes called <strong>unit</strong> tests.
-Each test should cover a single unit of functionality.
-A test is created with <code>test_that(desc, code)</code>.
-It’s common to write the description (<code>desc</code>) to create something that reads
-naturally, e.g. <code>test_that("basic duplication works", { ... })</code>.
-A test failure report includes this description, which is why you want a
-concise statement of the test’s purpose, e.g. a specific behaviour.</p></li>
-<li><p>An <strong>expectation</strong> is the atom of testing.
-It describes the expected result of a computation:
-Does it have the right value and right class?
-Does it produce an error when it should?
-An expectation automates visual checking of results in the console.
-Expectations are functions that start with <code>expect_</code>.</p></li>
+This is why they are sometimes called <strong>unit</strong> tests, as they test one unit of
+functionality.
+A test is created with <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>.</p></li>
+<li><p>A <strong>file</strong> groups together multiple related tests.
+<del>Files are given a human readable name with <code><a href="https://dplyr.tidyverse.org/reference/context.html">context()</a></code>.</del>
+<em>We are in the process of revising this chapter for the 2nd edition.
+Let it be known that the use of <code><a href="https://testthat.r-lib.org/reference/context.html">testthat::context()</a></code> is now discouraged.
+Don’t use <code><a href="https://dplyr.tidyverse.org/reference/context.html">context()</a></code> in new code and remove <code><a href="https://dplyr.tidyverse.org/reference/context.html">context()</a></code> when you come across
+it during package maintenance.</em></p></li>
 </ul>
-<p>You want to arrange things such that, when a test fails, you’ll know what’s wrong and where in your code to look for the problem.
-This motivates all our recommendations regarding file organisation, file naming, and the test description.
-Finally, try to avoid putting too many expectations in one test - it’s better to have more smaller tests than fewer larger tests.</p>
+<p>These are described in detail below.</p>
 <div id="expectations" class="section level3">
 <h3>
-<span class="header-section-number">12.4.1</span> Expectations<a class="anchor" aria-label="anchor" href="#expectations"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.2.1</span> Expectations<a class="anchor" aria-label="anchor" href="#expectations"><i class="fas fa-link"></i></a>
 </h3>
 <p>An expectation is the finest level of testing.
-It makes a binary assertion about whether or not an object has the properties you expect.
-This object is usually the return value from a function in your package.</p>
-<p>All expectations have a similar structure:</p>
+It makes a binary assertion about whether or not a function call does what you expect.
+All expectations have a similar structure:</p>
 <ul>
 <li><p>They start with <code>expect_</code>.</p></li>
-<li><p>They have two main arguments:
-the first is the actual result, the second is what you expect.</p></li>
+<li><p>They have two arguments: the first is the actual result, the second is what
+you expect.</p></li>
 <li><p>If the actual and expected results don’t agree, testthat throws an error.</p></li>
-<li><p>Some expectations have additional arguments that control the finer points of
-comparing an actual and expected result.</p></li>
 </ul>
 <p>While you’ll normally put expectations inside tests inside files, you can also run them directly.
 This makes it easy to explore expectations interactively.
-There are more than 40 expectations in the testthat package, which can be explored in testthat’s <a href="https://testthat.r-lib.org/reference/index.html">reference index</a>.</p>
-<p>We believe these are the most important expectations:</p>
-<ul>
-<li><code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code></li>
-<li><code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error()</a></code></li>
-<li><code><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot()</a></code></li>
-</ul>
-<p><code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code> checks for equality, with some reasonable amount of numeric tolerance:</p>
-<div class="sourceCode" id="cb197"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10L</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span> <span class="op">+</span> <span class="fl">1e-7</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">11</span><span class="op">)</span>
-<span class="co">#&gt; Error: 10 (`actual`) not equal to 11 (`expected`).</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;   `actual`: <span style="color: #00BB00;">10</span></span>
-<span class="co">#&gt; `expected`: <span style="color: #00BB00;">11</span></span></code></pre></div>
-<p>If you want to test for exact equivalence, use <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code>.</p>
-<div class="sourceCode" id="cb198"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span> <span class="op">+</span> <span class="fl">1e-7</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span> <span class="op">+</span> <span class="fl">1e-7</span><span class="op">)</span>
-<span class="co">#&gt; Error: 10 (`actual`) not identical to 10 + 1e-07 (`expected`).</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;   `actual`: <span style="color: #00BB00;">10.0000000</span></span>
-<span class="co">#&gt; `expected`: <span style="color: #00BB00;">10.0000001</span></span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2L</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2L</span><span class="op">)</span>
-<span class="co">#&gt; Error: 2 (`actual`) not identical to 2L (`expected`).</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; `actual` is <span style="color: #00BB00;">a double vector</span> (2)</span>
-<span class="co">#&gt; `expected` is <span style="color: #00BB00;">an integer vector</span> (2)</span></code></pre></div>
-<p><code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error()</a></code>, <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning()</a></code> and <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_message()</a></code> check for side effects, i.e. whether the code triggers an error, warning, or message.</p>
-<div class="sourceCode" id="cb199"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span>
-<span class="co">#&gt; Warning in log(-1): NaNs produced</span>
-<span class="co">#&gt; [1] NaN</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>
-
-<span class="fl">1</span> <span class="op">/</span> <span class="st">"a"</span>
-<span class="co">#&gt; Error in 1/"a": non-numeric argument to binary operator</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="st">"a"</span><span class="op">)</span> </code></pre></div>
-<p>You can specify the second argument <code>regexp</code> to assert something about the text of the message.
-This is often a good idea, to make sure you’re catching the condition you intended.</p>
-<div class="sourceCode" id="cb200"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="st">"NaNs produced"</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="st">"a"</span>, <span class="st">"non-numeric argument"</span><span class="op">)</span></code></pre></div>
-<p>It is increasingly common to throw classed errors, both within the tidyverse and in base R.
-If that is the case, checking your error’s class is better than checking its message.
-We saw an example of this above in the stringr tests.
-This is what the <code>class</code> argument is for:</p>
-<div class="sourceCode" id="cb201"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_dup.html">str_dup</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, class <span class="op">=</span> <span class="st">"vctrs_error_incompatible_size"</span><span class="op">)</span></code></pre></div>
-<p>To check for the <em>absence</em> of an error, warning, or message, use <code>regexp = NA</code>:</p>
-<div class="sourceCode" id="cb202"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="fl">2</span>, regexp <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></code></pre></div>
-<p><code><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot()</a></code> is new in testthat 3e and merits its own treatment below.</p>
-<p>We conclude this section with a few more expectations that come up frequently.
-But remember that testthat has many more pre-built expectations than we can demonstrate here.</p>
-<p>Several expectations can be described as “shortcuts”, i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.</p>
+There are almost 20 expectations in the testthat package.
+The most important are discussed below.</p>
+<p><em>This passage is still being revised for the 2nd edition the R Packages book.
+In the meantime, please note that:
+in the third edition of testthat, <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code> and <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code> are both powered by the <a href="">waldo package</a>.
+In the past / in the second edition of testthat, <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code> wraps <code><a href="https://rdrr.io/r/base/all.equal.html">all.equal()</a></code> and <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code> wraps <code><a href="https://rdrr.io/r/base/identical.html">identical()</a></code>.</em></p>
 <ul>
 <li>
-<p><code>expect_match(object, regexp, ...)</code> is a shortcut that wraps
-<code>grepl(pattern = regexp, x = object, ...)</code>.
-It matches a character vector input against a regular expression <code>regexp</code>.
-The optional <code>all</code> argument controls whether all elements or just one element
-needs to match.
-Read the <code><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match()</a></code> documentation to see how additional arguments, like
-<code>ignore.case = FALSE</code> or <code>fixed = TRUE</code>, can be passed down to <code><a href="https://rdrr.io/r/base/grep.html">grepl()</a></code>.</p>
-<div class="sourceCode" id="cb203"><pre class="downlit sourceCode r">
+<p>There are two basic ways to test for equality: <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code>,
+and <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code>. <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code> is the most commonly used: it
+checks for equality within a numerical tolerance:</p>
+<div class="sourceCode" id="cb187"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span> <span class="op">+</span> <span class="fl">1e-7</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">11</span><span class="op">)</span></code></pre></div>
+<p>If you want to test for exact equivalence, or need to compare a more
+exotic object like an environment, use <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code>.</p>
+<div class="sourceCode" id="cb188"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span> <span class="op">+</span> <span class="fl">1e-7</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span> <span class="op">+</span> <span class="fl">1e-7</span><span class="op">)</span></code></pre></div>
+</li>
+<li>
+<p><code><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match()</a></code> matches a character vector against a regular expression.
+The optional <code>all</code> argument controls whether all elements or just one
+element needs to match.
+This is powered by <code><a href="https://rdrr.io/r/base/grep.html">grepl()</a></code> (additional arguments like
+<code>ignore.case = FALSE</code> or <code>fixed = TRUE</code> are passed on down).</p>
+<div class="sourceCode" id="cb189"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">string</span> <span class="op">&lt;-</span> <span class="st">"Testing is fun!"</span>
 
 <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match</a></span><span class="op">(</span><span class="va">string</span>, <span class="st">"Testing"</span><span class="op">)</span> 
 
 <span class="co"># Fails, match is case-sensitive</span>
 <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match</a></span><span class="op">(</span><span class="va">string</span>, <span class="st">"testing"</span><span class="op">)</span>
-<span class="co">#&gt; Error: `string` does not match "testing".</span>
-<span class="co">#&gt; Actual value: "Testing is fun!"</span>
 
-<span class="co"># Passes because additional arguments are passed to grepl():</span>
+<span class="co"># Additional arguments are passed to grepl:</span>
 <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match</a></span><span class="op">(</span><span class="va">string</span>, <span class="st">"testing"</span>, ignore.case <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </li>
-<li><p><code>expect_length(object, n)</code> is a shortcut for
-<code>expect_equal(length(object), n)</code>.</p></li>
-<li><p><code>expect_setequal(x, y)</code> tests that every element of <code>x</code> occurs in <code>y</code>, and
-that every element of <code>y</code> occurs in <code>x</code>.
-But it won’t fail if <code>x</code> and <code>y</code> happen to have their elements in a different
-order.</p></li>
 <li>
-<p><code><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html">expect_s3_class()</a></code> and <code><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html">expect_s4_class()</a></code> check that an object <code>inherit()</code>s
-from a specified class. <code><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html">expect_type()</a></code>checks the <code><a href="https://rdrr.io/r/base/typeof.html">typeof()</a></code> an object.</p>
-<div class="sourceCode" id="cb204"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span><span class="op">(</span><span class="va">mpg</span> <span class="op">~</span> <span class="va">wt</span>, data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html">expect_s3_class</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"lm"</span><span class="op">)</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html">expect_s3_class</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"glm"</span><span class="op">)</span>
-<span class="co">#&gt; Error: `model` inherits from 'lm' not 'glm'.</span></code></pre></div>
-</li>
-</ul>
-<p><code><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true()</a></code> and <code><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_false()</a></code> are useful catchalls if none of the other expectations does what you need.</p>
-</div>
-<div id="snapshot-tests" class="section level3">
-<h3>
-<span class="header-section-number">12.4.2</span> Snapshot tests<a class="anchor" aria-label="anchor" href="#snapshot-tests"><i class="fas fa-link"></i></a>
-</h3>
-<p>Sometimes it’s difficult or awkward to describe an expected result with code.
-Snapshots tests are a great solution to this problem and this is one of the main innovations in testthat 3e.
-The basic idea is that you record the expected result in a separate, human-readable file.
-Going forward, testthat alerts you when a newly computed result differs from the previously recorded snapshot.
-Snapshot tests are particularly suited to monitoring your package’s user interface, such as its informational messages and errors.
-Other use cases include testing images or other complicated objects.</p>
-<p>We’ll illustrate snapshot tests using the waldo package.
-Under the hood, testthat 3e uses waldo to do the heavy lifting of “actual vs. expected” comparisons.
-One of the main design goals of waldo is to present differences in a clear and actionable manner, as opposed to a frustrating declaration that “this differs from that and I know exactly how, but I won’t tell you”.
-Therefore, the formatting of output from <code><a href="https://waldo.r-lib.org/reference/compare.html">waldo::compare()</a></code> is very intentional and is well-suited to a snapshot test.
-The binary outcome of <code>TRUE</code> (actual == expected) vs. <code>FALSE</code> (actual != expected) is fairly easy to check and merits its own dedicated tests.
-Here we’re concerned with writing a test to ensure that differences are reported to the user in the intended way.</p>
-<p>waldo uses a few different layouts for showing diffs, depending on various conditions.
-Here we deliberately constrain the width, in order to trigger a side-by-side layout.<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content="&lt;p&gt;The actual waldo test that inspires this example targets an unexported helper function that produces the desired layout.
-But this example uses an exported waldo function for simplicity.&lt;/p&gt;"><sup>30</sup></a>.</p>
-<div class="sourceCode" id="cb205"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">with_options</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,
-  <span class="fu">waldo</span><span class="fu">::</span><span class="fu"><a href="https://waldo.r-lib.org/reference/compare.html">compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="va">letters</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">letters</span>, <span class="st">"X"</span><span class="op">)</span><span class="op">)</span>
-<span class="op">)</span>
-<span class="co">#&gt;     old | new    </span>
-<span class="co">#&gt; [1] <span style="color: #BBBB00;">"X"</span> -        </span>
-<span class="co">#&gt; [2] <span style="color: #555555;">"a"</span> | <span style="color: #555555;">"a"</span> [1]</span>
-<span class="co">#&gt; [3] <span style="color: #555555;">"b"</span> | <span style="color: #555555;">"b"</span> [2]</span>
-<span class="co">#&gt; [4] <span style="color: #555555;">"c"</span> | <span style="color: #555555;">"c"</span> [3]</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;      old | new     </span>
-<span class="co">#&gt; [25] <span style="color: #555555;">"x"</span> | <span style="color: #555555;">"x"</span> [24]</span>
-<span class="co">#&gt; [26] <span style="color: #555555;">"y"</span> | <span style="color: #555555;">"y"</span> [25]</span>
-<span class="co">#&gt; [27] <span style="color: #555555;">"z"</span> | <span style="color: #555555;">"z"</span> [26]</span>
-<span class="co">#&gt;          - <span style="color: #0000BB;">"X"</span> [27]</span></code></pre></div>
-<p>The two primary inputs differ at two locations:
-once at the start and once at the end.
-This layout presents both of these, with some surrounding context, which helps the reader orient themselves.</p>
-<p>Here’s how this would look as a snapshot test:</p>
-<!-- Actually using snapshot test technology here is hard.
-I can sort of see how it might be done, by looking at the source of testthat's vignette about snapshotting.
-For the moment, I'm just faking it. -->
-<div class="sourceCode" id="cb206"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"side-by-side diffs work"</span>, <span class="op">{</span>
-  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot</a></span><span class="op">(</span>
-    <span class="fu">waldo</span><span class="fu">::</span><span class="fu"><a href="https://waldo.r-lib.org/reference/compare.html">compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="va">letters</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">letters</span>, <span class="st">"X"</span><span class="op">)</span><span class="op">)</span>
-  <span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>If you execute <code><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot()</a></code> or a test containing <code><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot()</a></code> interactively, you’ll see this:</p>
-<pre><code>Can't compare snapshot to reference when testing interactively
-ℹ Run `devtools::test()` or `testthat::test_file()` to see changes</code></pre>
-<p>followed by a preview of the snapshot output.</p>
-<p>This reminds you that snapshot tests only function when executed non-interactively, i.e. while running an entire test file or the entire test suite.
-This applies both to recording snapshots and to checking them.</p>
-<p>The first time this test is executed via <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code> or similar, you’ll see something like this (assume the test is in <code>tests/testthat/test-diff.R</code>):</p>
-<pre><code>── Warning (test-diff.R:63:3): side-by-side diffs work ─────────────────────
-Adding new snapshot:
-Code
-  waldo::compare(c(
-    "X", letters), c(
-    letters, "X"))
-Output
-      old | new    
-  [1] "X" -        
-  [2] "a" | "a" [1]
-  [3] "b" | "b" [2]
-  [4] "c" | "c" [3]
-  
-       old | new     
-  [25] "x" | "x" [24]
-  [26] "y" | "y" [25]
-  [27] "z" | "z" [26]
-           - "X" [27]</code></pre>
-<p>There is always a warning upon initial snapshot creation.
-The snapshot is added to <code>tests/testthat/_snaps/diff.md</code>, under the heading “side-by-side diffs work”, which comes from the test’s description.
-The snapshot looks exactly like what a user sees interactively in the console, which is the experience we want to check for.
-The snapshot file is <em>also</em> very readable, which is pleasant for the package developer.
-This readability extends to snapshot changes, i.e. when examining Git diffs and reviewing pull requests on GitHub, which helps you keep tabs on your user interface.
-Going forward, as long as your package continues to re-capitulate the expected snapshot, this test will pass.</p>
-<p>If you’ve written a lot of conventional unit tests, you can appreciate how well-suited snapshot tests are for this use case.
-If we were forced to inline the expected output in the test file, there would be a great deal of quoting, escaping, and newline management.
-Ironically, with conventional expectations, the output you expect your user to see tends to get obscured by a heavy layer of syntactical noise.</p>
-<p>What about when a snapshot test fails?
-Let’s imagine a hypothetical internal change where the default labels switch from “old” and “new” to “OLD” and “NEW”.
-Here’s how this snapshot test would react:</p>
-<pre><code>── Failure (test-diff.R:63:3): side-by-side diffs work──────────────────────────
-Snapshot of code has changed:
-old[3:15] vs new[3:15]
-  "    \"X\", letters), c("
-  "    letters, \"X\"))"
-  "Output"
-- "      old | new    "
-+ "      OLD | NEW    "
-  "  [1] \"X\" -        "
-  "  [2] \"a\" | \"a\" [1]"
-  "  [3] \"b\" | \"b\" [2]"
-  "  [4] \"c\" | \"c\" [3]"
-  "  "
-- "       old | new     "
-+ "       OLD | NEW     "
-and 3 more ...
+<p>Four variations of <code><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match()</a></code> let you check for other types of
+result: <code><a href="https://testthat.r-lib.org/reference/expect_output.html">expect_output()</a></code>, inspects printed output; <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_message()</a></code>,
+messages; <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning()</a></code>, warnings; and <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error()</a></code> errors.</p>
+<div class="sourceCode" id="cb190"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="va">letters</span><span class="op">)</span>
 
-* Run `snapshot_accept('diff')` to accept the change
-* Run `snapshot_review('diff')` to interactively review the change</code></pre>
-<p>This diff is presented more effectively in most real-world usage, e.g. in the console, by a Git client, or via a Shiny app (see below).
-But even this plain text version highlights the changes quite clearly.
-Each of the two loci of change is indicated with a pair of lines marked with <code>-</code> and <code>+</code>, showing how the snapshot has changed.</p>
-<p>You can call <code>testthat::snapshot_review('diff')</code> to review changes locally in a Shiny app, which lets you skip or accept individual snapshots.
-Or, if all changes are intentional and expected, you can go straight to <code>testthat::snapshot_accept('diff')</code>.
-Once you’ve re-synchronized your actual output and the snapshots on file, your tests will pass once again.
-In real life, snapshot tests are a great way to stay informed about changes to your package’s user interface, due to your own internal changes or due to changes in your dependencies or even R itself.</p>
-<p><code><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot()</a></code> has a few arguments worth knowing about:</p>
-<ul>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_output.html">expect_output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="st">"List of 2"</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_output.html">expect_output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="st">"int [1:10]"</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_message</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">mgcv</span><span class="op">)</span>, <span class="st">"This is mgcv"</span><span class="op">)</span></code></pre></div>
+<p>With <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_message()</a></code>, <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning()</a></code>, <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error()</a></code> you can
+leave the second argument blank if you just want to see if a message,
+warning or error is created. However, it’s normally better to be explicit,
+and provide some text from the message.</p>
+<div class="sourceCode" id="cb191"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="st">"a"</span><span class="op">)</span> 
+
+<span class="co"># But always better to be explicit</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="st">"NaNs produced"</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="st">"a"</span>, <span class="st">"non-numeric argument"</span><span class="op">)</span>
+
+<span class="co"># Failure to produce a warning or error when an error is expected</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span> </code></pre></div>
+</li>
 <li>
-<code>cran = FALSE</code>: By default, snapshot tests are skipped if it looks like the
-tests are running on CRAN’s servers.
-This reflects the typical intent of snapshot tests, which is to proactively
-monitor user interface, but not to check for correctness, which presumably
-is the job of other unit tests which are not skipped.
-In typical usage, a snapshot change is something the developer will want to
-know about, but it does not signal an actual defect.</li>
-<li>
-<code>error = FALSE</code>: By default, snapshot code is <em>not</em> allowed to throw an error.
-See <code><a href="https://testthat.r-lib.org/reference/expect_error.html">expect_error()</a></code>, described above, for an one approach to testing errors.
-But sometimes you want to assess is “Does this error message make sense to a
-human?” and having it laid out in context in a snapshot is a great way to see
-it with fresh eyes.
-Specify <code>error = TRUE</code> in this case.</li>
-<li>
-<code>transform</code>: Sometimes a snapshot contains volatile, insignificant elements,
-such as a temporary filepath or a timestamp.
-The <code>transform</code> argument accepts a function, presumably written by you, to
-remove or replace such changeable text.
-Another use of <code>transform</code> is to scrub sensitive information from the
-snapshot.</li>
-<li>
-<code>variant</code>: Sometimes snapshots reflect the ambient conditions, such as the
-operating system or the version of R or one of your dependencies, and you need
-a different snapshot for each variant. This is an experimental and somewhat
-advanced feature, so if you can arrange things to use a single snapshot, you
-probably should.</li>
+<p><code><a href="https://testthat.r-lib.org/reference/expect_is.html">expect_is()</a></code> checks that an object <code>inherit()</code>s from a specified class.</p>
+<div class="sourceCode" id="cb192"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span><span class="op">(</span><span class="va">mpg</span> <span class="op">~</span> <span class="va">wt</span>, data <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_is.html">expect_is</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"lm"</span><span class="op">)</span>
+<span class="fu"><a href="https://testthat.r-lib.org/reference/expect_is.html">expect_is</a></span><span class="op">(</span><span class="va">model</span>, <span class="st">"glm"</span><span class="op">)</span></code></pre></div>
+</li>
+<li><p><code><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true()</a></code> and <code><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_false()</a></code> are useful catchalls if none of the
+other expectations does what you need.</p></li>
+<li><p>Sometimes you don’t know exactly what the result should be, or it’s too
+complicated to easily recreate in code.
+In that case the best you can do is check that the result is the same as
+last time.
+<code><a href="https://testthat.r-lib.org/reference/expect_known_output.html">expect_equal_to_reference()</a></code> caches the result the first time its run, and
+then compares it to subsequent runs.
+If for some reason the result does change, just delete the cache (*) file
+and re-test.</p></li>
 </ul>
+<p>Running a sequence of expectations is useful because it ensures that your code behaves as expected.
+You could even use an expectation within a function to check that the inputs are what you expect.
+However, they’re not so useful when something goes wrong.
+All you know is that something is not as expected.
+You don’t know the goal of the expectation.
+Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.</p>
 </div>
 </div>
 <div id="test-tests" class="section level2">
 <h2>
-<span class="header-section-number">12.5</span> Writing tests<a class="anchor" aria-label="anchor" href="#test-tests"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.3</span> Writing tests<a class="anchor" aria-label="anchor" href="#test-tests"><i class="fas fa-link"></i></a>
 </h2>
-<blockquote>
-<p>Everyone knows that debugging is twice as hard as writing a program in the
-first place. So if you’re as clever as you can be when you write it, how will
-you ever debug it?
-— Brian Kernighan</p>
-</blockquote>
-<p>Above is a well-known quote about debugging and we suspect something similar holds true for testing.
-Writing good tests for a code base can sometimes feel more challenging than writing the code in the first place.
-Even if it’s not strictly more difficult, it absolutely has a different feel.
-Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the “main code”.</p>
-<div id="test-hygiene" class="section level3">
-<h3>
-<span class="header-section-number">12.5.1</span> Test hygiene<a class="anchor" aria-label="anchor" href="#test-hygiene"><i class="fas fa-link"></i></a>
-</h3>
-<!-- I feel ambivalent about "self-contained" here.
-Technically, it's not quite right or, at least, it's an incomplete description.
-It also feels as much a piece of aspirational advice re: mindset, as an observation about how things are rigged.
-Like, it's sort of self-contained, but to the extent it's not, we urge you to behave in such a way to promote test-self-contained-ness.
--->
-<p>Each <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> test is executed in its own environment and is self-contained.
-For example, an R object you create inside a test does not exist after the test exits:</p>
-<div class="sourceCode" id="cb210"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"thingy"</span><span class="op">)</span>
-<span class="co">#&gt; [1] FALSE</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"thingy exists"</span>, <span class="op">{</span>
-  <span class="va">thingy</span> <span class="op">&lt;-</span> <span class="st">"thingy"</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="va">thingy</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🥇</span>
-
-<span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"thingy"</span><span class="op">)</span>
-<span class="co">#&gt; [1] FALSE</span></code></pre></div>
-<p>The <code>thingy</code> object lives and dies entirely within the confines of <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>.
-However, testthat doesn’t know how to cleanup after actions that affect other aspects of the R landscape:</p>
+<p>Each test should have an informative name and cover a single unit of functionality.
+The idea is that when a test fails, you’ll know what’s wrong and where in your code to look for the problem.
+You create a new test using <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>, with test name and code block as arguments.
+The test name should complete the sentence “Test that …”.
+The code block should be a collection of expectations.</p>
+<p>It’s up to you how to organise your expectations into tests.
+The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem.
+Try to avoid putting too many expectations in one test - it’s better to have more smaller tests than fewer larger tests.</p>
+<p>Each test is run in its own environment and is self-contained.
+However, testthat doesn’t know how to cleanup after actions that affect the R landscape:</p>
 <ul>
-<li>The filesystem: creating and deleting files, changing the working directory,
-etc.</li>
-<li>The search path: <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, <code><a href="https://rdrr.io/r/base/attach.html">attach()</a></code>.</li>
-<li>Global options, like <code><a href="https://rdrr.io/r/base/options.html">options()</a></code> and <code><a href="https://rdrr.io/r/graphics/par.html">par()</a></code>, and environment variables.</li>
+<li><p>The filesystem: creating and deleting files, changing the working directory,
+etc.</p></li>
+<li><p>The search path: <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, <code><a href="https://rdrr.io/r/base/attach.html">attach()</a></code>.</p></li>
+<li><p>Global options, like <code><a href="https://rdrr.io/r/base/options.html">options()</a></code> and <code><a href="https://rdrr.io/r/graphics/par.html">par()</a></code>.</p></li>
 </ul>
-<p>If it’s easy to avoid making such changes in your test code, that is the best strategy.
-But if it’s unavoidable, then you have to make sure that you clean up after yourself.
-This mindset is very similar to one we advocated for in section <a href="r.html#code-r-landscape">7.5</a>, when discussing how to design well-mannered functions.</p>
-<p>When possible, make each test self-sufficient:</p>
-<ul>
-<li>Don’t change the surrounding landscape.
-More realistically, make sure any changes are reversed when the test is done.</li>
-<li>Don’t depend on specific aspects of the landscape, especially not in some
-implicit, silent way.
-Check for and/or create the conditions necessary for your test to do its job.</li>
-</ul>
-<p>In the testing domain, this is sometimes referred to as <em>setup and teardown</em> and we’ll describe several official testthat ways to do this, at various scopes.</p>
-<p>But first, let’s connect this back to very similar advice offered in section <a href="r.html#code-r-landscape">7.5</a>, which covers your package’s “main code”, i.e. everything below <code>R/</code>:</p>
-<blockquote>
-<p>The <code>.R</code> files below <code>R/</code> should consist almost entirely of function definitions.
-Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.</p>
-</blockquote>
-<p>Similarly, <code>tests/testthat/test-*.R</code> files should consist almost entirely of calls to <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>.
-Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving whatever its goal is.</p>
-<p>Two concrete examples:</p>
-<ul>
-<li>
-<code><a href="https://rdrr.io/r/base/source.html">source()</a></code> should not appear in your tests.
-There are several special files with an official role in testthat workflows
-(see below), not to mention the entire R package machinery, that provide
-better ways to make functions, objects, and other logic available in your
-tests.</li>
-<li>
-<code><a href="https://rdrr.io/r/base/library.html">library()</a></code> should (almost certainly) not appear in your tests.
-Similar to advice for the code below <code>R/</code>, it’s usually better to access
-functions from a dependency via <code>otherpkg::fun()</code>.</li>
-</ul>
-<!-- I also want to mention testthat's built-in efforts re: reproducibility.
-
-So: local_test_context(), local_reproducible_output()
-
-https://testthat.r-lib.org/reference/local_test_context.html
-
-This is (one of) the reasonable places to put this content.
---><div id="self-sufficient-tests" class="section level4">
-<h4>
-<span class="header-section-number">12.5.1.1</span> Self-sufficient tests<a class="anchor" aria-label="anchor" href="#self-sufficient-tests"><i class="fas fa-link"></i></a>
-</h4>
-<p>It’s hard to beat the pure simplicity and obviousness of a test that creates the conditions it needs, then puts things back as they were.
-You’ve already seen an example of this, when we explored snapshot tests:</p>
-<div class="sourceCode" id="cb211"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"side-by-side diffs work"</span>, <span class="op">{</span>
-  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>             <span class="co"># &lt;-- (°_°) look here!</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot</a></span><span class="op">(</span>
-    <span class="fu">waldo</span><span class="fu">::</span><span class="fu"><a href="https://waldo.r-lib.org/reference/compare.html">compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="va">letters</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">letters</span>, <span class="st">"X"</span><span class="op">)</span><span class="op">)</span>
-  <span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>This test requires the display width to be set at 20 columns, which is considerably less than the default width.
-We like to use the withr package (<a href="https://withr.r-lib.org" class="uri">https://withr.r-lib.org</a>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration.
-In this case, <code>withr::local_options(width = 20)</code> sets the <code>width</code> option to 20 and, at the end of the test, resets the option to whatever its original value was.
-withr is also pleasant to use during interactive development:
-deferred actions are still captured on the global environment and can be executed explicitly via <code><a href="https://withr.r-lib.org/reference/defer.html">withr::deferred_run()</a></code> or implicitly by restarting R.</p>
-<p>We recommend including withr in <code>Suggests</code>, if you’re only going to use it in your tests, or in <code>Imports</code>, if you also use it below <code>R/</code>.
-Call withr functions as we do above, e.g. like <code>withr::local_whatever()</code>, in either case.
-See section <a href="description.html#suggested-packages-and-tests">8.1.1.1</a> for a full discussion.</p>
-<div class="tip">
-<p>The easiest way to add a package to DESCRIPTION is with, e.g., <code>usethis::use_package("withr", type = "Suggests")</code>.
-For tidyverse packages, withr is considered a “free dependency”, i.e. the tidyverse uses withr so
-extensively that we don’t hesitate to use it whenever it would be useful.</p>
-</div>
-<p>withr has a large set of pre-implemented <code>local_*()</code> / <code>with_*()</code> functions that should handle most of your testing needs.
-Here are a couple of the functions most useful when writing tests:</p>
-<ul>
-<li><p><code>local_options()</code> / <code>with_options()</code> (see above)</p></li>
-<li>
-<p><code>local_envvar()</code> / <code>with_envvar()</code> for temporarily setting an environment variable</p>
-<div class="sourceCode" id="cb212"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># from tibble, in tests/testthat/test-utils.R</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"is_rstudio()"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_false</a></span><span class="op">(</span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_envvar.html">with_envvar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>RSTUDIO <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>, <span class="fu">is_rstudio</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true</a></span><span class="op">(</span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_envvar.html">with_envvar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>RSTUDIO <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, <span class="fu">is_rstudio</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-</li>
-<li>
-<p><code>local_tempfile()</code>, <code>local_tempdir()</code>, and <code>local_file()</code> for creating a
-self-destructing file or directory</p>
-<div class="sourceCode" id="cb213"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># from roxygen2, in tests/testthat/test-collate.R</span>
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"can read from file name with utf-8 path"</span>, <span class="op">{</span>
-  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html">local_tempfile</a></span><span class="op">(</span>
-    pattern <span class="op">=</span> <span class="st">"Universit\u00e0-"</span>,
-    lines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"#' @include foo.R"</span>, <span class="cn">NULL</span><span class="op">)</span>
-  <span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">find_includes</span><span class="op">(</span><span class="va">path</span><span class="op">)</span>, <span class="st">"foo.R"</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-</li>
-</ul>
-<p>There are many other functions in withr, so check there before you write your own.
-If nothing exists that meets your need, <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code> is the general way to schedule some action at the end of a test.<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content="&lt;p&gt;Base R’s &lt;code&gt;on.exit()&lt;/code&gt; is another alternative, but it requires more from you.
-You need to capture the original state and write the restoration code yourself.
-Also remember to do &lt;code&gt;on.exit(..., add = TRUE)&lt;/code&gt; if there’s &lt;em&gt;any&lt;/em&gt; chance a second &lt;code&gt;on.exit()&lt;/code&gt; call could be added in the test.
-You probably also want to default to &lt;code&gt;after = FALSE&lt;/code&gt;.&lt;/p&gt;"><sup>31</sup></a></p>
-<p>What if you need to do more than, e.g., set an option, before you can execute your expectations?
-We’re going to make the controversial recommendation that you tolerate a fair amount of duplication in test code, i.e. you can relax some of your DRY (“don’t repeat yourself”) tendencies.</p>
-<p>Here’s a toy example to make things concrete.</p>
-<div class="sourceCode" id="cb214"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"multiplication works"</span>, <span class="op">{</span>
-  <span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fl">3</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">useful_thing</span>, <span class="fl">6</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🥇</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"subtraction works"</span>, <span class="op">{</span>
-  <span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fl">3</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">5</span> <span class="op">-</span> <span class="va">useful_thing</span>, <span class="fl">2</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🎊</span></code></pre></div>
-<p>In real life, <code>useful_thing</code> is usually a more complicated object that somehow feels burdensome to instantiate.
-Notice how <code>useful_thing &lt;- 3</code> appears in more than once place.
-Conventional wisdom says we should DRY this code out.
-It’s tempting to just move <code>useful_thing</code>’s definition outside of the tests:</p>
-<div class="sourceCode" id="cb215"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fl">3</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"multiplication works"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">useful_thing</span>, <span class="fl">6</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🌈</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"subtraction works"</span>, <span class="op">{</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">5</span> <span class="op">-</span> <span class="va">useful_thing</span>, <span class="fl">2</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🎉</span></code></pre></div>
-<p>This does work because when <code>useful_thing</code> is not found in the test-specific environment, the search continues in the parent environment, where <code>useful_thing</code> will often be found.
-When testthat executes an entire test file, <code>useful_thing</code> will get defined and made available for subsequent tests in that file.
-However, during interactive development, there is no gesture to systematically identify and execute such code.
-Top-level code, outside of any test, is in a sort of No Man’s Land: it’s fine when your tests are all passing, but when something goes wrong and a test fails you now have to encounter a bunch of extra pain when it need the least.
-Below we recommend various robust and structured solutions to this problem.</p>
-<p>But first, seriously consider inlining the creation of a <code>useful_thing</code> whenever you need it.
-Is it truly expensive to create a <code>useful_thing</code> or does it just bug you to see <code>useful_thing &lt;- 3</code> in multiple places?
-The blog post <a href="https://mtlynch.io/good-developers-bad-tests/">Why Good Developers Write Bad Unit Tests</a> makes a compelling argument that the requirements of test code and production code are different:</p>
-<blockquote>
-<p>Keep the reader in your test function.
-Good production code is well-factored; good test code is obvious.
-… think about what will make the problem obvious when a test fails.</p>
-</blockquote>
-<p>This captures why we advocate inlining logic and objects, where practical.
-Imagine yourself troubleshooting a test that’s suddenly started failing on CRAN or on GitHub Actions.
-If the test is self-sufficient, you can basically focus your attention to the universe contained within <code>test_that("your code works", { ... })</code>.
-The code inside <code>{ ... }</code> will either explicitly create all the necessary objects and conditions or make explicit calls to specific helpers or fixtures (explained below).
-We find this a more sustainable workflow than hunting through a test file for top-level calls that need to be executed in order to work on the tests.</p>
-</div>
-</div>
-<div id="test-fixtures" class="section level3">
-<h3>
-<span class="header-section-number">12.5.2</span> Test fixtures<a class="anchor" aria-label="anchor" href="#test-fixtures"><i class="fas fa-link"></i></a>
-</h3>
-<p>When it’s not practical to make your test entirely self-sufficient, prefer making the necessary object or logic available in a structured, explicit way.
-We describe several specific solutions.</p>
-<div id="store-a-concrete-useful_thing-persistently" class="section level4">
-<h4>
-<span class="header-section-number">12.5.2.1</span> Store a concrete <code>useful_thing</code> persistently<a class="anchor" aria-label="anchor" href="#store-a-concrete-useful_thing-persistently"><i class="fas fa-link"></i></a>
-</h4>
-<p>If a <code>useful_thing</code> is costly to create, in terms of time or memory, maybe you don’t actually need to re-create it for each test run.
-You could make the <code>useful_thing</code> once, store it as a static test fixture, and load it in the tests that need it.
-Here’s a sketch of how this could look:</p>
-<div class="sourceCode" id="cb216"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does this"</span>, <span class="op">{</span>
-  <span class="va">useful_thing1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_path.html">test_path</a></span><span class="op">(</span><span class="st">"fixtures"</span>, <span class="st">"useful_thing.rds"</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">useful_thing1</span>, x <span class="op">=</span> <span class="st">"this"</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does that"</span>, <span class="op">{</span>
-  <span class="va">useful_thing2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_path.html">test_path</a></span><span class="op">(</span><span class="st">"fixtures"</span>, <span class="st">"useful_thing.rds"</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">useful_thing2</span>, x <span class="op">=</span> <span class="st">"that"</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-<div class="tip">
-<p><code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code> is a handy function for building robust paths for files that live below <code>tests/testthat/</code>.
-The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory is more likely to be <code>tests/testthat/</code>.</p>
-</div>
-<!-- I feel like we should say something about storing the code that creates `tests/testthat/fixtures/useful_thing.rds`, similar to what we advocate for data / `use_data()`, `data_raw/`. -->
-</div>
-<div id="create-useful_things-with-a-helper-function" class="section level4">
-<h4>
-<span class="header-section-number">12.5.2.2</span> Create <code>useful_thing</code>s with a helper function<a class="anchor" aria-label="anchor" href="#create-useful_things-with-a-helper-function"><i class="fas fa-link"></i></a>
-</h4>
-<p>Is it fiddly to create a <code>useful_thing</code>?
-Does it take several lines of code, but not much time or memory?
-In that case, write a helper function to create a <code>useful_thing</code> on-demand:</p>
-<div class="sourceCode" id="cb217"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">new_useful_thing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
-  <span class="co"># your fiddly code to create a useful_thing goes here</span>
-<span class="op">}</span></code></pre></div>
-<p>and call that helper in the affected tests:</p>
-<div class="sourceCode" id="cb218"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does this"</span>, <span class="op">{</span>
-  <span class="va">useful_thing1</span> <span class="op">&lt;-</span> <span class="fu">new_useful_thing</span><span class="op">(</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">useful_thing1</span>, x <span class="op">=</span> <span class="st">"this"</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does that"</span>, <span class="op">{</span>
-  <span class="va">useful_thing2</span> <span class="op">&lt;-</span> <span class="fu">new_useful_thing</span><span class="op">(</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">useful_thing2</span>, x <span class="op">=</span> <span class="st">"that"</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>Where should the <code>new_useful_thing()</code> helper be defined?
-For new code and actively maintained code, we recommend defining it like any other internal helper, i.e. in a file below <code>R/</code>.
-If it logically fits into an existing <code>.R</code> file, put it there.
-Otherwise, consider making a file for test utilities, such as <code>R/utils-testing.R</code> or <code>R/test-helpers.R</code>.</p>
-<p>A key advantage of this solution is that the <code>new_useful_thing()</code> helper is available to you during interactive development after <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> and during automated test runs (<code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_active_file()</a></code>, <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>, etc.), because this is true of all unexported functions.
-Helper code that is lying around in other places, e.g. sprinkled around in test files, does not have this property.</p>
-<p>If it’s fiddly AND costly to create a <code>useful_thing</code>, your helper function could even use memoisation to avoid unnecessary re-computation.
-Once you have a helper like <code>new_useful_thing()</code>, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
-Sometimes you even realize you should just export and document it, so you can use it freely in documentation and tests.</p>
-<p>Another, older location for defining test helpers is <code>tests/testthat/helper.R</code>.
-Any <code>.R</code> file below <code>tests/testthat/</code> that starts with <code>helper</code> gets special treatment by testthat and devtools.
-By default, such files are sourced by <code><a href="https://devtools.r-lib.org/reference/load_all.html">load_all()</a></code> and when you run entire test file or the entire test suite.
-This is a legacy approach which still works, but it has no advantage over defining helpers below <code>R/</code>.
-Avoid this in new code and consider relocating any existing code in <code>tests/testthat/helper.R</code> files when updating a package.</p>
-<!-- The way I load a token in gargle-using packages in helper.R is actually something that does NOT work "just as well" below `R/`. It could happen in setup.R I suppose, but I actually want / need it to be executed by `load_all()`. I'm not entirely sold on the deprecation of helper.R. -->
-<!-- Drafting this made me realize how hard it is to learn about the role of special files in testthat. It's really not spelled out in any obvious way in the testthat docs. 
-Update: I am wrong. I eventually found it here! But I still think lots of people don't find this.
-
-https://testthat.r-lib.org/reference/test_file.html?q=setup#special-files
-
-There are two types of .R file that have special behaviour:
-
-Test files start with test and are executed in alphabetical order.
-
-Setup files start with setup and are executed before tests. If clean up is needed after all tests have been run, you can use withr::defer(clean_up(), teardown_env()). See vignette("test-fixtures") for more details.
-
-There are two other types of special file that we no longer recommend using:
-
-Helper files start with helper and are executed before tests are run. They're also loaded by devtools::load_all(), so there's no real point to them and you should just put your helper code in R/.
-
-Teardown files start with teardown and are executed after the tests are run. Now we recommend interleave setup and cleanup code in setup- files, making it easier to check that you automatically clean up every mess that you make.
-
-All other files are ignored by testthat.
--->
-</div>
-<div id="create-and-destroy-a-local-useful_thing" class="section level4">
-<h4>
-<span class="header-section-number">12.5.2.3</span> Create (and destroy) a “local” <code>useful_thing</code><a class="anchor" aria-label="anchor" href="#create-and-destroy-a-local-useful_thing"><i class="fas fa-link"></i></a>
-</h4>
-<p>So far, our example of a <code>useful_thing</code> was a regular R object, which is cleaned-up automatically at the end of each test.
-What if the creation of a <code>useful_thing</code> has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like?
-Then your helper function should create a <code>useful_thing</code> <strong>and clean up afterwards</strong>.
-Instead of a simple <code>new_useful_thing()</code> constructor, you’ll write a customized function in the style of withr’s <code>local_*()</code> functions:</p>
-<div class="sourceCode" id="cb219"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">local_useful_thing</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">...</span>, <span class="va">env</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sys.parent.html">parent.frame</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-  <span class="co"># your fiddly code to create a useful_thing goes here</span>
-  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/defer.html">defer</a></span><span class="op">(</span>
-    <span class="co"># your fiddly code to clean up after a useful_thing goes here</span>
-    envir <span class="op">=</span> <span class="va">env</span>
-  <span class="op">)</span>
-<span class="op">}</span></code></pre></div>
-<p>Use it in your tests like this:</p>
-<div class="sourceCode" id="cb220"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does this"</span>, <span class="op">{</span>
-  <span class="va">useful_thing1</span> <span class="op">&lt;-</span> <span class="fu">local_useful_thing</span><span class="op">(</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">useful_thing1</span>, x <span class="op">=</span> <span class="st">"this"</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does that"</span>, <span class="op">{</span>
-  <span class="va">useful_thing2</span> <span class="op">&lt;-</span> <span class="fu">local_useful_thing</span><span class="op">(</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">foofy</span><span class="op">(</span><span class="va">useful_thing2</span>, x <span class="op">=</span> <span class="st">"that"</span><span class="op">)</span>, <span class="va">EXPECTED_FOOFY_OUTPUT</span><span class="op">)</span>
-<span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>Just like <code>new_useful_thing()</code>, the best place to define <code>local_useful_thing()</code> is in a file below <code>R/</code>, making it available during interactive development and and during automated testing.
-To learn more about writing custom helpers like <code>local_useful_thing()</code>, see the <a href="https://testthat.r-lib.org/articles/test-fixtures.html">testthat vignette on test fixtures</a>.</p>
-<!-- 
-Quoting from https://testthat.r-lib.org/articles/test-fixtures.html#test-fixtures
-
-> A test fixture is just a local_ function that you use to change state in such a way that you can reach inside and test parts of your code that would otherwise be challenging.
-
-Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R package) is the fixture.
-
-The local_*() function instantiates a fixture and schedules it's destruction.
--->
-</div>
-</div>
-<div id="setup-and-teardown" class="section level3">
-<h3>
-<span class="header-section-number">12.5.3</span> Setup and teardown<a class="anchor" aria-label="anchor" href="#setup-and-teardown"><i class="fas fa-link"></i></a>
-</h3>
-<p>Sometimes there is truly global test setup that would be impractical to build into every single test and that might be tailored for test execution in non-interactive or remote environments.
-Examples:</p>
-<ul>
-<li>Turning off behaviour aimed at an interactive user, such as messaging or
-writing to the clipboard.</li>
-<li>Loading a credential for auth.</li>
-<li>Setting up a cache folder.</li>
-</ul>
-<p>Put such code in <code>tests/testthat/setup.R</code>.
-In fact, any file in that directory whose name starts with “setup” is treated as a setup file.
-Setup files are run by testthat before running whole test files.
-Note that setup code is <em>not</em> run by <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</p>
-<p>If any of your setup should be reversed after test execution, you should also include the necessary teardown code in <code>setup.R</code>.
-We recommend maintaining teardown code alongside the setup code, in <code>setup.R</code>, because this makes it easier to ensure they stay in sync.
-The artificial environment <code>teatdown_env()</code> exists as a magical handle to use in <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code> and <code>withr::local_*()</code> / <code>withr::with_*()</code>.
-A legacy approach (which still works, but is no longer recommended) is to put teardown code in <code>tests/testthat/teardown.R</code>.</p>
-<p>Here’s a <code>setup.R</code> example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:</p>
-<div class="sourceCode" id="cb221"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>reprex.clipboard <span class="op">=</span> <span class="cn">FALSE</span>, reprex.html_preview <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/defer.html">defer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span>, <span class="fu"><a href="https://testthat.r-lib.org/reference/teardown_env.html">teardown_env</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>Since we are just modifying options here, we can be even more concise and use the pre-built function <code><a href="https://withr.r-lib.org/reference/with_options.html">withr::local_options()</a></code>:</p>
-<div class="sourceCode" id="cb222"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>reprex.clipboard <span class="op">=</span> <span class="cn">FALSE</span>, reprex.html_preview <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/teardown_env.html">teardown_env</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">)</span></code></pre></div>
-</div>
+<p>When you use these actions in tests, you’ll need to clean up after yourself.
+While many other testing packages have set-up and teardown methods that are run automatically before and after each test, these are not so important with testthat because you can create objects outside of the tests and you can rely on R’s copy-on-modify semantics to keep them unchanged between test runs.
+To clean up other actions you can use regular R functions.</p>
 <div id="what-to-test" class="section level3">
 <h3>
-<span class="header-section-number">12.5.4</span> What to test<a class="anchor" aria-label="anchor" href="#what-to-test"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.3.1</span> What to test<a class="anchor" aria-label="anchor" href="#what-to-test"><i class="fas fa-link"></i></a>
 </h3>
 <blockquote>
 <p>Whenever you are tempted to type something into a print statement or a
@@ -1086,90 +413,40 @@ problem.</p></li>
 </div>
 <div id="skipping-a-test" class="section level3">
 <h3>
-<span class="header-section-number">12.5.5</span> Skipping a test<a class="anchor" aria-label="anchor" href="#skipping-a-test"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.3.2</span> Skipping a test<a class="anchor" aria-label="anchor" href="#skipping-a-test"><i class="fas fa-link"></i></a>
 </h3>
 <p>Sometimes it’s impossible to perform a test - you may not have an internet connection or you may be missing an important file.
 Unfortunately, another likely reason follows from this simple rule:
 the more machines you use to write your code, the more likely it is that you won’t be able to run all of your tests.
 In short, there are times when, instead of getting a failure, you just want to skip a test.
 To do that, you can use the <code><a href="https://testthat.r-lib.org/reference/skip.html">skip()</a></code> function - rather than throwing an error it simply prints an <code>S</code> in the output.</p>
-<div class="sourceCode" id="cb223"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">skip_if_no_api</span><span class="op">(</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
-  <span class="kw">if</span> <span class="op">(</span><span class="fu">api_unavailable</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
+<div class="sourceCode" id="cb193"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">check_api</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
+  <span class="kw">if</span> <span class="op">(</span><span class="fu">not_working</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
     <span class="fu"><a href="https://testthat.r-lib.org/reference/skip.html">skip</a></span><span class="op">(</span><span class="st">"API not available"</span><span class="op">)</span>
   <span class="op">}</span>
 <span class="op">}</span>
 
 <span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foo api returns bar when given baz"</span>, <span class="op">{</span>
-  <span class="fu">skip_if_no_api</span><span class="op">(</span><span class="op">)</span>
+  <span class="fu">check_api</span><span class="op">(</span><span class="op">)</span>
   <span class="va">...</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>The custom skipper <code>skip_if_no_api()</code> is a yet another example of a test helper and the advice already given about where to define it applies here too.
-Likewise, we lean towards calling <code>skip_if_no_api()</code> in each test where it’s needed, even though this might lead to repetition.
-This is another type of call that is tempting to hoist to the top-level of a test file:</p>
-<div class="sourceCode" id="cb224"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">skip_if_no_api</span><span class="op">(</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foo api returns bar when given baz"</span>, <span class="op">{</span><span class="va">...</span><span class="op">}</span><span class="op">)</span>
-
-<span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foo api returns an errors when given qux"</span>, <span class="op">{</span><span class="va">...</span><span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>We have mixed feelings about this practice.
-Within the realm of top-level code in test files, this is probably on the “more acceptable” / “least offensive” end.
-But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.</p>
-<p>At the complete other extreme, another practice that can make sense in very specific situations is to build a <code><a href="https://testthat.r-lib.org/reference/skip.html">skip()</a></code> directly into a package function.
-Here’s an example from pkgdown, in <code>convert_markdown_to_html()</code>, which absolutely, positively cannot work if the Pandoc tool is unavailable:</p>
-<p><a href="https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106" class="uri">https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106</a></p>
-<div class="sourceCode" id="cb225"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># in r-lib/pkgdown/R/markdown.R</span>
-<span class="va">convert_markdown_to_html</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">in_path</span>, <span class="va">out_path</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
-  <span class="kw">if</span> <span class="op">(</span><span class="fu">rmarkdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgs.rstudio.com/rmarkdown/reference/pandoc_available.html">pandoc_available</a></span><span class="op">(</span><span class="st">"2.0"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-    <span class="va">from</span> <span class="op">&lt;-</span> <span class="st">"markdown+gfm_auto_identifiers-citations+emoji+autolink_bare_uris"</span>
-  <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="fu">rmarkdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgs.rstudio.com/rmarkdown/reference/pandoc_available.html">pandoc_available</a></span><span class="op">(</span><span class="st">"1.12.3"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-    <span class="va">from</span> <span class="op">&lt;-</span> <span class="st">"markdown_github-hard_line_breaks+tex_math_dollars+tex_math_single_backslash+header_attributes"</span>
-  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
-    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://testthat.r-lib.org/reference/is_testing.html">is_testing</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-      <span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/skip.html">skip</a></span><span class="op">(</span><span class="st">"Pandoc not available"</span><span class="op">)</span>
-    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
-      <span class="fu">abort</span><span class="op">(</span><span class="st">"Pandoc not available"</span><span class="op">)</span>
-    <span class="op">}</span>
-  <span class="op">}</span>
-  
-  <span class="fu">rmarkdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgs.rstudio.com/rmarkdown/reference/pandoc_convert.html">pandoc_convert</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
-<p>When this function executes, in the absence of Pandoc, it throws an error <em>unless</em> it appears to part of a test run, in which it skips the test.
-This is an alternative to implementing a custom skipper, e.g. <code>skip_if_no_pandoc()</code>, and inserting it into many of pkgdown’s tests.</p>
-<p>Advantages of this approach: Feels elegant and concise.</p>
-<p>Disadvantages of this approach: Seems to violate “Good production code is well-factored; good test code is obvious”, i.e. when you’re focused on the tests, the existence of this skip is easy to miss.</p>
-<!-- I want to talk about the danger of skipping, i.e. when you think everything's "green", but actually you're not running any / many tests, because some pre-condition is not met. -->
 </div>
 <div id="building-your-own-testing-tools" class="section level3">
 <h3>
-<span class="header-section-number">12.5.6</span> Building your own testing tools<a class="anchor" aria-label="anchor" href="#building-your-own-testing-tools"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.3.3</span> Building your own testing tools<a class="anchor" aria-label="anchor" href="#building-your-own-testing-tools"><i class="fas fa-link"></i></a>
 </h3>
-<!--
-Why Good Developers Write Bad Unit Tests
-https://mtlynch.io/good-developers-bad-tests/
-"Your natural inclination might be to delegate all the uninteresting code to test helper methods, but you should first ask a more vital question: why is the system so difficult to test? Excessive boilerplate code is often a symptom of weak architecture."
-"When tempted to write test helper methods, try refactoring your production code instead."
--->
-<p>Let’s return to the topic of duplication in your test code.
-We’ve encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious.
-But there’s still a limit to how much repetition to tolerate.
-We’ve covered techniques such as loading static objects with <code><a href="https://testthat.r-lib.org/reference/test_path.html">test_path()</a></code>, writing a constructor like <code>new_useful_thing()</code>, or implementing a test fixture like <code>local_useful_thing()</code>.
-There are even more types of test helpers that can be useful in certain situations.</p>
-<p>For example, the following code shows one test of the <code><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date()</a></code> function from <code><a href="https://lubridate.tidyverse.org">library(lubridate)</a></code>.
+<p>As you start to write more tests, you might notice duplication in your code.
+For example, the following code shows one test of the <code><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date()</a></code> function from <code><a href="https://lubridate.tidyverse.org">library(lubridate)</a></code>.
 There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.
-There’s a lot of duplication here, which increases the chance of copy / paste errors and generally makes your eyes glaze over.</p>
-<div class="sourceCode" id="cb226"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># this library call would NOT appear in a real test file for lubridate</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://lubridate.tidyverse.org">lubridate</a></span><span class="op">)</span>
+There’s a lot of duplication (which increases the chance of bugs), so we might want to extract common behaviour into a new function.</p>
+<div class="sourceCode" id="cb194"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://lubridate.tidyverse.org">lubridate</a></span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Attaching package: 'lubridate'</span>
 <span class="co">#&gt; The following objects are masked from 'package:base':</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     date, intersect, setdiff, union</span>
-
 <span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"floor_date works for different units"</span>, <span class="op">{</span>
   <span class="va">base</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
 
@@ -1189,15 +466,13 @@ There’s a lot of duplication here, which increases the chance of copy / paste 
     <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="st">"2009-01-01 00:00:00"</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span>
 <span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🥇</span></code></pre></div>
-<p>A nice move here is to create some hyper-local helper functions to make each expectation more concise.
-Now each expectation fits on one line, which allows us read the actual and expected value like a table.
-This makes it easier to see the expected floor evolve, as we vary the <code>unit</code> from <code>second</code> to <code>year</code>:</p>
-<!-- I actually think that, for THIS SPECIFIC EXAMPLE, this is exactly the right level of customization. When we take the next step, below, it feels weird. -->
-<div class="sourceCode" id="cb227"><pre class="downlit sourceCode r">
+<p>I’d start by defining a couple of helper functions to make each expectation more concise.
+That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:</p>
+<div class="sourceCode" id="cb195"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"floor_date works for different units"</span>, <span class="op">{</span>
-  <span class="va">as_time</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">x</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-  <span class="va">base</span> <span class="op">&lt;-</span> <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span><span class="op">)</span>
+  <span class="va">base</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
   <span class="va">floor_base</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">unit</span><span class="op">)</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="va">base</span>, <span class="va">unit</span><span class="op">)</span>
+  <span class="va">as_time</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">x</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
 
   <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">floor_base</span><span class="op">(</span><span class="st">"second"</span><span class="op">)</span>, <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59"</span><span class="op">)</span><span class="op">)</span>
   <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">floor_base</span><span class="op">(</span><span class="st">"minute"</span><span class="op">)</span>, <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-08-03 12:01:00"</span><span class="op">)</span><span class="op">)</span>
@@ -1207,117 +482,75 @@ This makes it easier to see the expected floor evolve, as we vary the <code>unit
   <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">floor_base</span><span class="op">(</span><span class="st">"month"</span><span class="op">)</span>,  <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-08-01 00:00:00"</span><span class="op">)</span><span class="op">)</span>
   <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">floor_base</span><span class="op">(</span><span class="st">"year"</span><span class="op">)</span>,   <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-01-01 00:00:00"</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🎊</span></code></pre></div>
-<!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
+<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🥇</span></code></pre></div>
+<p>We could go a step further and create a custom expectation function:</p>
+<div class="sourceCode" id="cb196"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">base</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
 
-* Fall in with the `object, expected, details` pattern the most expectations have.
-* Modern approach to NSE / metaprogramming.
-
-But the basically fixed "base" the primary actual input and the need to as_time() everything adds a lot of fiddliness.
--->
-<p>We could go a step further and create a custom expectation function that wraps <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code>:</p>
-<div class="sourceCode" id="cb228"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">expect_floor_date</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span>, <span class="va">expected</span>, <span class="va">unit</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">as_time</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">x</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="fu">as_time</span><span class="op">(</span><span class="va">object</span><span class="op">)</span>, <span class="va">unit</span><span class="op">)</span>, <span class="fu">as_time</span><span class="op">(</span><span class="va">expected</span><span class="op">)</span><span class="op">)</span>
+<span class="va">expect_floor_equal</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">unit</span>, <span class="va">time</span><span class="op">)</span> <span class="op">{</span>
+  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="va">base</span>, <span class="va">unit</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">time</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span>
-
-<span class="fu">expect_floor_date</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, <span class="st">"2009-01-01 00:00:00"</span>, <span class="st">"year"</span><span class="op">)</span></code></pre></div>
-<p>However, if this expectation fails, the output of such a super-simple wrapper is less than ideal:</p>
-<div class="sourceCode" id="cb229"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">expect_floor_date</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, <span class="st">"2222-02-01 00:00:00"</span>, <span class="st">"year"</span><span class="op">)</span>
-<span class="co">#&gt; Error: floor_date(as_time(object), unit) (`actual`) not equal to as_time(expected) (`expected`).</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; `actual`:   <span style="color: #00BB00;">"2009-01-01"</span></span>
-<span class="co">#&gt; `expected`: <span style="color: #00BB00;">"2222-02-01"</span></span></code></pre></div>
-<p>If you’re going to create a custom expectation, you should probably take the next step and do the non-standard evaluation or meta-programming work to give yourself an intelligible and actionable failure message.</p>
-<div class="sourceCode" id="cb230"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">expect_floor_date</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span>, <span class="va">expected</span>, <span class="va">unit</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">act</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://testthat.r-lib.org/reference/quasi_label.html">quasi_label</a></span><span class="op">(</span><span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/enquo.html">enquo</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>, arg <span class="op">=</span> <span class="st">"object"</span><span class="op">)</span>
-  <span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://testthat.r-lib.org/reference/quasi_label.html">quasi_label</a></span><span class="op">(</span><span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/enquo.html">enquo</a></span><span class="op">(</span><span class="va">expected</span><span class="op">)</span>, arg <span class="op">=</span> <span class="st">"expected"</span><span class="op">)</span>
-  <span class="va">as_time</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">x</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-  
-  <span class="co"># I want to do a modern waldo-y comparison</span>
-  <span class="co"># is that possible without `testthat:::`?</span>
-  <span class="va">comp</span> <span class="op">&lt;-</span> <span class="fu">testthat</span><span class="fu">:::</span><span class="fu">waldo_compare</span><span class="op">(</span>
-    <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="fu">as_time</span><span class="op">(</span><span class="va">object</span><span class="op">)</span>, unit <span class="op">=</span> <span class="va">unit</span><span class="op">)</span>,
-    <span class="fu">as_time</span><span class="op">(</span><span class="va">expected</span><span class="op">)</span>,
-    x_arg <span class="op">=</span> <span class="st">"actual"</span>, y_arg <span class="op">=</span> <span class="st">"expected"</span>
-  <span class="op">)</span>
-
-  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect.html">expect</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">comp</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span>,
-    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
-      <span class="co"># could just use object here? I don't see why act$lab is needed</span>
-      <span class="fu">glue</span><span class="fu">::</span><span class="fu"><a href="https://glue.tidyverse.org/reference/glue.html">glue</a></span><span class="op">(</span><span class="st">"floor_date({act$lab}, \"{unit}\") not equal to {exp$lab}"</span><span class="op">)</span>,
-      <span class="va">comp</span>
-    <span class="op">)</span>,
-    trace_env <span class="op">=</span> <span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/stack.html">caller_env</a></span><span class="op">(</span><span class="op">)</span>
-  <span class="op">)</span>
-
-  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">act</span><span class="op">$</span><span class="va">val</span><span class="op">)</span>
-<span class="op">}</span>
-
-<span class="co"># success</span>
-<span class="fu">expect_floor_date</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, <span class="st">"2009-01-01 00:00:00"</span>, <span class="st">"year"</span><span class="op">)</span>
-
-<span class="co"># failure</span>
-<span class="fu">expect_floor_date</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span>, <span class="st">"2222-02-01 00:00:00"</span>, <span class="st">"year"</span><span class="op">)</span>
-<span class="co">#&gt; Error: floor_date("2009-08-03 12:01:59.23", "year") not equal to "2222-02-01 00:00:00"</span>
-<span class="co">#&gt; `actual`:   <span style="color: #00BB00;">"2009-01-01"</span></span>
-<span class="co">#&gt; `expected`: <span style="color: #00BB00;">"2222-02-01"</span></span></code></pre></div>
-<p><em>I’m keeping the “old way” here, so we can see how the previous custom expectation example played out.</em></p>
-<p>The key is to use <code><a href="https://rdrr.io/r/base/bquote.html">bquote()</a></code> and <code><a href="https://rdrr.io/r/base/eval.html">eval()</a></code>.
+<span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"2009-01-01 00:00:00"</span><span class="op">)</span></code></pre></div>
+<p>However, if the expectation fails this doesn’t give very informative output:</p>
+<div class="sourceCode" id="cb197"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"2008-01-01 00:00:00"</span><span class="op">)</span></code></pre></div>
+<p>Instead you can use a little <a href="https://adv-r.hadley.nz/metaprogramming.html">non-standard evaluation</a> to produce something more informative.
+The key is to use <code><a href="https://rdrr.io/r/base/bquote.html">bquote()</a></code> and <code><a href="https://rdrr.io/r/base/eval.html">eval()</a></code>.
 In the <code><a href="https://rdrr.io/r/base/bquote.html">bquote()</a></code> call below, note the use of <code>.(x)</code> - the contents of <code>()</code> will be inserted into the call.</p>
-<div class="sourceCode" id="cb231"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">expect_floor_old_skool</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">unit</span>, <span class="va">time</span><span class="op">)</span> <span class="op">{</span>
+<div class="sourceCode" id="cb198"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">expect_floor_equal</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">unit</span>, <span class="va">time</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">as_time</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">x</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-  <span class="va">base</span> <span class="op">&lt;-</span> <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span><span class="op">)</span>
   <span class="fu"><a href="https://rdrr.io/r/base/eval.html">eval</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/bquote.html">bquote</a></span><span class="op">(</span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="va">base</span>, <span class="fu">.</span><span class="op">(</span><span class="va">unit</span><span class="op">)</span><span class="op">)</span>, <span class="fu">as_time</span><span class="op">(</span><span class="fu">.</span><span class="op">(</span><span class="va">time</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span>
-<span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"2008-01-01 00:00:00"</span><span class="op">)</span>
-<span class="co">#&gt; Error: floor_date(base, "year") (`actual`) not equal to as_time("2008-01-01 00:00:00") (`expected`).</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; `actual`:   <span style="color: #00BB00;">"2009-01-01"</span></span>
-<span class="co">#&gt; `expected`: <span style="color: #00BB00;">"2008-01-01"</span></span>
-<span class="co"># Error: floor_date(base, "year") not equal to as_time("2008-01-01 00:00:00").</span>
-<span class="co"># 1/1 mismatches</span>
-<span class="co"># [1] 2009-01-01 - 2008-01-01 == 366 days</span></code></pre></div>
+<span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"2008-01-01 00:00:00"</span><span class="op">)</span></code></pre></div>
 <p>This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what’s changing.
 Readable tests give you more confidence that they’re correct.</p>
-<div class="sourceCode" id="cb232"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb199"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"floor_date works for different units"</span>, <span class="op">{</span>
   <span class="va">as_time</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html">as.POSIXct</a></span><span class="op">(</span><span class="va">x</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-  
-  <span class="va">expect_floor_old_skool</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">unit</span>, <span class="va">time</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">expect_floor_equal</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">unit</span>, <span class="va">time</span><span class="op">)</span> <span class="op">{</span>
     <span class="fu"><a href="https://rdrr.io/r/base/eval.html">eval</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/bquote.html">bquote</a></span><span class="op">(</span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="va">base</span>, <span class="fu">.</span><span class="op">(</span><span class="va">unit</span><span class="op">)</span><span class="op">)</span>, <span class="fu">as_time</span><span class="op">(</span><span class="fu">.</span><span class="op">(</span><span class="va">time</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
   <span class="op">}</span>
-  
+
   <span class="va">base</span> <span class="op">&lt;-</span> <span class="fu">as_time</span><span class="op">(</span><span class="st">"2009-08-03 12:01:59.23"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"second"</span>, <span class="st">"2009-08-03 12:01:59"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"minute"</span>, <span class="st">"2009-08-03 12:01:00"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"hour"</span>,   <span class="st">"2009-08-03 12:00:00"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"day"</span>,    <span class="st">"2009-08-03 00:00:00"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"week"</span>,   <span class="st">"2009-08-02 00:00:00"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"month"</span>,  <span class="st">"2009-08-01 00:00:00"</span><span class="op">)</span>
-  <span class="fu">expect_floor_old_skool</span><span class="op">(</span><span class="st">"year"</span>,   <span class="st">"2009-01-01 00:00:00"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"second"</span>, <span class="st">"2009-08-03 12:01:59"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"minute"</span>, <span class="st">"2009-08-03 12:01:00"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"hour"</span>,   <span class="st">"2009-08-03 12:00:00"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"day"</span>,    <span class="st">"2009-08-03 00:00:00"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"week"</span>,   <span class="st">"2009-08-02 00:00:00"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"month"</span>,  <span class="st">"2009-08-01 00:00:00"</span><span class="op">)</span>
+  <span class="fu">expect_floor_equal</span><span class="op">(</span><span class="st">"year"</span>,   <span class="st">"2009-01-01 00:00:00"</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🎊</span></code></pre></div>
+<span class="co">#&gt; <span style="color: #00BB00;">Test passed</span> 🌈</span></code></pre></div>
 </div>
+</div>
+<div id="test-files" class="section level2">
+<h2>
+<span class="header-section-number">12.4</span> Test files<a class="anchor" aria-label="anchor" href="#test-files"><i class="fas fa-link"></i></a>
+</h2>
+<p>The highest-level structure of tests is the file.
+<del>Each file should contain a single <code><a href="https://dplyr.tidyverse.org/reference/context.html">context()</a></code> call that provides a brief description of its contents.</del>
+<em>We are in the process of revising this chapter for the 2nd edition.
+Let it be known that the use of <code><a href="https://testthat.r-lib.org/reference/context.html">testthat::context()</a></code> is now discouraged.
+Don’t use <code><a href="https://dplyr.tidyverse.org/reference/context.html">context()</a></code> in new code and remove <code><a href="https://dplyr.tidyverse.org/reference/context.html">context()</a></code> when you come across it during package maintenance.</em>
+Just like the files in the <code>R/</code> directory, you are free to organise your tests any way that you like.
+But again, the two extremes are clearly bad (all tests in one file, one file per test).
+You need to find a happy medium that works for you.
+A good starting place is to have one file of tests for each complicated function.</p>
 </div>
 <div id="test-cran" class="section level2">
 <h2>
-<span class="header-section-number">12.6</span> CRAN notes<a class="anchor" aria-label="anchor" href="#test-cran"><i class="fas fa-link"></i></a>
+<span class="header-section-number">12.5</span> CRAN notes<a class="anchor" aria-label="anchor" href="#test-cran"><i class="fas fa-link"></i></a>
 </h2>
-<p>CRAN will run your tests on all CRAN platforms: Windows, Mac, and Linux.
+<p>CRAN will run your tests on all CRAN platforms: Windows, Mac, Linux and Solaris.
 There are a few things to bear in mind:</p>
 <ul>
 <li><p>Tests need to run relatively quickly - aim for under a minute.
 Place <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> at the beginning of long-running tests that shouldn’t
 be run on CRAN - they’ll still be run locally, but not on CRAN.</p></li>
-<li><p>~Note that tests are always run in the English language (<code>LANGUAGE=EN</code>) and
+<li><p>Note that tests are always run in the English language (<code>LANGUAGE=EN</code>) and
 with C sort order (<code>LC_COLLATE=C</code>).
-This minimises spurious differences between platforms.~ <em>This is not true.</em></p></li>
+This minimises spurious differences between platforms.</p></li>
 <li><p>Be careful about testing things that are likely to be variable on CRAN
 machines.
 It’s risky to test how long something takes (because CRAN machines are often
@@ -1327,117 +560,8 @@ Numerical precision can also vary across platforms (it’s often less precise on
 32-bit versions of R) so use <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code> rather than
 <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code>.</p></li>
 </ul>
-<p>CRAN revision thought dump:</p>
-<ul>
-<li>Enrich description of platforms, i.e. say more than “Windows, Mac, Linux”.
-The check flavors: <a href="https://cran.r-project.org/web/checks/check_flavors.html" class="uri">https://cran.r-project.org/web/checks/check_flavors.html</a>.
-<ul>
-<li>Draw a line to how this determines which “flavors” a package should be
-checked on.
-Depends on how broad the user base is and the “trickiness” of the package’s
-code (e.g. does it need compilation?).
-Do a cost benefit analysis.
-Connect that to which <code>usethis::use_github_action_check_*()</code> variant is
-appropriate.</li>
-</ul>
-</li>
-<li>How to decide whether to let a test run on CRAN.
-If the test can fail WITHOUT indicating a defect in your package that merits
-removal from CRAN, do not let CRAN run the test. Examples:
-<ul>
-<li>Accessing a website or API that could ever be down or have an
-occasional error (so: any website or API on planet earth).</li>
-<li>Exact formatting of a message.</li>
-<li>File system work typical of an authentic user that touches files any where
-but the R session’s temp directory. This includes reading or writing the
-clipboard.</li>
-</ul>
-</li>
-<li>How to prevent a test from running on CRAN.
-<ul>
-<li>
-<code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code>, <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_os()</a></code>
-</li>
-<li>Default behaviour for snapshot tests</li>
-<li>Keep in a separate repo</li>
-</ul>
-</li>
-</ul>
-</div>
-<div id="miscellaneous-sections-to-maybe-add" class="section level2">
-<h2>
-<span class="header-section-number">12.7</span> Miscellaneous sections to (maybe) add<a class="anchor" aria-label="anchor" href="#miscellaneous-sections-to-maybe-add"><i class="fas fa-link"></i></a>
-</h2>
-<div id="mocking" class="section level3">
-<h3>
-<span class="header-section-number">12.7.1</span> Mocking<a class="anchor" aria-label="anchor" href="#mocking"><i class="fas fa-link"></i></a>
-</h3>
-</div>
-<div id="filesystem-matters" class="section level3">
-<h3>
-<span class="header-section-number">12.7.2</span> Filesystem matters<a class="anchor" aria-label="anchor" href="#filesystem-matters"><i class="fas fa-link"></i></a>
-</h3>
-<p>Do not write into <code>tests/testthat/</code> during your tests.</p>
-<p>The only place you should write into is session temp dir.</p>
-<p>Even then, best practice is to clean up any files or folder you create.</p>
-<p>Ways to be build good paths:</p>
-<ul>
-<li><code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code></li>
-<li>
-<code><a href="https://fs.r-lib.org/reference/path_package.html">fs::path_package()</a></code> and <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>
-</li>
-</ul>
-</div>
-<div id="namespace" class="section level3">
-<h3>
-<span class="header-section-number">12.7.3</span> Namespace<a class="anchor" aria-label="anchor" href="#namespace"><i class="fas fa-link"></i></a>
-</h3>
-<p>You can call / test all of your own package’s functions without any special effort on your part, regardless of whether they are exported or not.</p>
-<p>That is provided at test time by <code>testhat::test_file()</code>, <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>, etc.</p>
-<p>During interactive development, you should make this happen for yourself via <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</p>
-<p>In general, testthat’s official workflows are designed around the assumption that the user uses <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</p>
-</div>
-<div id="dependencies" class="section level3">
-<h3>
-<span class="header-section-number">12.7.4</span> Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"><i class="fas fa-link"></i></a>
-</h3>
-<p>Don’t attach other packages from your tests.
-Don’t call <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>.
-Or, rather, that should be about as rare as using <code>Depends</code>.</p>
-<p>If other package is in Imports, do <code>foo::fun()</code>, just like we recommend when you use it in functions below <code>R/</code>.</p>
-<p>If other package is in Suggests, …. I already wrote about whether and how to guard in Metadata.Rmd.
-Move that content?</p>
-</div>
-<div id="introspection" class="section level3">
-<h3>
-<span class="header-section-number">12.7.5</span> Introspection<a class="anchor" aria-label="anchor" href="#introspection"><i class="fas fa-link"></i></a>
-</h3>
-<p><code>NOT_CRAN</code>, <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code></p>
-<p><code>TESTTHAT</code>, <code><a href="https://testthat.r-lib.org/reference/is_testing.html">is_testing()</a></code></p>
-<p><code><a href="https://testthat.r-lib.org/reference/is_testing.html">testing_package()</a></code></p>
-</div>
-<div id="test-coverage" class="section level3">
-<h3>
-<span class="header-section-number">12.7.6</span> Test coverage<a class="anchor" aria-label="anchor" href="#test-coverage"><i class="fas fa-link"></i></a>
-</h3>
-<!--
-Thought dump re: revision, stuff I haven't added yet (and maybe never will?)
-
-web, APIs, auth, secrets
-
-
-When does our file naming / organisation  advise not work? sometimes a package has one main function and following the convention would result in having one monster file of tests.
-
-Example: reprex::reprex(), (to a lesser extent) readxl::read_excel()
-Instead, in those cases, you might organize your tests around the use of
-specific arguments (reprex) or the challenges presented by specific inputs
-(readxl).
--->
-
 </div>
 </div>
-</div>
-
   <div class="chapter-nav">
 <div class="prev"><a href="vignettes.html"><span class="header-section-number">11</span> Vignettes: long-form documentation</a></div>
 <div class="next"><a href="namespace.html"><span class="header-section-number">13</span> Namespace</a></div>
@@ -1445,42 +569,19 @@ specific arguments (reprex) or the challenges presented by specific inputs
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
 <li><a class="nav-link" href="#tests"><span class="header-section-number">12</span> Testing</a></li>
-<li><a class="nav-link" href="#why-is-formal-testing-worth-the-trouble"><span class="header-section-number">12.1</span> Why is formal testing worth the trouble?</a></li>
-<li><a class="nav-link" href="#introducing-testthat"><span class="header-section-number">12.2</span> Introducing testthat</a></li>
+<li><a class="nav-link" href="#test-workflow"><span class="header-section-number">12.1</span> Test workflow</a></li>
 <li>
-<a class="nav-link" href="#test-mechanics-and-workflow"><span class="header-section-number">12.3</span> Test mechanics and workflow</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#initial-setup"><span class="header-section-number">12.3.1</span> Initial setup</a></li>
-<li><a class="nav-link" href="#create-a-test"><span class="header-section-number">12.3.2</span> Create a test</a></li>
-<li><a class="nav-link" href="#run-tests"><span class="header-section-number">12.3.3</span> Run tests</a></li>
-</ul>
+<a class="nav-link" href="#test-structure"><span class="header-section-number">12.2</span> Test structure</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#expectations"><span class="header-section-number">12.2.1</span> Expectations</a></li></ul>
 </li>
 <li>
-<a class="nav-link" href="#test-structure"><span class="header-section-number">12.4</span> Test structure</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#expectations"><span class="header-section-number">12.4.1</span> Expectations</a></li>
-<li><a class="nav-link" href="#snapshot-tests"><span class="header-section-number">12.4.2</span> Snapshot tests</a></li>
+<a class="nav-link" href="#test-tests"><span class="header-section-number">12.3</span> Writing tests</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#what-to-test"><span class="header-section-number">12.3.1</span> What to test</a></li>
+<li><a class="nav-link" href="#skipping-a-test"><span class="header-section-number">12.3.2</span> Skipping a test</a></li>
+<li><a class="nav-link" href="#building-your-own-testing-tools"><span class="header-section-number">12.3.3</span> Building your own testing tools</a></li>
 </ul>
 </li>
-<li>
-<a class="nav-link" href="#test-tests"><span class="header-section-number">12.5</span> Writing tests</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#test-hygiene"><span class="header-section-number">12.5.1</span> Test hygiene</a></li>
-<li><a class="nav-link" href="#test-fixtures"><span class="header-section-number">12.5.2</span> Test fixtures</a></li>
-<li><a class="nav-link" href="#setup-and-teardown"><span class="header-section-number">12.5.3</span> Setup and teardown</a></li>
-<li><a class="nav-link" href="#what-to-test"><span class="header-section-number">12.5.4</span> What to test</a></li>
-<li><a class="nav-link" href="#skipping-a-test"><span class="header-section-number">12.5.5</span> Skipping a test</a></li>
-<li><a class="nav-link" href="#building-your-own-testing-tools"><span class="header-section-number">12.5.6</span> Building your own testing tools</a></li>
-</ul>
-</li>
-<li><a class="nav-link" href="#test-cran"><span class="header-section-number">12.6</span> CRAN notes</a></li>
-<li>
-<a class="nav-link" href="#miscellaneous-sections-to-maybe-add"><span class="header-section-number">12.7</span> Miscellaneous sections to (maybe) add</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#mocking"><span class="header-section-number">12.7.1</span> Mocking</a></li>
-<li><a class="nav-link" href="#filesystem-matters"><span class="header-section-number">12.7.2</span> Filesystem matters</a></li>
-<li><a class="nav-link" href="#namespace"><span class="header-section-number">12.7.3</span> Namespace</a></li>
-<li><a class="nav-link" href="#dependencies"><span class="header-section-number">12.7.4</span> Dependencies</a></li>
-<li><a class="nav-link" href="#introspection"><span class="header-section-number">12.7.5</span> Introspection</a></li>
-<li><a class="nav-link" href="#test-coverage"><span class="header-section-number">12.7.6</span> Test coverage</a></li>
-</ul>
-</li>
+<li><a class="nav-link" href="#test-files"><span class="header-section-number">12.4</span> Test files</a></li>
+<li><a class="nav-link" href="#test-cran"><span class="header-section-number">12.5</span> CRAN notes</a></li>
 </ul>
 
       <div class="book-extra">
