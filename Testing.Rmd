@@ -1011,9 +1011,9 @@ Quoting from https://testthat.r-lib.org/articles/test-fixtures.html#test-fixture
 
 > A test fixture is just a local_ function that you use to change state in such a way that you can reach inside and test parts of your code that would otherwise be challenging.
 
-Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R package) is the fixture.
+Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R package) is the fixture. As are readxl's test sheets, which persist.
 
-The local_*() function instantiates a fixture and schedules it's destruction.
+The local_*() function instantiates a short-lived fixture and schedules its destruction.
 -->
 
 ### Setup and teardown
@@ -1052,6 +1052,8 @@ withr::local_options(
   teardown_env()
 )
 ```
+
+<!-- Should we explicitly address older approaches to setup / teardown that are still out there in the wild but that are now discouraged? -->
 
 ### What to test
 
@@ -1124,7 +1126,7 @@ Within the realm of top-level code in test files, this is probably on the "more 
 But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
 
 At the complete other extreme, another practice that can make sense in very specific situations is to build a `skip()` directly into a package function.
-Here's an example from pkgdown, in `convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
+Here's an example from pkgdown, in `pkgdown::convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
 
 <https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106>
 
@@ -1148,10 +1150,28 @@ convert_markdown_to_html <- function(in_path, out_path, ...) {
 }
 ```
 
-When this function executes, in the absence of Pandoc, it throws an error *unless* it appears to part of a test run, in which it skips the test.
+If Pandoc is not available when `convert_markdown_to_html()` executes, it throws an error *unless* it appears to part of a test run, in which case the test is skipped.
 This is an alternative to implementing a custom skipper, e.g. `skip_if_no_pandoc()`, and inserting it into many of pkgdown's tests.
 
-Advantages of this approach: Feels elegant and concise.
+`testthat::is_testing()` is a small convenience function that checks the value of the `TESTTHAT` environment variable, which will be true when testthat is running tests:
+
+```{r eval = FALSE}
+is_testing <- function() {
+  identical(Sys.getenv("TESTTHAT"), "true")
+}
+```
+
+You usually want to avoid a runtime dependency on testthat, i.e. you won't want to use testthat in the code below `R/`.
+In that case, you should inline the source of `is_testing()` into your package, in whatever location you are using for any other test helper functions.
+
+<!-- Of course, the example above actually DOES have a runtime dependency on testthat, because of the call to `testthat::skip()`.
+
+So pkgdown might as well call `testthat::is_testing(), instead of inlining it.
+
+pkgdown lists testthat in Suggests, not Imports, so that is also interesting to me. Hmmm.
+-->
+
+Advantages of the embedded `skip()` approach: Feels elegant and concise.
 
 Disadvantages of this approach: Seems to violate "Good production code is well-factored; good test code is obvious", i.e. when you're focused on the tests, the existence of this skip is easy to miss.
 
@@ -1373,6 +1393,10 @@ CRAN revision thought dump:
 
 ### Mocking
 
+At the very least, I think we need to point to packages that handle this and outline situations when mocking is one of the reasonable approaches.
+
+It's not actually a topic I want to get deeply into, because it feels pretty specialized and I don't think we have detailed, strongly held, stable opinions about it.
+
 ### Filesystem matters
 
 Do not write into `tests/testthat/` during your tests.
@@ -1416,6 +1440,14 @@ Move that content?
 `testing_package()`
 
 ### Test coverage
+
+* What is test coverage?
+* Use covr to learn your test coverage.
+* Use GitHub Actions to keep tabs on your test coverage.
+* Test coverage should be "high", but going from 90% to 100% coverage is not
+  always the best use of your development time and energy.
+* Focus your testing effort on code that is both uncovered and "tricky", based
+  on your expert opinion and/or empirical evidence of bug hot spots.
 
 <!--
 Thought dump re: revision, stuff I haven't added yet (and maybe never will?)
