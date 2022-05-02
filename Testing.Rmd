@@ -828,7 +828,7 @@ But first, let's connect this back to very similar advice offered in section \@r
 Similarly, `tests/testthat/test-*.R` files should consist almost entirely of calls to `test_that()`.
 Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving whatever its goal is.
 
-Two concrete examples:
+Some specific things to avoid:
 
 * `source()` should not appear in your tests.
   There are several special files with an official role in testthat workflows
@@ -838,6 +838,7 @@ Two concrete examples:
 * `library()` should (almost certainly) not appear in your tests.
   Similar to advice for the code below `R/`, it's usually better to access
   functions from a dependency via `otherpkg::fun()`.
+* Avoid big globs of top-level code that creates data used by many other tests.
   
 <!-- I also want to mention testthat's built-in efforts re: reproducibility.
 
@@ -848,7 +849,7 @@ https://testthat.r-lib.org/reference/local_test_context.html
 This is (one of) the reasonable places to put this content.
 -->
 
-#### Self-sufficient tests
+### Self-sufficient tests
 
 It's hard to beat the pure simplicity and obviousness of a test that creates the conditions it needs, then puts things back as they were.
 You've already seen an example of this, when we explored snapshot tests:
@@ -911,6 +912,8 @@ You need to capture the original state and write the restoration code yourself.
 Also remember to do `on.exit(..., add = TRUE)` if there's *any* chance a second `on.exit()` call could be added in the test.
 You probably also want to default to `after = FALSE`.
 
+### Repetition is OK
+
 What if you need to do more than, e.g., set an option, before you can execute your expectations?
 We're going to make the controversial recommendation that you tolerate a fair amount of duplication in test code, i.e. you can relax some of your DRY ("don't repeat yourself") tendencies.
 
@@ -946,9 +949,13 @@ test_that("subtraction works", {
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
-When testthat executes an entire test file, `useful_thing` will get defined and made available for subsequent tests in that file.
+When testthat executes an entire test file, `useful_thing` will be defined and made available for subsequent tests in that file.
 However, during interactive development, there is no gesture to systematically identify and execute such code.
-Top-level code, outside of any test, is in a sort of No Man's Land: it's fine when your tests are all passing, but when something goes wrong and a test fails you now have to encounter a bunch of extra pain when it need the least.
+This is particularly frustrating when the failing test starts on line 573 and all the implicit setup code is at line 1.
+Or, even worse, the setup is sprinkled around the file between tests, at random locations that made sense at the time you wrote it.
+
+Top-level code, outside of any test, is in a sort of No Man's Land:
+it's fine when your tests are all passing, but when something goes wrong and a test fails, now you have to endure a extra self-inflicted pain when you least need it.
 Below we recommend various robust and structured solutions to this problem.
 
 But first, seriously consider inlining the creation of a `useful_thing` whenever you need it.
