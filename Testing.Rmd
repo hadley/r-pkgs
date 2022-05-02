@@ -1355,6 +1355,43 @@ test_that("floor_date works for different units", {
 })
 ```
 
+*I think that example should end RIGHT HERE. It's not a natural candidate for demonstrating writing a custom expectation and the metaprogramming approach.*
+
+*Other candidates of hyperlocal helpers that could replace the lubridate example:*
+
+```{r eval = FALSE}
+# from stringr
+test_that("truncations work for all sides", {
+
+  trunc <- function(direction) str_trunc(
+    "This string is moderately long",
+    direction,
+    width = 20
+  )
+
+  expect_equal(trunc("right"),   "This string is mo...")
+  expect_equal(trunc("left"),    "...s moderately long")
+  expect_equal(trunc("center"),  "This stri...ely long")
+})
+```
+
+```{r eval = FALSE}
+# from tidyr
+test_that("can fill in missing cells", {
+  df <- tibble(g = c(1, 2), var = c("x", "y"), val = c(1, 2))
+
+  widen <- function(...) {
+    df %>% pivot_wider(names_from = var, values_from = val, ...)
+  }
+
+  expect_equal(widen()$x, c(1, NA))
+  expect_equal(widen(values_fill = 0)$x, c(1, 0))
+  expect_equal(widen(values_fill = list(val = 0))$x, c(1, 0))
+})
+```
+
+*Does anyone have a great example of custom expectation? With metaprogramming / tidy eval? I'm leaning towards leaving that advanced topic for, e.g. a testthat vignette.*
+
 <!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
 
 * Fall in with the `object, expected, details` pattern the most expectations have.
@@ -1466,7 +1503,9 @@ There are a few things to bear in mind:
 
 * ~Note that tests are always run in the English language (`LANGUAGE=EN`) and
   with C sort order (`LC_COLLATE=C`).
-  This minimises spurious differences between platforms.~ *This is not true.*
+  This minimises spurious differences between platforms.~
+  *This is not true.*
+  *This is a good place to mention `testthat::local_reproducible_output()`.
 
 * Be careful about testing things that are likely to be variable on CRAN
   machines.
@@ -1484,20 +1523,23 @@ CRAN revision thought dump:
   - Draw a line to how this determines which "flavors" a package should be
     checked on.
     Depends on how broad the user base is and the "trickiness" of the package's
-    code (e.g. does it need compilation?).
+    code (e.g. does it need compilation? does it use system libraries?).
     Do a cost benefit analysis.
     Connect that to which `usethis::use_github_action_check_*()` variant is
     appropriate.
+  - Advise the use of r-hub.
+  - Link to (to-be-written/revised) chapter on package release.
 * How to decide whether to let a test run on CRAN.
-  If the test can fail WITHOUT indicating a defect in your package that merits
-  removal from CRAN, do not let CRAN run the test. Examples:
+  Any test that can fail for reasons not under your direct control is an
+  excellent candidate for skipping on CRAN.
+  Examples:
   - Accessing a website or API that could ever be down or have an
     occasional error (so: any website or API on planet earth).
   - Exact formatting of a message.
   - File system work typical of an authentic user that touches files any where
     but the R session's temp directory. This includes reading or writing the
     clipboard.
-* How to prevent a test from running on CRAN.
+ * How to prevent a test from running on CRAN.
   - `skip_on_cran()`, `skip_on_os()`
   - Default behaviour for snapshot tests
   - Keep in a separate repo
@@ -1506,7 +1548,7 @@ CRAN revision thought dump:
 
 ### Mocking
 
-At the very least, I think we need to point to packages that handle this and outline situations when mocking is one of the reasonable approaches.
+Give a brief description of what mocking is and a survey what's currently available.
 
 It's not actually a topic I want to get deeply into, because it feels pretty specialized and I don't think we have detailed, strongly held, stable opinions about it.
 
@@ -1515,10 +1557,15 @@ It's not actually a topic I want to get deeply into, because it feels pretty spe
 Do not write into `tests/testthat/` during your tests.
 
 The only place you should write into is session temp dir.
+ONLY EVER USE `withr::local_temp_file()`.
+ALL OTHER PATHS LEAD TO PAIN AND SUFFERING.
 
 Even then, best practice is to clean up any files or folder you create.
 
-Ways to be build good paths:
+Therefore, the best move is to use `withr::local_temp_file()` and friends.
+This will protect you against 99% of the most likely problems and if new policies arise, the withr maintainer can fix centrally in one location.
+
+Other ways to build robust paths for files that you read (not write):
 
 * `testthat::test_path()`
 * `fs::path_package()` and `system.file()`
@@ -1552,16 +1599,12 @@ Move that content?
 
 `testing_package()`
 
-<!--
-Thought dump re: revision, stuff I haven't added yet (and maybe never will?)
+### Random numbers
+
+`withr::local_seed()`
+
+### Stuff that's hard to test
 
 web, APIs, auth, secrets
 
-
-When does our file naming / organisation  advise not work? sometimes a package has one main function and following the convention would result in having one monster file of tests.
-
-Example: reprex::reprex(), (to a lesser extent) readxl::read_excel()
-Instead, in those cases, you might organize your tests around the use of
-specific arguments (reprex) or the challenges presented by specific inputs
-(readxl).
--->
+Maybe any mocking content belongs in this section.
