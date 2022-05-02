@@ -975,32 +975,14 @@ We find this a more sustainable workflow than hunting through a test file for to
 ### Test fixtures
 
 When it's not practical to make your test entirely self-sufficient, prefer making the necessary object or logic available in a structured, explicit way.
-We describe several specific solutions.
+We describe several specific solutions:
 
-#### Store a concrete `useful_thing` persistently
-
-If a `useful_thing` is costly to create, in terms of time or memory, maybe you don't actually need to re-create it for each test run.
-You could make the `useful_thing` once, store it as a static test fixture, and load it in the tests that need it.
-Here's a sketch of how this could look:
-
-```{r eval = FALSE}
-test_that("foofy() does this", {
-  useful_thing1 <- readRDS(test_path("fixtures", "useful_thing.rds"))
-  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
-})
-
-test_that("foofy() does that", {
-  useful_thing2 <- readRDS(test_path("fixtures", "useful_thing.rds"))
-  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
-})
-```
-
-:::tip
-`testthat::test_path()` is a handy function for building robust paths for files that live below `tests/testthat/`.
-The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory is more likely to be `tests/testthat/`.
-:::
-
-<!-- I feel like we should say something about storing the code that creates `tests/testthat/fixtures/useful_thing.rds`, similar to what we advocate for data / `use_data()`, `data_raw/`. -->
+* Put repeated code in a constructor-type helper function. Memoise it, if
+  construction is demonstably slow.
+* If the repeated code has side effects, write a custom `local_*()` function to
+  do what's needed and clean up afterwards.
+* If the above approaches are too slow or awkward and the thing you need is
+  fairly stable, save it as a static file and load it.
 
 #### Create `useful_thing`s with a helper function
 
@@ -1040,11 +1022,15 @@ If it's fiddly AND costly to create a `useful_thing`, your helper function could
 Once you have a helper like `new_useful_thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
 Sometimes you even realize you should just export and document it, so you can use it freely in documentation and tests.
 
+*Does anyone have a good example of the memoisation alluded to above?*
+
 Another, older location for defining test helpers is `tests/testthat/helper.R`.
 Any `.R` file below `tests/testthat/` that starts with `helper` gets special treatment by testthat and devtools.
 By default, such files are sourced by `load_all()` and when you run entire test file or the entire test suite.
 This is a legacy approach which still works, but it has no advantage over defining helpers below `R/`.
 Avoid this in new code and consider relocating any existing code in `tests/testthat/helper.R` files when updating a package.
+
+*I (Jenny) am not completely sold on the deprecation of `helper.R`.*
 
 <!-- The way I load a token in gargle-using packages in helper.R is actually something that does NOT work "just as well" below `R/`. It could happen in setup.R I suppose, but I actually want / need it to be executed by `load_all()`. I'm not entirely sold on the deprecation of helper.R. -->
 
@@ -1112,7 +1098,36 @@ Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R pa
 The local_*() function instantiates a short-lived fixture and schedules its destruction.
 -->
 
+#### Store a concrete `useful_thing` persistently
+
+If a `useful_thing` is costly to create, in terms of time or memory, maybe you don't actually need to re-create it for each test run.
+You could make the `useful_thing` once, store it as a static test fixture, and load it in the tests that need it.
+Here's a sketch of how this could look:
+
+```{r eval = FALSE}
+test_that("foofy() does this", {
+  useful_thing1 <- readRDS(test_path("fixtures", "useful_thing.rds"))
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
+})
+
+test_that("foofy() does that", {
+  useful_thing2 <- readRDS(test_path("fixtures", "useful_thing.rds"))
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
+})
+```
+
+:::tip
+`testthat::test_path()` is a handy function for building robust paths for files that live below `tests/testthat/`.
+The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory is more likely to be `tests/testthat/`.
+:::
+
+*It feels like we are missing something comparable to `use_data_raw()` but for documenting where test fixtures came from. Also something like `use_data(usething_thing, type = "test")`.*
+
+<!-- I feel like we should say something about storing the code that creates `tests/testthat/fixtures/useful_thing.rds`, similar to what we advocate for data / `use_data()`, `data_raw/`. -->
+
 ### Setup and teardown
+
+*`tests/testthat/setup.R` clearly needs to be mentioned, but now we are thinking a lot of what appears here should move into a testthat vignette. It might be too detailed for this chapter.*
 
 Sometimes there is truly global test setup that would be impractical to build into every single test and that might be tailored for test execution in non-interactive or remote environments.
 Examples:
