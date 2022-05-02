@@ -1169,15 +1169,14 @@ withr::local_options(
 
 <!-- Should we explicitly address older approaches to setup / teardown that are still out there in the wild but that are now discouraged? -->
 
-
-
 ### Skipping a test
 
 Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
 Unfortunately, another likely reason follows from this simple rule:
 the more machines you use to write your code, the more likely it is that you won't be able to run all of your tests.
 In short, there are times when, instead of getting a failure, you just want to skip a test.
-To do that, you can use the `skip()` function - rather than throwing an error it simply prints an `S` in the output.
+
+To do that, you can use the `skip()` function:
 
 ```{r, eval = FALSE}
 skip_if_no_api() <- function() {
@@ -1193,7 +1192,32 @@ test_that("foo api returns bar when given baz", {
 ```
 
 The custom skipper `skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
-Likewise, we lean towards calling `skip_if_no_api()` in each test where it's needed, even though this might lead to repetition.
+
+`skip()`s are reported inline as tests are executed and are also indicated clearly in the summary:
+
+```
+✓ | F W S  OK | Context
+✓ |         2 | blarg                                        
+✓ |     2   2 | foofy                                        
+─────────────────────────────────────────────────────────────
+Skip (test-foofy.R:6:3): blarg exists inside foofy tests
+Reason: failing test
+
+Skip (test-foofy.R:11:3): I know the working directory
+Reason: failing test
+─────────────────────────────────────────────────────────────
+
+══ Results ══════════════════════════════════════════════════
+Duration: 0.1 s
+
+── Skipped tests  ───────────────────────────────────────────
+• failing test (2)
+
+[ FAIL 0 | WARN 0 | SKIP 2 | PASS 4 ]
+```
+
+Something like `skip_if_no_api()` is likely to appear many times in your test suite.
+We lean towards calling `skip_if_no_api()` in each test where it's needed, even though this is going to tempt you to DRY things out.
 This is another type of call that is tempting to hoist to the top-level of a test file:
 
 ```{r eval = FALSE}
@@ -1207,6 +1231,8 @@ test_that("foo api returns an errors when given qux", {...})
 We have mixed feelings about this practice.
 Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
 But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
+
+*This next technique should probably move to <https://testthat.r-lib.org/articles/skipping.html> and we should just send people there for more. AFAIK only Hadley does this, yeah?*
 
 At the complete other extreme, another practice that can make sense in very specific situations is to build a `skip()` directly into a package function.
 Here's an example from pkgdown, in `pkgdown::convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
@@ -1248,10 +1274,8 @@ You usually want to avoid a runtime dependency on testthat, i.e. you won't want 
 In that case, you should inline the source of `is_testing()` into your package, in whatever location you are using for any other test helper functions.
 
 <!-- Of course, the example above actually DOES have a runtime dependency on testthat, because of the call to `testthat::skip()`.
-
-So pkgdown might as well call `testthat::is_testing(), instead of inlining it.
-
-pkgdown lists testthat in Suggests, not Imports, so that is also interesting to me. Hmmm.
+Or, rather, it appears to.
+But `testthat::skip` is only ever run when you're inside a test, implying that branch operates under the "testing rules", where we're allowed to assume that all Suggested packages are installed.
 -->
 
 Advantages of the embedded `skip()` approach: Feels elegant and concise.
@@ -1259,6 +1283,12 @@ Advantages of the embedded `skip()` approach: Feels elegant and concise.
 Disadvantages of this approach: Seems to violate "Good production code is well-factored; good test code is obvious", i.e. when you're focused on the tests, the existence of this skip is easy to miss.
 
 <!-- I want to talk about the danger of skipping, i.e. when you think everything's "green", but actually you're not running any / many tests, because some pre-condition is not met. -->
+
+One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
+In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
+
+It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
+But this tends to be something you have to learn through experience.
 
 ### Building your own testing tools
 
