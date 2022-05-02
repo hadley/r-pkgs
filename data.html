@@ -107,24 +107,24 @@ functions need.</p></li>
 <span class="header-section-number">14.1</span> Exported data<a class="anchor" aria-label="anchor" href="#data-data"><i class="fas fa-link"></i></a>
 </h2>
 <p>The most common location for package data is (surprise!) <code>data/</code>. Each file in this directory should be an <code>.rda</code> (or <code>.RData</code>) file created by <code><a href="https://rdrr.io/r/base/save.html">save()</a></code> containing a single object (with the same name as the file). The easiest way to adhere to these rules is to use <code><a href="https://usethis.r-lib.org/reference/use_data.html">usethis::use_data()</a></code>:</p>
-<div class="sourceCode" id="cb210"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb249"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span>
 <span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_data.html">use_data</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">mtcars</span><span class="op">)</span></code></pre></div>
 <p>It’s possible to use other types of files, but I don’t recommend it because <code>.rda</code> files are already fast, small and explicit. Other options are described in <code><a href="https://rdrr.io/r/utils/data.html">data()</a></code>. For larger datasets, you may want to experiment with the compression setting. The default is <code>bzip2</code>, but sometimes <code>gzip</code> or <code>xz</code> can create smaller files.</p>
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change until you inspect the flights dataset stored inside the package.</p>
-<div class="sourceCode" id="cb211"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb250"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">pryr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pryr/man/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; 50.6 MB</span>
+<span class="co">#&gt; 52.7 MB</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span>
 <span class="fu">pryr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pryr/man/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; 59 MB</span>
+<span class="co">#&gt; 59.2 MB</span>
 
 <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">flights</span><span class="op">)</span>
 <span class="fu">pryr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pryr/man/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; 99.7 MB</span></code></pre></div>
+<span class="co">#&gt; 99.9 MB</span></code></pre></div>
 <p><del>I recommend that you always include <code>LazyData: true</code> in your <code>DESCRIPTION</code>. <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code> does this for you.</del> <em>This text is slated for revision for the 2nd edition. TL;DR do NOT include <code>LazyData: true</code> in <code>DESCRIPTION</code> unless you actually ship data in your package. usethis v2.1.0 changes the behaviour of <code><a href="https://usethis.r-lib.org/reference/create_package.html">create_package()</a></code> and <code><a href="https://usethis.r-lib.org/reference/use_data.html">use_data()</a></code> accordingly.</em></p>
 <p>Often, the data you include in <code>data/</code> is a cleaned up version of raw data you’ve gathered from elsewhere. I highly recommend taking the time to include the code used to do this in the source version of your package. This will make it easy for you to update or reproduce your version of the data. I suggest that you put this code in <code>data-raw/</code>. You don’t need it in the bundled version of your package, so also add it to <code>.Rbuildignore</code>. Do all this in one step with:</p>
-<div class="sourceCode" id="cb212"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb251"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_data.html">use_data_raw</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p>You can see this approach in practice in some of my recent data packages. I’ve been creating these as packages because the data will rarely change, and because multiple packages can then use them for examples:</p>
 <ul>
@@ -139,7 +139,7 @@ functions need.</p></li>
 <span class="header-section-number">14.1.1</span> Documenting datasets<a class="anchor" aria-label="anchor" href="#documenting-data"><i class="fas fa-link"></i></a>
 </h3>
 <p>Objects in <code>data/</code> are always effectively exported (they use a slightly different mechanism than <code>NAMESPACE</code> but the details are not important). This means that they must be documented. Documenting data is like documenting a function with a few minor differences. Instead of documenting the data directly, you document the name of the dataset and save it in <code>R/</code>. For example, the roxygen2 block used to document the diamonds data in ggplot2 is saved as <code>R/data.R</code> and looks something like this:</p>
-<div class="sourceCode" id="cb213"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb252"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#' Prices of 50,000 round cut diamonds.</span>
 <span class="co">#'</span>
 <span class="co">#' A dataset containing the prices and other attributes of almost 54,000</span>
@@ -169,7 +169,7 @@ a good idea to describe variables’ units here.</p></li>
 </h2>
 <p>Sometimes functions need pre-computed data tables. If you put these in <code>data/</code> they’ll also be available to package users, which is not appropriate. Instead, you can save them in <code>R/sysdata.rda</code>. For example, two colour-related packages, <a href="https://github.com/cwickham/munsell">munsell</a> and <a href="https://cran.r-project.org/web/packages/dichromat/index.html">dichromat</a>, use <code>R/sysdata.rda</code> to store large tables of colour data.</p>
 <p>You can use <code><a href="https://usethis.r-lib.org/reference/use_data.html">usethis::use_data()</a></code> to create this file with the argument <code>internal = TRUE</code>:</p>
-<div class="sourceCode" id="cb214"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb253"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span>
 <span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_data.html">use_data</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">mtcars</span>, internal <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <p>Again, to make this data reproducible it’s a good idea to include the code used to generate it. Put it in <code>data-raw/</code>.</p>
@@ -180,15 +180,15 @@ a good idea to describe variables’ units here.</p></li>
 <span class="header-section-number">14.3</span> Raw data<a class="anchor" aria-label="anchor" href="#data-extdata"><i class="fas fa-link"></i></a>
 </h2>
 <p>If you want to show examples of loading/parsing raw data, put the original files in <code>inst/extdata</code>. When the package is installed, all files (and folders) in <code>inst/</code> are moved up one level to the top-level directory (so they can’t have names like <code>R/</code> or <code>DESCRIPTION</code>). To refer to files in <code>inst/extdata</code> (whether installed or not), use <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>. For example, the <a href="https://readr.tidyverse.org">readr</a> package uses <code>inst/extdata</code> to store delimited files for use in examples:</p>
-<div class="sourceCode" id="cb215"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb254"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"mtcars.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span>
 <span class="co">#&gt; [1] "/home/runner/work/_temp/Library/readr/extdata/mtcars.csv"</span></code></pre></div>
 <p>Beware: by default, if the file does not exist, <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> does not return an error - it just returns the empty string:</p>
-<div class="sourceCode" id="cb216"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb255"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"iris.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span>
 <span class="co">#&gt; [1] ""</span></code></pre></div>
 <p>If you want to have an error message when the file does not exist, add the argument <code>mustWork = TRUE</code>:</p>
-<div class="sourceCode" id="cb217"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb256"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"iris.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span>, mustWork <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; Error in system.file("extdata", "iris.csv", package = "readr", mustWork = TRUE): no file found</span></code></pre></div>
 </div>
