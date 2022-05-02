@@ -380,6 +380,7 @@ __expectations__ are grouped into __tests__ which are organised in __files__:
   This is why they are sometimes called __unit__ tests.
   Each test should cover a single unit of functionality.
   A test is created with `test_that(desc, code)`.
+  
   It's common to write the description (`desc`) to create something that reads
   naturally, e.g. `test_that("basic duplication works", { ... })`.
   A test failure report includes this description, which is why you want a
@@ -417,6 +418,7 @@ All expectations have a similar structure:
 While you'll normally put expectations inside tests inside files, you can also run them directly.
 This makes it easy to explore expectations interactively.
 There are more than 40 expectations in the testthat package, which can be explored in testthat's [reference index](https://testthat.r-lib.org/reference/index.html).
+We're only going to cover the most important expectations here.
 
 ### Testing for equality
 
@@ -443,13 +445,13 @@ expect_identical(2, 2L)
 
 Use `expect_error()` to check whether an expression throws an error.
 It's the most important expectation in a trio that also includes `expect_warning()` and `expect_message()`.
-We're going to emphasize errors here, but most of this applies equally well to signalling other conditions, e.g., warnings and messages.
+We're going to emphasize errors here, but most of this also applies to warnings and messages.
 
 Usually you care about two things when testing an error:
 
 * Does the code fail? Specifically, does it fail for the right reason?
 * Does the accompanying message make sense to the human who needs to deal with
-  it?
+  the error?
 
 The entry-level solution is to expect a specific type of condition:
 
@@ -472,7 +474,7 @@ expect_error(str_duq(1:2, 1:3))
 This expectation is intended to test the recycling behaviour of `str_dup()`.
 But, due to a typo, it tests behaviour of a non-existent function, `str_duq()`.
 The code throws an error and, therefore, the test above passes, but for the *wrong reason*.
-Here's the actual error thrown by the typo-bearing code:
+Due to the typo, the actual error thrown is about not being able to find the `str_duq()` function: 
 
 ```{r, error = TRUE}
 str_duq(1:2, 1:3)
@@ -480,18 +482,18 @@ str_duq(1:2, 1:3)
 
 Historically, the best defense against this was to assert that the condition message matches a certain regular expression, via the second argument, `regexp`.
     
-```{r error = TRUE}
-expect_warning(log(-1), "NaNs produced")
+```{r}
 expect_error(1 / "a", "non-numeric argument")
+expect_warning(log(-1), "NaNs produced")
 ```
 
-This does, in fact, surface our typo problem:
+This does, in fact, force our typo problem to the surface:
 
 ```{r error = TRUE}
 expect_error(str_duq(1:2, 1:3), "recycle")
 ```
 
-Recent developments in both base R and rlang make it increasingly likely that we can (and should) test the condition's *class*, when we want to be more precise.
+Recent developments in both base R and rlang make it increasingly likely that conditions are signalled with a *class*, which provides a better basis for creating precise expectations.
 That is exactly what you've already seen in this stringr example.
 This is what the `class` argument is for:
     
@@ -503,25 +505,24 @@ expect_error(str_duq(1:2, 1:3), class = "vctrs_error_incompatible_size")
 expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 ```
 
-Test for a condition's class, if you can.
+<!-- This advice feels somewhat at odds with Hadley's ambivalence about classed errors.
+I.e. I think he recommends using a classed condition only when there's a specific reason to.
+Then again, maybe the desire to test it is a legitimate reason? -->
+
+If you have the choice, express your expectation in terms of the condition's class, instead of its message.
 Often this is under your control, i.e. if your package signals the condition.
 If the condition originates from base R or another package, proceed with caution.
 This is often a good reminder to re-consider the wisdom of testing a condition that is not fully under your control in the first place.
 
-To check for the *absence* of an error, warning, or message, use `regexp = NA`:
+To check for the *absence* of an error, warning, or message, pass `NA` to the `regexp` argument:
   
 ```{r}
-expect_error(1 / 2, regexp = NA)
+expect_error(1 / 2, NA)
 ```
 
-If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach (see next section).
-Note that, by default, the code in a snapshot test should not throw an error, so be sure to specify `error = TRUE` in that case.
+Of course, this is functionally equivalent to simply executing `1 / 2` or `identity(1 / 2)`, but some developers find the explicit expectation expressive.
 
-```{r eval = FALSE}
-expect_snapshot(error = TRUE,
-  str_dup(1:2, 1:3)
-)
-```
+If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach, which we describe next.
 
 ### Snapshot tests
 
@@ -666,7 +667,14 @@ In real life, snapshot tests are a great way to stay informed about changes to y
   But sometimes you want to assess is "Does this error message make sense to a
   human?" and having it laid out in context in a snapshot is a great way to see
   it with fresh eyes.
-  Specify `error = TRUE` in this case.
+  Specify `error = TRUE` in this case:
+  
+    ```{r eval = FALSE}
+    expect_snapshot(error = TRUE,
+      str_dup(1:2, 1:3)
+    )
+    ```
+  
 * `transform`: Sometimes a snapshot contains volatile, insignificant elements,
   such as a temporary filepath or a timestamp.
   The `transform` argument accepts a function, presumably written by you, to
