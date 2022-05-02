@@ -356,18 +356,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😀
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😸
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 ```
 
 This file shows a typical mix of tests:
@@ -468,29 +468,30 @@ expect_identical(2, 2L)
 
 Use `expect_error()` to check whether an expression throws an error.
 It's the most important expectation in a trio that also includes `expect_warning()` and `expect_message()`.
+We're going to emphasize errors here, but most of this applies equally well to signalling other conditions, e.g., warnings and messages.
 
-These expectations are all about *conditions*.
-There are three aspects of the condition that you might want to test:
+Usually you care about two things when testing an error:
 
-* Is the specified condition signalled?
-* Does the condition's message look the way you intend? 
-* Does the condition have the expected class?
+* Does the code fail? Specifically, does it fail for the right reason?
+* Does the accompanying message make sense to the human who needs to deal with
+  it?
 
-The simplest move is to expect a specific type of condition:
+The entry-level solution is to expect a specific type of condition:
 
 
 ```r
+1 / "a"
+#> Error in 1/"a": non-numeric argument to binary operator
+expect_error(1 / "a") 
+
 log(-1)
 #> Warning in log(-1): NaNs produced
 #> [1] NaN
 expect_warning(log(-1))
-
-1 / "a"
-#> Error in 1/"a": non-numeric argument to binary operator
-expect_error(1 / "a") 
 ```
 
-Often, though, you want to be more precise, i.e. you want to make sure the code fails (or warns or messages) for the reason you expect.
+This is a bit dangerous, though, especially when testing an error.
+There are lots of ways for code to fail!
 Consider the following test:
 
 
@@ -498,10 +499,10 @@ Consider the following test:
 expect_error(str_duq(1:2, 1:3))
 ```
 
-It's intended to test the recycling behaviour of `str_dup()`.
+This expectation is intended to test the recycling behaviour of `str_dup()`.
 But, due to a typo, it tests behaviour of a non-existent function, `str_duq()`.
 The code throws an error and, therefore, the test above passes, but for the *wrong reason*.
-Here's the actual error that is caught:
+Here's the actual error thrown by the typo-bearing code:
 
 
 ```r
@@ -515,8 +516,12 @@ Historically, the best defense against this was to assert that the condition mes
 ```r
 expect_warning(log(-1), "NaNs produced")
 expect_error(1 / "a", "non-numeric argument")
+```
 
-# fails, because the code errors for an unexpected reason
+This does, in fact, surface our typo problem:
+
+
+```r
 expect_error(str_duq(1:2, 1:3), "recycle")
 #> Error in str_duq(1:2, 1:3): could not find function "str_duq"
 ```
@@ -540,13 +545,21 @@ Often this is under your control, i.e. if your package signals the condition.
 If the condition originates from base R or another package, proceed with caution.
 This is often a good reminder to re-consider the wisdom of testing a condition that is not fully under your control in the first place.
 
-If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach (see next section).
-  
 To check for the *absence* of an error, warning, or message, use `regexp = NA`:
   
 
 ```r
 expect_error(1 / 2, regexp = NA)
+```
+
+If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach (see next section).
+Note that, by default, the code in a snapshot test should not throw an error, so be sure to specify `error = TRUE` in that case.
+
+
+```r
+expect_snapshot(error = TRUE,
+  str_dup(1:2, 1:3)
+)
 ```
 
 ### Snapshot tests
@@ -851,7 +864,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🎉
 
 exists("thingy")
 #> [1] FALSE
@@ -987,13 +1000,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥇
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎉
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1013,7 +1026,7 @@ test_that("multiplication works", {
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎊
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
@@ -1416,7 +1429,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥇
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1440,7 +1453,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎊
 ```
 
 *I think that example should end RIGHT HERE. It's not a natural candidate for demonstrating writing a custom expectation and the metaprogramming approach.*
