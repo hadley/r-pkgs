@@ -443,35 +443,36 @@ expect_identical(2, 2L)
 
 Use `expect_error()` to check whether an expression throws an error.
 It's the most important expectation in a trio that also includes `expect_warning()` and `expect_message()`.
+We're going to emphasize errors here, but most of this applies equally well to signalling other conditions, e.g., warnings and messages.
 
-These expectations are all about *conditions*.
-There are three aspects of the condition that you might want to test:
+Usually you care about two things when testing an error:
 
-* Is the specified condition signalled?
-* Does the condition's message look the way you intend? 
-* Does the condition have the expected class?
+* Does the code fail? Specifically, does it fail for the right reason?
+* Does the accompanying message make sense to the human who needs to deal with
+  it?
 
-The simplest move is to expect a specific type of condition:
+The entry-level solution is to expect a specific type of condition:
 
 ```{r, warning = TRUE, error = TRUE}
-log(-1)
-expect_warning(log(-1))
-
 1 / "a"
 expect_error(1 / "a") 
+
+log(-1)
+expect_warning(log(-1))
 ```
 
-Often, though, you want to be more precise, i.e. you want to make sure the code fails (or warns or messages) for the reason you expect.
+This is a bit dangerous, though, especially when testing an error.
+There are lots of ways for code to fail!
 Consider the following test:
 
 ```{r}
 expect_error(str_duq(1:2, 1:3))
 ```
 
-It's intended to test the recycling behaviour of `str_dup()`.
+This expectation is intended to test the recycling behaviour of `str_dup()`.
 But, due to a typo, it tests behaviour of a non-existent function, `str_duq()`.
 The code throws an error and, therefore, the test above passes, but for the *wrong reason*.
-Here's the actual error that is caught:
+Here's the actual error thrown by the typo-bearing code:
 
 ```{r, error = TRUE}
 str_duq(1:2, 1:3)
@@ -482,8 +483,11 @@ Historically, the best defense against this was to assert that the condition mes
 ```{r error = TRUE}
 expect_warning(log(-1), "NaNs produced")
 expect_error(1 / "a", "non-numeric argument")
+```
 
-# fails, because the code errors for an unexpected reason
+This does, in fact, surface our typo problem:
+
+```{r error = TRUE}
 expect_error(str_duq(1:2, 1:3), "recycle")
 ```
 
@@ -504,12 +508,19 @@ Often this is under your control, i.e. if your package signals the condition.
 If the condition originates from base R or another package, proceed with caution.
 This is often a good reminder to re-consider the wisdom of testing a condition that is not fully under your control in the first place.
 
-If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach (see next section).
-  
 To check for the *absence* of an error, warning, or message, use `regexp = NA`:
   
 ```{r}
 expect_error(1 / 2, regexp = NA)
+```
+
+If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach (see next section).
+Note that, by default, the code in a snapshot test should not throw an error, so be sure to specify `error = TRUE` in that case.
+
+```{r eval = FALSE}
+expect_snapshot(error = TRUE,
+  str_dup(1:2, 1:3)
+)
 ```
 
 ### Snapshot tests
