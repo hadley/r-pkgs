@@ -309,7 +309,7 @@ Each failure gives a description of the test (e.g., "get_release_data() works if
 
 The idea is that you'll modify your code (either the functions defined below `R/` or the tests in `tests/testthat/`) until all tests are passing.
 
-## Test structure {#test-structure}
+## Test organisation
 
 A test file lives in `tests/testthat/`.
 Its name must start with `test`.
@@ -396,7 +396,7 @@ You want to arrange things such that, when a test fails, you'll know what's wron
 This motivates all our recommendations regarding file organisation, file naming, and the test description.
 Finally, try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer larger tests.
 
-### Expectations
+## Expectations
 
 An expectation is the finest level of testing.
 It makes a binary assertion about whether or not an object has the properties you expect.
@@ -418,11 +418,7 @@ While you'll normally put expectations inside tests inside files, you can also r
 This makes it easy to explore expectations interactively.
 There are more than 40 expectations in the testthat package, which can be explored in testthat's [reference index](https://testthat.r-lib.org/reference/index.html).
 
-We believe these are the most important expectations:
-
-* `expect_equal()`
-* `expect_error()`
-* `expect_snapshot()`
+### Testing for equality
 
 `expect_equal()` checks for equality, with some reasonable amount of numeric tolerance:
 
@@ -443,7 +439,19 @@ expect_equal(2, 2L)
 expect_identical(2, 2L)
 ```
 
-`expect_error()`, `expect_warning()` and `expect_message()` check for side effects, i.e. whether the code triggers an error, warning, or message.
+### Testing errors
+
+Use `expect_error()` to check whether an expression throws an error.
+It's the most important expectation in a trio that also includes `expect_warning()` and `expect_message()`.
+
+These expectations are all about *conditions*.
+There are three aspects of the condition that you might want to test:
+
+* Is the specified condition signalled?
+* Does the condition's message look the way you intend? 
+* Does the condition have the expected class?
+
+The simplest move is to expect a specific type of condition:
 
 ```{r, warning = TRUE, error = TRUE}
 log(-1)
@@ -452,72 +460,57 @@ expect_warning(log(-1))
 1 / "a"
 expect_error(1 / "a") 
 ```
-  
-You can specify the second argument `regexp` to assert something about the text of the message.
-This is often a good idea, to make sure you're catching the condition you intended.
+
+Often, though, you want to be more precise, i.e. you want to make sure the code fails (or warns or messages) for the reason you expect.
+Consider the following test:
+
+```{r}
+expect_error(str_duq(1:2, 1:3))
+```
+
+It's intended to test the recycling behaviour of `str_dup()`.
+But, due to a typo, it tests behaviour of a non-existent function, `str_duq()`.
+The code throws an error and, therefore, the test above passes, but for the *wrong reason*.
+Here's the actual error that is caught:
+
+```{r, error = TRUE}
+str_duq(1:2, 1:3)
+```
+
+Historically, the best defense against this was to assert that the condition message matches a certain regular expression, via the second argument, `regexp`.
     
 ```{r}
 expect_warning(log(-1), "NaNs produced")
 expect_error(1 / "a", "non-numeric argument")
+
+# fails, because the code errors for an unexpected reason
+expect_error(str_duq(1:2, 1:3), "recycle")
 ```
-  
-It is increasingly common to throw classed errors, both within the tidyverse and in base R.
-If that is the case, checking your error's class is better than checking its message.
-We saw an example of this above in the stringr tests.
+
+Recent developments in both base R and rlang make it increasingly likely that we can (and should) test the condition's *class*, when we want to be more precise.
+That is exactly what you've already seen in this stringr example.
 This is what the `class` argument is for:
     
 ```{r, error = TRUE}  
+# fails, error has wrong class
+expect_error(str_duq(1:2, 1:3), class = "vctrs_error_incompatible_size")
+
+# passes, error has expected class
 expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 ```
+
+Test for a condition's class, if you can.
+Often this is under your control, i.e. if your package signals the condition.
+If the condition originates from base R or another package, proceed with caution.
+This is often a good reminder to re-consider the wisdom of testing a condition that is not fully under your control in the first place.
+
+If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach (see next section).
   
 To check for the *absence* of an error, warning, or message, use `regexp = NA`:
   
 ```{r}
 expect_error(1 / 2, regexp = NA)
 ```
-
-`expect_snapshot()` is new in testthat 3e and merits its own treatment below.
-
-We conclude this section with a few more expectations that come up frequently.
-But remember that testthat has many more pre-built expectations than we can demonstrate here.
-
-Several expectations can be described as "shortcuts", i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.
-
-* `expect_match(object, regexp, ...)` is a shortcut that wraps
-  `grepl(pattern = regexp, x = object, ...)`.
-  It matches a character vector input against a regular expression `regexp`.
-  The optional `all` argument controls whether all elements or just one element
-  needs to match.
-  Read the `expect_match()` documentation to see how additional arguments, like
-  `ignore.case = FALSE` or `fixed = TRUE`, can be passed down to `grepl()`.
-   
-    ```{r, error = TRUE}
-    string <- "Testing is fun!"
-  
-    expect_match(string, "Testing") 
-     
-    # Fails, match is case-sensitive
-    expect_match(string, "testing")
-  
-    # Passes because additional arguments are passed to grepl():
-    expect_match(string, "testing", ignore.case = TRUE)
-    ```
-* `expect_length(object, n)` is a shortcut for
-  `expect_equal(length(object), n)`.
-* `expect_setequal(x, y)` tests that every element of `x` occurs in `y`, and
-  that every element of `y` occurs in `x`.
-  But it won't fail if `x` and `y` happen to have their elements in a different
-  order.
-* `expect_s3_class()` and `expect_s4_class()` check that an object `inherit()`s
-  from a specified class. `expect_type()`checks the `typeof()` an object.
-
-    ```{r, error = TRUE}
-    model <- lm(mpg ~ wt, data = mtcars)
-    expect_s3_class(model, "lm")
-    expect_s3_class(model, "glm")
-    ```
-
-`expect_true()` and `expect_false()` are useful catchalls if none of the other expectations does what you need.
 
 ### Snapshot tests
 
@@ -529,8 +522,8 @@ Snapshot tests are particularly suited to monitoring your package's user interfa
 Other use cases include testing images or other complicated objects.
 
 We'll illustrate snapshot tests using the waldo package.
-Under the hood, testthat 3e uses waldo to do the heavy lifting of "actual vs. expected" comparisons.
-One of the main design goals of waldo is to present differences in a clear and actionable manner, as opposed to a frustrating declaration that "this differs from that and I know exactly how, but I won't tell you".
+Under the hood, testthat 3e uses waldo to do the heavy lifting of "actual vs. expected" comparisons, so it's good for you to know a bit about waldo anyway.
+One of waldo's main design goals is to present differences in a clear and actionable manner, as opposed to a frustrating declaration that "this differs from that and I know exactly how, but I won't tell you".
 Therefore, the formatting of output from `waldo::compare()` is very intentional and is well-suited to a snapshot test.
 The binary outcome of `TRUE` (actual == expected) vs. `FALSE` (actual != expected) is fairly easy to check and merits its own dedicated tests.
 Here we're concerned with writing a test to ensure that differences are reported to the user in the intended way.
@@ -674,6 +667,49 @@ In real life, snapshot tests are a great way to stay informed about changes to y
   a different snapshot for each variant. This is an experimental and somewhat
   advanced feature, so if you can arrange things to use a single snapshot, you
   probably should.
+
+### Shortcuts for other common patterns
+
+We conclude this section with a few more expectations that come up frequently.
+But remember that testthat has many more pre-built expectations than we can demonstrate here.
+
+Several expectations can be described as "shortcuts", i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.
+
+* `expect_match(object, regexp, ...)` is a shortcut that wraps
+  `grepl(pattern = regexp, x = object, ...)`.
+  It matches a character vector input against a regular expression `regexp`.
+  The optional `all` argument controls whether all elements or just one element
+  needs to match.
+  Read the `expect_match()` documentation to see how additional arguments, like
+  `ignore.case = FALSE` or `fixed = TRUE`, can be passed down to `grepl()`.
+   
+    ```{r, error = TRUE}
+    string <- "Testing is fun!"
+  
+    expect_match(string, "Testing") 
+     
+    # Fails, match is case-sensitive
+    expect_match(string, "testing")
+  
+    # Passes because additional arguments are passed to grepl():
+    expect_match(string, "testing", ignore.case = TRUE)
+    ```
+* `expect_length(object, n)` is a shortcut for
+  `expect_equal(length(object), n)`.
+* `expect_setequal(x, y)` tests that every element of `x` occurs in `y`, and
+  that every element of `y` occurs in `x`.
+  But it won't fail if `x` and `y` happen to have their elements in a different
+  order.
+* `expect_s3_class()` and `expect_s4_class()` check that an object `inherit()`s
+  from a specified class. `expect_type()`checks the `typeof()` an object.
+
+    ```{r, error = TRUE}
+    model <- lm(mpg ~ wt, data = mtcars)
+    expect_s3_class(model, "lm")
+    expect_s3_class(model, "glm")
+    ```
+
+`expect_true()` and `expect_false()` are useful catchalls if none of the other expectations does what you need.
 
 ## Writing tests {#test-tests}
 
