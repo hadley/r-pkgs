@@ -800,13 +800,7 @@ Testing presents many unique challenges and maneuvers, which tend to get much le
 
 ### Test hygiene
 
-<!-- I feel ambivalent about "self-contained" here.
-Technically, it's not quite right or, at least, it's an incomplete description.
-It also feels as much a piece of aspirational advice re: mindset, as an observation about how things are rigged.
-Like, it's sort of self-contained, but to the extent it's not, we urge you to behave in such a way to promote test-self-contained-ness.
--->
-
-Each `test_that()` test is executed in its own environment and is self-contained.
+Each `test_that()` test is executed in its own environment and is (somewhat) self-contained.
 For example, an R object you create inside a test does not exist after the test exits:
 
 ```{r}
@@ -832,7 +826,7 @@ If it's easy to avoid making such changes in your test code, that is the best st
 But if it's unavoidable, then you have to make sure that you clean up after yourself.
 This mindset is very similar to one we advocated for in section \@ref(code-r-landscape), when discussing how to design well-mannered functions.
 
-When possible, make each test self-sufficient:
+When possible, make each test self-contained and self-sufficient:
 
 * Don't change the surrounding landscape.
   More realistically, make sure any changes are reversed when the test is done.
@@ -861,15 +855,6 @@ Some specific things to avoid:
   Similar to advice for the code below `R/`, it's usually better to access
   functions from a dependency via `otherpkg::fun()`.
 * Avoid big globs of top-level code that creates data used by many other tests.
-  
-<!-- I also want to mention testthat's built-in efforts re: reproducibility.
-
-So: local_test_context(), local_reproducible_output()
-
-https://testthat.r-lib.org/reference/local_test_context.html
-
-This is (one of) the reasonable places to put this content.
--->
 
 ### Self-sufficient tests
 
@@ -887,7 +872,7 @@ test_that("side-by-side diffs work", {
 
 This test requires the display width to be set at 20 columns, which is considerably less than the default width.
 We like to use the withr package (<https://withr.r-lib.org>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration.
-In this case, `withr::local_options(width = 20)` sets the `width` option to 20 and, at the end of the test, resets the option to whatever its original value was.
+In this case, `withr::local_options(width = 20)` sets the `width` option to 20 and, at the end of the test, restores the option to its original value.
 withr is also pleasant to use during interactive development:
 deferred actions are still captured on the global environment and can be executed explicitly via `withr::deferred_run()` or implicitly by restarting R.
 
@@ -933,6 +918,12 @@ If nothing exists that meets your need, `withr::defer()` is the general way to s
 You need to capture the original state and write the restoration code yourself.
 Also remember to do `on.exit(..., add = TRUE)` if there's *any* chance a second `on.exit()` call could be added in the test.
 You probably also want to default to `after = FALSE`.
+
+testthat itself uses some built-in measures to make the test environment as reproducible as possible.
+In testthat 3e, `local_reproducible_output()` is implicitly part of each `test_that()` test.
+This temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses coloured output, turns off fancy quotes, and sets the console width.
+Usually, you can just passively enjoy the benefits of `local_reproducible_output()`.
+But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.
 
 ### Repetition is OK
 
@@ -1630,3 +1621,13 @@ Move that content?
 web, APIs, auth, secrets
 
 Maybe any mocking content belongs in this section.
+
+
+<!-- I also want to mention testthat's built-in efforts re: reproducibility.
+
+So: local_test_context(), local_reproducible_output()
+
+https://testthat.r-lib.org/reference/local_test_context.html
+
+This is (one of) the reasonable places to put this content.
+-->
