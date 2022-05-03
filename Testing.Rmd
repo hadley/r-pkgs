@@ -985,19 +985,19 @@ If the test is self-sufficient, you can basically focus your attention to the un
 The code inside `{ ... }` will either explicitly create all the necessary objects and conditions or make explicit calls to specific helpers or fixtures (explained below).
 We find this a more sustainable workflow than hunting through a test file for top-level calls that need to be executed in order to work on the tests.
 
-### Test fixtures
+## Test fixtures
 
 When it's not practical to make your test entirely self-sufficient, prefer making the necessary object or logic available in a structured, explicit way.
 We describe several specific solutions:
 
 * Put repeated code in a constructor-type helper function. Memoise it, if
-  construction is demonstably slow.
+  construction is demonstrably slow.
 * If the repeated code has side effects, write a custom `local_*()` function to
   do what's needed and clean up afterwards.
 * If the above approaches are too slow or awkward and the thing you need is
   fairly stable, save it as a static file and load it.
 
-#### Create `useful_thing`s with a helper function
+### Create `useful_thing`s with a helper function
 
 Is it fiddly to create a `useful_thing`?
 Does it take several lines of code, but not much time or memory?
@@ -1039,13 +1039,17 @@ Sometimes you even realize you should just export and document it, so you can us
 
 Another, older location for defining test helpers is `tests/testthat/helper.R`.
 Any `.R` file below `tests/testthat/` that starts with `helper` gets special treatment by testthat and devtools.
-By default, such files are sourced by `load_all()` and when you run entire test file or the entire test suite.
+By default, such files are sourced by `load_all()` and when you run an entire test file or the entire test suite.
 This is a legacy approach which still works, but it has no advantage over defining helpers below `R/`.
-Avoid this in new code and consider relocating any existing code in `tests/testthat/helper.R` files when updating a package.
+Avoid creating `helper.R` in new code and, when updating a package, consider if the contents of `helper.R` are suitable for relation below `R/`.
 
 *I (Jenny) am not completely sold on the deprecation of `helper.R`.*
 
-<!-- The way I load a token in gargle-using packages in helper.R is actually something that does NOT work "just as well" below `R/`. It could happen in setup.R I suppose, but I actually want / need it to be executed by `load_all()`. I'm not entirely sold on the deprecation of helper.R. -->
+<!--
+The way I load a token in gargle-using packages in helper.R is actually something that does NOT work "just as well" below `R/`.
+It could happen in setup.R I suppose, but I actually want / need it to be executed by `load_all()`.
+I'm not entirely sold on the deprecation of helper.R.
+-->
 
 <!-- Drafting this made me realize how hard it is to learn about the role of special files in testthat. It's really not spelled out in any obvious way in the testthat docs. 
 Update: I am wrong. I eventually found it here! But I still think lots of people don't find this.
@@ -1067,7 +1071,7 @@ Teardown files start with teardown and are executed after the tests are run. Now
 All other files are ignored by testthat.
 -->
 
-#### Create (and destroy) a "local" `useful_thing`
+### Create (and destroy) a "local" `useful_thing`
 
 So far, our example of a `useful_thing` was a regular R object, which is cleaned-up automatically at the end of each test.
 What if the creation of a `useful_thing` has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like?
@@ -1111,7 +1115,7 @@ Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R pa
 The local_*() function instantiates a short-lived fixture and schedules its destruction.
 -->
 
-#### Store a concrete `useful_thing` persistently
+### Store a concrete `useful_thing` persistently
 
 If a `useful_thing` is costly to create, in terms of time or memory, maybe you don't actually need to re-create it for each test run.
 You could make the `useful_thing` once, store it as a static test fixture, and load it in the tests that need it.
@@ -1134,11 +1138,13 @@ test_that("foofy() does that", {
 The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory is more likely to be `tests/testthat/`.
 :::
 
-*It feels like we are missing something comparable to `use_data_raw()` but for documenting where test fixtures came from. Also something like `use_data(usething_thing, type = "test")`.*
+<!--
+I feel like we should point out that it's a good idea to store the code that creates `tests/testthat/fixtures/useful_thing.rds`, because one day you'll need to remake it or at least better understand where it came from.
+It's conceivable that we could implement `use_data(useful_thing, type = "test)` and just piggyback on `use_data_raw()` / `use_data()`.
+Morally this is very similar; you'd just want to store the result in a different place.
+-->
 
-<!-- I feel like we should say something about storing the code that creates `tests/testthat/fixtures/useful_thing.rds`, similar to what we advocate for data / `use_data()`, `data_raw/`. -->
-
-### Setup and teardown
+## Setup and teardown
 
 *`tests/testthat/setup.R` clearly needs to be mentioned, but now we are thinking a lot of what appears here should move into a testthat vignette. It might be too detailed for this chapter.*
 
@@ -1182,7 +1188,7 @@ withr::local_options(
 
 <!-- Should we explicitly address older approaches to setup / teardown that are still out there in the wild but that are now discouraged? -->
 
-### Skipping a test
+## Skipping a test
 
 Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
 Unfortunately, another likely reason follows from this simple rule:
@@ -1303,7 +1309,7 @@ In an ideal world, your CI/CD would make it easy to see how many tests are being
 It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
 But this tends to be something you have to learn through experience.
 
-### Building your own testing tools
+## Building your own testing tools
 
 <!--
 Why Good Developers Write Bad Unit Tests
