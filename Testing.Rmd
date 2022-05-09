@@ -836,15 +836,19 @@ When possible, make each test self-contained and self-sufficient:
 
 In the testing domain, this is sometimes referred to as *setup and teardown* and we'll describe several official testthat ways to do this, at various scopes.
 
-But first, let's connect this back to very similar advice offered in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
+### Code to avoid
+
+Recall this advice found in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
 
 > The `.R` files below `R/` should consist almost entirely of function definitions.
 > Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
 
-Similarly, `tests/testthat/test-*.R` files should consist almost entirely of calls to `test_that()`.
-Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving whatever its goal is.
+We have analogous advice for your "testing code", i.e. everything in `tests/testthat/test-*.R` files:
 
-Some specific things to avoid:
+> The `test-*.R` file below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
+> Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving its goal, such as using functions or data objects defined in your package or relocating logic to special testthat files, e.g. `setup.R`.
+
+Some specific things to avoid in test code:
 
 * `source()` should not appear in your tests.
   There are several special files with an official role in testthat workflows
@@ -967,8 +971,12 @@ However, during interactive development, there is no gesture to systematically i
 This is particularly frustrating when the failing test starts on line 573 and all the implicit setup code is at line 1.
 Or, even worse, the setup is sprinkled around the file between tests, at random locations that made sense at the time you wrote it.
 
+> In its purest form, automating testing consists of three activities: writing tests, running tests, and **reacting to test failures**.
+> --- Testing Overview chapter of The Software Engineering at Google book
+
 Top-level code, outside of any test, is in a sort of No Man's Land:
 it's fine when your tests are all passing, but when something goes wrong and a test fails, now you have to endure a extra self-inflicted pain when you least need it.
+This is the sort of practice that feels convenient when *writing tests*, but proves to be extremely inconvenient when you are *failing tests*.
 Below we recommend various robust and structured solutions to this problem.
 
 But first, seriously consider inlining the creation of a `useful_thing` whenever you need it.
@@ -987,8 +995,15 @@ We find this a more sustainable workflow than hunting through a test file for to
 
 ## Test fixtures
 
-When it's not practical to make your test entirely self-sufficient, prefer making the necessary object or logic available in a structured, explicit way.
-We describe several specific solutions:
+When it's not practical to make your test entirely self-sufficient, prefer making the necessary object, logic, or conditions available in a structured, explicit way.
+There's a pre-existing term for this in software engineering: a *test fixture*.
+
+> A test fixture is something used to consistently test some item, device, or
+> piece of software.
+> --- Wikipedia
+
+The main idea is that we need to make it as easy and obvious as possible to arrange the world into a state that is conducive for testing.
+We describe several specific solutions to this problem:
 
 * Put repeated code in a constructor-type helper function. Memoise it, if
   construction is demonstrably slow.
@@ -1163,7 +1178,7 @@ Note that setup code is *not* run by `devtools::load_all()`.
 
 If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`.
 We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync.
-The artificial environment `teatdown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
+The artificial environment `teardown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
 A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
 
 Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
@@ -1174,140 +1189,16 @@ op <- options(reprex.clipboard = FALSE, reprex.html_preview = FALSE)
 withr::defer(options(op), teardown_env())
 ```
 
-~Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local_options()`:~
-
-*No, this is actually does not work.
-For group meeting: Does this surprise the folks who maintain testthat?*
+Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local_options()` and pass `teardown_env()` as the `.local_envir`:
 
 ```{r eval = FALSE}
 withr::local_options(
   list(reprex.clipboard = FALSE, reprex.html_preview = FALSE),
-  teardown_env()
+  .local_envir = teardown_env()
 )
 ```
 
 <!-- Should we explicitly address older approaches to setup / teardown that are still out there in the wild but that are now discouraged? -->
-
-## Skipping a test
-
-Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
-Unfortunately, another likely reason follows from this simple rule:
-the more machines you use to write your code, the more likely it is that you won't be able to run all of your tests.
-In short, there are times when, instead of getting a failure, you just want to skip a test.
-
-To do that, you can use the `skip()` function:
-
-```{r, eval = FALSE}
-skip_if_no_api() <- function() {
-  if (api_unavailable()) {
-    skip("API not available")
-  }
-}
-
-test_that("foo api returns bar when given baz", {
-  skip_if_no_api()
-  ...
-})
-```
-
-The custom skipper `skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
-
-`skip()`s are reported inline as tests are executed and are also indicated clearly in the summary:
-
-```
-✓ | F W S  OK | Context
-✓ |         2 | blarg                                        
-✓ |     2   2 | foofy                                        
-─────────────────────────────────────────────────────────────
-Skip (test-foofy.R:6:3): blarg exists inside foofy tests
-Reason: failing test
-
-Skip (test-foofy.R:11:3): I know the working directory
-Reason: failing test
-─────────────────────────────────────────────────────────────
-
-══ Results ══════════════════════════════════════════════════
-Duration: 0.1 s
-
-── Skipped tests  ───────────────────────────────────────────
-• failing test (2)
-
-[ FAIL 0 | WARN 0 | SKIP 2 | PASS 4 ]
-```
-
-Something like `skip_if_no_api()` is likely to appear many times in your test suite.
-We lean towards calling `skip_if_no_api()` in each test where it's needed, even though this is going to tempt you to DRY things out.
-This is another type of call that is tempting to hoist to the top-level of a test file:
-
-```{r eval = FALSE}
-skip_if_no_api()
-
-test_that("foo api returns bar when given baz", {...})
-
-test_that("foo api returns an errors when given qux", {...})
-```
-
-We have mixed feelings about this practice.
-Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
-But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
-
-*This next technique should probably move to <https://testthat.r-lib.org/articles/skipping.html> and we should just send people there for more. AFAIK only Hadley does this, yeah?*
-
-At the complete other extreme, another practice that can make sense in very specific situations is to build a `skip()` directly into a package function.
-Here's an example from pkgdown, in `pkgdown::convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
-
-<https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106>
-
-```{r eval = FALSE}
-# in r-lib/pkgdown/R/markdown.R
-convert_markdown_to_html <- function(in_path, out_path, ...) {
-  if (rmarkdown::pandoc_available("2.0")) {
-    from <- "markdown+gfm_auto_identifiers-citations+emoji+autolink_bare_uris"
-  } else if (rmarkdown::pandoc_available("1.12.3")) {
-    from <- "markdown_github-hard_line_breaks+tex_math_dollars+tex_math_single_backslash+header_attributes"
-  } else {
-    if (is_testing()) {
-      testthat::skip("Pandoc not available")
-    } else {
-      abort("Pandoc not available")
-    }
-  }
-  
-  rmarkdown::pandoc_convert(...)
-  invisible()
-}
-```
-
-If Pandoc is not available when `convert_markdown_to_html()` executes, it throws an error *unless* it appears to part of a test run, in which case the test is skipped.
-This is an alternative to implementing a custom skipper, e.g. `skip_if_no_pandoc()`, and inserting it into many of pkgdown's tests.
-
-`testthat::is_testing()` is a small convenience function that checks the value of the `TESTTHAT` environment variable, which will be true when testthat is running tests:
-
-```{r eval = FALSE}
-is_testing <- function() {
-  identical(Sys.getenv("TESTTHAT"), "true")
-}
-```
-
-You usually want to avoid a runtime dependency on testthat, i.e. you won't want to use testthat in the code below `R/`.
-In that case, you should inline the source of `is_testing()` into your package, in whatever location you are using for any other test helper functions.
-
-<!-- Of course, the example above actually DOES have a runtime dependency on testthat, because of the call to `testthat::skip()`.
-Or, rather, it appears to.
-But `testthat::skip` is only ever run when you're inside a test, implying that branch operates under the "testing rules", where we're allowed to assume that all Suggested packages are installed.
--->
-
-Advantages of the embedded `skip()` approach: Feels elegant and concise.
-
-Disadvantages of this approach: Seems to violate "Good production code is well-factored; good test code is obvious", i.e. when you're focused on the tests, the existence of this skip is easy to miss.
-
-<!-- I want to talk about the danger of skipping, i.e. when you think everything's "green", but actually you're not running any / many tests, because some pre-condition is not met. -->
-
-One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
-In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
-
-It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
-But this tends to be something you have to learn through experience.
 
 ## Building your own testing tools
 
@@ -1511,7 +1402,151 @@ test_that("floor_date works for different units", {
 })
 ```
 
-## CRAN notes {#test-cran}
+## When testing gets hard
+
+Despite all the techniques we've covered so far, there remain situations where it still feels very difficult to write tests.
+In this section, we review more ways to deal with challenging situations:
+
+* Skipping a test in certain situations
+* Mocking an external service
+
+### Skipping a test
+
+Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
+Unfortunately, another likely reason follows from this simple rule:
+the more machines you use to write your code, the more likely it is that you won't be able to run all of your tests.
+In short, there are times when, instead of getting a failure, you just want to skip a test.
+
+To do that, you can use the `skip()` function:
+
+```{r, eval = FALSE}
+skip_if_no_api() <- function() {
+  if (api_unavailable()) {
+    skip("API not available")
+  }
+}
+
+test_that("foo api returns bar when given baz", {
+  skip_if_no_api()
+  ...
+})
+```
+
+The custom skipper `skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
+
+`skip()`s are reported inline as tests are executed and are also indicated clearly in the summary:
+
+```
+✓ | F W S  OK | Context
+✓ |         2 | blarg                                        
+✓ |     2   2 | foofy                                        
+─────────────────────────────────────────────────────────────
+Skip (test-foofy.R:6:3): blarg exists inside foofy tests
+Reason: failing test
+
+Skip (test-foofy.R:11:3): I know the working directory
+Reason: failing test
+─────────────────────────────────────────────────────────────
+
+══ Results ══════════════════════════════════════════════════
+Duration: 0.1 s
+
+── Skipped tests  ───────────────────────────────────────────
+• failing test (2)
+
+[ FAIL 0 | WARN 0 | SKIP 2 | PASS 4 ]
+```
+
+Something like `skip_if_no_api()` is likely to appear many times in your test suite.
+We lean towards calling `skip_if_no_api()` in each test where it's needed, even though this is going to tempt you to DRY things out.
+This is another type of call that is tempting to hoist to the top-level of a test file:
+
+```{r eval = FALSE}
+skip_if_no_api()
+
+test_that("foo api returns bar when given baz", {...})
+
+test_that("foo api returns an errors when given qux", {...})
+```
+
+We have mixed feelings about this practice.
+Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
+But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
+
+*This next technique should probably move to <https://testthat.r-lib.org/articles/skipping.html> and we should just send people there for more. AFAIK only Hadley does this, yeah?*
+
+At the complete other extreme, another practice that can make sense in very specific situations is to build a `skip()` directly into a package function.
+Here's an example from pkgdown, in `pkgdown::convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
+
+<https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106>
+
+```{r eval = FALSE}
+# in r-lib/pkgdown/R/markdown.R
+convert_markdown_to_html <- function(in_path, out_path, ...) {
+  if (rmarkdown::pandoc_available("2.0")) {
+    from <- "markdown+gfm_auto_identifiers-citations+emoji+autolink_bare_uris"
+  } else if (rmarkdown::pandoc_available("1.12.3")) {
+    from <- "markdown_github-hard_line_breaks+tex_math_dollars+tex_math_single_backslash+header_attributes"
+  } else {
+    if (is_testing()) {
+      testthat::skip("Pandoc not available")
+    } else {
+      abort("Pandoc not available")
+    }
+  }
+  
+  rmarkdown::pandoc_convert(...)
+  invisible()
+}
+```
+
+If Pandoc is not available when `convert_markdown_to_html()` executes, it throws an error *unless* it appears to part of a test run, in which case the test is skipped.
+This is an alternative to implementing a custom skipper, e.g. `skip_if_no_pandoc()`, and inserting it into many of pkgdown's tests.
+
+`testthat::is_testing()` is a small convenience function that checks the value of the `TESTTHAT` environment variable, which will be true when testthat is running tests:
+
+```{r eval = FALSE}
+is_testing <- function() {
+  identical(Sys.getenv("TESTTHAT"), "true")
+}
+```
+
+You usually want to avoid a runtime dependency on testthat, i.e. you won't want to use testthat in the code below `R/`.
+In that case, you should inline the source of `is_testing()` into your package, in whatever location you are using for any other test helper functions.
+
+<!-- Of course, the example above actually DOES have a runtime dependency on testthat, because of the call to `testthat::skip()`.
+Or, rather, it appears to.
+But `testthat::skip` is only ever run when you're inside a test, implying that branch operates under the "testing rules", where we're allowed to assume that all Suggested packages are installed.
+-->
+
+Advantages of the embedded `skip()` approach: Feels elegant and concise.
+
+Disadvantages of this approach: Seems to violate "Good production code is well-factored; good test code is obvious", i.e. when you're focused on the tests, the existence of this skip is easy to miss.
+
+<!-- I want to talk about the danger of skipping, i.e. when you think everything's "green", but actually you're not running any / many tests, because some pre-condition is not met. -->
+
+One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
+In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
+
+It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
+But this tends to be something you have to learn through experience.
+
+
+### Mocking
+
+Give a brief description of what mocking is and a survey what's currently available.
+
+It's not actually a topic I want to get deeply into, because it feels pretty specialized and I don't think we have detailed, strongly held, stable opinions about it.
+
+### Secrets
+
+If you really must hit an external API that requires auth, ...
+
+Mostly an ad for httr2's advice in <https://httr2.r-lib.org/articles/wrapping-apis.html>
+
+## Miscellaneous sections that still need to be placed
+
+### CRAN notes
 
 CRAN will run your tests on all CRAN platforms: Windows, Mac, and Linux.
 There are a few things to bear in mind:
@@ -1563,14 +1598,6 @@ CRAN revision thought dump:
   - Default behaviour for snapshot tests
   - Keep in a separate repo
 
-## Miscellaneous sections to (maybe) add
-
-### Mocking
-
-Give a brief description of what mocking is and a survey what's currently available.
-
-It's not actually a topic I want to get deeply into, because it feels pretty specialized and I don't think we have detailed, strongly held, stable opinions about it.
-
 ### Filesystem matters
 
 Do not write into `tests/testthat/` during your tests.
@@ -1588,6 +1615,8 @@ Other ways to build robust paths for files that you read (not write):
 
 * `testthat::test_path()`
 * `fs::path_package()` and `system.file()`
+
+Maybe give a review of all the file-related do's and don'ts
 
 ### Namespace
 
@@ -1621,13 +1650,6 @@ Move that content?
 ### Random numbers
 
 `withr::local_seed()`
-
-### Stuff that's hard to test
-
-web, APIs, auth, secrets
-
-Maybe any mocking content belongs in this section.
-
 
 <!-- I also want to mention testthat's built-in efforts re: reproducibility.
 
