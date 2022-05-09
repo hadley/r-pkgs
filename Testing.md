@@ -362,12 +362,12 @@ test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🎊
 ```
 
 This file shows a typical mix of tests:
@@ -1006,13 +1006,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🌈
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1027,12 +1027,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥳
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎉
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
@@ -1324,7 +1324,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎉
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1348,7 +1348,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 ```
 
 *I think that example should end RIGHT HERE. It's not a natural candidate for demonstrating writing a custom expectation and the metaprogramming approach.*
@@ -1388,7 +1388,10 @@ test_that("can fill in missing cells", {
 })
 ```
 
-*Does anyone have a great example of custom expectation? With metaprogramming / tidy eval? I'm leaning towards leaving that advanced topic for, e.g. a testthat vignette.*
+*Does anyone have a great example of custom expectation? With metaprogramming / tidy eval?
+I'm leaning towards leaving that advanced topic for, e.g. a testthat vignette.
+I'm definitely NOT keeping the continuation here of the previous example.
+*
 
 <!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
 
@@ -1504,7 +1507,7 @@ test_that("floor_date works for different units", {
   expect_floor_old_skool("month",  "2009-08-01 00:00:00")
   expect_floor_old_skool("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😀
 ```
 
 ## When testing gets hard
@@ -1653,7 +1656,7 @@ If you really must hit an external API that requires auth, ...
 
 Mostly an ad for httr2's advice in <https://httr2.r-lib.org/articles/wrapping-apis.html>
 
-## Miscellaneous sections that still need to be placed
+## Miscellaneous content that still needs to be placed
 
 ### CRAN notes
 
