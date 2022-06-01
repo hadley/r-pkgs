@@ -790,19 +790,36 @@ Another concrete way to direct your test writing efforts is to examine your test
 * Focus your testing effort on code that is both uncovered and "tricky", based
   on your expert opinion and/or empirical evidence of bug hot spots.
 
-## How to write tests
+## How to approach testing
 
-> Everyone knows that debugging is twice as hard as writing a program in the
-> first place. So if you're as clever as you can be when you write it, how will
-> you ever debug it?
-> --- Brian Kernighan
+Writing good tests for a code base often feels more challenging than writing the code in the first place.
+This can come as a bit of a shock when you're new to package development and you might be concerned that you're doing it wrong.
+Don't worry, you're not!
+Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "main code", i.e. the stuff below `R/`.
+As a result, it requires more deliberate effort to develop your skills and taste around testing.
 
-Above is a well-known quote about debugging and we suspect something similar holds true for testing.
-Writing good tests for a code base can sometimes feel more challenging than writing the code in the first place.
-Even if it's not strictly more difficult, it absolutely has a different feel.
-Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "main code".
+Anecdotally, it seems like many new R package developers fall back to habits from data analysis code, when writing tests.
+To a certain extent, this is natural, since your tests need to exercise the functions in your package by doing real tasks.
+The code *inside each `test_that()` call* should be very procedural.
+But at the next level of organisation, i.e. a file with multiple tests or a folder with many test files, the step-by-step script mentality can lead you astray.
+
+Recall this advice found in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
+
+> The `.R` files below `R/` should consist almost entirely of function definitions.
+> Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
+
+We have analogous advice for your "testing code", i.e. everything in `tests/testthat/test-*.R` files:
+
+> The `test-*.R` file below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
+> Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving its goal, such as using functions or data objects defined in your package or relocating logic to special testthat files, such as `helper.R` or `setup.R`.
 
 ### Test hygiene
+
+> All tests should strive to be hermetic:
+> a test should contain all of the information necessary to set up, execute, and tear down its environment.
+> Tests should assume as little as possible about the outside environment ....
+> 
+> From <https://abseil.io/resources/swe-book/html/ch11.html>
 
 Each `test_that()` test is executed in its own environment and is (somewhat) self-contained.
 For example, an R object you create inside a test does not exist after the test exits:
@@ -840,31 +857,13 @@ When possible, make each test self-contained and self-sufficient:
 
 In the testing domain, this is sometimes referred to as *setup and teardown* and we'll describe several official testthat ways to do this, at various scopes.
 
-### Code to avoid
+### Self-sufficient, self-contained tests
 
-Recall this advice found in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
-
-> The `.R` files below `R/` should consist almost entirely of function definitions.
-> Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
-
-We have analogous advice for your "testing code", i.e. everything in `tests/testthat/test-*.R` files:
-
-> The `test-*.R` file below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
-> Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving its goal, such as using functions or data objects defined in your package or relocating logic to special testthat files, e.g. `setup.R`.
-
-Some specific things to avoid in test code:
-
-* `source()` should not appear in your tests.
-  There are several special files with an official role in testthat workflows
-  (see below), not to mention the entire R package machinery, that provide
-  better ways to make functions, objects, and other logic available in your
-  tests.
-* `library()` should (almost certainly) not appear in your tests.
-  Similar to advice for the code below `R/`, it's usually better to access
-  functions from a dependency via `otherpkg::fun()`.
-* Avoid big globs of top-level code that creates data used by many other tests.
-
-### Self-sufficient tests
+> Remember that tests are often revisited only when something breaks
+> When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand.
+> Code is read far more than it is written, so make sure you write the test you’d like to read!
+> 
+> From <https://abseil.io/resources/swe-book/html/ch11.html>
 
 It's hard to beat the pure simplicity and obviousness of a test that creates the conditions it needs, then puts things back as they were.
 You've already seen an example of this, when we explored snapshot tests:
@@ -996,6 +995,233 @@ Imagine yourself troubleshooting a test that's suddenly started failing on CRAN 
 If the test is self-sufficient, you can basically focus your attention to the universe contained within `test_that("your code works", { ... })`.
 The code inside `{ ... }` will either explicitly create all the necessary objects and conditions or make explicit calls to specific helpers or fixtures (explained below).
 We find this a more sustainable workflow than hunting through a test file for top-level calls that need to be executed in order to work on the tests.
+
+## Interactions between your workflow and and your test suite
+
+Your test code will be executed in two different settings:
+
+* Interactive test development and maintenance, which includes tasks like:
+  - Initial test creation
+  - Modifying tests to adapt to change
+  - Debugging test failure
+* Automated test runs, which is accomplished with functions such as:
+  - Single file: `devtools::test_active_file()`, `testthat::test_file()`
+  - Whole package: `devtools::test()`, `devtools::check()`
+  
+Automated testing of your whole package is what takes priority.
+This is ultimately the whole point of your tests.
+However, the interactive experience is clearly important for the humans doing this work.
+Therefore it's important to find a pleasant workflow, but also to ensure that you don't rig anything for interactive convenience that actually compromises the health of the test suite.
+
+These two modes of test-running should not be in conflict with each other.
+If you perceive tension between these two modes, this can indicate that you're not taking full advantage of some of testthat's features and the way it's designed to work with `devtools::load_all()`.
+
+### Practices to avoid
+
+When we do reverse dependency checks, often involving hundreds or thousands of CRAN packages, we have to inspect test failures to determine if changes in our packages are to blame.
+As a result, we regularly engage with failing tests in other people's packages, which leaves us with lots of opinions about practices that create unnecessary testing pain.
+
+Here are two practices we see fairly often in the wild that have real downsides:
+
+* Adding code to `tests/testthat.R`, such as `library()` calls that attach
+  packages
+* Top-level code interspersed in the test files that, e.g., defines test
+  objects or attaches packages with `library()`
+  
+These practices can undermine the quality of both the test suite and the interactive workflow:
+
+* They change the R landscape: `library()` alters the search path and
+  top-level assignments add objects to the current environment. This means the
+  circumstances under which you are testing do not necessarily reflect the
+  circumstances under which your package will be used. This makes it easier to
+  create subtle test bugs, which you will have to unravel in the future.
+* There's no official gesture, in devtools, testthat, or the RStudio IDE, for
+  ferreting out all these bits of code and running them when you want to work
+  on your tests.
+  Therefore you have to find and run this code "by hand".
+  This sort of *ad hoc* code creates hard-to-see dependencies between
+  different pieces of your testing suite and adds mystery when you least need
+  it: when you're trying to figure out why tests are failing.
+
+What should you do instead?
+When working on your tests, use `devtools::load_all()`, just like you do when working below `R/`.
+By default, `load_all()` does all of these things:
+
+* Simulates re-building, re-installing, and re-loading your package.
+* Makes everything in your package's namespace available, including unexported
+  functions and objects and anything you've imported from another package.
+* Attaches testthat, i.e. does `library(testthat)`.
+* Runs test helper files, i.e. executes `test/testthat/helper.R`.
+
+This eliminates the need for any `library()` calls below `tests/testthat/`, for the vast majority of R packages.
+Any instance of `library(testthat)` is clearly no longer necessary.
+Likewise, any instance of attaching one of your dependencies via `library(somePkg)` is unnecessary.
+In your tests, if you need to call functions from somePkg, do it just as you do below `R/`.
+If you have imported the function into your namespace, use `fun()`.
+If you have not, use `somePkg::fun()`.
+
+Test toubleshooting nirvana looks like this:
+In a fresh R sesion, you can do `devtools::load_all()` and immediately run an individual test or walk through it line-by-line.
+There is no need to hunt around for code that has to be run first, that is found elsewhere in the test file or in a different file altogether (i.e. some file that is not executed by `load_all()`).
+
+One other function that basically should never appear below `tests/testhat/` is `source()`.
+There are several special files with an official role in testthat workflows (see below), not to mention the entire R package machinery, that provide better ways to make functions, objects, and other logic available in your tests.
+
+## Files relevant to testing
+
+Here we review which package files are especially relevant to testing and, more generally, best practices for interacting with the file system from your tests.
+
+### The obvious: files below `R/`
+
+The most important functions you'll need to access from your tests are clearly those in your package!
+Here we're talking about everything that's defined below `R/`.
+The functions and other objects defined by your package are always available when testing.
+For interactive work, `devtools::load_all()` takes care of this.
+During automated testing, this is taken care of internally by testthat.
+
+This means that test helpers can absolutely be defined below `R/` and used freely in your tests.
+It might make sense to gather such helpers in a clearly marked file, such as one of these:
+
+```
+.                              
+├── ...
+└── R
+    ├── ...
+    ├── test-helpers.R
+    ├── test-utils.R
+    ├── utils-testing.R
+    └── ...
+```
+
+### Helper and setup files that are special to testthat
+
+Another type of file that is always executed by `load_all()` and at the beginning of automated testing is a helper file, defined as any file below `tests/testthat/` that begins with `helper`.
+If you have just one such file, you should probably name it `helper.R`.
+If you organize your helpers into multiple files, you could include a suffix with additional info.
+Here are examples of how such files might look:
+
+```
+.                              
+├── ...
+└── tests
+    ├── testthat
+    │   ├── helper.R
+    │   ├── helper-blah.R
+    │   ├── helper-foo.R    
+    │   ├── setup.R
+    │   ├── test-foofy.R
+    │   └── (more test files)
+    └── testthat.R
+```
+
+A helper file is also a good location for setup code that is needed for its side effects.
+This is a case where `tests/testthat/helper.R` is clearly more appropriate than a file below `R/`.
+For example, in some API-wrapping packages, `helper.R` is where we (attempt to) authenticate with the credentials for a testing account.
+This succeeds or fails, depending on the availability of a specific environment variable, and all downstream tests are written to cope gracefully either way (see ??? to learn about test skipping).
+
+In the file listing above, you can also see the final special file type: setup files, defined as any file below `test/testthat/` that begins with `setup`.
+A setup file is handled almost exactly like a helper file, but with two big differences:
+
+* Setup files are not executed by `devtools::load_all()`.
+* Setup files often contain the corresponding teardown code.
+
+Put setup code that is relevant to interactive test work in a helper file.
+Put setup code that is relevant only to automated testing in a setup file.
+
+### Storing test data
+
+Many packages contain files that hold test data.
+Where should these be stored?
+The best location is somewhere below `tests/testthat/`, often in a subdirectory, to keep things neat.
+Below is an example, where `useful_thing1.rds` and `useful_thing2.rds` hold objects used in the test files.
+
+```
+.
+├── ...
+└── tests
+    ├── testthat
+    │   ├── fixtures
+    │   │   ├── make-useful-things.R
+    │   │   ├── useful_thing1.rds
+    │   │   └── useful_thing2.rds
+    │   ├── helper.R
+    │   ├── setup.R
+    │   └── (all the test files)
+    └── testthat.R
+```
+
+Then, in your tests, use `testthat::test_path()` to build a robust filepath to such files.
+
+```{r eval = FALSE}
+test_that("foofy() does this", {
+  useful_thing <- readRDS(test_path("fixtures", "useful_thing1.rds"))
+  # ...
+})
+```
+
+`testthat::test_path()` is extremely handy, because it produces the correct path in the two important modes of test execution:
+
+* Interactive test development and maintenance, where working directory is
+  presumably set to the top-level of the package.
+* Automated testing, where working directory is usually set to something
+  below `tests/`.
+
+Another important path-building function to know about is `fs::path_package()`.
+It is essentially `base::system.file()` with one very significant added feature:
+it produces the correct path for both an in-development or an installed package.
+
+```
+during development               after installation                             
+
+/path/to/local/package           /path/to/some/installed/package
+├── DESCRIPTION                  ├── DESCRIPTION
+├── ...                          ├── ...
+├── inst                         └── some-installed-file.txt
+│   └── some-installed-file.txt  
+└── ...
+```
+
+A common theme now you've seen in various places is that the tools try to remove tension between having a smooth interactive development experience and arranging things correctly in your package.
+
+### Where to write files during testing
+
+If it's easy to avoid writing files from you tests, that is definitely the best plan.
+But there are many times when you really must write files.
+
+You should only write file inside the session temp directory.
+Do not write into your package's `tests/` directory.
+Do not write into the current working directory.
+Do not write into the user's home directory.
+Even though you are writing into the session temp directory, you should still clean up after yourself, i.e. delete any files you've written.
+
+Most package developers don't want to hear this, because it sounds like a hassle.
+But it's not that burdensome once you get familiar with a few techniques and build some new habits.
+A high level of file system discipline also eliminates various testing bugs and will absolutely make your CRAN life run more smoothly.
+
+This test is from roxygen2 and demonstrates everything we recommend:
+
+```{r eval = FALSE}
+test_that("can read from file name with utf-8 path", {
+  path <- withr::local_tempfile(
+    pattern = "Universit\u00e0-",
+    lines = c("#' @include foo.R", NULL)
+  )
+  expect_equal(find_includes(path), "foo.R")
+})
+```
+
+`withr::local_tempfile()` creates a file within the session temp directory whose lifetime is tied to the "local" environment -- in this case, the exectuion environment of an individual test.
+It is a wrapper around `base::tempfile()` and passes, e.g., the `pattern` argument through, so you have some control over the file name.
+You can optionally provide `lines` to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps.
+Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.
+
+Sometimes you need even more control over the file name, in which case two techniques are handy:
+
+* Use `withr::local_file(file.path(tempdir(), "very-specific-file-name"))`,
+  which still creates a self-deleting file, below the temp directory, but with
+  the exact name you provide.
+* Use `withr::local_tempdir()` to create a self-deleting temporary directory and
+  write intentionally-named files inside this directory.
 
 ## Test fixtures
 
@@ -1665,4 +1891,16 @@ So: local_test_context(), local_reproducible_output()
 https://testthat.r-lib.org/reference/local_test_context.html
 
 This is (one of) the reasonable places to put this content.
+-->
+
+<!--
+Creating and maintaining a healthy test suite takes real effort. As a codebase grows, so too will the test suite. It will begin to face challenges like instability and slowness. A failure to address these problems will cripple a test suite. Keep in mind that tests derive their value from the trust engineers place in them. If testing becomes a productivity sink, constantly inducing toil and uncertainty, engineers will lose trust and begin to find workarounds. A bad test suite can be worse than no test suite at all.
+
+Remember that tests are often revisited only when something breaks. When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand. Code is read far more than it is written, so make sure you write the test you’d like to read!
+
+https://abseil.io/resources/swe-book/html/ch11.html
+
+Because they make up such a big part of engineers’ lives, Google puts a lot of focus on test maintainability. Maintainable tests  are ones that "just work": after writing them, engineers don’t need to think about them again until they fail, and those failures indicate real bugs with clear causes. The bulk of this chapter focuses on exploring the idea of maintainability and techniques for achieving it.
+
+https://abseil.io/resources/swe-book/html/ch12.html
 -->
