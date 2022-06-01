@@ -1514,10 +1514,12 @@ In this section, we review more ways to deal with challenging situations:
 
 Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
 Unfortunately, another likely reason follows from this simple rule:
-the more machines you use to write your code, the more likely it is that you won't be able to run all of your tests.
+the more platforms you use to test your code, the more likely it is that you won't be able to run all of your tests, all of the time.
 In short, there are times when, instead of getting a failure, you just want to skip a test.
 
-To do that, you can use the `skip()` function:
+#### `skip()`
+
+Here we use `testthat::skip()` to write a hypothetical custom skipper, `skip_if_no_api()`:
 
 ```{r, eval = FALSE}
 skip_if_no_api() <- function() {
@@ -1532,36 +1534,48 @@ test_that("foo api returns bar when given baz", {
 })
 ```
 
-The custom skipper `skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
+`skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
 
-`skip()`s are reported inline as tests are executed and are also indicated clearly in the summary:
+`skip()`s and the associated reasons are reported inline as tests are executed and are also indicated clearly in the summary:
 
-```
-✓ | F W S  OK | Context
-✓ |         2 | blarg                                        
-✓ |     2   2 | foofy                                        
-─────────────────────────────────────────────────────────────
-Skip (test-foofy.R:6:3): blarg exists inside foofy tests
-Reason: failing test
-
-Skip (test-foofy.R:11:3): I know the working directory
-Reason: failing test
-─────────────────────────────────────────────────────────────
-
-══ Results ══════════════════════════════════════════════════
-Duration: 0.1 s
-
-── Skipped tests  ───────────────────────────────────────────
-• failing test (2)
-
-[ FAIL 0 | WARN 0 | SKIP 2 | PASS 4 ]
+```{r, eval = FALSE}
+devtools::test()
+#> ℹ Loading abcde
+#> ℹ Testing abcde
+#> ✔ | F W S  OK | Context
+#> ✔ |         2 | blarg
+#> ✔ |     1   2 | foofy
+#> ────────────────────────────────────────────────────────────────────────────────
+#> Skip (test-foofy.R:6:3): foo api returns bar when given baz
+#> Reason: API not available
+#> ────────────────────────────────────────────────────────────────────────────────
+#> ✔ |         0 | yo                                                              
+#> ══ Results ═════════════════════════════════════════════════════════════════════
+#> ── Skipped tests  ──────────────────────────────────────────────────────────────
+#> • API not available (1)
+#> 
+#> [ FAIL 0 | WARN 0 | SKIP 1 | PASS 4 ]
+#> 
+#> 🥳
 ```
 
 Something like `skip_if_no_api()` is likely to appear many times in your test suite.
-We lean towards calling `skip_if_no_api()` in each test where it's needed, even though this is going to tempt you to DRY things out.
-This is another type of call that is tempting to hoist to the top-level of a test file:
+This is another occasion where it is tempting to DRY things out, by hoisting the `skip()` to the top-level of the file.
+However, we still lean towards calling `skip_if_no_api()` in each test where it's needed. 
 
 ```{r eval = FALSE}
+# we prefer this:
+test_that("foo api returns bar when given baz", {
+  skip_if_no_api()
+  ...
+})
+
+test_that("foo api returns an errors when given qux", {
+  skip_if_no_api()
+  ...
+})
+
+# over this:
 skip_if_no_api()
 
 test_that("foo api returns bar when given baz", {...})
@@ -1569,12 +1583,38 @@ test_that("foo api returns bar when given baz", {...})
 test_that("foo api returns an errors when given qux", {...})
 ```
 
-We have mixed feelings about this practice.
-Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
-But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
+Within the realm of top-level code in test files, having a top-level `skip()` at the very beginning of a test file is one of more harmless uses.
+But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the `skip()` and individual tests.
+
+#### Built-in `skip()` functions
+
+Similar to testthat's built-in expectations, there is a family of `skip()` functions that anticipate some common situations.
+These functions often relieve you of the need to write a custom skipper.
+Here are some examples of the most useful `skip()` functions:
+
+```{r eval = FALSE}
+test_that("foo api returns bar when given baz", {
+  skip_if(api_unavailable(), "API not available")
+  ...
+})
+test_that("foo api returns bar when given baz", {
+  skip_if_not(api_available(), "API not available")
+  ...
+})
+
+skip_if_not_installed("sp")
+skip_if_not_installed("stringi", "1.2.2")
+
+skip_if_offline()
+skip_on_cran()
+skip_on_os("windows")
+```
+
+#### Dangers of skipping
 
 One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
 In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
+
 *2022-06-01: Recent changes to GitHub Actions mean that we will likely have better test reporting before the second edition of this book is published. Stay tuned!*
 
 It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
@@ -1648,7 +1688,6 @@ CRAN revision thought dump:
 
 ### Introspection
 
-`NOT_CRAN`, `skip_on_cran()`
 
 `TESTTHAT`, `is_testing()`
 
