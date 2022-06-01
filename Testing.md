@@ -360,18 +360,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥇
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🎊
 ```
 
 This file shows a typical mix of tests:
@@ -910,7 +910,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🌈
 
 exists("thingy")
 #> [1] FALSE
@@ -1031,7 +1031,7 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 
 test_that("subtraction works", {
   useful_thing <- 3
@@ -1057,7 +1057,7 @@ test_that("multiplication works", {
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
@@ -1519,72 +1519,34 @@ But there's still a limit to how much repetition to tolerate.
 We've covered techniques such as loading static objects with `test_path()`, writing a constructor like `new_useful_thing()`, or implementing a test fixture like `local_useful_thing()`.
 There are even more types of test helpers that can be useful in certain situations.
 
-For example, the following code shows one test of the `floor_date()` function from `library(lubridate)`.
-There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.
-There's a lot of duplication here, which increases the chance of copy / paste errors and generally makes your eyes glaze over.
+Consider this test for the `str_trunc()` function in stringr:
 
 
 ```r
-# this library call would NOT appear in a real test file for lubridate
-library(lubridate)
-#> 
-#> Attaching package: 'lubridate'
-#> The following objects are masked from 'package:base':
-#> 
-#>     date, intersect, setdiff, union
-
-test_that("floor_date works for different units", {
-  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
-
-  expect_equal(floor_date(base, "second"), 
-    as.POSIXct("2009-08-03 12:01:59", tz = "UTC"))
-  expect_equal(floor_date(base, "minute"), 
-    as.POSIXct("2009-08-03 12:01:00", tz = "UTC"))
-  expect_equal(floor_date(base, "hour"),   
-    as.POSIXct("2009-08-03 12:00:00", tz = "UTC"))
-  expect_equal(floor_date(base, "day"),    
-    as.POSIXct("2009-08-03 00:00:00", tz = "UTC"))
-  expect_equal(floor_date(base, "week"),   
-    as.POSIXct("2009-08-02 00:00:00", tz = "UTC"))
-  expect_equal(floor_date(base, "month"),  
-    as.POSIXct("2009-08-01 00:00:00", tz = "UTC"))
-  expect_equal(floor_date(base, "year"),   
-    as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
+# from stringr (hypothetically)
+test_that("truncations work for all sides", {
+  expect_equal(
+    str_trunc("This string is moderately long", width = 20, side = "right"),
+    "This string is mo..."
+  )
+  expect_equal(
+    str_trunc("This string is moderately long", width = 20, side = "left"),
+    "...s moderately long"
+  )
+  expect_equal(
+    str_trunc("This string is moderately long", width = 20, side = "center"),
+    "This stri...ely long"
+  )
 })
-#> [32mTest passed[39m 😀
 ```
 
-A nice move here is to create some hyper-local helper functions to make each expectation more concise.
-Now each expectation fits on one line, which allows us read the actual and expected value like a table.
-This makes it easier to see the expected floor evolve, as we vary the `unit` from `second` to `year`:
-
-<!-- I actually think that, for THIS SPECIFIC EXAMPLE, this is exactly the right level of customization. When we take the next step, below, it feels weird. -->
+There's a lot of repetition here, which increases the chance of copy / paste errors and generally makes your eyes glaze over.
+Sometimes it's nice to create a hyper-local helper, *inside the test*.
+Here's how the test actually looks in stringr
 
 
 ```r
-test_that("floor_date works for different units", {
-  as_time <- function(x) as.POSIXct(x, tz = "UTC")
-  base <- as_time("2009-08-03 12:01:59.23")
-  floor_base <- function(unit) floor_date(base, unit)
-
-  expect_equal(floor_base("second"), as_time("2009-08-03 12:01:59"))
-  expect_equal(floor_base("minute"), as_time("2009-08-03 12:01:00"))
-  expect_equal(floor_base("hour"),   as_time("2009-08-03 12:00:00"))
-  expect_equal(floor_base("day"),    as_time("2009-08-03 00:00:00"))
-  expect_equal(floor_base("week"),   as_time("2009-08-02 00:00:00"))
-  expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
-  expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
-})
-#> [32mTest passed[39m 😸
-```
-
-*I think that example should end RIGHT HERE. It's not a natural candidate for demonstrating writing a custom expectation and the metaprogramming approach.*
-
-*Other candidates of hyperlocal helpers that could replace the lubridate example:*
-
-
-```r
-# from stringr
+# from stringr (actually)
 test_that("truncations work for all sides", {
 
   trunc <- function(direction) str_trunc(
@@ -1599,143 +1561,35 @@ test_that("truncations work for all sides", {
 })
 ```
 
+A hyper-local helper like `trunc()` is particularly useful when it allow you to fit all the important business for each expectation on one line.
+Then your expectations can be read almost like a table of actual vs. expected, for a set of related use cases.
+Above, it's very easy to watch the result change as we truncate the input in various ways.
 
-```r
-# from tidyr
-test_that("can fill in missing cells", {
-  df <- tibble(g = c(1, 2), var = c("x", "y"), val = c(1, 2))
+Note that this technique should be used in extreme moderation.
+A helper like `trunc()` is yet another place where you can introduce a bug, so it's best to keep such helpers extremely short and simple.
 
-  widen <- function(...) {
-    df %>% pivot_wider(names_from = var, values_from = val, ...)
-  }
+If a more complicated helper feels necessary, it's a good time to reflect on why that is.
+If it's fussy to get into position to *test* a function, that could be a sign that it's also fussy to *use* that function.
+Do you need to refactor it?
+If the function seems sound, then you probably need to use a more formal helper, defined outside of any individual test, as described earlier.
 
-  expect_equal(widen()$x, c(1, NA))
-  expect_equal(widen(values_fill = 0)$x, c(1, 0))
-  expect_equal(widen(values_fill = list(val = 0))$x, c(1, 0))
-})
-```
-
-*Does anyone have a great example of custom expectation? With metaprogramming / tidy eval?
-I'm leaning towards leaving that advanced topic for, e.g. a testthat vignette.
-I'm definitely NOT keeping the continuation here of the previous example.
-*
-
-<!-- Here's where I think we should just find a new example, but I've modernized this one for now. Two changes:
-
-* Fall in with the `object, expected, details` pattern the most expectations have.
-* Modern approach to NSE / metaprogramming.
-
-But the basically fixed "base" the primary actual input and the need to as_time() everything adds a lot of fiddliness.
--->
-
-We could go a step further and create a custom expectation function that wraps `expect_equal()`:
+Another type of helper you might want to create is a custom expectation.
+Here are two very simple ones from usethis:
 
 
 ```r
-expect_floor_date <- function(object, expected, unit) {
-  as_time <- function(x) as.POSIXct(x, tz = "UTC")
-  expect_equal(floor_date(as_time(object), unit), as_time(expected))
+expect_usethis_error <- function(...) {
+  expect_error(..., class = "usethis_error")
 }
 
-expect_floor_date("2009-08-03 12:01:59.23", "2009-01-01 00:00:00", "year")
+expect_proj_file <- function(...) expect_true(file_exists(proj_path(...)))
 ```
 
-However, if this expectation fails, the output of such a super-simple wrapper is less than ideal:
+`expect_usethis_error()` checks that an error has the `"usethis_error"` class.
+`expect_proj_file()` is a simple wrapper around `file_exists()` that searches for the file in the current project.
 
-
-```r
-expect_floor_date("2009-08-03 12:01:59.23", "2222-02-01 00:00:00", "year")
-#> Error: floor_date(as_time(object), unit) (`actual`) not equal to as_time(expected) (`expected`).
-#> 
-#> `actual`:   [32m"2009-01-01"[39m
-#> `expected`: [32m"2222-02-01"[39m
-```
-
-If you're going to create a custom expectation, you should probably take the next step and do the non-standard evaluation or meta-programming work to give yourself an intelligible and actionable failure message.
-
-
-```r
-expect_floor_date <- function(object, expected, unit) {
-  act <- quasi_label(rlang::enquo(object), arg = "object")
-  exp <- quasi_label(rlang::enquo(expected), arg = "expected")
-  as_time <- function(x) as.POSIXct(x, tz = "UTC")
-  
-  # I want to do a modern waldo-y comparison
-  # is that possible without `testthat:::`?
-  comp <- testthat:::waldo_compare(
-    floor_date(as_time(object), unit = unit),
-    as_time(expected),
-    x_arg = "actual", y_arg = "expected"
-  )
-
-  expect(
-    length(comp) == 0,
-    c(
-      # could just use object here? I don't see why act$lab is needed
-      glue::glue("floor_date({act$lab}, \"{unit}\") not equal to {exp$lab}"),
-      comp
-    ),
-    trace_env = rlang::caller_env()
-  )
-
-  invisible(act$val)
-}
-
-# success
-expect_floor_date("2009-08-03 12:01:59.23", "2009-01-01 00:00:00", "year")
-
-# failure
-expect_floor_date("2009-08-03 12:01:59.23", "2222-02-01 00:00:00", "year")
-#> Error: floor_date("2009-08-03 12:01:59.23", "year") not equal to "2222-02-01 00:00:00"
-#> `actual`:   [32m"2009-01-01"[39m
-#> `expected`: [32m"2222-02-01"[39m
-```
-
-*I'm keeping the "old way" here, so we can see how the previous custom expectation example played out.*
-
-The key is to use `bquote()` and `eval()`.
-In the `bquote()` call below, note the use of `.(x)` - the contents of `()` will be inserted into the call.
-
-
-```r
-expect_floor_old_skool <- function(unit, time) {
-  as_time <- function(x) as.POSIXct(x, tz = "UTC")
-  base <- as_time("2009-08-03 12:01:59.23")
-  eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
-}
-expect_floor_old_skool("year", "2008-01-01 00:00:00")
-#> Error: floor_date(base, "year") (`actual`) not equal to as_time("2008-01-01 00:00:00") (`expected`).
-#> 
-#> `actual`:   [32m"2009-01-01"[39m
-#> `expected`: [32m"2008-01-01"[39m
-# Error: floor_date(base, "year") not equal to as_time("2008-01-01 00:00:00").
-# 1/1 mismatches
-# [1] 2009-01-01 - 2008-01-01 == 366 days
-```
-
-This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what's changing.
-Readable tests give you more confidence that they're correct.
-
-
-```r
-test_that("floor_date works for different units", {
-  as_time <- function(x) as.POSIXct(x, tz = "UTC")
-  
-  expect_floor_old_skool <- function(unit, time) {
-    eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
-  }
-  
-  base <- as_time("2009-08-03 12:01:59.23")
-  expect_floor_old_skool("second", "2009-08-03 12:01:59")
-  expect_floor_old_skool("minute", "2009-08-03 12:01:00")
-  expect_floor_old_skool("hour",   "2009-08-03 12:00:00")
-  expect_floor_old_skool("day",    "2009-08-03 00:00:00")
-  expect_floor_old_skool("week",   "2009-08-02 00:00:00")
-  expect_floor_old_skool("month",  "2009-08-01 00:00:00")
-  expect_floor_old_skool("year",   "2009-01-01 00:00:00")
-})
-#> [32mTest passed[39m 🥳
-```
+It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat.
+We refer you to the [Custom expectations](https://testthat.r-lib.org/articles/custom-expectation.html) vignette if you wish to learn more about that.
 
 ## When testing gets hard
 
