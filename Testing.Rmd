@@ -1508,6 +1508,7 @@ In this section, we review more ways to deal with challenging situations:
 
 * Skipping a test in certain situations
 * Mocking an external service
+* Dealing with secrets
 
 ### Skipping a test {#tests-skipping}
 
@@ -1572,64 +1573,12 @@ We have mixed feelings about this practice.
 Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
 But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
 
-*This next technique should probably move to <https://testthat.r-lib.org/articles/skipping.html> and we should just send people there for more. AFAIK only Hadley does this, yeah?*
-
-At the complete other extreme, another practice that can make sense in very specific situations is to build a `skip()` directly into a package function.
-Here's an example from pkgdown, in `pkgdown::convert_markdown_to_html()`, which absolutely, positively cannot work if the Pandoc tool is unavailable:
-
-<https://github.com/r-lib/pkgdown/blob/98d5a5c735eb244cb98b2e6bab1d54bb27c0af95/R/markdown.R#L95-L106>
-
-```{r eval = FALSE}
-# in r-lib/pkgdown/R/markdown.R
-convert_markdown_to_html <- function(in_path, out_path, ...) {
-  if (rmarkdown::pandoc_available("2.0")) {
-    from <- "markdown+gfm_auto_identifiers-citations+emoji+autolink_bare_uris"
-  } else if (rmarkdown::pandoc_available("1.12.3")) {
-    from <- "markdown_github-hard_line_breaks+tex_math_dollars+tex_math_single_backslash+header_attributes"
-  } else {
-    if (is_testing()) {
-      testthat::skip("Pandoc not available")
-    } else {
-      abort("Pandoc not available")
-    }
-  }
-  
-  rmarkdown::pandoc_convert(...)
-  invisible()
-}
-```
-
-If Pandoc is not available when `convert_markdown_to_html()` executes, it throws an error *unless* it appears to part of a test run, in which case the test is skipped.
-This is an alternative to implementing a custom skipper, e.g. `skip_if_no_pandoc()`, and inserting it into many of pkgdown's tests.
-
-`testthat::is_testing()` is a small convenience function that checks the value of the `TESTTHAT` environment variable, which will be true when testthat is running tests:
-
-```{r eval = FALSE}
-is_testing <- function() {
-  identical(Sys.getenv("TESTTHAT"), "true")
-}
-```
-
-You usually want to avoid a runtime dependency on testthat, i.e. you won't want to use testthat in the code below `R/`.
-In that case, you should inline the source of `is_testing()` into your package, in whatever location you are using for any other test helper functions.
-
-<!-- Of course, the example above actually DOES have a runtime dependency on testthat, because of the call to `testthat::skip()`.
-Or, rather, it appears to.
-But `testthat::skip` is only ever run when you're inside a test, implying that branch operates under the "testing rules", where we're allowed to assume that all Suggested packages are installed.
--->
-
-Advantages of the embedded `skip()` approach: Feels elegant and concise.
-
-Disadvantages of this approach: Seems to violate "Good production code is well-factored; good test code is obvious", i.e. when you're focused on the tests, the existence of this skip is easy to miss.
-
-<!-- I want to talk about the danger of skipping, i.e. when you think everything's "green", but actually you're not running any / many tests, because some pre-condition is not met. -->
-
 One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
 In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
+*2022-06-01: Recent changes to GitHub Actions mean that we will likely have better test reporting before the second edition of this book is published. Stay tuned!*
 
 It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
 But this tends to be something you have to learn through experience.
-
 
 ### Mocking
 
