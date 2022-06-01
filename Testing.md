@@ -360,7 +360,7 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎉
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
@@ -910,7 +910,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🥳
 
 exists("thingy")
 #> [1] FALSE
@@ -1031,13 +1031,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🎉
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1052,7 +1052,7 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎊
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
@@ -1350,6 +1350,19 @@ Sometimes you need even more control over the file name, in which case two techn
   the exact name you provide.
 * Use `withr::local_tempdir()` to create a self-deleting temporary directory and
   write intentionally-named files inside this directory.
+  
+### Files ignored by testthat
+
+testhat only automatically executes files where these are both true:
+
+* File is a direct child of `tests/testthat/`
+* File name starts with one of the specific strings:
+  - `helper`
+  - `setup`
+  - `test`
+
+It is fine to have other files or directories in `tests/testthat/`, but testthat won't automatically do anything with them (other than the `_snaps` directory, which holds snapshots).
+You can keep other files here, for reading or copying, and use `testthat::test_path()` to build filepath.
 
 ## Test fixtures
 
@@ -1445,7 +1458,7 @@ test_that("foofy() does that", {
 
 Where should the `local_useful_thing()` helper be defined?
 All the advice given above for `new_useful_thing()` applies:
-define it below `R/` or a test helper file.
+define it below `R/` or in a test helper file.
 
 To learn more about writing custom helpers like `local_useful_thing()`, see the [testthat vignette on test fixtures](https://testthat.r-lib.org/articles/test-fixtures.html).
 
@@ -1488,7 +1501,7 @@ Now we can revisit a file listing from earlier, which addressed exactly this sce
 This shows static test files stored in `tests/testthat/fixtures/`, but also notice the companion R script, `make-useful-things.R`.
 From data analysis, we all know there is no such things as a script that is run only once.
 Refinement and iteration is inevitable.
-This also holds true to test objects like `useful_thing1.rds`.
+This also holds true for test objects like `useful_thing1.rds`.
 We highly recommend saving the R code used to create your test objects, so that they can be re-created as needed.
 
 ## Building your own testing tools
@@ -1538,7 +1551,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1562,7 +1575,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
   expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 ```
 
 *I think that example should end RIGHT HERE. It's not a natural candidate for demonstrating writing a custom expectation and the metaprogramming approach.*
@@ -1721,7 +1734,7 @@ test_that("floor_date works for different units", {
   expect_floor_old_skool("month",  "2009-08-01 00:00:00")
   expect_floor_old_skool("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥳
 ```
 
 ## When testing gets hard
