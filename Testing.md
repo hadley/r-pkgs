@@ -371,7 +371,7 @@ test_that("0 duplicates equals empty string", {
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 ```
 
 This file shows a typical mix of tests:
@@ -910,7 +910,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎉
 
 exists("thingy")
 #> [1] FALSE
@@ -1031,7 +1031,7 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎊
 
 test_that("subtraction works", {
   useful_thing <- 3
@@ -1052,7 +1052,7 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
@@ -1506,13 +1506,6 @@ We highly recommend saving the R code used to create your test objects, so that 
 
 ## Building your own testing tools
 
-<!--
-Why Good Developers Write Bad Unit Tests
-https://mtlynch.io/good-developers-bad-tests/
-"Your natural inclination might be to delegate all the uninteresting code to test helper methods, but you should first ask a more vital question: why is the system so difficult to test? Excessive boilerplate code is often a symptom of weak architecture."
-"When tempted to write test helper methods, try refactoring your production code instead."
--->
-
 Let's return to the topic of duplication in your test code.
 We've encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious.
 But there's still a limit to how much repetition to tolerate.
@@ -1791,47 +1784,6 @@ CRAN revision thought dump:
   - Default behaviour for snapshot tests
   - Keep in a separate repo
 
-### Filesystem matters
-
-Do not write into `tests/testthat/` during your tests.
-
-The only place you should write into is session temp dir.
-ONLY EVER USE `withr::local_temp_file()`.
-ALL OTHER PATHS LEAD TO PAIN AND SUFFERING.
-
-Even then, best practice is to clean up any files or folder you create.
-
-Therefore, the best move is to use `withr::local_temp_file()` and friends.
-This will protect you against 99% of the most likely problems and if new policies arise, the withr maintainer can fix centrally in one location.
-
-Other ways to build robust paths for files that you read (not write):
-
-* `testthat::test_path()`
-* `fs::path_package()` and `system.file()`
-
-Maybe give a review of all the file-related do's and don'ts
-
-### Namespace
-
-You can call / test all of your own package's functions without any special effort on your part, regardless of whether they are exported or not.
-
-That is provided at test time by `testhat::test_file()`, `devtools::test()`, etc.
-
-During interactive development, you should make this happen for yourself via `devtools::load_all()`.
-
-In general, testthat's official workflows are designed around the assumption that the user uses `devtools::load_all()`.
-
-### Dependencies
-
-Don't attach other packages from your tests.
-Don't call `library()`.
-Or, rather, that should be about as rare as using `Depends`.
-
-If other package is in Imports, do `foo::fun()`, just like we recommend when you use it in functions below `R/`.
-
-If other package is in Suggests, .... I already wrote about whether and how to guard in Metadata.Rmd.
-Move that content?
-
 ### Introspection
 
 `NOT_CRAN`, `skip_on_cran()`
@@ -1843,15 +1795,6 @@ Move that content?
 ### Random numbers
 
 `withr::local_seed()`
-
-<!-- I also want to mention testthat's built-in efforts re: reproducibility.
-
-So: local_test_context(), local_reproducible_output()
-
-https://testthat.r-lib.org/reference/local_test_context.html
-
-This is (one of) the reasonable places to put this content.
--->
 
 <!--
 Creating and maintaining a healthy test suite takes real effort. As a codebase grows, so too will the test suite. It will begin to face challenges like instability and slowness. A failure to address these problems will cripple a test suite. Keep in mind that tests derive their value from the trust engineers place in them. If testing becomes a productivity sink, constantly inducing toil and uncertainty, engineers will lose trust and begin to find workarounds. A bad test suite can be worse than no test suite at all.
