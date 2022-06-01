@@ -360,18 +360,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎊
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎉
 ```
 
 This file shows a typical mix of tests:
@@ -870,13 +870,33 @@ We have analogous advice for your "testing code", i.e. everything in `tests/test
 > The `test-*.R` file below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
 > Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving its goal, such as using functions or data objects defined in your package or relocating logic to special testthat files, such as `helper.R` or `setup.R`.
 
+
+```r
+# sometimes people put top-level code here, but it's a good idea to avoid this
+# when you can
+
+test_that("foofy() does this", { ... })
+
+test_that("foofy() does that", { ... })
+
+# it's even more problematic to have top-level code in the MIDDLE of a test file
+#
+# such code only affects *part* of your test file
+#
+# this code is hard to discover and run when troubleshooting
+
+test_that("foofy() does the other thing", { ... })
+```
+
+Keep reading for various alternatives that are better than having top-level code in your test files other than calls to `test_that()`.
+
 ### Test hygiene
 
 > All tests should strive to be hermetic:
 > a test should contain all of the information necessary to set up, execute, and tear down its environment.
 > Tests should assume as little as possible about the outside environment ....
 > 
-> From <https://abseil.io/resources/swe-book/html/ch11.html>
+> From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
 
 Each `test_that()` test is executed in its own environment and is (somewhat) self-contained.
 For example, an R object you create inside a test does not exist after the test exits:
@@ -890,7 +910,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 
 exists("thingy")
 #> [1] FALSE
@@ -924,7 +944,9 @@ In the testing domain, this is sometimes referred to as *setup and teardown* and
 > When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand.
 > Code is read far more than it is written, so make sure you write the test you’d like to read!
 > 
-> From <https://abseil.io/resources/swe-book/html/ch11.html>
+> From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
+
+*Most of us don't work on a code base the size of Google. But even in a team of one, tests that you wrote six months ago might as well have been written by someone else. Especially when they suddenly start failing.*
 
 It's hard to beat the pure simplicity and obviousness of a test that creates the conditions it needs, then puts things back as they were.
 You've already seen an example of this, when we explored snapshot tests:
@@ -1009,13 +1031,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎊
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🌈
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1035,7 +1057,7 @@ test_that("multiplication works", {
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🎉
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
@@ -1045,7 +1067,8 @@ This is particularly frustrating when the failing test starts on line 573 and al
 Or, even worse, the setup is sprinkled around the file between tests, at random locations that made sense at the time you wrote it.
 
 > In its purest form, automating testing consists of three activities: writing tests, running tests, and **reacting to test failures**.
-> --- Testing Overview chapter of The Software Engineering at Google book
+> 
+> From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
 
 Top-level code, outside of any test, is in a sort of No Man's Land:
 it's fine when your tests are all passing, but when something goes wrong and a test fails, now you have to endure a extra self-inflicted pain when you least need it.
@@ -1054,11 +1077,13 @@ Below we recommend various robust and structured solutions to this problem.
 
 But first, seriously consider inlining the creation of a `useful_thing` whenever you need it.
 Is it truly expensive to create a `useful_thing` or does it just bug you to see `useful_thing <- 3` in multiple places?
-The blog post [Why Good Developers Write Bad Unit Tests](https://mtlynch.io/good-developers-bad-tests/) makes a compelling argument that the requirements of test code and production code are different:
+The requirements of test code and production code are different:
 
 > Keep the reader in your test function.
 > Good production code is well-factored; good test code is obvious.
 > ... think about what will make the problem obvious when a test fails.
+>
+> From the blog post [Why Good Developers Write Bad Unit Tests](https://mtlynch.io/good-developers-bad-tests/)
 
 This captures why we advocate inlining logic and objects, where practical.
 Imagine yourself troubleshooting a test that's suddenly started failing on CRAN or on GitHub Actions.
@@ -1137,7 +1162,7 @@ There is no need to hunt around for code that has to be run first, that is found
 One other function that basically should never appear below `tests/testhat/` is `source()`.
 There are several special files with an official role in testthat workflows (see below), not to mention the entire R package machinery, that provide better ways to make functions, objects, and other logic available in your tests.
 
-## Files relevant to testing
+## Files relevant to testing  {#tests-files-overview}
 
 Here we review which package files are especially relevant to testing and, more generally, best practices for interacting with the file system from your tests.
 
@@ -1184,10 +1209,14 @@ Here are examples of how such files might look:
     └── testthat.R
 ```
 
+Many developers use helper files to define custom test helper functions, which we describe in detail below.
+Compared to defining helpers below `R/`, some people find that `tests/testthat/helper.R` makes it more clear that these utilities are specifically for testing the package.
+This location also feels more natural if your helpers rely on testthat functions.
+
 A helper file is also a good location for setup code that is needed for its side effects.
 This is a case where `tests/testthat/helper.R` is clearly more appropriate than a file below `R/`.
 For example, in some API-wrapping packages, `helper.R` is where we (attempt to) authenticate with the credentials for a testing account.
-This succeeds or fails, depending on the availability of a specific environment variable, and all downstream tests are written to cope gracefully either way (see ??? to learn about test skipping).
+This succeeds or fails, depending on the availability of a specific environment variable, and all downstream tests are written to cope gracefully either way (see \@ref(tests-skipping) to learn about skipping tests).
 
 In the file listing above, you can also see the final special file type: setup files, defined as any file below `test/testthat/` that begins with `setup`.
 A setup file is handled almost exactly like a helper file, but with two big differences:
@@ -1195,8 +1224,33 @@ A setup file is handled almost exactly like a helper file, but with two big diff
 * Setup files are not executed by `devtools::load_all()`.
 * Setup files often contain the corresponding teardown code.
 
-Put setup code that is relevant to interactive test work in a helper file.
-Put setup code that is relevant only to automated testing in a setup file.
+Setup files are good for global test setup that is tailored for test execution in non-interactive or remote environments.
+For example, you might turn off behaviour that's aimed at an interactive user, such as messaging or writing to the clipboard.
+
+If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`[^legacy-teardown].
+We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync.
+The artificial environment `teardown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
+
+[^legacy-teardown]: A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
+
+Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
+
+
+```r
+op <- options(reprex.clipboard = FALSE, reprex.html_preview = FALSE)
+
+withr::defer(options(op), teardown_env())
+```
+
+Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local_options()` and pass `teardown_env()` as the `.local_envir`:
+
+
+```r
+withr::local_options(
+  list(reprex.clipboard = FALSE, reprex.html_preview = FALSE),
+  .local_envir = teardown_env()
+)
+```
 
 ### Storing test data
 
@@ -1252,14 +1306,16 @@ during development               after installation
 └── ...
 ```
 
-A common theme now you've seen in various places is that the tools try to remove tension between having a smooth interactive development experience and arranging things correctly in your package.
+`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
+
+A common theme you've now encountered in multiple places is devtools and related packages try to remove tension between having a smooth interactive development experience and arranging things correctly in your package.
 
 ### Where to write files during testing
 
 If it's easy to avoid writing files from you tests, that is definitely the best plan.
 But there are many times when you really must write files.
 
-You should only write file inside the session temp directory.
+**You should only write file inside the session temp directory.**
 Do not write into your package's `tests/` directory.
 Do not write into the current working directory.
 Do not write into the user's home directory.
@@ -1343,52 +1399,16 @@ test_that("foofy() does that", {
 ```
 
 Where should the `new_useful_thing()` helper be defined?
-For new code and actively maintained code, we recommend defining it like any other internal helper, i.e. in a file below `R/`.
-If it logically fits into an existing `.R` file, put it there.
-Otherwise, consider making a file for test utilities, such as `R/utils-testing.R` or `R/test-helpers.R`.
-
-A key advantage of this solution is that the `new_useful_thing()` helper is available to you during interactive development after `devtools::load_all()` and during automated test runs (`devtools::test_active_file()`, `devtools::test()`, etc.), because this is true of all unexported functions.
-Helper code that is lying around in other places, e.g. sprinkled around in test files, does not have this property.
+This comes back to what we outlined in section \@ref(tests-files-overview).
+Test helpers can be defined below `R/`, just like any other internal utility in your package.
+Another popular location is in a test helper file, e.g. `tests/testthat/helper.R`.
+A key feature of both options is that the helpers are made available to you during interactive maintenance via `devtools::load_all()`.
 
 If it's fiddly AND costly to create a `useful_thing`, your helper function could even use memoisation to avoid unnecessary re-computation.
 Once you have a helper like `new_useful_thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
 Sometimes you even realize you should just export and document it, so you can use it freely in documentation and tests.
 
-*Does anyone have a good example of the memoisation alluded to above?*
-
-Another, older location for defining test helpers is `tests/testthat/helper.R`.
-Any `.R` file below `tests/testthat/` that starts with `helper` gets special treatment by testthat and devtools.
-By default, such files are sourced by `load_all()` and when you run an entire test file or the entire test suite.
-This is a legacy approach which still works, but it has no advantage over defining helpers below `R/`.
-Avoid creating `helper.R` in new code and, when updating a package, consider if the contents of `helper.R` are suitable for relation below `R/`.
-
-*I (Jenny) am not completely sold on the deprecation of `helper.R`.*
-
-<!--
-The way I load a token in gargle-using packages in helper.R is actually something that does NOT work "just as well" below `R/`.
-It could happen in setup.R I suppose, but I actually want / need it to be executed by `load_all()`.
-I'm not entirely sold on the deprecation of helper.R.
--->
-
-<!-- Drafting this made me realize how hard it is to learn about the role of special files in testthat. It's really not spelled out in any obvious way in the testthat docs. 
-Update: I am wrong. I eventually found it here! But I still think lots of people don't find this.
-
-https://testthat.r-lib.org/reference/test_file.html?q=setup#special-files
-
-There are two types of .R file that have special behaviour:
-
-Test files start with test and are executed in alphabetical order.
-
-Setup files start with setup and are executed before tests. If clean up is needed after all tests have been run, you can use withr::defer(clean_up(), teardown_env()). See vignette("test-fixtures") for more details.
-
-There are two other types of special file that we no longer recommend using:
-
-Helper files start with helper and are executed before tests are run. They're also loaded by devtools::load_all(), so there's no real point to them and you should just put your helper code in R/.
-
-Teardown files start with teardown and are executed after the tests are run. Now we recommend interleave setup and cleanup code in setup- files, making it easier to check that you automatically clean up every mess that you make.
-
-All other files are ignored by testthat.
--->
+<!-- We're still on the hunt for a good example of such memoisation. -->
 
 ### Create (and destroy) a "local" `useful_thing`
 
@@ -1423,18 +1443,11 @@ test_that("foofy() does that", {
 })
 ```
 
-Just like `new_useful_thing()`, the best place to define `local_useful_thing()` is in a file below `R/`, making it available during interactive development and and during automated testing.
+Where should the `local_useful_thing()` helper be defined?
+All the advice given above for `new_useful_thing()` applies:
+define it below `R/` or a test helper file.
+
 To learn more about writing custom helpers like `local_useful_thing()`, see the [testthat vignette on test fixtures](https://testthat.r-lib.org/articles/test-fixtures.html).
-
-<!-- 
-Quoting from https://testthat.r-lib.org/articles/test-fixtures.html#test-fixtures
-
-> A test fixture is just a local_ function that you use to change state in such a way that you can reach inside and test parts of your code that would otherwise be challenging.
-
-Pedantic critique: I feel like the thing itself (e.g. the Google Sheet, the R package) is the fixture. As are readxl's test sheets, which persist.
-
-The local_*() function instantiates a short-lived fixture and schedules its destruction.
--->
 
 ### Store a concrete `useful_thing` persistently
 
@@ -1455,59 +1468,28 @@ test_that("foofy() does that", {
 })
 ```
 
-:::tip
-`testthat::test_path()` is a handy function for building robust paths for files that live below `tests/testthat/`.
-The resulting paths work during interactive development, when working directory is presumably set to the package root directory, and during all other methods of test execution, where the working directory is more likely to be `tests/testthat/`.
-:::
+Now we can revisit a file listing from earlier, which addressed exactly this scenario:
 
-<!--
-I feel like we should point out that it's a good idea to store the code that creates `tests/testthat/fixtures/useful_thing.rds`, because one day you'll need to remake it or at least better understand where it came from.
-It's conceivable that we could implement `use_data(useful_thing, type = "test)` and just piggyback on `use_data_raw()` / `use_data()`.
-Morally this is very similar; you'd just want to store the result in a different place.
--->
-
-## Setup and teardown
-
-*`tests/testthat/setup.R` clearly needs to be mentioned, but now we are thinking a lot of what appears here should move into a testthat vignette. It might be too detailed for this chapter.*
-
-Sometimes there is truly global test setup that would be impractical to build into every single test and that might be tailored for test execution in non-interactive or remote environments.
-Examples:
-
-* Turning off behaviour aimed at an interactive user, such as messaging or
-  writing to the clipboard.
-* Loading a credential for auth.
-* Setting up a cache folder.
-
-Put such code in `tests/testthat/setup.R`.
-In fact, any file in that directory whose name starts with "setup" is treated as a setup file.
-Setup files are run by testthat before running whole test files.
-Note that setup code is *not* run by `devtools::load_all()`.
-
-If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`.
-We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync.
-The artificial environment `teardown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
-A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
-
-Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
-
-
-```r
-op <- options(reprex.clipboard = FALSE, reprex.html_preview = FALSE)
-
-withr::defer(options(op), teardown_env())
+```
+.
+├── ...
+└── tests
+    ├── testthat
+    │   ├── fixtures
+    │   │   ├── make-useful-things.R
+    │   │   ├── useful_thing1.rds
+    │   │   └── useful_thing2.rds
+    │   ├── helper.R
+    │   ├── setup.R
+    │   └── (all the test files)
+    └── testthat.R
 ```
 
-Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local_options()` and pass `teardown_env()` as the `.local_envir`:
-
-
-```r
-withr::local_options(
-  list(reprex.clipboard = FALSE, reprex.html_preview = FALSE),
-  .local_envir = teardown_env()
-)
-```
-
-<!-- Should we explicitly address older approaches to setup / teardown that are still out there in the wild but that are now discouraged? -->
+This shows static test files stored in `tests/testthat/fixtures/`, but also notice the companion R script, `make-useful-things.R`.
+From data analysis, we all know there is no such things as a script that is run only once.
+Refinement and iteration is inevitable.
+This also holds true to test objects like `useful_thing1.rds`.
+We highly recommend saving the R code used to create your test objects, so that they can be re-created as needed.
 
 ## Building your own testing tools
 
@@ -1556,7 +1538,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🌈
 ```
 
 A nice move here is to create some hyper-local helper functions to make each expectation more concise.
@@ -1739,7 +1721,7 @@ test_that("floor_date works for different units", {
   expect_floor_old_skool("month",  "2009-08-01 00:00:00")
   expect_floor_old_skool("year",   "2009-01-01 00:00:00")
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎉
 ```
 
 ## When testing gets hard
@@ -1750,7 +1732,7 @@ In this section, we review more ways to deal with challenging situations:
 * Skipping a test in certain situations
 * Mocking an external service
 
-### Skipping a test
+### Skipping a test {#tests-skipping}
 
 Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
 Unfortunately, another likely reason follows from this simple rule:
