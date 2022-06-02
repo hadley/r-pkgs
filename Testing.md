@@ -1,3 +1,89 @@
+
+
+<!--
+Thought dump re: revision
+
+Mentality: you're visiting a wild, uninhabited nature preserve.
+Bring your own supplies.
+Leave everything as you found it.
+Practice conservatism, minimalism.
+
+Idea of practicing certain patterns at different levels of granularity:
+- individual test
+- single test file
+- tests for a single package
+
+When in doubt, do setup/teardown as close as possible to the need, create
+stuff you need as close as possible to that need, in as narrow a scope as
+practical, and delete ASAP.
+
+Where to define test helpers/supporters/artefacts, that aren't actually tests?
+
+I interpret this to cover stuff like:
+
+- test fixtures: simple vs. complex, persistent vs. ephemeral, create
+  on-the-fly vs. in advance, create "by hand" vs. with a helper
+- snapshot tests
+- test helper functions: discuss putting below R/ vs. tests/testthat/helper.R
+  vs. defining in a particular test file (outside a test) or inside a test
+
+setup, teardown: both the principle and the mechanics
+
+mocking, giving yourself a way to exercise code in various "as if" scenarios
+  
+  
+  
+file naming: by default, test anything in R/foo.R in tests/testthat/test-foo.R
+- usethis::use_r() / use_test() , devtools::test_active_file() stand ready to help
+you if you do this
+
+When does this advise not work? sometimes a package has one main function and
+following that convention would result in having one monster file of tests.
+
+Example: reprex::reprex(), (to a lesser extent) readxl::read_excel()
+Instead, in those cases, you might organize your tests around the use of
+specific arguments (reprex) or the challenges presented by specific inputs
+(readxl).
+
+
+files/folder created/used by testthat and what they are for
+when in doubt, don't touch tests/testthat.R, which is not executed by test()
+load_all() sources helper.R
+
+namespace and scope thoughts:
+* you have full access to the package-under-testing, even unexported functions
+* whether/how to attach other packages
+* whether/how to test for presence of other packages
+* other package is in Imports vs Suggests vs none of the above
+* maybe explain your use of dependencies in tests relative to how you handle
+  same below R/
+
+
+skipping
+
+
+web, APIs, auth, secrets
+
+
+CRAN specific matters
+
+workflow:
+- test creation
+- test execution
+
+Why Good Developers Write Bad Unit Tests
+https://mtlynch.io/good-developers-bad-tests/
+"Good production code is well-factored; good test code is obvious."
+"Keep the reader in your test function"
+"think about what will make the problem obvious when a test fails"
+"Your natural inclination might be to delegate all the uninteresting code to test helper methods, but you should first ask a more vital question: why is the system so difficult to test? Excessive boilerplate code is often a symptom of weak architecture."
+"When tempted to write test helper methods, try refactoring your production code instead."
+"Embrace magic numbers"
+
+http://wiki.c2.com/?ArrangeActAssert
+Arrange Act Assert
+-->
+
 # Testing {#tests}
 
 
@@ -7,20 +93,10 @@ It ensures that your code does what you want it to do.
 Testing, however, adds an additional step to your development workflow.
 The goal of this chapter is to show you how to make this task easier and more effective by doing formal automated testing using the testthat package.
 
-The first stage of your testing journey is to become convinced that testing has enough benefits to justify the work.
-For some of us, this is easy to accept.
-Others must learn the hard way.
-
-Once you've decided to embrace automated testing, it's time to learn some mechanics and figure out where testing fits into your development workflow.
-
-As you and your R packages evolve, you'll start to encounter testing situations where it's fruitful to use techniques that are somewhat specific to testing and differ from what we do below `R/`.
-
-## Why is formal testing worth the trouble?
-
 Up until now, your workflow probably looks like this:
 
 1. Write a function.
-1. Load it with `devtools::load_all()`, maybe via Ctrl/Cmd + Shift + L.
+1. Load it with Ctrl/Cmd + Shift + L or `devtools::load_all()`.
 1. Experiment with it in the console to see if it works.
 1. Rinse and repeat.
 
@@ -28,265 +104,77 @@ While you _are_ testing your code in this workflow, you're only doing it informa
 The problem with this approach is that when you come back to this code in 3 months time to add a new feature, you've probably forgotten some of the informal tests you ran the first time around.
 This makes it very easy to break code that used to work. 
 
-<!-- This next paragraph is very "I" based. But it's also hard to rephrase. Let's discuss. -->
-
 I started using automated tests because I discovered I was spending too much time re-fixing bugs that I'd already fixed before.
 While writing code or fixing bugs, I'd perform interactive tests to make sure the code worked.
 But I never had a system which could store those tests so I could re-run them as needed.
 I think that this is a common practice among R programmers.
 It's not that you don't test your code, it's that you don't automate your tests.
 
-In this chapter you'll learn how to transition from informal *ad hoc* testing, done interactively in the console, to automated testing (aka unit testing).
-While turning casual interactive tests into formal tests requires a little more work up front, it pays off in four ways:
+In this chapter you'll learn how to graduate from using informal ad hoc testing, done at the command line, to formal automated testing (aka unit testing).
+While turning casual interactive tests into reproducible scripts requires a little more work up front, it pays off in four ways:
 
 * Fewer bugs.
-  Because you're explicit about how your code should behave, you will have fewer
+  Because you're explicit about how your code should behave you will have fewer
   bugs.
   The reason why is a bit like the reason double entry book-keeping works:
   because you describe the behaviour of your code in two places, both in your
   code and in your tests, you are able to check one against the other.
-  
-  With informal testing, it's tempting to just explore typical and authentic
-  usage, similar to writing examples.
-  However, when writing formal tests, it's natural to adopt a more adversarial
-  mindset and to anticipate how unexpected inputs could break your code.
-  
-  If you always introduce new tests when you add a new feature or function,
-  you'll prevent many bugs from being created in the first place,
-  because you will proactively address pesky edge cases.
-  Tests also keep you from (re-)breaking one feature, when you're tinkering with
-  another.
+  By following this approach to testing, you can be sure that bugs that you've
+  fixed in the past will never come back to haunt you.
 
 * Better code structure.
-  Code that is well designed tends to be easy to test and you can turn this to
-  your advantage.
-  If you are struggling to write tests, consider if the problem is
-  actually the design of your function(s).
-  The process of writing tests is a great way to get free, private, and
-  personalized feedback on how well-factored your code is.
-  If you integrate testing into your development workflow (versus planning to
-  slap tests on "later"), you'll subject yourself to constant pressure to break
-  complicated operations into separate functions that work in isolation.
-  Functions that are easier to test are usually easier to understand and
-  re-combine in new ways.
+  Code that's easy to test is usually better designed.
+  This is because writing tests forces you to break up complicated parts of 
+  your code into separate functions that can work in isolation.
+  This reduces duplication in your code.
+  As a result, functions will be easier to test, understand and work with (it'll
+  be easier to combine them in new ways).
 
-* Call to action.
-  When we start to fix a bug, we first like to convert it into a (failing) test.
-  This is wonderfully effective at making your goal very concrete:
-  make this test pass.
-  This is basically a special case of a general methodology known as test driven
-  development.
-  
+* Easier restarts.
+  If you always finish a coding session by creating a failing test (e.g. for the
+  next feature you want to implement), testing makes it easier for you to pick
+  up where you left off: your tests will let you know what to do next.
+
 * Robust code.
-  If you know that all the major functionality of your package is well covered
-  by the tests, you can confidently make big changes without worrying about
-  accidentally breaking something.
-  This provides a great reality check when you think you've discovered some
-  brilliant new way to simplify your package.
-  Sometimes such "simplifications" fail to account for some important use case
-  and your tests will save you from yourself.
+  If you know that all the major functionality of your package has an associated
+  test, you can confidently make big changes without worrying about accidentally
+  breaking something.
+  For me, this is particularly useful when I think I have a simpler way to
+  accomplish a task (usually the reason my solution is simpler is that I've
+  forgotten an important use case!).
 
-## Introducing testthat
+If you're familiar with unit testing in other languages, you should note that there are some fundamental differences with testthat.
+This is because R is, at heart, more a functional programming language than an object oriented programming language.
+For instance, because R's main OO systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
 
-This chapter describes how to test your R package using the testthat package:
-<https://testthat.r-lib.org>
+## Test workflow {#test-workflow}
 
-If you're familiar with frameworks for unit testing in other languages, you should note that there are some fundamental differences with testthat.
-This is because R is, at heart, more a functional programming language than an object-oriented programming language.
-For instance, because R's main object-oriented systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
-
-testthat 3.0.0 (released 2020-10-31) introduced the idea of an **edition** of testthat, specifically the 3rd edition of testhat, which we refer to as testthat 3e.
-An edition is a bundle of behaviours that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes.
-This is particularly important for testthat since it has a very large number of packages that use it (almost 5,000 at last count).
-To use testthat 3e, you must have a version of testthat >= 3.0.0 **and** explicitly opt-in to the third edition behaviours.
-This allows testthat to continue to evolve and improve without breaking historical packages that are in a rather passive maintenance phase.
-You can learn more in the [testthat 3e article](https://testthat.r-lib.org/articles/third-edition.html) and the blog post [Upgrading to testthat edition 3](https://www.tidyverse.org/blog/2022/02/upkeep-testthat-3/).
-
-We recommend testthat 3e for all new packages and we recommend updating existing, actively maintained packages to use testthat 3e.
-Unless we say otherwise, this chapter describes testthat 3e.
-
-## Test mechanics and workflow
-
-### Initial setup
-
-To setup your package to use testthat, run:
+To set up your package to use testthat, run:
 
 
 ```r
-usethis::use_testthat(3)
+usethis::use_testthat()
 ```
 
 This will:
 
-1.  Create a `tests/testthat/` directory.
+1.  Create a `tests/testthat` directory.
 
 1.  Add testthat to the `Suggests` field in the `DESCRIPTION`.
-    Specify testthat 3e in the `Config/testthat/edition` field.
-    The affected `DESCRIPTION` fields might look like:
-    
-        Suggests: testthat (>= 3.0.0)
-        Config/testthat/edition: 3
 
 1.  Create a file `tests/testthat.R` that runs all your tests when
     `R CMD check` runs. (You'll learn more about that in 
     [automated checking](#r-cmd-check).)
-    The contents of this file will be something like:
-    
-    
-    ```r
-    library(testthat)
-    library(abcde)
-    
-    test_check("abcde")
-    ```
-    
-This initial setup is usually something you do once per package.
-However, even in a package that already uses testthat, it is safe to run `use_testthat(3)`, when you're ready to opt-in to testthat 3e.
 
-Do not edit `tests/testthat.R`!
-It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in most other test-running scenarios (such as `devtools::test()` or `devtools::test_active_file()`).
-If you want to do something that affects all of your tests, there is almost always a better way than modifying the boilerplate `tests/testthat.R` script.
-This chapter details many different ways to make objects and logic available during testing.
+Once you're set up the workflow is simple:
 
-### Create a test
+1.  Modify your code or tests.
 
-As you define functions in your package, in the files below `R/`, you add the corresponding tests to `.R` files in `tests/testthat/`.
-We strongly recommend that the organisation of test files match the organisation of `R/` files, discussed in section \@ref(code-organising):
-The `foofy()` function (and its friends and helpers) should be defined in `R/foofy.R` and their tests should live in `tests/testthat/test-foofy.R`.
+2.  Test your package with Ctrl/Cmd + Shift + T or `devtools::test()`.
 
-```
-R                                     tests/testthat
-└── foofy.R                           └── test-foofy.R
-    foofy <- function(...) {...}          test_that("foofy does this", {...})
-                                          test_that("foofy does that", {...})
-```
+3.  Repeat until all tests pass.
 
-Even if you have different conventions for file organisation and naming, note that testthat tests **must** live in files below `tests/testthat/` and these file names **must** begin with `test`.
-The test file name is displayed in testthat output, which provides helpful context[^bye-bye-context].
-
-[^bye-bye-context]: The legacy function `testthat::context()` is superseded now and its use in new or actively maintained code is discouraged.
-In testthat 3e, `context()` is formally deprecated; you should just remove it.
-Once you adopt an intentional, synchronised approach to the organisation of files below `R/` and `tests/testthat/`, the necessary contextual information is right there in the file name, rendering the legacy `context()` superfluous.
-
-<!-- Hadley thinks this is too much detail about use_r()/use_test(). I will likely agree when I revisit this later. Leaving it for now. -->
-
-usethis offers a helpful pair of functions for creating or toggling between files:
-
-* `usethis::use_r()`
-* `usethis::use_test()`
-
-Either one can be called with a file (base) name, in order to create a file *de novo* and open it for editing:
-
-
-```r
-use_r("foofy")    # creates and opens R/foofy.R
-use_test("blarg") # creates and opens tests/testthat/test-blarg.R
-```
-
-The `use_r()` / `use_test()` duo has some convenience features that make them "just work" in many common situations:
-
-* When determining the target file, they can deal with the presence or absence
-  of the `.R` extension and the `test-` prefix.
-  - Equivalent: `use_r("foofy.R")`, `use_r("foofy")`
-  - Equivalent: `use_test("test-blarg.R")`, `use_test("blarg.R")`, `use_test("blarg")`
-* If the target file already exists, it is opened for editing. Otherwise, the
-  target is created and then opened for editing.
-
-:::rstudio-tip
-If `R/foofy.R` is the active file in your source editor, you can even call `use_test()` with no arguments!
-The target test file can be inferred: if you're editing `R/foofy.R`, you probably want to work on the companion test file, `tests/testthat/test-foofy.R`.
-If it doesn't exist yet, it is created and, either way, the test file is opened for editing.
-This all works the other way around also.
-If you're editing `tests/testthat/test-foofy.R`, a call to `use_r()` (optionally, creates and) opens `R/foofy.R`.
-:::
-
-Bottom line: `use_r()` / `use_test()` are handy for initially creating these file pairs and, later, for shifting your attention from one to the other.
-
-When `use_test()` creates a new test file, it inserts a dummy test:
-
-
-```r
-test_that("multiplication works", {
-  expect_equal(2 * 2, 4)
-})
-```
-
-You will replace this with your own logic, but it's a nice reminder of the basic form:
-
-* A test file holds one or more `test_that()` tests.
-* Each test describes what it's testing: e.g. "multiplication works".
-* Each test has one or more expectations: e.g. `expect_equal(2 * 2, 4)`.
-
-Below we go into much more detail about how to test your own functions, which is a big and important topic.
-
-### Run tests
-
-Depending on where you are in the development cycle, you'll run your tests at various scales.
-When you are rapidly iterating on a function, you might work at the level of individual tests.
-As the code settles down, you'll run entire test files and eventually the entire test suite.
-
-**Micro-iteration**: This is the interactive phase where you initiate and refine a function and its tests in tandem.
-Here you will run `load_all()` often, and then execute individual expectations or whole tests interactively in the console.
-Note that `load_all()` attaches testthat, so it puts you in the perfect position to test drive your functions and to execute individual tests and expectations.
-
-
-```r
-# tweak the foofy() function and re-load it
-devtools::load_all()
-
-# interactively explore and refine expectations and tests
-expect_equal(foofy(...), EXPECTED_FOOFY_OUTPUT)
-
-testthat("foofy does good things", {...})
-```
-
-**Mezzo-iteration**: As one file's-worth of functions and their associated tests start to shape up, you will want to execute the entire file of associated tests, perhaps with `testthat::test_file()`:
-
-<!-- `devtools::test_file()` exists, but is deprecated, because of the collision.
-
-Consider marking as defunct / removing before the book is published. -->
-
-
-```r
-testthat::test_file("tests/testthat/test-foofy.R")
-```
-
-:::rstudio-tip
-In RStudio, you have a couple shortcuts for running a single test file.
-
-If the target test file is the active file, you can use the "Run Tests" button in the upper right corner of the source editor.
-
-There is also a useful function, `devtools::test_active_file()`.
-It infers the target test file from the active file and, similar to how `use_r()` and `use_test()` work, it works regardless of whether the active file is a test file or a companion `R/*.R` file.
-You can invoke this via "Run a test file" in the Addins menu.
-However, for heavy users (like us!), we recommend [binding this to a keyboard shortcut](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE); we use Ctrl/Cmd + T.
-:::
-
-**Macro-iteration**: As you near the completion of a new feature or bug fix, you will want to run the entire test suite.
-
-Most frequently, you'll do this with `devtools::test()`:
-
-
-```r
-devtools::test()
-```
-
-Then eventually, as part of `R CMD check` with `devtools::check()`:
-
-
-```r
-devtools::check()
-```
-:::rstudio-tip
-`devtools::test()` is mapped to Ctrl/Cmd + Shift + T.
-`devtools::check()` is mapped to  Ctrl/Cmd + Shift + E.
-:::
-
-<!-- We'll probably want to replace this example eventually, but it's a decent placeholder.
-The test failure is something highly artificial I created very quickly. 
-It would be better to use an example that actually makes sense, if someone elects to really read and think about it.-->
-
-The output of `devtools::test()` looks like this:
+The testing output looks like this:
 
     devtools::test()
     ℹ Loading usethis
@@ -307,7 +195,7 @@ The output of `devtools::test()` looks like this:
     
     [ FAIL 1 | WARN 0 | SKIP 3 | PASS 728 ]
 
-Test failure is reported like this:
+A test failure looks something like this:
 
     Failure (test-release.R:108:3): get_release_data() works if no file found
     res$Version (`actual`) not equal to "0.0.0.9000" (`expected`).
@@ -316,485 +204,220 @@ Test failure is reported like this:
     `expected`: "0.0.0.9000"
 
 Each failure gives a description of the test (e.g., "get_release_data() works if no file found"), its location (e.g., "test-release.R:108:3"), and the reason for the failure (e.g., "res$Version (`actual`) not equal to "0.0.0.9000" (`expected`)").
+The goal is to pass all the tests.
 
-The idea is that you'll modify your code (either the functions defined below `R/` or the tests in `tests/testthat/`) until all tests are passing.
-
-## Test organisation
+## Test structure {#test-structure}
 
 A test file lives in `tests/testthat/`.
 Its name must start with `test`.
-We will inspect and execute a test file from the stringr package.
-
-<!-- https://github.com/hadley/r-pkgs/issues/778 -->
-
-But first, for the purposes of rendering this book, we must attach stringr and testthat.
-Note that in real-life test-running situations, this is taken care of by your package development tooling:
-
-* During interactive development, `devtools::load_all()` makes testthat and the
-  package-under-development available (both its exported and unexported
-  functions).
-* During arms-length test execution, this is taken care of by
-  `devtools::test_active_file()`, `devtools::test()`, and `tests/testthat.R`.
-  
-**Your test files should not include these `library()` calls.
-We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.**
+Here's an example of a test file from the stringr package:
 
 
 ```r
-library(testthat)
+# In an actual test file, in a package, you will NOT include `library(stringr)`!
+# The various ways you run your tests will take care of making the
+# functions in the package you are testing available.
+# But we must do it here.
 library(stringr)
-local_edition(3)
-```
 
-<!-- TODO: check if stringr has released and, if so, remove this footnote and edit DESCRIPTION. -->
-
-Here are the contents of `tests/testthat/test-dup.r` from stringr[^dev-stringr]:
-
-[^dev-stringr]: Note that we are building the book against a dev version of stringr.
-
-
-```r
-test_that("basic duplication works", {
-  expect_equal(str_dup("a", 3), "aaa")
-  expect_equal(str_dup("abc", 2), "abcabc")
-  expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
-  expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
-})
-#> [32mTest passed[39m 🥳
-
-test_that("0 duplicates equals empty string", {
-  expect_equal(str_dup("a", 0), "")
-  expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
-})
-#> [32mTest passed[39m 😸
-
-test_that("uses tidyverse recycling rules", {
-  expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
+test_that("str_length is number of characters", {
+  expect_equal(str_length("a"), 1)
+  expect_equal(str_length("ab"), 2)
+  expect_equal(str_length("abc"), 3)
 })
 #> [32mTest passed[39m 😀
+
+test_that("str_length of factor is length of level", {
+  expect_equal(str_length(factor("a")), 1)
+  expect_equal(str_length(factor("ab")), 2)
+  expect_equal(str_length(factor("abc")), 3)
+})
+#> [32mTest passed[39m 🥇
+
+test_that("str_length of missing is missing", {
+  expect_equal(str_length(NA), NA_integer_)
+  expect_equal(str_length(c(NA, 1)), c(NA, 1))
+  expect_equal(str_length("NA"), 2)
+})
+#> [32mTest passed[39m 🎊
 ```
 
-This file shows a typical mix of tests:
+Tests are organised hierarchically: __expectations__ are grouped into __tests__ which are organised in __files__:
 
-* "basic duplication works" tests typical usage of `str_dup()`.
-* "0 duplicates equals empty string" probes a specific edge case.
-* "uses tidyverse recycling rules" checks that malformed input results in a
-  specific kind of error.
-
-Tests are organised hierarchically:
-__expectations__ are grouped into __tests__ which are organised in __files__:
-
-* A __file__ holds multiple related tests.
-  In this example, the file `tests/testthat/test-dup.r` has all of the tests
-  for the code in `R/dup.r`.
+* An __expectation__ is the atom of testing.
+  It describes the expected result of a computation:
+  Does it have the right value and right class?
+  Does it produce error messages when it should?
+  An expectation automates visual checking of results in the console.
+  Expectations are functions that start with `expect_`.
 
 * A __test__ groups together multiple expectations to test the output from a
   simple function, a range of possibilities for a single parameter from a more
   complicated function, or tightly related functionality from across multiple
   functions.
-  This is why they are sometimes called __unit__ tests.
-  Each test should cover a single unit of functionality.
-  A test is created with `test_that(desc, code)`.
-  
-  It's common to write the description (`desc`) to create something that reads
-  naturally, e.g. `test_that("basic duplication works", { ... })`.
-  A test failure report includes this description, which is why you want a
-  concise statement of the test's purpose, e.g. a specific behaviour.
+  This is why they are sometimes called __unit__ tests, as they test one unit of
+  functionality.
+  A test is created with `test_that()`.
 
-* An __expectation__ is the atom of testing.
-  It describes the expected result of a computation:
-  Does it have the right value and right class?
-  Does it produce an error when it should?
-  An expectation automates visual checking of results in the console.
-  Expectations are functions that start with `expect_`.
+* A __file__ groups together multiple related tests.
+  ~~Files are given a human readable name with `context()`.~~
+  *We are in the process of revising this chapter for the 2nd edition.
+  Let it be known that the use of `testthat::context()` is now discouraged.
+  Don't use `context()` in new code and remove `context()` when you come across
+  it during package maintenance.*
 
-You want to arrange things such that, when a test fails, you'll know what's wrong and where in your code to look for the problem.
-This motivates all our recommendations regarding file organisation, file naming, and the test description.
-Finally, try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer larger tests.
+These are described in detail below. 
 
-## Expectations
+### Expectations
 
 An expectation is the finest level of testing.
-It makes a binary assertion about whether or not an object has the properties you expect.
-This object is usually the return value from a function in your package.
-
+It makes a binary assertion about whether or not a function call does what you expect.
 All expectations have a similar structure:
 
 * They start with `expect_`.
 
-* They have two main arguments:
-  the first is the actual result, the second is what you expect.
+* They have two arguments: the first is the actual result, the second is what
+  you expect.
   
 * If the actual and expected results don't agree, testthat throws an error.
 
-* Some expectations have additional arguments that control the finer points of
-  comparing an actual and expected result.
-
 While you'll normally put expectations inside tests inside files, you can also run them directly.
 This makes it easy to explore expectations interactively.
-There are more than 40 expectations in the testthat package, which can be explored in testthat's [reference index](https://testthat.r-lib.org/reference/index.html).
-We're only going to cover the most important expectations here.
+There are almost 20 expectations in the testthat package.
+The most important are discussed below.
 
-### Testing for equality
+*This passage is still being revised for the 2nd edition the R Packages book.
+In the meantime, please note that:
+in the third edition of testthat, `expect_equal()` and `expect_identical()` are both powered by the [waldo package]().
+In the past / in the second edition of testthat, `expect_equal()` wraps `all.equal()` and `expect_identical()` wraps `identical()`.*
 
-`expect_equal()` checks for equality, with some reasonable amount of numeric tolerance:
+*   There are two basic ways to test for equality: `expect_equal()`, 
+    and `expect_identical()`. `expect_equal()` is the most commonly used: it 
+    checks for equality within a numerical tolerance:
 
-
-```r
-expect_equal(10, 10)
-expect_equal(10, 10L)
-expect_equal(10, 10 + 1e-7)
-expect_equal(10, 11)
-#> Error: 10 (`actual`) not equal to 11 (`expected`).
-#> 
-#>   `actual`: [32m10[39m
-#> `expected`: [32m11[39m
-```
-
-If you want to test for exact equivalence, use `expect_identical()`.
-
-
-```r
-expect_equal(10, 10 + 1e-7)
-expect_identical(10, 10 + 1e-7)
-#> Error: 10 (`actual`) not identical to 10 + 1e-07 (`expected`).
-#> 
-#>   `actual`: [32m10.0000000[39m
-#> `expected`: [32m10.0000001[39m
-
-expect_equal(2, 2L)
-expect_identical(2, 2L)
-#> Error: 2 (`actual`) not identical to 2L (`expected`).
-#> 
-#> `actual` is [32ma double vector[39m (2)
-#> `expected` is [32man integer vector[39m (2)
-```
-
-### Testing errors
-
-Use `expect_error()` to check whether an expression throws an error.
-It's the most important expectation in a trio that also includes `expect_warning()` and `expect_message()`.
-We're going to emphasize errors here, but most of this also applies to warnings and messages.
-
-Usually you care about two things when testing an error:
-
-* Does the code fail? Specifically, does it fail for the right reason?
-* Does the accompanying message make sense to the human who needs to deal with
-  the error?
-
-The entry-level solution is to expect a specific type of condition:
-
-
-```r
-1 / "a"
-#> Error in 1/"a": non-numeric argument to binary operator
-expect_error(1 / "a") 
-
-log(-1)
-#> Warning in log(-1): NaNs produced
-#> [1] NaN
-expect_warning(log(-1))
-```
-
-This is a bit dangerous, though, especially when testing an error.
-There are lots of ways for code to fail!
-Consider the following test:
-
-
-```r
-expect_error(str_duq(1:2, 1:3))
-```
-
-This expectation is intended to test the recycling behaviour of `str_dup()`.
-But, due to a typo, it tests behaviour of a non-existent function, `str_duq()`.
-The code throws an error and, therefore, the test above passes, but for the *wrong reason*.
-Due to the typo, the actual error thrown is about not being able to find the `str_duq()` function: 
-
-
-```r
-str_duq(1:2, 1:3)
-#> Error in str_duq(1:2, 1:3): could not find function "str_duq"
-```
-
-Historically, the best defense against this was to assert that the condition message matches a certain regular expression, via the second argument, `regexp`.
-    
-
-```r
-expect_error(1 / "a", "non-numeric argument")
-expect_warning(log(-1), "NaNs produced")
-```
-
-This does, in fact, force our typo problem to the surface:
-
-
-```r
-expect_error(str_duq(1:2, 1:3), "recycle")
-#> Error in str_duq(1:2, 1:3): could not find function "str_duq"
-```
-
-Recent developments in both base R and rlang make it increasingly likely that conditions are signalled with a *class*, which provides a better basis for creating precise expectations.
-That is exactly what you've already seen in this stringr example.
-This is what the `class` argument is for:
-    
-
-```r
-# fails, error has wrong class
-expect_error(str_duq(1:2, 1:3), class = "vctrs_error_incompatible_size")
-#> Error in str_duq(1:2, 1:3): could not find function "str_duq"
-
-# passes, error has expected class
-expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
-```
-
-<!-- This advice feels somewhat at odds with Hadley's ambivalence about classed errors.
-I.e. I think he recommends using a classed condition only when there's a specific reason to.
-Then again, maybe the desire to test it is a legitimate reason? -->
-
-If you have the choice, express your expectation in terms of the condition's class, instead of its message.
-Often this is under your control, i.e. if your package signals the condition.
-If the condition originates from base R or another package, proceed with caution.
-This is often a good reminder to re-consider the wisdom of testing a condition that is not fully under your control in the first place.
-
-To check for the *absence* of an error, warning, or message, pass `NA` to the `regexp` argument:
-  
-
-```r
-expect_error(1 / 2, NA)
-```
-
-Of course, this is functionally equivalent to simply executing `1 / 2` inside a test, but some developers find the explicit expectation expressive.
-
-If you genuinely care about the condition's message, testthat 3e's snapshot tests are the best approach, which we describe next.
-
-### Snapshot tests
-
-Sometimes it's difficult or awkward to describe an expected result with code.
-Snapshot tests are a great solution to this problem and this is one of the main innovations in testthat 3e.
-The basic idea is that you record the expected result in a separate, human-readable file.
-Going forward, testthat alerts you when a newly computed result differs from the previously recorded snapshot.
-Snapshot tests are particularly suited to monitoring your package's user interface, such as its informational messages and errors.
-Other use cases include testing images or other complicated objects.
-
-We'll illustrate snapshot tests using the waldo package.
-Under the hood, testthat 3e uses waldo to do the heavy lifting of "actual vs. expected" comparisons, so it's good for you to know a bit about waldo anyway.
-One of waldo's main design goals is to present differences in a clear and actionable manner, as opposed to a frustrating declaration that "this differs from that and I know exactly how, but I won't tell you".
-Therefore, the formatting of output from `waldo::compare()` is very intentional and is well-suited to a snapshot test.
-The binary outcome of `TRUE` (actual == expected) vs. `FALSE` (actual != expected) is fairly easy to check and could get its own test.
-Here we're concerned with writing a test to ensure that differences are reported to the user in the intended way.
-
-waldo uses a few different layouts for showing diffs, depending on various conditions.
-Here we deliberately constrain the width, in order to trigger a side-by-side layout.[^actual-waldo-test].
-
-[^actual-waldo-test]: The actual waldo test that inspires this example targets an unexported helper function that produces the desired layout.
-But this example uses an exported waldo function for simplicity.
-
-
-```r
-withr::with_options(
-  list(width = 20),
-  waldo::compare(c("X", letters), c(letters, "X"))
-)
-#>     old | new    
-#> [1] [33m"X"[39m -        
-#> [2] [90m"a"[39m | [90m"a"[39m [1]
-#> [3] [90m"b"[39m | [90m"b"[39m [2]
-#> [4] [90m"c"[39m | [90m"c"[39m [3]
-#> 
-#>      old | new     
-#> [25] [90m"x"[39m | [90m"x"[39m [24]
-#> [26] [90m"y"[39m | [90m"y"[39m [25]
-#> [27] [90m"z"[39m | [90m"z"[39m [26]
-#>          - [34m"X"[39m [27]
-```
-
-The two primary inputs differ at two locations:
-once at the start and once at the end.
-This layout presents both of these, with some surrounding context, which helps the reader orient themselves.
-
-Here's how this would look as a snapshot test:
-
-<!-- Actually using snapshot test technology here is hard.
-I can sort of see how it might be done, by looking at the source of testthat's vignette about snapshotting.
-For the moment, I'm just faking it. -->
-
-
-```r
-test_that("side-by-side diffs work", {
-  withr::local_options(width = 20)
-  expect_snapshot(
-    waldo::compare(c("X", letters), c(letters, "X"))
-  )
-})
-```
-
-If you execute `expect_snapshot()` or a test containing `expect_snapshot()` interactively, you'll see this:
-
-```
-Can't compare snapshot to reference when testing interactively
-ℹ Run `devtools::test()` or `testthat::test_file()` to see changes
-```
-
-followed by a preview of the snapshot output.
-
-This reminds you that snapshot tests only function when executed non-interactively, i.e. while running an entire test file or the entire test suite.
-This applies both to recording snapshots and to checking them.
-
-The first time this test is executed via `devtools::test()` or similar, you'll see something like this (assume the test is in `tests/testthat/test-diff.R`):
-
-```
-── Warning (test-diff.R:63:3): side-by-side diffs work ─────────────────────
-Adding new snapshot:
-Code
-  waldo::compare(c(
-    "X", letters), c(
-    letters, "X"))
-Output
-      old | new    
-  [1] "X" -        
-  [2] "a" | "a" [1]
-  [3] "b" | "b" [2]
-  [4] "c" | "c" [3]
-  
-       old | new     
-  [25] "x" | "x" [24]
-  [26] "y" | "y" [25]
-  [27] "z" | "z" [26]
-           - "X" [27]
-```
-
-There is always a warning upon initial snapshot creation.
-The snapshot is added to `tests/testthat/_snaps/diff.md`, under the heading "side-by-side diffs work", which comes from the test's description.
-The snapshot looks exactly like what a user sees interactively in the console, which is the experience we want to check for.
-The snapshot file is *also* very readable, which is pleasant for the package developer.
-This readability extends to snapshot changes, i.e. when examining Git diffs and reviewing pull requests on GitHub, which helps you keep tabs on your user interface.
-Going forward, as long as your package continues to re-capitulate the expected snapshot, this test will pass.
-
-If you've written a lot of conventional unit tests, you can appreciate how well-suited snapshot tests are for this use case.
-If we were forced to inline the expected output in the test file, there would be a great deal of quoting, escaping, and newline management.
-Ironically, with conventional expectations, the output you expect your user to see tends to get obscured by a heavy layer of syntactical noise.
-
-What about when a snapshot test fails?
-Let's imagine a hypothetical internal change where the default labels switch from "old" and "new" to "OLD" and "NEW".
-Here's how this snapshot test would react:
-
-```
-── Failure (test-diff.R:63:3): side-by-side diffs work──────────────────────────
-Snapshot of code has changed:
-old[3:15] vs new[3:15]
-  "    \"X\", letters), c("
-  "    letters, \"X\"))"
-  "Output"
-- "      old | new    "
-+ "      OLD | NEW    "
-  "  [1] \"X\" -        "
-  "  [2] \"a\" | \"a\" [1]"
-  "  [3] \"b\" | \"b\" [2]"
-  "  [4] \"c\" | \"c\" [3]"
-  "  "
-- "       old | new     "
-+ "       OLD | NEW     "
-and 3 more ...
-
-* Run `snapshot_accept('diff')` to accept the change
-* Run `snapshot_review('diff')` to interactively review the change
-```
-
-This diff is presented more effectively in most real-world usage, e.g. in the console, by a Git client, or via a Shiny app (see below).
-But even this plain text version highlights the changes quite clearly.
-Each of the two loci of change is indicated with a pair of lines marked with `-` and `+`, showing how the snapshot has changed.
-
-You can call `testthat::snapshot_review('diff')` to review changes locally in a Shiny app, which lets you skip or accept individual snapshots.
-Or, if all changes are intentional and expected, you can go straight to `testthat::snapshot_accept('diff')`.
-Once you've re-synchronized your actual output and the snapshots on file, your tests will pass once again.
-In real life, snapshot tests are a great way to stay informed about changes to your package's user interface, due to your own internal changes or due to changes in your dependencies or even R itself.
-
-`expect_snapshot()` has a few arguments worth knowing about:
-
-* `cran = FALSE`: By default, snapshot tests are skipped if it looks like the
-  tests are running on CRAN's servers.
-  This reflects the typical intent of snapshot tests, which is to proactively
-  monitor user interface, but not to check for correctness, which presumably
-  is the job of other unit tests which are not skipped.
-  In typical usage, a snapshot change is something the developer will want to
-  know about, but it does not signal an actual defect.
-* `error = FALSE`: By default, snapshot code is *not* allowed to throw an error.
-  See `expect_error()`, described above, for one approach to testing errors.
-  But sometimes you want to assess "Does this error message make sense to a
-  human?" and having it laid out in context in a snapshot is a great way to see
-  it with fresh eyes.
-  Specify `error = TRUE` in this case:
-  
     
     ```r
-    expect_snapshot(error = TRUE,
-      str_dup(1:2, 1:3)
-    )
+    expect_equal(10, 10)
+    expect_equal(10, 10 + 1e-7)
+    expect_equal(10, 11)
     ```
   
-* `transform`: Sometimes a snapshot contains volatile, insignificant elements,
-  such as a temporary filepath or a timestamp.
-  The `transform` argument accepts a function, presumably written by you, to
-  remove or replace such changeable text.
-  Another use of `transform` is to scrub sensitive information from the
-  snapshot.
-* `variant`: Sometimes snapshots reflect the ambient conditions, such as the
-  operating system or the version of R or one of your dependencies, and you need
-  a different snapshot for each variant. This is an experimental and somewhat
-  advanced feature, so if you can arrange things to use a single snapshot, you
-  probably should.
-  
-In typical usage, testthat will take care of managing the snapshot files below `tests/testthat/_snaps/`.
-This happens in the normal course of you running your tests and, perhaps, calling `testthat::snapshot_accept()`.
+    If you want to test for exact equivalence, or need to compare a more
+    exotic object like an environment, use `expect_identical()`.
 
-### Shortcuts for other common patterns
+    
+    ```r
+    expect_equal(10, 10 + 1e-7)
+    expect_identical(10, 10 + 1e-7)
+    ```
 
-We conclude this section with a few more expectations that come up frequently.
-But remember that testthat has [many more pre-built expectations](https://testthat.r-lib.org/reference/index.html) than we can demonstrate here.
+*   `expect_match()` matches a character vector against a regular expression. 
+    The optional `all` argument controls whether all elements or just one 
+    element needs to match.
+    This is powered by `grepl()` (additional arguments like
+    `ignore.case = FALSE` or `fixed = TRUE` are passed on down).
 
-Several expectations can be described as "shortcuts", i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.
-
-* `expect_match(object, regexp, ...)` is a shortcut that wraps
-  `grepl(pattern = regexp, x = object, ...)`.
-  It matches a character vector input against a regular expression `regexp`.
-  The optional `all` argument controls whether all elements or just one element
-  needs to match.
-  Read the `expect_match()` documentation to see how additional arguments, like
-  `ignore.case = FALSE` or `fixed = TRUE`, can be passed down to `grepl()`.
-   
     
     ```r
     string <- "Testing is fun!"
-      
+    
     expect_match(string, "Testing") 
-     
+    
     # Fails, match is case-sensitive
     expect_match(string, "testing")
-    #> Error: `string` does not match "testing".
-    #> Actual value: "Testing is fun!"
-      
-    # Passes because additional arguments are passed to grepl():
+    
+    # Additional arguments are passed to grepl:
     expect_match(string, "testing", ignore.case = TRUE)
     ```
-* `expect_length(object, n)` is a shortcut for
-  `expect_equal(length(object), n)`.
-* `expect_setequal(x, y)` tests that every element of `x` occurs in `y`, and
-  that every element of `y` occurs in `x`.
-  But it won't fail if `x` and `y` happen to have their elements in a different
-  order.
-* `expect_s3_class()` and `expect_s4_class()` check that an object `inherit()`s
-  from a specified class. `expect_type()`checks the `typeof()` an object.
+
+*   Four variations of `expect_match()` let you check for other types of 
+    result: `expect_output()`, inspects printed output; `expect_message()`,
+    messages; `expect_warning()`, warnings; and `expect_error()` errors.
+    
+    
+    ```r
+    a <- list(1:10, letters)
+    
+    expect_output(str(a), "List of 2")
+    expect_output(str(a), "int [1:10]", fixed = TRUE)
+    
+    expect_message(library(mgcv), "This is mgcv")
+    ```
+    
+    With `expect_message()`, `expect_warning()`, `expect_error()` you can
+    leave the second argument blank if you just want to see if a message,
+    warning or error is created. However, it's normally better to be explicit, 
+    and provide some text from the message.
+    
+    
+    ```r
+    expect_warning(log(-1))
+    expect_error(1 / "a") 
+    
+    # But always better to be explicit
+    expect_warning(log(-1), "NaNs produced")
+    expect_error(1 / "a", "non-numeric argument")
+    
+    # Failure to produce a warning or error when an error is expected
+    expect_warning(log(0))
+    expect_error(1 / 2) 
+    ```
+
+*   `expect_is()` checks that an object `inherit()`s from a specified class.
 
     
     ```r
     model <- lm(mpg ~ wt, data = mtcars)
-    expect_s3_class(model, "lm")
-    expect_s3_class(model, "glm")
-    #> Error: `model` inherits from 'lm' not 'glm'.
+    expect_is(model, "lm")
+    expect_is(model, "glm")
     ```
 
-`expect_true()` and `expect_false()` are useful catchalls if none of the other expectations does what you need.
+*   `expect_true()` and `expect_false()` are useful catchalls if none of the 
+    other expectations does what you need.
 
-## What to test
+*   Sometimes you don't know exactly what the result should be, or it's too 
+    complicated to easily recreate in code.
+    In that case the best you can do is check that the result is the same as
+    last time.
+    `expect_equal_to_reference()` caches the result the first time its run, and
+    then compares it to subsequent runs.
+    If for some reason the result does change, just delete the cache (*) file
+    and re-test.
+
+Running a sequence of expectations is useful because it ensures that your code behaves as expected.
+You could even use an expectation within a function to check that the inputs are what you expect.
+However, they're not so useful when something goes wrong.
+All you know is that something is not as expected.
+You don't know the goal of the expectation.
+Tests, described next, organise expectations into coherent blocks that describe the overall goal of a set of expectations.
+
+## Writing tests {#test-tests}
+
+Each test should have an informative name and cover a single unit of functionality.
+The idea is that when a test fails, you'll know what's wrong and where in your code to look for the problem.
+You create a new test using `test_that()`, with test name and code block as arguments.
+The test name should complete the sentence "Test that ...".
+The code block should be a collection of expectations.
+
+It's up to you how to organise your expectations into tests.
+The main thing is that the message associated with the test should be informative so that you can quickly narrow down the source of the problem.
+Try to avoid putting too many expectations in one test - it's better to have more smaller tests than fewer larger tests.
+
+Each test is run in its own environment and is self-contained.
+However, testthat doesn't know how to cleanup after actions that affect the R landscape: 
+
+* The filesystem: creating and deleting files, changing the working directory,
+  etc.
+
+* The search path: `library()`, `attach()`.
+
+* Global options, like `options()` and `par()`.
+
+When you use these actions in tests, you'll need to clean up after yourself.
+While many other testing packages have set-up and teardown methods that are run automatically before and after each test, these are not so important with testthat because you can create objects outside of the tests and you can rely on R's copy-on-modify semantics to keep them unchanged between test runs.
+To clean up other actions you can use regular R functions.
+
+### What to test
 
 > Whenever you are tempted to type something into a print statement or a 
 > debugger expression, write it as a test instead.
@@ -826,873 +449,165 @@ It's hard to give good general advice about writing tests, but you might find th
   This reflects an important problem solving strategy:
   start by establishing your success criteria, how you know if you've solved the
   problem.
-  
-### Test coverage
 
-Another concrete way to direct your test writing efforts is to examine your test coverage.
-
-*Currently in thought dump / bullet point form*
-
-* What is test coverage?
-* Use covr to learn your test coverage.
-* Use ` devtools::test_coverage_active_file()` repeatedly while you're writing
-  tests. Binding to, e.g., Cmd + R.
-* Use GitHub Actions to keep tabs on your test coverage.
-* Test coverage should be "high", but going from 90% or 99% to 100% coverage is
-  not always the best use of your development time and energy.
-  
-  The last 10% or 1% often requires excessive gymnastics to cover.
-  Don't sacrifice maintainability for covering some weird edge case that hasn't
-  been proven to be important.
-* Focus your testing effort on code that is both uncovered and "tricky", based
-  on your expert opinion and/or empirical evidence of bug hot spots.
-
-## How to approach testing
-
-Writing good tests for a code base often feels more challenging than writing the code in the first place.
-This can come as a bit of a shock when you're new to package development and you might be concerned that you're doing it wrong.
-Don't worry, you're not!
-Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "main code", i.e. the stuff below `R/`.
-As a result, it requires more deliberate effort to develop your skills and taste around testing.
-
-Anecdotally, it seems like many new R package developers fall back to habits from data analysis code, when writing tests.
-To a certain extent, this is natural, since your tests need to exercise the functions in your package by doing real tasks.
-The code *inside each `test_that()` call* should be very procedural.
-But at the next level of organisation, i.e. a file with multiple tests or a folder with many test files, the step-by-step script mentality can lead you astray.
-
-Recall this advice found in section \@ref(code-r-landscape), which covers your package's "main code", i.e. everything below `R/`:
-
-> The `.R` files below `R/` should consist almost entirely of function definitions.
-> Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
-
-We have analogous advice for your "testing code", i.e. everything in `tests/testthat/test-*.R` files:
-
-> The `test-*.R` file below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
-> Any other top-level code is suspicious and should be carefully reviewed for conversion to a more official method of achieving its goal, such as using functions or data objects defined in your package or relocating logic to special testthat files, such as `helper.R` or `setup.R`.
-
-
-```r
-# sometimes people put top-level code here, but it's a good idea to avoid this
-# when you can
-
-test_that("foofy() does this", { ... })
-
-test_that("foofy() does that", { ... })
-
-# it's even more problematic to have top-level code in the MIDDLE of a test file
-#
-# such code only affects *part* of your test file
-#
-# this code is hard to discover and run when troubleshooting
-
-test_that("foofy() does the other thing", { ... })
-```
-
-Keep reading for various alternatives that are better than having top-level code in your test files other than calls to `test_that()`.
-
-### Test hygiene
-
-> All tests should strive to be hermetic:
-> a test should contain all of the information necessary to set up, execute, and tear down its environment.
-> Tests should assume as little as possible about the outside environment ....
-> 
-> From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
-
-Each `test_that()` test is executed in its own environment and is (somewhat) self-contained.
-For example, an R object you create inside a test does not exist after the test exits:
-
-
-```r
-exists("thingy")
-#> [1] FALSE
-
-test_that("thingy exists", {
-  thingy <- "thingy"
-  expect_true(exists(thingy))
-})
-#> [32mTest passed[39m 😀
-
-exists("thingy")
-#> [1] FALSE
-```
-
-The `thingy` object lives and dies entirely within the confines of `test_that()`.
-However, testthat doesn't know how to cleanup after actions that affect other aspects of the R landscape:
-
-* The filesystem: creating and deleting files, changing the working directory,
-  etc.
-* The search path: `library()`, `attach()`.
-* Global options, like `options()` and `par()`, and environment variables.
-
-If it's easy to avoid making such changes in your test code, that is the best strategy.
-But if it's unavoidable, then you have to make sure that you clean up after yourself.
-This mindset is very similar to one we advocated for in section \@ref(code-r-landscape), when discussing how to design well-mannered functions.
-
-When possible, make each test self-contained and self-sufficient:
-
-* Don't change the surrounding landscape.
-  More realistically, make sure any changes are reversed when the test is done.
-* Don't depend on specific aspects of the landscape, especially not in some
-  implicit, silent way.
-  Check for and/or create the conditions necessary for your test to do its job.
-
-In the testing domain, this is sometimes referred to as *setup and teardown* and we'll describe several official testthat ways to do this, at various scopes.
-
-### Self-sufficient, self-contained tests
-
-> Remember that tests are often revisited only when something breaks
-> When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand.
-> Code is read far more than it is written, so make sure you write the test you’d like to read!
-> 
-> From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
-
-*Most of us don't work on a code base the size of Google. But even in a team of one, tests that you wrote six months ago might as well have been written by someone else. Especially when they suddenly start failing.*
-
-It's hard to beat the pure simplicity and obviousness of a test that creates the conditions it needs, then puts things back as they were.
-You've already seen an example of this, when we explored snapshot tests:
-
-
-```r
-test_that("side-by-side diffs work", {
-  withr::local_options(width = 20)             # <-- (°_°) look here!
-  expect_snapshot(
-    waldo::compare(c("X", letters), c(letters, "X"))
-  )
-})
-```
-
-This test requires the display width to be set at 20 columns, which is considerably less than the default width.
-We like to use the withr package (<https://withr.r-lib.org>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration.
-In this case, `withr::local_options(width = 20)` sets the `width` option to 20 and, at the end of the test, restores the option to its original value.
-withr is also pleasant to use during interactive development:
-deferred actions are still captured on the global environment and can be executed explicitly via `withr::deferred_run()` or implicitly by restarting R.
-
-We recommend including withr in `Suggests`, if you're only going to use it in your tests, or in `Imports`, if you also use it below `R/`.
-Call withr functions as we do above, e.g. like `withr::local_whatever()`, in either case.
-See section \@ref(suggested-packages-and-tests) for a full discussion.
-
-::: tip
-The easiest way to add a package to DESCRIPTION is with, e.g., `usethis::use_package("withr", type = "Suggests")`.
-For tidyverse packages, withr is considered a "free dependency", i.e. the tidyverse uses withr so 
-extensively that we don't hesitate to use it whenever it would be useful.
-:::
-
-withr has a large set of pre-implemented `local_*()` / `with_*()` functions that should handle most of your testing needs.
-Here are a couple of the functions most useful when writing tests:
-
-* `local_options()` / `with_options()` (see above)
-* `local_envvar()` / `with_envvar()` for temporarily setting an environment variable
-    
-    ```r
-    # from tibble, in tests/testthat/test-utils.R
-    test_that("is_rstudio()", {
-      expect_false(withr::with_envvar(c(RSTUDIO = NA), is_rstudio()))
-      expect_true(withr::with_envvar(c(RSTUDIO = 1), is_rstudio()))
-    })
-    ```
-* `local_tempfile()`, `local_tempdir()`, and `local_file()` for creating a
-  self-destructing file or directory
-    
-    ```r
-    # from roxygen2, in tests/testthat/test-collate.R
-    test_that("can read from file name with utf-8 path", {
-      path <- withr::local_tempfile(
-        pattern = "Universit\u00e0-",
-        lines = c("#' @include foo.R", NULL)
-      )
-      expect_equal(find_includes(path), "foo.R")
-    })
-    ```
-
-There are many other functions in withr, so check there before you write your own.
-If nothing exists that meets your need, `withr::defer()` is the general way to schedule some action at the end of a test.[^on-exit]
-
-[^on-exit]: Base R's `on.exit()` is another alternative, but it requires more from you.
-You need to capture the original state and write the restoration code yourself.
-Also remember to do `on.exit(..., add = TRUE)` if there's *any* chance a second `on.exit()` call could be added in the test.
-You probably also want to default to `after = FALSE`.
-
-testthat itself uses some built-in measures to make the test environment as reproducible as possible.
-In testthat 3e, `local_reproducible_output()` is implicitly part of each `test_that()` test.
-This temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses coloured output, turns off fancy quotes, and sets the console width.
-Usually, you can just passively enjoy the benefits of `local_reproducible_output()`.
-But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.
-
-### Repetition is OK
-
-What if you need to do more than, e.g., set an option, before you can execute your expectations?
-We're going to make the controversial recommendation that you tolerate a fair amount of duplication in test code, i.e. you can relax some of your DRY ("don't repeat yourself") tendencies.
-
-Here's a toy example to make things concrete.
-
-
-```r
-test_that("multiplication works", {
-  useful_thing <- 3
-  expect_equal(2 * useful_thing, 6)
-})
-#> [32mTest passed[39m 🎊
-
-test_that("subtraction works", {
-  useful_thing <- 3
-  expect_equal(5 - useful_thing, 2)
-})
-#> [32mTest passed[39m 🎉
-```
-
-In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
-Notice how `useful_thing <- 3` appears in more than once place.
-Conventional wisdom says we should DRY this code out.
-It's tempting to just move `useful_thing`'s definition outside of the tests:
-
-
-```r
-useful_thing <- 3
-
-test_that("multiplication works", {
-  expect_equal(2 * useful_thing, 6)
-})
-#> [32mTest passed[39m 🥇
-
-test_that("subtraction works", {
-  expect_equal(5 - useful_thing, 2)
-})
-#> [32mTest passed[39m 🎊
-```
-
-This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
-When testthat executes an entire test file, `useful_thing` will be defined and made available for subsequent tests in that file.
-However, during interactive development, there is no gesture to systematically identify and execute such code.
-This is particularly frustrating when the failing test starts on line 573 and all the implicit setup code is at line 1.
-Or, even worse, the setup is sprinkled around the file between tests, at random locations that made sense at the time you wrote it.
-
-> In its purest form, automating testing consists of three activities: writing tests, running tests, and **reacting to test failures**.
-> 
-> From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
-
-Top-level code, outside of any test, is in a sort of No Man's Land:
-it's fine when your tests are all passing, but when something goes wrong and a test fails, now you have to endure a extra self-inflicted pain when you least need it.
-This is the sort of practice that feels convenient when *writing tests*, but proves to be extremely inconvenient when you are *failing tests*.
-Below we recommend various robust and structured solutions to this problem.
-
-But first, seriously consider inlining the creation of a `useful_thing` whenever you need it.
-Is it truly expensive to create a `useful_thing` or does it just bug you to see `useful_thing <- 3` in multiple places?
-The requirements of test code and production code are different:
-
-> Keep the reader in your test function.
-> Good production code is well-factored; good test code is obvious.
-> ... think about what will make the problem obvious when a test fails.
->
-> From the blog post [Why Good Developers Write Bad Unit Tests](https://mtlynch.io/good-developers-bad-tests/)
-
-This captures why we advocate inlining logic and objects, where practical.
-Imagine yourself troubleshooting a test that's suddenly started failing on CRAN or on GitHub Actions.
-If the test is self-sufficient, you can basically focus your attention to the universe contained within `test_that("your code works", { ... })`.
-The code inside `{ ... }` will either explicitly create all the necessary objects and conditions or make explicit calls to specific helpers or fixtures (explained below).
-We find this a more sustainable workflow than hunting through a test file for top-level calls that need to be executed in order to work on the tests.
-
-## Interactions between your workflow and and your test suite
-
-Your test code will be executed in two different settings:
-
-* Interactive test development and maintenance, which includes tasks like:
-  - Initial test creation
-  - Modifying tests to adapt to change
-  - Debugging test failure
-* Automated test runs, which is accomplished with functions such as:
-  - Single file: `devtools::test_active_file()`, `testthat::test_file()`
-  - Whole package: `devtools::test()`, `devtools::check()`
-  
-Automated testing of your whole package is what takes priority.
-This is ultimately the whole point of your tests.
-However, the interactive experience is clearly important for the humans doing this work.
-Therefore it's important to find a pleasant workflow, but also to ensure that you don't rig anything for interactive convenience that actually compromises the health of the test suite.
-
-These two modes of test-running should not be in conflict with each other.
-If you perceive tension between these two modes, this can indicate that you're not taking full advantage of some of testthat's features and the way it's designed to work with `devtools::load_all()`.
-
-### Practices to avoid
-
-When we do reverse dependency checks, often involving hundreds or thousands of CRAN packages, we have to inspect test failures to determine if changes in our packages are to blame.
-As a result, we regularly engage with failing tests in other people's packages, which leaves us with lots of opinions about practices that create unnecessary testing pain.
-
-Here are two practices we see fairly often in the wild that have real downsides:
-
-* Adding code to `tests/testthat.R`, such as `library()` calls that attach
-  packages
-* Top-level code interspersed in the test files that, e.g., defines test
-  objects or attaches packages with `library()`
-  
-These practices can undermine the quality of both the test suite and the interactive workflow:
-
-* They change the R landscape: `library()` alters the search path and
-  top-level assignments add objects to the current environment. This means the
-  circumstances under which you are testing do not necessarily reflect the
-  circumstances under which your package will be used. This makes it easier to
-  create subtle test bugs, which you will have to unravel in the future.
-* There's no official gesture, in devtools, testthat, or the RStudio IDE, for
-  ferreting out all these bits of code and running them when you want to work
-  on your tests.
-  Therefore you have to find and run this code "by hand".
-  This sort of *ad hoc* code creates hard-to-see dependencies between
-  different pieces of your testing suite and adds mystery when you least need
-  it: when you're trying to figure out why tests are failing.
-
-What should you do instead?
-When working on your tests, use `devtools::load_all()`, just like you do when working below `R/`.
-By default, `load_all()` does all of these things:
-
-* Simulates re-building, re-installing, and re-loading your package.
-* Makes everything in your package's namespace available, including unexported
-  functions and objects and anything you've imported from another package.
-* Attaches testthat, i.e. does `library(testthat)`.
-* Runs test helper files, i.e. executes `test/testthat/helper.R`.
-
-This eliminates the need for any `library()` calls below `tests/testthat/`, for the vast majority of R packages.
-Any instance of `library(testthat)` is clearly no longer necessary.
-Likewise, any instance of attaching one of your dependencies via `library(somePkg)` is unnecessary.
-In your tests, if you need to call functions from somePkg, do it just as you do below `R/`.
-If you have imported the function into your namespace, use `fun()`.
-If you have not, use `somePkg::fun()`.
-
-Test toubleshooting nirvana looks like this:
-In a fresh R sesion, you can do `devtools::load_all()` and immediately run an individual test or walk through it line-by-line.
-There is no need to hunt around for code that has to be run first, that is found elsewhere in the test file or in a different file altogether (i.e. some file that is not executed by `load_all()`).
-
-One other function that basically should never appear below `tests/testhat/` is `source()`.
-There are several special files with an official role in testthat workflows (see below), not to mention the entire R package machinery, that provide better ways to make functions, objects, and other logic available in your tests.
-
-## Files relevant to testing  {#tests-files-overview}
-
-Here we review which package files are especially relevant to testing and, more generally, best practices for interacting with the file system from your tests.
-
-### The obvious: files below `R/`
-
-The most important functions you'll need to access from your tests are clearly those in your package!
-Here we're talking about everything that's defined below `R/`.
-The functions and other objects defined by your package are always available when testing.
-For interactive work, `devtools::load_all()` takes care of this.
-During automated testing, this is taken care of internally by testthat.
-
-This means that test helpers can absolutely be defined below `R/` and used freely in your tests.
-It might make sense to gather such helpers in a clearly marked file, such as one of these:
-
-```
-.                              
-├── ...
-└── R
-    ├── ...
-    ├── test-helpers.R
-    ├── test-utils.R
-    ├── utils-testing.R
-    └── ...
-```
-
-### Helper and setup files that are special to testthat
-
-Another type of file that is always executed by `load_all()` and at the beginning of automated testing is a helper file, defined as any file below `tests/testthat/` that begins with `helper`.
-If you have just one such file, you should probably name it `helper.R`.
-If you organize your helpers into multiple files, you could include a suffix with additional info.
-Here are examples of how such files might look:
-
-```
-.                              
-├── ...
-└── tests
-    ├── testthat
-    │   ├── helper.R
-    │   ├── helper-blah.R
-    │   ├── helper-foo.R    
-    │   ├── setup.R
-    │   ├── test-foofy.R
-    │   └── (more test files)
-    └── testthat.R
-```
-
-Many developers use helper files to define custom test helper functions, which we describe in detail below.
-Compared to defining helpers below `R/`, some people find that `tests/testthat/helper.R` makes it more clear that these utilities are specifically for testing the package.
-This location also feels more natural if your helpers rely on testthat functions.
-
-A helper file is also a good location for setup code that is needed for its side effects.
-This is a case where `tests/testthat/helper.R` is clearly more appropriate than a file below `R/`.
-For example, in some API-wrapping packages, `helper.R` is where we (attempt to) authenticate with the credentials for a testing account.
-This succeeds or fails, depending on the availability of a specific environment variable, and all downstream tests are written to cope gracefully either way (see \@ref(tests-skipping) to learn about skipping tests).
-
-In the file listing above, you can also see the final special file type: setup files, defined as any file below `test/testthat/` that begins with `setup`.
-A setup file is handled almost exactly like a helper file, but with two big differences:
-
-* Setup files are not executed by `devtools::load_all()`.
-* Setup files often contain the corresponding teardown code.
-
-Setup files are good for global test setup that is tailored for test execution in non-interactive or remote environments.
-For example, you might turn off behaviour that's aimed at an interactive user, such as messaging or writing to the clipboard.
-
-If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`[^legacy-teardown].
-We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync.
-The artificial environment `teardown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
-
-[^legacy-teardown]: A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
-
-Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
-
-
-```r
-op <- options(reprex.clipboard = FALSE, reprex.html_preview = FALSE)
-
-withr::defer(options(op), teardown_env())
-```
-
-Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local_options()` and pass `teardown_env()` as the `.local_envir`:
-
-
-```r
-withr::local_options(
-  list(reprex.clipboard = FALSE, reprex.html_preview = FALSE),
-  .local_envir = teardown_env()
-)
-```
-
-### Storing test data
-
-Many packages contain files that hold test data.
-Where should these be stored?
-The best location is somewhere below `tests/testthat/`, often in a subdirectory, to keep things neat.
-Below is an example, where `useful_thing1.rds` and `useful_thing2.rds` hold objects used in the test files.
-
-```
-.
-├── ...
-└── tests
-    ├── testthat
-    │   ├── fixtures
-    │   │   ├── make-useful-things.R
-    │   │   ├── useful_thing1.rds
-    │   │   └── useful_thing2.rds
-    │   ├── helper.R
-    │   ├── setup.R
-    │   └── (all the test files)
-    └── testthat.R
-```
-
-Then, in your tests, use `testthat::test_path()` to build a robust filepath to such files.
-
-
-```r
-test_that("foofy() does this", {
-  useful_thing <- readRDS(test_path("fixtures", "useful_thing1.rds"))
-  # ...
-})
-```
-
-`testthat::test_path()` is extremely handy, because it produces the correct path in the two important modes of test execution:
-
-* Interactive test development and maintenance, where working directory is
-  presumably set to the top-level of the package.
-* Automated testing, where working directory is usually set to something
-  below `tests/`.
-
-Another important path-building function to know about is `fs::path_package()`.
-It is essentially `base::system.file()` with one very significant added feature:
-it produces the correct path for both an in-development or an installed package.
-
-```
-during development               after installation                             
-
-/path/to/local/package           /path/to/some/installed/package
-├── DESCRIPTION                  ├── DESCRIPTION
-├── ...                          ├── ...
-├── inst                         └── some-installed-file.txt
-│   └── some-installed-file.txt  
-└── ...
-```
-
-`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
-
-A common theme you've now encountered in multiple places is devtools and related packages try to remove tension between having a smooth interactive development experience and arranging things correctly in your package.
-
-### Where to write files during testing
-
-If it's easy to avoid writing files from you tests, that is definitely the best plan.
-But there are many times when you really must write files.
-
-**You should only write file inside the session temp directory.**
-Do not write into your package's `tests/` directory.
-Do not write into the current working directory.
-Do not write into the user's home directory.
-Even though you are writing into the session temp directory, you should still clean up after yourself, i.e. delete any files you've written.
-
-Most package developers don't want to hear this, because it sounds like a hassle.
-But it's not that burdensome once you get familiar with a few techniques and build some new habits.
-A high level of file system discipline also eliminates various testing bugs and will absolutely make your CRAN life run more smoothly.
-
-This test is from roxygen2 and demonstrates everything we recommend:
-
-
-```r
-test_that("can read from file name with utf-8 path", {
-  path <- withr::local_tempfile(
-    pattern = "Universit\u00e0-",
-    lines = c("#' @include foo.R", NULL)
-  )
-  expect_equal(find_includes(path), "foo.R")
-})
-```
-
-`withr::local_tempfile()` creates a file within the session temp directory whose lifetime is tied to the "local" environment -- in this case, the exectuion environment of an individual test.
-It is a wrapper around `base::tempfile()` and passes, e.g., the `pattern` argument through, so you have some control over the file name.
-You can optionally provide `lines` to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps.
-Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.
-
-Sometimes you need even more control over the file name, in which case two techniques are handy:
-
-* Use `withr::local_file(file.path(tempdir(), "very-specific-file-name"))`,
-  which still creates a self-deleting file, below the temp directory, but with
-  the exact name you provide.
-* Use `withr::local_tempdir()` to create a self-deleting temporary directory and
-  write intentionally-named files inside this directory.
-  
-### Files ignored by testthat
-
-testhat only automatically executes files where these are both true:
-
-* File is a direct child of `tests/testthat/`
-* File name starts with one of the specific strings:
-  - `helper`
-  - `setup`
-  - `test`
-
-It is fine to have other files or directories in `tests/testthat/`, but testthat won't automatically do anything with them (other than the `_snaps` directory, which holds snapshots).
-You can keep other files here, for reading or copying, and use `testthat::test_path()` to build filepath.
-
-## Test fixtures
-
-When it's not practical to make your test entirely self-sufficient, prefer making the necessary object, logic, or conditions available in a structured, explicit way.
-There's a pre-existing term for this in software engineering: a *test fixture*.
-
-> A test fixture is something used to consistently test some item, device, or
-> piece of software.
-> --- Wikipedia
-
-The main idea is that we need to make it as easy and obvious as possible to arrange the world into a state that is conducive for testing.
-We describe several specific solutions to this problem:
-
-* Put repeated code in a constructor-type helper function. Memoise it, if
-  construction is demonstrably slow.
-* If the repeated code has side effects, write a custom `local_*()` function to
-  do what's needed and clean up afterwards.
-* If the above approaches are too slow or awkward and the thing you need is
-  fairly stable, save it as a static file and load it.
-
-### Create `useful_thing`s with a helper function
-
-Is it fiddly to create a `useful_thing`?
-Does it take several lines of code, but not much time or memory?
-In that case, write a helper function to create a `useful_thing` on-demand:
-
-
-```r
-new_useful_thing <- function() {
-  # your fiddly code to create a useful_thing goes here
-}
-```
-
-and call that helper in the affected tests:
-
-
-```r
-test_that("foofy() does this", {
-  useful_thing1 <- new_useful_thing()
-  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
-})
-
-test_that("foofy() does that", {
-  useful_thing2 <- new_useful_thing()
-  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
-})
-```
-
-Where should the `new_useful_thing()` helper be defined?
-This comes back to what we outlined in section \@ref(tests-files-overview).
-Test helpers can be defined below `R/`, just like any other internal utility in your package.
-Another popular location is in a test helper file, e.g. `tests/testthat/helper.R`.
-A key feature of both options is that the helpers are made available to you during interactive maintenance via `devtools::load_all()`.
-
-If it's fiddly AND costly to create a `useful_thing`, your helper function could even use memoisation to avoid unnecessary re-computation.
-Once you have a helper like `new_useful_thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
-Sometimes you even realize you should just export and document it, so you can use it freely in documentation and tests.
-
-<!-- We're still on the hunt for a good example of such memoisation. -->
-
-### Create (and destroy) a "local" `useful_thing`
-
-So far, our example of a `useful_thing` was a regular R object, which is cleaned-up automatically at the end of each test.
-What if the creation of a `useful_thing` has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like?
-Then your helper function should create a `useful_thing` **and clean up afterwards**.
-Instead of a simple `new_useful_thing()` constructor, you'll write a customized function in the style of withr's `local_*()` functions:
-
-
-```r
-local_useful_thing <- function(..., env = parent.frame()) {
-  # your fiddly code to create a useful_thing goes here
-  withr::defer(
-    # your fiddly code to clean up after a useful_thing goes here
-    envir = env
-  )
-}
-```
-
-Use it in your tests like this:
-
-
-```r
-test_that("foofy() does this", {
-  useful_thing1 <- local_useful_thing()
-  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
-})
-
-test_that("foofy() does that", {
-  useful_thing2 <- local_useful_thing()
-  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
-})
-```
-
-Where should the `local_useful_thing()` helper be defined?
-All the advice given above for `new_useful_thing()` applies:
-define it below `R/` or in a test helper file.
-
-To learn more about writing custom helpers like `local_useful_thing()`, see the [testthat vignette on test fixtures](https://testthat.r-lib.org/articles/test-fixtures.html).
-
-### Store a concrete `useful_thing` persistently
-
-If a `useful_thing` is costly to create, in terms of time or memory, maybe you don't actually need to re-create it for each test run.
-You could make the `useful_thing` once, store it as a static test fixture, and load it in the tests that need it.
-Here's a sketch of how this could look:
-
-
-```r
-test_that("foofy() does this", {
-  useful_thing1 <- readRDS(test_path("fixtures", "useful_thing.rds"))
-  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
-})
-
-test_that("foofy() does that", {
-  useful_thing2 <- readRDS(test_path("fixtures", "useful_thing.rds"))
-  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
-})
-```
-
-Now we can revisit a file listing from earlier, which addressed exactly this scenario:
-
-```
-.
-├── ...
-└── tests
-    ├── testthat
-    │   ├── fixtures
-    │   │   ├── make-useful-things.R
-    │   │   ├── useful_thing1.rds
-    │   │   └── useful_thing2.rds
-    │   ├── helper.R
-    │   ├── setup.R
-    │   └── (all the test files)
-    └── testthat.R
-```
-
-This shows static test files stored in `tests/testthat/fixtures/`, but also notice the companion R script, `make-useful-things.R`.
-From data analysis, we all know there is no such things as a script that is run only once.
-Refinement and iteration is inevitable.
-This also holds true for test objects like `useful_thing1.rds`.
-We highly recommend saving the R code used to create your test objects, so that they can be re-created as needed.
-
-## Building your own testing tools
-
-Let's return to the topic of duplication in your test code.
-We've encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious.
-But there's still a limit to how much repetition to tolerate.
-We've covered techniques such as loading static objects with `test_path()`, writing a constructor like `new_useful_thing()`, or implementing a test fixture like `local_useful_thing()`.
-There are even more types of test helpers that can be useful in certain situations.
-
-Consider this test for the `str_trunc()` function in stringr:
-
-
-```r
-# from stringr (hypothetically)
-test_that("truncations work for all sides", {
-  expect_equal(
-    str_trunc("This string is moderately long", width = 20, side = "right"),
-    "This string is mo..."
-  )
-  expect_equal(
-    str_trunc("This string is moderately long", width = 20, side = "left"),
-    "...s moderately long"
-  )
-  expect_equal(
-    str_trunc("This string is moderately long", width = 20, side = "center"),
-    "This stri...ely long"
-  )
-})
-```
-
-There's a lot of repetition here, which increases the chance of copy / paste errors and generally makes your eyes glaze over.
-Sometimes it's nice to create a hyper-local helper, *inside the test*.
-Here's how the test actually looks in stringr
-
-
-```r
-# from stringr (actually)
-test_that("truncations work for all sides", {
-
-  trunc <- function(direction) str_trunc(
-    "This string is moderately long",
-    direction,
-    width = 20
-  )
-
-  expect_equal(trunc("right"),   "This string is mo...")
-  expect_equal(trunc("left"),    "...s moderately long")
-  expect_equal(trunc("center"),  "This stri...ely long")
-})
-```
-
-A hyper-local helper like `trunc()` is particularly useful when it allow you to fit all the important business for each expectation on one line.
-Then your expectations can be read almost like a table of actual vs. expected, for a set of related use cases.
-Above, it's very easy to watch the result change as we truncate the input in various ways.
-
-Note that this technique should be used in extreme moderation.
-A helper like `trunc()` is yet another place where you can introduce a bug, so it's best to keep such helpers extremely short and simple.
-
-If a more complicated helper feels necessary, it's a good time to reflect on why that is.
-If it's fussy to get into position to *test* a function, that could be a sign that it's also fussy to *use* that function.
-Do you need to refactor it?
-If the function seems sound, then you probably need to use a more formal helper, defined outside of any individual test, as described earlier.
-
-Another type of helper you might want to create is a custom expectation.
-Here are two very simple ones from usethis:
-
-
-```r
-expect_usethis_error <- function(...) {
-  expect_error(..., class = "usethis_error")
-}
-
-expect_proj_file <- function(...) expect_true(file_exists(proj_path(...)))
-```
-
-`expect_usethis_error()` checks that an error has the `"usethis_error"` class.
-`expect_proj_file()` is a simple wrapper around `file_exists()` that searches for the file in the current project.
-
-It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat.
-We refer you to the [Custom expectations](https://testthat.r-lib.org/articles/custom-expectation.html) vignette if you wish to learn more about that.
-
-## When testing gets hard
-
-Despite all the techniques we've covered so far, there remain situations where it still feels very difficult to write tests.
-In this section, we review more ways to deal with challenging situations:
-
-* Skipping a test in certain situations
-* Mocking an external service
-* Dealing with secrets
-
-### Skipping a test {#tests-skipping}
+### Skipping a test
 
 Sometimes it's impossible to perform a test - you may not have an internet connection or you may be missing an important file.
 Unfortunately, another likely reason follows from this simple rule:
 the more machines you use to write your code, the more likely it is that you won't be able to run all of your tests.
 In short, there are times when, instead of getting a failure, you just want to skip a test.
-
-To do that, you can use the `skip()` function:
+To do that, you can use the `skip()` function - rather than throwing an error it simply prints an `S` in the output.
 
 
 ```r
-skip_if_no_api() <- function() {
-  if (api_unavailable()) {
+check_api <- function() {
+  if (not_working()) {
     skip("API not available")
   }
 }
 
 test_that("foo api returns bar when given baz", {
-  skip_if_no_api()
+  check_api()
   ...
 })
 ```
 
-The custom skipper `skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
+### Building your own testing tools
 
-`skip()`s are reported inline as tests are executed and are also indicated clearly in the summary:
-
-```
-✓ | F W S  OK | Context
-✓ |         2 | blarg                                        
-✓ |     2   2 | foofy                                        
-─────────────────────────────────────────────────────────────
-Skip (test-foofy.R:6:3): blarg exists inside foofy tests
-Reason: failing test
-
-Skip (test-foofy.R:11:3): I know the working directory
-Reason: failing test
-─────────────────────────────────────────────────────────────
-
-══ Results ══════════════════════════════════════════════════
-Duration: 0.1 s
-
-── Skipped tests  ───────────────────────────────────────────
-• failing test (2)
-
-[ FAIL 0 | WARN 0 | SKIP 2 | PASS 4 ]
-```
-
-Something like `skip_if_no_api()` is likely to appear many times in your test suite.
-We lean towards calling `skip_if_no_api()` in each test where it's needed, even though this is going to tempt you to DRY things out.
-This is another type of call that is tempting to hoist to the top-level of a test file:
+As you start to write more tests, you might notice duplication in your code.
+For example, the following code shows one test of the `floor_date()` function from `library(lubridate)`.
+There are seven expectations that check the results of rounding a date down to the nearest second, minute, hour, etc.
+There's a lot of duplication (which increases the chance of bugs), so we might want to extract common behaviour into a new function.
 
 
 ```r
-skip_if_no_api()
+library(lubridate)
+#> 
+#> Attaching package: 'lubridate'
+#> The following objects are masked from 'package:base':
+#> 
+#>     date, intersect, setdiff, union
+test_that("floor_date works for different units", {
+  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
 
-test_that("foo api returns bar when given baz", {...})
-
-test_that("foo api returns an errors when given qux", {...})
+  expect_equal(floor_date(base, "second"), 
+    as.POSIXct("2009-08-03 12:01:59", tz = "UTC"))
+  expect_equal(floor_date(base, "minute"), 
+    as.POSIXct("2009-08-03 12:01:00", tz = "UTC"))
+  expect_equal(floor_date(base, "hour"),   
+    as.POSIXct("2009-08-03 12:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "day"),    
+    as.POSIXct("2009-08-03 00:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "week"),   
+    as.POSIXct("2009-08-02 00:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "month"),  
+    as.POSIXct("2009-08-01 00:00:00", tz = "UTC"))
+  expect_equal(floor_date(base, "year"),   
+    as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
+})
+#> [32mTest passed[39m 🌈
 ```
 
-We have mixed feelings about this practice.
-Within the realm of top-level code in test files, this is probably on the "more acceptable" / "least offensive" end.
-But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the skip(s) and individual tests.
+I'd start by defining a couple of helper functions to make each expectation more concise.
+That allows each test to fit on one line, so you can line up actual and expected values to make it easier to see the differences:
 
-One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
-In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
-*2022-06-01: Recent changes to GitHub Actions mean that we will likely have better test reporting before the second edition of this book is published. Stay tuned!*
 
-It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
-But this tends to be something you have to learn through experience.
+```r
+test_that("floor_date works for different units", {
+  base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
+  floor_base <- function(unit) floor_date(base, unit)
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
 
-### Mocking
+  expect_equal(floor_base("second"), as_time("2009-08-03 12:01:59"))
+  expect_equal(floor_base("minute"), as_time("2009-08-03 12:01:00"))
+  expect_equal(floor_base("hour"),   as_time("2009-08-03 12:00:00"))
+  expect_equal(floor_base("day"),    as_time("2009-08-03 00:00:00"))
+  expect_equal(floor_base("week"),   as_time("2009-08-02 00:00:00"))
+  expect_equal(floor_base("month"),  as_time("2009-08-01 00:00:00"))
+  expect_equal(floor_base("year"),   as_time("2009-01-01 00:00:00"))
+})
+#> [32mTest passed[39m 😸
+```
 
-Give a brief description of what mocking is and a survey what's currently available.
+We could go a step further and create a custom expectation function:
 
-It's not actually a topic I want to get deeply into, because it feels pretty specialized and I don't think we have detailed, strongly held, stable opinions about it.
 
-### Secrets
+```r
+base <- as.POSIXct("2009-08-03 12:01:59.23", tz = "UTC")
 
-If you really must hit an external API that requires auth, ...
+expect_floor_equal <- function(unit, time) {
+  expect_equal(floor_date(base, unit), as.POSIXct(time, tz = "UTC"))
+}
+expect_floor_equal("year", "2009-01-01 00:00:00")
+```
 
-Mostly an ad for httr2's advice in <https://httr2.r-lib.org/articles/wrapping-apis.html>
+However, if the expectation fails this doesn't give very informative output:
 
-## Miscellaneous content that still needs to be placed
 
-### CRAN notes
+```r
+expect_floor_equal("year", "2008-01-01 00:00:00")
+```
 
-CRAN will run your tests on all CRAN platforms: Windows, Mac, and Linux.
+Instead you can use a little [non-standard evaluation](https://adv-r.hadley.nz/metaprogramming.html) to produce something more informative.
+The key is to use `bquote()` and `eval()`.
+In the `bquote()` call below, note the use of `.(x)` - the contents of `()` will be inserted into the call.
+
+
+```r
+expect_floor_equal <- function(unit, time) {
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
+}
+expect_floor_equal("year", "2008-01-01 00:00:00")
+```
+
+This sort of refactoring is often worthwhile because removing redundant code makes it easier to see what's changing.
+Readable tests give you more confidence that they're correct.
+
+
+```r
+test_that("floor_date works for different units", {
+  as_time <- function(x) as.POSIXct(x, tz = "UTC")
+  expect_floor_equal <- function(unit, time) {
+    eval(bquote(expect_equal(floor_date(base, .(unit)), as_time(.(time)))))
+  }
+
+  base <- as_time("2009-08-03 12:01:59.23")
+  expect_floor_equal("second", "2009-08-03 12:01:59")
+  expect_floor_equal("minute", "2009-08-03 12:01:00")
+  expect_floor_equal("hour",   "2009-08-03 12:00:00")
+  expect_floor_equal("day",    "2009-08-03 00:00:00")
+  expect_floor_equal("week",   "2009-08-02 00:00:00")
+  expect_floor_equal("month",  "2009-08-01 00:00:00")
+  expect_floor_equal("year",   "2009-01-01 00:00:00")
+})
+#> [32mTest passed[39m 🎊
+```
+
+## Test files {#test-files}
+
+The highest-level structure of tests is the file.
+~~Each file should contain a single `context()` call that provides a brief description of its contents.~~
+*We are in the process of revising this chapter for the 2nd edition.
+Let it be known that the use of `testthat::context()` is now discouraged.
+Don't use `context()` in new code and remove `context()` when you come across it during package maintenance.*
+Just like the files in the `R/` directory, you are free to organise your tests any way that you like.
+But again, the two extremes are clearly bad (all tests in one file, one file per test).
+You need to find a happy medium that works for you.
+A good starting place is to have one file of tests for each complicated function.
+
+## CRAN notes {#test-cran}
+
+CRAN will run your tests on all CRAN platforms: Windows, Mac, Linux and Solaris.
 There are a few things to bear in mind:
 
 * Tests need to run relatively quickly - aim for under a minute.
   Place `skip_on_cran()` at the beginning of long-running tests that shouldn't
   be run on CRAN - they'll still be run locally, but not on CRAN.
 
-* ~Note that tests are always run in the English language (`LANGUAGE=EN`) and
+* Note that tests are always run in the English language (`LANGUAGE=EN`) and
   with C sort order (`LC_COLLATE=C`).
-  This minimises spurious differences between platforms.~
-  *This is not true.*
-  *This is a good place to mention `testthat::local_reproducible_output()`.
+  This minimises spurious differences between platforms.
 
 * Be careful about testing things that are likely to be variable on CRAN
   machines.
@@ -1703,54 +618,5 @@ There are a few things to bear in mind:
   32-bit versions of R) so use `expect_equal()` rather than
   `expect_identical()`.
 
-CRAN revision thought dump:
-
-* Enrich description of platforms, i.e. say more than "Windows, Mac, Linux".
-  The check flavors: <https://cran.r-project.org/web/checks/check_flavors.html>.
-  - Draw a line to how this determines which "flavors" a package should be
-    checked on.
-    Depends on how broad the user base is and the "trickiness" of the package's
-    code (e.g. does it need compilation? does it use system libraries?).
-    Do a cost benefit analysis.
-    Connect that to which `usethis::use_github_action_check_*()` variant is
-    appropriate.
-  - Advise the use of r-hub.
-  - Link to (to-be-written/revised) chapter on package release.
-* How to decide whether to let a test run on CRAN.
-  Any test that can fail for reasons not under your direct control is an
-  excellent candidate for skipping on CRAN.
-  Examples:
-  - Accessing a website or API that could ever be down or have an
-    occasional error (so: any website or API on planet earth).
-  - Exact formatting of a message.
-  - File system work typical of an authentic user that touches files any where
-    but the R session's temp directory. This includes reading or writing the
-    clipboard.
- * How to prevent a test from running on CRAN.
-  - `skip_on_cran()`, `skip_on_os()`
-  - Default behaviour for snapshot tests
-  - Keep in a separate repo
-
-### Introspection
-
-`NOT_CRAN`, `skip_on_cran()`
-
-`TESTTHAT`, `is_testing()`
-
-`testing_package()`
-
-### Random numbers
-
-`withr::local_seed()`
-
-<!--
-Creating and maintaining a healthy test suite takes real effort. As a codebase grows, so too will the test suite. It will begin to face challenges like instability and slowness. A failure to address these problems will cripple a test suite. Keep in mind that tests derive their value from the trust engineers place in them. If testing becomes a productivity sink, constantly inducing toil and uncertainty, engineers will lose trust and begin to find workarounds. A bad test suite can be worse than no test suite at all.
-
-Remember that tests are often revisited only when something breaks. When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand. Code is read far more than it is written, so make sure you write the test you’d like to read!
-
-https://abseil.io/resources/swe-book/html/ch11.html
-
-Because they make up such a big part of engineers’ lives, Google puts a lot of focus on test maintainability. Maintainable tests  are ones that "just work": after writing them, engineers don’t need to think about them again until they fail, and those failures indicate real bugs with clear causes. The bulk of this chapter focuses on exploring the idea of maintainability and techniques for achieving it.
-
-https://abseil.io/resources/swe-book/html/ch12.html
--->
+[tdd]:https://en.wikipedia.org/wiki/Test-driven_development
+[extreme-programming]:https://en.wikipedia.org/wiki/Extreme_programming
