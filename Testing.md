@@ -239,7 +239,7 @@ test_that("str_length of missing is missing", {
   expect_equal(str_length(c(NA, 1)), c(NA, 1))
   expect_equal(str_length("NA"), 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😸
 ```
 
 Tests are organised hierarchically: __expectations__ are grouped into __tests__ which are organised in __files__:
@@ -505,7 +505,7 @@ test_that("floor_date works for different units", {
   expect_equal(floor_date(base, "year"),   
     as.POSIXct("2009-01-01 00:00:00", tz = "UTC"))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥇
 ```
 
 I'd start by defining a couple of helper functions to make each expectation more concise.
