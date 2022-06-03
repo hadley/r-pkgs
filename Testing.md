@@ -360,13 +360,13 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥇
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🌈
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
@@ -910,7 +910,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎊
 
 exists("thingy")
 #> [1] FALSE
@@ -1014,7 +1014,20 @@ You probably also want to default to `after = FALSE`.
 
 testthat itself uses some built-in measures to make the test environment as reproducible as possible.
 In testthat 3e, `local_reproducible_output()` is implicitly part of each `test_that()` test.
-This temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses coloured output, turns off fancy quotes, and sets the console width.
+
+
+```r
+test_that("something specific happens", {
+  # local_reproducible_output() # <-- this happens automatically
+  
+  # your test code, which might be sensitive to ambient conditions, such as
+  # display width or the number of supported colors
+})
+#> ── [1m[34mSkip[39m (???): something specific happens[22m ──────────────────────────────────────
+#> Reason: empty test
+```
+
+This temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses coloured output, turns off fancy quotes, sets the console width, and sets `LC_COLLATE = "C"`.
 Usually, you can just passively enjoy the benefits of `local_reproducible_output()`.
 But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.
 
@@ -1031,13 +1044,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎉
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1740,7 +1753,7 @@ Instead we refer you to the [Wrapping APIs](https://httr2.r-lib.org/articles/wra
 
 ## Special considerations for CRAN packages
 
-### CRAN check flavors and related services
+### CRAN check flavors and related services {#tests-cran-flavors-services}
 
 *This section will likely move to a different location, once we revise and expand the content elsewhere in the book on `R CMD check` and package release. But it can gestate here.*
 
@@ -1851,13 +1864,6 @@ Be careful about testing things that are likely to be variable on CRAN machines.
 It's risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available).
 Numerical precision can also vary across platforms, so use `expect_equal()` unless you have a specific reason for using `expect_identical()`.
 
-* ~Note that tests are always run in the English language (`LANGUAGE=EN`) and
-  with C sort order (`LC_COLLATE=C`).
-  This minimises spurious differences between platforms.~
-  *This is not true.*
-  *This is a good place to mention `testthat::local_reproducible_output()`.
-
-
 #### Nuisance failure
 
 Due to the scale at which CRAN checks packages, there is basically no latitude for a test that's "just flaky", i.e. sometimes fails for incidental reasons.
@@ -1884,7 +1890,7 @@ Finally, flaky tests cause problems for the maintainers of your dependencies.
 When the packages you depend on are updated, CRAN runs `R CMD check` on all reverse dependencies, including your package.
 If your package has flaky tests, your package can be the reason another package does not clear CRAN's incoming checks and can delay its release.
 
-#### Process and file system hygiene.
+#### Process and file system hygiene
 
 In section \@ref(tests-files-where-write), we urged you to only write into the session temp directory and to clean up after yourself.
 This practice makes your test suite much more maintainable and predictable.
