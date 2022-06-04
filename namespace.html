@@ -126,15 +126,15 @@ Move this earlier, because our new export strategy forces people to deal with th
 <p>As the name suggests, namespaces provide “spaces” for “names”. They provide a context for looking up the value of an object associated with a name.</p>
 <p>Without knowing it, you’ve probably already used namespaces. For example, have you ever used the <code>::</code> operator? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> function. If you load plyr, then Hmisc, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the Hmisc version. But if you load the packages in the opposite order, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the plyr version. This can be confusing. Instead, you can explicitly refer to specific functions: <code>Hmisc::summarize()</code> and <code>plyr::summarize()</code>. Then the order in which the packages are loaded won’t matter.</p>
 <p>Namespaces make your packages self-contained in two ways: the <strong>imports</strong> and the <strong>exports</strong>. The <strong>imports</strong> defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> function in base R:</p>
-<div class="sourceCode" id="cb200"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb246"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">nrow</span>
 <span class="co">#&gt; function (x) </span>
 <span class="co">#&gt; dim(x)[1L]</span>
-<span class="co">#&gt; &lt;bytecode: 0x55adb7679d00&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x5632f8e3ad00&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:base&gt;</span></code></pre></div>
 <p>It’s defined in terms of <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>. So what will happen if we override <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>
 with our own definition? Does <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> break?</p>
-<div class="sourceCode" id="cb201"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb247"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">dim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1 1</span>
@@ -150,7 +150,7 @@ the base environment, not the <code><a href="https://rdrr.io/r/base/dim.html">di
 <span class="header-section-number">13.2</span> Search path<a class="anchor" aria-label="anchor" href="#search-path"><i class="fas fa-link"></i></a>
 </h2>
 <p>To understand why namespaces are important, you need a solid understanding of search paths. To call a function, R first has to find it. R does this by first looking in the global environment. If R doesn’t find it there, it looks in the search path, the list of all the packages you have <strong>attached</strong>. You can see this list by running <code><a href="https://rdrr.io/r/base/search.html">search()</a></code>. For example, here’s the search path for the code in this book:</p>
-<div class="sourceCode" id="cb202"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb248"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; [1] ".GlobalEnv"        "package:stats"     "package:graphics" </span>
 <span class="co">#&gt; [4] "package:grDevices" "package:utils"     "package:datasets" </span>
@@ -172,7 +172,7 @@ then attach the package. You can see the currently attached packages with
 </ul>
 <p>If a package isn’t installed, loading (and hence attaching) will fail with an error.</p>
 <p>To see the differences more clearly, consider two ways of running <code><a href="https://testthat.r-lib.org/reference/expect_that.html">expect_that()</a></code> from the testthat package. If we use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, testthat is attached to the search path. If we use <code>::</code>, it’s not.</p>
-<div class="sourceCode" id="cb203"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb249"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>
 <span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">old</span><span class="op">)</span>
@@ -296,7 +296,7 @@ correct.</p></li>
 </h2>
 <p>For a function to be usable outside of your package, you must <strong>export</strong> it. When you create a new package with <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code>, it produces a temporary <code>NAMESPACE</code> that exports everything in your package that doesn’t start with <code>.</code> (a single period). If you’re just working locally, it’s fine to export everything in your package. However, if you’re planning on sharing your package with others, it’s a really good idea to only export needed functions. This reduces the chances of a conflict with another package.</p>
 <p>To export an object, put <code>@export</code> in its roxygen block. For example:</p>
-<div class="sourceCode" id="cb205"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb251"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#' @export</span>
 <span class="va">foo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">...</span>
@@ -304,7 +304,7 @@ correct.</p></li>
 <p>This will then generate <code>export()</code>, <code>exportMethods()</code>, <code>exportClass()</code> or <code>S3method()</code> depending on the type of the object.</p>
 <p>You export functions that you want other people to use. Exported functions must be documented, and you must be cautious when changing their interface — other people are using them! Generally, it’s better to export too little than too much. It’s easy to export things that you didn’t before; it’s hard to stop exporting a function because it might break existing code. Always err on the side of caution, and simplicity. It’s easier to give people more functionality than it is to take away stuff they’re used to.</p>
 <p>I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or a set of closely related problems). Any functions not related to that purpose should not be exported. For example, most of my packages have a <code>utils.R</code> file that contains many small functions that are useful for me, but aren’t part of the core purpose of those packages. I never export these functions.</p>
-<div class="sourceCode" id="cb206"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb252"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Defaults for NULL values</span>
 <span class="va">`%||%`</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span> <span class="va">b</span> <span class="kw">else</span> <span class="va">a</span>
 
@@ -344,25 +344,25 @@ scenario.</p></li>
 <p>S4 classes: if you want others to be able to extend your class, <code>@export</code> it.
 If you want others to create instances of your class but not to extend it,
 <code>@export</code> the constructor function, not the class.</p>
-<div class="sourceCode" id="cb207"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb253"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Can extend and create with new("A", ...)</span>
 <span class="co">#' @export</span>
-<span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"A"</span><span class="op">)</span>
+<span class="kw">setClass</span><span class="op">(</span><span class="st">"A"</span><span class="op">)</span>
 
 <span class="co"># Can extend and create with new("B", ...). You can use B()</span>
 <span class="co"># to construct instances in your own code, but others can not</span>
 <span class="co">#' @export</span>
-<span class="va">B</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"B"</span><span class="op">)</span>
+<span class="va">B</span> <span class="op">&lt;-</span> <span class="kw">setClass</span><span class="op">(</span><span class="st">"B"</span><span class="op">)</span>
 
 <span class="co"># Can create with C(...) and new("C", ...), but can't create</span>
 <span class="co"># a subclass that extends C</span>
 <span class="co">#' @export C</span>
-<span class="va">C</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"C"</span><span class="op">)</span>
+<span class="va">C</span> <span class="op">&lt;-</span> <span class="kw">setClass</span><span class="op">(</span><span class="st">"C"</span><span class="op">)</span>
 
 <span class="co"># Can extend and create with D(...) or new("D", ...)</span>
 <span class="co">#' @export D</span>
 <span class="co">#' @exportClass D</span>
-<span class="va">D</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"D"</span><span class="op">)</span></code></pre></div>
+<span class="va">D</span> <span class="op">&lt;-</span> <span class="kw">setClass</span><span class="op">(</span><span class="st">"D"</span><span class="op">)</span></code></pre></div>
 <p>S4 generics: <code>@export</code> if you want the generic to be publicly usable.</p>
 <p>S4 methods: you only need to <code>@export</code> methods for generics that you did not define. But I think it’s a good idea to <code>@export</code> every method: that way you don’t need to remember whether or not you created the generic.</p>
 </div>
@@ -415,11 +415,11 @@ Post R 3.2.0: <code>Imports: methods</code> in <code>DESCRIPTION</code>.</p></li
 <li>
 <p>Since you’ll being using a lot of functions from <code>methods</code>,
 you’ll probably also want to import the complete package with:</p>
-<div class="sourceCode" id="cb208"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb254"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#' @import methods</span>
 <span class="cn">NULL</span></code></pre></div>
 <p>Or you might just want to import the most commonly used functions:</p>
-<div class="sourceCode" id="cb209"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb255"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#' @importFrom methods setClass setGeneric setMethod setRefClass</span>
 <span class="cn">NULL</span></code></pre></div>
 <p>Here I’m documenting “NULL” to make it clear that these directives don’t
