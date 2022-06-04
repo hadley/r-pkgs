@@ -1010,7 +1010,7 @@ Or, even worse, the setup is sprinkled around the file between tests, at random 
 > From the book Software Engineering at Google, [Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html)
 
 Top-level code, outside of any test, is in a sort of No Man's Land:
-it's fine when your tests are all passing, but when something goes wrong and a test fails, now you have to endure a extra self-inflicted pain when you least need it.
+it's fine when your tests are all passing, but when something goes wrong and a test fails, now you have to endure extra self-inflicted pain when you least need it.
 This is the sort of practice that feels convenient when *writing tests*, but proves to be extremely inconvenient when you are *failing tests*.
 Below we recommend various robust and structured solutions to this problem.
 
@@ -1093,6 +1093,7 @@ Likewise, any instance of attaching one of your dependencies via `library(somePk
 In your tests, if you need to call functions from somePkg, do it just as you do below `R/`.
 If you have imported the function into your namespace, use `fun()`.
 If you have not, use `somePkg::fun()`.
+It's fair to say that `library(somePkg)` in the tests should be about as rare as taking a dependency via `Depends`, i.e. there is usually a better alternative.
 
 Test toubleshooting nirvana looks like this:
 In a fresh R sesion, you can do `devtools::load_all()` and immediately run an individual test or walk through it line-by-line.
@@ -1244,7 +1245,7 @@ during development               after installation
 
 `fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
 
-A common theme you've now encountered in multiple places is devtools and related packages try to remove tension between having a smooth interactive development experience and arranging things correctly in your package.
+A common theme you've now encountered in multiple places is that devtools and related packages try to eliminate hard choices between having a smooth interactive development experience and arranging things correctly in your package.
 
 ### Where to write files during testing {#tests-files-where-write}
 
@@ -1273,7 +1274,7 @@ test_that("can read from file name with utf-8 path", {
 })
 ```
 
-`withr::local_tempfile()` creates a file within the session temp directory whose lifetime is tied to the "local" environment -- in this case, the exectuion environment of an individual test.
+`withr::local_tempfile()` creates a file within the session temp directory whose lifetime is tied to the "local" environment -- in this case, the execution environment of an individual test.
 It is a wrapper around `base::tempfile()` and passes, e.g., the `pattern` argument through, so you have some control over the file name.
 You can optionally provide `lines` to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps.
 Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.
@@ -1442,6 +1443,8 @@ But there's still a limit to how much repetition to tolerate.
 We've covered techniques such as loading static objects with `test_path()`, writing a constructor like `new_useful_thing()`, or implementing a test fixture like `local_useful_thing()`.
 There are even more types of test helpers that can be useful in certain situations.
 
+### Helper defined inside a test
+
 Consider this test for the `str_trunc()` function in stringr:
 
 ```{r eval = FALSE}
@@ -1482,19 +1485,21 @@ test_that("truncations work for all sides", {
 })
 ```
 
-A hyper-local helper like `trunc()` is particularly useful when it allow you to fit all the important business for each expectation on one line.
+A hyper-local helper like `trunc()` is particularly useful when it allows you to fit all the important business for each expectation on one line.
 Then your expectations can be read almost like a table of actual vs. expected, for a set of related use cases.
-Above, it's very easy to watch the result change as we truncate the input in various ways.
+Above, it's very easy to watch the result change as we truncate the input from the right, left, and in the center.
 
 Note that this technique should be used in extreme moderation.
 A helper like `trunc()` is yet another place where you can introduce a bug, so it's best to keep such helpers extremely short and simple.
+
+### Custom expectatations
 
 If a more complicated helper feels necessary, it's a good time to reflect on why that is.
 If it's fussy to get into position to *test* a function, that could be a sign that it's also fussy to *use* that function.
 Do you need to refactor it?
 If the function seems sound, then you probably need to use a more formal helper, defined outside of any individual test, as described earlier.
 
-Another type of helper you might want to create is a custom expectation.
+One specific type of helper you might want to create is a custom expectation.
 Here are two very simple ones from usethis:
 
 ```{r}
@@ -1502,14 +1507,37 @@ expect_usethis_error <- function(...) {
   expect_error(..., class = "usethis_error")
 }
 
-expect_proj_file <- function(...) expect_true(file_exists(proj_path(...)))
+expect_proj_file <- function(...) {
+  expect_true(file_exists(proj_path(...)))
+}
 ```
 
 `expect_usethis_error()` checks that an error has the `"usethis_error"` class.
 `expect_proj_file()` is a simple wrapper around `file_exists()` that searches for the file in the current project.
+These are very simple functions, but the sheet amount of repitition and the expressiveness of their names makes them feel justified.
 
 It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat.
 We refer you to the [Custom expectations](https://testthat.r-lib.org/articles/custom-expectation.html) vignette if you wish to learn more about that.
+
+Finally, it can be handy to know that testthat makes specific information available when it's running:
+
+* The environment variable `TESTTHAT` is set to `"true"`.
+  `testthat::is_testing()` is a shortcut:
+    ```{r, eval = FALSE}
+    is_testing <- function() {
+      Sys.getenv("TESTTHAT_PKG")
+    }
+    ```
+* The package-under-test is available as the environment variable `TESTTHAT_PKG`
+  and `testthat::testing_package()` is a shortcut:
+    ```{r, eval = FALSE}
+    testing_package <- function() {
+      Sys.getenv("TESTTHAT_PKG")
+    }
+    ```
+
+In some situations, you may want to exploit this information without taking a run-time dependency on testthat.
+In that case, just inline the source of these functions directly into your package.
 
 ## When testing gets hard
 
@@ -1816,12 +1844,6 @@ Accessing the clipboard is the perfect storm that potentially runs afoul of both
 Therefore it is best to turn off any clipboard functionality in your tests (and to ensure that, during authentic usage, your user is clearly opting-in to that).
 
 ## Miscellaneous content that still needs to be placed
-
-### Introspection
-
-`TESTTHAT`, `is_testing()`
-
-`testing_package()`
 
 ### Random numbers
 
