@@ -34,7 +34,7 @@ But it's easy to forget all the different use cases you need to check, if you do
 This is a common practice among R programmers.
 The problem is not that you don't test your code, it's that you don't automate your tests.
 
-In this chapter you'll learn how to transition from informal *ad hoc* testing, done interactively in the console, to automated testing (aka unit testing).
+In this chapter you'll learn how to transition from informal *ad hoc* testing, done interactively in the console, to automated testing (also known as unit testing).
 While turning casual interactive tests into formal tests requires a little more work up front, it pays off in four ways:
 
 * Fewer bugs.
@@ -93,7 +93,7 @@ If you're familiar with frameworks for unit testing in other languages, you shou
 This is because R is, at heart, more a functional programming language than an object-oriented programming language.
 For instance, because R's main object-oriented systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
 
-testthat 3.0.0 (released 2020-10-31) introduced the idea of an **edition** of testthat, specifically the 3rd edition of testhat, which we refer to as testthat 3e.
+testthat 3.0.0 (released 2020-10-31) introduced the idea of an **edition** of testthat, specifically the third edition of testthat, which we refer to as testthat 3e.
 An edition is a bundle of behaviours that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes.
 This is particularly important for testthat since it has a very large number of packages that use it (almost 5,000 at last count).
 To use testthat 3e, you must have a version of testthat >= 3.0.0 **and** explicitly opt-in to the third edition behaviours.
@@ -215,7 +215,7 @@ You will replace this with your own logic, but it's a nice reminder of the basic
 * Each test describes what it's testing: e.g. "multiplication works".
 * Each test has one or more expectations: e.g. `expect_equal(2 * 2, 4)`.
 
-Below we go into much more detail about how to test your own functions, which is a big and important topic.
+Below we go into much more detail about how to test your own functions.
 
 ### Run tests
 
@@ -358,13 +358,13 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎊
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 😀
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
@@ -918,7 +918,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎉
 
 exists("thingy")
 #> [1] FALSE
@@ -1012,7 +1012,7 @@ Here are a couple of the functions most useful when writing tests:
     })
     ```
 
-There are many other functions in withr, so check there before you write your own.
+There are many other functions in withr, so check there before you write your own (like with testthat expectations!).
 If nothing exists that meets your need, `withr::defer()` is the general way to schedule some action at the end of a test.[^on-exit]
 
 [^on-exit]: Base R's `on.exit()` is another alternative, but it requires more from you.
@@ -1052,13 +1052,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥳
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😀
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1073,12 +1073,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😸
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🌈
 ```
 
 This does work because when `useful_thing` is not found in the test-specific environment, the search continues in the parent environment, where `useful_thing` will often be found.
