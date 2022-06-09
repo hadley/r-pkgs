@@ -211,9 +211,9 @@ There are five main cases to consider:
 -   If their code has a copyleft license and your code has a permissive license, you can't bundle their code.
     You'll need to consider an alternative approach, either looking for code with a more permissive license, or putting the external code in a separate package.
 
--   If the code comes from Stack Overflow, it's licensed[^license-5] with the Creative Common CC BY-SA license, which is only compatible with GPLv3[^license-6]
-    . This means that you need to take extra care when using Stack Overflow code in open source packages
-    . Learn more at <https://empirical-software.engineering/blog/so-snippets-in-gh-projects>.
+-   If the code comes from Stack Overflow, it's licensed[^license-5] with the Creative Common CC BY-SA license, which is only compatible with GPLv3[^license-6].
+    This means that you need to take extra care when using Stack Overflow code in open source packages.
+    Learn more at <https://empirical-software.engineering/blog/so-snippets-in-gh-projects>.
 
 -   Otherwise, you'll need to do a little research.
     Wikipedia has a [useful diagram](https://en.wikipedia.org/wiki/License_compatibility#Compatibility_of_FOSS_licenses) and Google is your friend.
