@@ -94,9 +94,9 @@ This is because R is, at heart, more a functional programming language than an o
 For instance, because R's main object-oriented systems (S3 and S4) are based on generic functions (i.e., methods belong to functions not classes), testing approaches built around objects and methods don't make much sense.
 
 testthat 3.0.0 (released 2020-10-31) introduced the idea of an **edition** of testthat, specifically the third edition of testthat, which we refer to as testthat 3e.
-An edition is a bundle of behaviours that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes.
+An edition is a bundle of behaviors that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes.
 This is particularly important for testthat since it has a very large number of packages that use it (almost 5,000 at last count).
-To use testthat 3e, you must have a version of testthat >= 3.0.0 **and** explicitly opt-in to the third edition behaviours.
+To use testthat 3e, you must have a version of testthat >= 3.0.0 **and** explicitly opt-in to the third edition behaviors.
 This allows testthat to continue to evolve and improve without breaking historical packages that are in a rather passive maintenance phase.
 You can learn more in the [testthat 3e article](https://testthat.r-lib.org/articles/third-edition.html) and the blog post [Upgrading to testthat edition 3](https://www.tidyverse.org/blog/2022/02/upkeep-testthat-3/).
 
@@ -164,7 +164,7 @@ The test file name is displayed in testthat output, which provides helpful conte
 
 [^bye-bye-context]: The legacy function `testthat::context()` is superseded now and its use in new or actively maintained code is discouraged.
 In testthat 3e, `context()` is formally deprecated; you should just remove it.
-Once you adopt an intentional, synchronised approach to the organisation of files below `R/` and `tests/testthat/`, the necessary contextual information is right there in the file name, rendering the legacy `context()` superfluous.
+Once you adopt an intentional, synchronized approach to the organisation of files below `R/` and `tests/testthat/`, the necessary contextual information is right there in the file name, rendering the legacy `context()` superfluous.
 
 <!-- Hadley thinks this is too much detail about use_r()/use_test(). I will likely agree when I revisit this later. Leaving it for now. -->
 
@@ -358,18 +358,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 😸
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🎉
 ```
 
 This file shows a typical mix of tests:
@@ -530,7 +530,7 @@ expect_error(str_duq(1:2, 1:3), "recycle")
 #> Error in str_duq(1:2, 1:3): could not find function "str_duq"
 ```
 
-Recent developments in both base R and rlang make it increasingly likely that conditions are signalled with a *class*, which provides a better basis for creating precise expectations.
+Recent developments in both base R and rlang make it increasingly likely that conditions are signaled with a *class*, which provides a better basis for creating precise expectations.
 That is exactly what you've already seen in this stringr example.
 This is what the `class` argument is for:
     
@@ -975,7 +975,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎉
 
 exists("thingy")
 #> [1] FALSE
@@ -1009,7 +1009,7 @@ test_that("landscape changes leak outside the test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🎊
 
 grep("jsonlite", search(), value = TRUE)
 #> [1] "package:jsonlite"
@@ -1084,7 +1084,7 @@ test_that("withr makes landscape changes local to a test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥇
 
 grep("jsonlite", search(), value = TRUE)
 #> character(0)
@@ -1107,7 +1107,7 @@ test_that("something specific happens", {
 })
 ```
 
-`local_reproducible_output()` temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses coloured output, turns off fancy quotes, sets the console width, and sets `LC_COLLATE = "C"`.
+`local_reproducible_output()` temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses colored output, turns off fancy quotes, sets the console width, and sets `LC_COLLATE = "C"`.
 Usually, you can just passively enjoy the benefits of `local_reproducible_output()`.
 But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.
 
@@ -1189,13 +1189,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎉
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😸
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1210,12 +1210,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🥇
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 😀
 ```
 
 But we really do think the first form, with the repetition, if often the better choice.
@@ -1398,7 +1398,7 @@ withr::local_options(
 
 ### Files ignored by testthat
 
-testhat only automatically executes files where these are both true:
+testthat only automatically executes files where these are both true:
 
 * File is a direct child of `tests/testthat/`
 * File name starts with one of the specific strings:
@@ -1721,7 +1721,7 @@ expect_proj_file <- function(...) {
 
 `expect_usethis_error()` checks that an error has the `"usethis_error"` class.
 `expect_proj_file()` is a simple wrapper around `file_exists()` that searches for the file in the current project.
-These are very simple functions, but the sheet amount of repitition and the expressiveness of their names makes them feel justified.
+These are very simple functions, but the sheet amount of repetition and the expressiveness of their names makes them feel justified.
 
 It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat.
 We refer you to the [Custom expectations](https://testthat.r-lib.org/articles/custom-expectation.html) vignette if you wish to learn more about that.
@@ -1919,7 +1919,7 @@ There are various combinations of:
 
 * Operating system and CPU: Windows, macOS (x86_64, arm64), Linux (various distributions)
 * R version: r-devel, r-release, r-oldrel
-* C, C++, Fortan compilers
+* C, C++, FORTRAN compilers
 * Locale, in the sense of the `LC_CTYPE` environment variable (this is about
   which human language is in use and character encoding)
 
