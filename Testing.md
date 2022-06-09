@@ -103,7 +103,7 @@ You can learn more in the [testthat 3e article](https://testthat.r-lib.org/artic
 We recommend testthat 3e for all new packages and we recommend updating existing, actively maintained packages to use testthat 3e.
 Unless we say otherwise, this chapter describes testthat 3e.
 
-## Test mechanics and workflow
+## Test mechanics and workflow  {#tests-mechanics-workflow}
 
 ### Initial setup
 
@@ -364,12 +364,12 @@ test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🌈
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎊
 ```
 
 This file shows a typical mix of tests:
@@ -582,6 +582,7 @@ Here we're concerned with writing a test to ensure that differences are reported
 
 waldo uses a few different layouts for showing diffs, depending on various conditions.
 Here we deliberately constrain the width, in order to trigger a side-by-side layout.[^actual-waldo-test].
+(We'll talk more about the withr package below.)
 
 [^actual-waldo-test]: The actual waldo test that inspires this example targets an unexported helper function that produces the desired layout.
 But this example uses an exported waldo function for simplicity.
@@ -974,7 +975,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 
 exists("thingy")
 #> [1] FALSE
@@ -1008,7 +1009,7 @@ test_that("landscape changes leak outside the test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 😀
 
 grep("jsonlite", search(), value = TRUE)
 #> [1] "package:jsonlite"
@@ -1026,9 +1027,43 @@ This mindset is very similar to one we advocated for in section \@ref(code-r-lan
 
 
 
-We like to use the withr package to manage state inside tests.
-Here's how we would fix the problems above using withr:
+We like to use the withr package (<https://withr.r-lib.org>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration.
+You've already seen an example of its usage, when we explored snapshot tests:
 
+
+```r
+test_that("side-by-side diffs work", {
+  withr::local_options(width = 20)             # <-- (°_°) look here!
+  expect_snapshot(
+    waldo::compare(c("X", letters), c(letters, "X"))
+  )
+})
+```
+
+This test requires the display width to be set at 20 columns, which is considerably less than the default width.
+`withr::local_options(width = 20)` sets the `width` option to 20 and, at the end of the test, restores the option to its original value.
+withr is also pleasant to use during interactive development:
+deferred actions are still captured on the global environment and can be executed explicitly via `withr::deferred_run()` or implicitly by restarting R.
+
+We recommend including withr in `Suggests`, if you're only going to use it in your tests, or in `Imports`, if you also use it below `R/`.
+Call withr functions as we do above, e.g. like `withr::local_whatever()`, in either case.
+See section \@ref(suggested-packages-and-tests) for a full discussion.
+
+::: tip
+The easiest way to add a package to DESCRIPTION is with, e.g., `usethis::use_package("withr", type = "Suggests")`.
+For tidyverse packages, withr is considered a "free dependency", i.e. the tidyverse uses withr so 
+extensively that we don't hesitate to use it whenever it would be useful.
+:::
+
+withr has a large set of pre-implemented `local_*()` / `with_*()` functions that should handle most of your testing needs, so check there before you write your own.
+If nothing exists that meets your need, `withr::defer()` is the general way to schedule some action at the end of a test.[^on-exit]
+
+[^on-exit]: Base R's `on.exit()` is another alternative, but it requires more from you.
+You need to capture the original state and write the restoration code yourself.
+Also remember to do `on.exit(..., add = TRUE)` if there's *any* chance a second `on.exit()` call could be added in the test.
+You probably also want to default to `after = FALSE`.
+
+Here's how we would fix the problems in the previous example using withr:
 *Behind the scenes, we reversed the landscape changes, so we can try this again.*
 
 
@@ -1049,7 +1084,7 @@ test_that("withr makes landscape changes local to a test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 🎊
 
 grep("jsonlite", search(), value = TRUE)
 #> character(0)
@@ -1058,8 +1093,6 @@ getOption("opt_whatever")
 Sys.getenv("envvar_whatever")
 #> [1] ""
 ```
-
-We'll say more about withr below.
 
 testthat leans heavily on withr to make test execution environments as reproducible and self-contained as possible.
 In testthat 3e, `testthat::local_reproducible_output()` is implicitly part of each `test_that()` test.
@@ -1156,13 +1189,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎉
+#> [32mTest passed[39m 🥇
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1177,12 +1210,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥳
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥳
+#> [32mTest passed[39m 😸
 ```
 
 But we really do think the first form, with the repetition, if often the better choice.
@@ -1241,17 +1274,15 @@ There are several special files with an official role in testthat workflows (see
 
 Here we review which package files are especially relevant to testing and, more generally, best practices for interacting with the file system from your tests.
 
-TO PLACE: specifically recommening NOT to Add code to `tests/testthat.R`, such as `library()` calls that attach packages
-
-### The obvious: files below `R/`
+### Hiding in plain sight: files below `R/`
 
 The most important functions you'll need to access from your tests are clearly those in your package!
 Here we're talking about everything that's defined below `R/`.
-The functions and other objects defined by your package are always available when testing.
+The functions and other objects defined by your package are always available when testing, regardless of whether they are exported or not.
 For interactive work, `devtools::load_all()` takes care of this.
 During automated testing, this is taken care of internally by testthat.
 
-This means that test helpers can absolutely be defined below `R/` and used freely in your tests.
+This implies that test helpers can absolutely be defined below `R/` and used freely in your tests.
 It might make sense to gather such helpers in a clearly marked file, such as one of these:
 
 ```
@@ -1265,9 +1296,31 @@ It might make sense to gather such helpers in a clearly marked file, such as one
     └── ...
 ```
 
-### Helper and setup files that are special to testthat
+### `tests/testhat.R`
+
+Recall the initial testthat setup described in section \@ref(tests-mechanics-workflow):
+The standard `tests/testhat.R` file looks like this:
+
+
+```r
+library(testthat)
+library(abcde)
+
+test_check("abcde")
+```
+    
+We repeat the advice to not edit `tests/testthat.R`.
+It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in most other test-running scenarios (such as `devtools::test()` or `devtools::test_active_file()` or during interactive development).
+Do not attach your dependencies here with `library()`.
+Call them in your tests in the same manner as you do below `R/`.
+
+### Testthat helper files
 
 Another type of file that is always executed by `load_all()` and at the beginning of automated testing is a helper file, defined as any file below `tests/testthat/` that begins with `helper`.
+Helper files are a mighty weapon in the battle to eliminate code floating around at the top-level of test files.
+Helper files are a prime example of what we mean when we recommend moving such code into a broader scope.
+Objects or functions defined in a helper file are available to all of your tests.
+
 If you have just one such file, you should probably name it `helper.R`.
 If you organize your helpers into multiple files, you could include a suffix with additional info.
 Here are examples of how such files might look:
@@ -1280,7 +1333,6 @@ Here are examples of how such files might look:
     │   ├── helper.R
     │   ├── helper-blah.R
     │   ├── helper-foo.R    
-    │   ├── setup.R
     │   ├── test-foofy.R
     │   └── (more test files)
     └── testthat.R
@@ -1292,10 +1344,25 @@ This location also feels more natural if your helpers rely on testthat functions
 
 A helper file is also a good location for setup code that is needed for its side effects.
 This is a case where `tests/testthat/helper.R` is clearly more appropriate than a file below `R/`.
-For example, in some API-wrapping packages, `helper.R` is where we (attempt to) authenticate with the credentials for a testing account.
-This succeeds or fails, depending on the availability of a specific environment variable, and all downstream tests are written to cope gracefully either way (see \@ref(tests-skipping) to learn about skipping tests).
+For example, in an API-wrapping package, `helper.R` is a good place to (attempt to) authenticate with the testing credentials.
 
-In the file listing above, you can also see the final special file type: setup files, defined as any file below `test/testthat/` that begins with `setup`.
+### Testthat setup files
+
+Testthat has one more special file type: setup files, defined as any file below `test/testthat/` that begins with `setup`.
+Here's an example of how that might look:
+
+```
+.                              
+├── ...
+└── tests
+    ├── testthat
+    │   ├── helper.R
+    │   ├── setup.R
+    │   ├── test-foofy.R
+    │   └── (more test files)
+    └── testthat.R
+```
+
 A setup file is handled almost exactly like a helper file, but with two big differences:
 
 * Setup files are not executed by `devtools::load_all()`.
@@ -1328,6 +1395,18 @@ withr::local_options(
   .local_envir = teardown_env()
 )
 ```
+
+### Files ignored by testthat
+
+testhat only automatically executes files where these are both true:
+
+* File is a direct child of `tests/testthat/`
+* File name starts with one of the specific strings:
+  - `helper`
+  - `setup`
+  - `test`
+
+It is fine to have other files or directories in `tests/testthat/`, but testthat won't automatically do anything with them (other than the `_snaps` directory, which holds snapshots).
 
 ### Storing test data
 
@@ -1368,25 +1447,6 @@ test_that("foofy() does this", {
 * Automated testing, where working directory is usually set to something
   below `tests/`.
 
-Another important path-building function to know about is `fs::path_package()`.
-It is essentially `base::system.file()` with one very significant added feature:
-it produces the correct path for both an in-development or an installed package.
-
-```
-during development               after installation                             
-
-/path/to/local/package           /path/to/some/installed/package
-├── DESCRIPTION                  ├── DESCRIPTION
-├── ...                          ├── ...
-├── inst                         └── some-installed-file.txt
-│   └── some-installed-file.txt  
-└── ...
-```
-
-`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
-
-A common theme you've now encountered in multiple places is that devtools and related packages try to eliminate hard choices between having a smooth interactive development experience and arranging things correctly in your package.
-
 ### Where to write files during testing {#tests-files-where-write}
 
 If it's easy to avoid writing files from you tests, that is definitely the best plan.
@@ -1420,27 +1480,9 @@ It is a wrapper around `base::tempfile()` and passes, e.g., the `pattern` argume
 You can optionally provide `lines` to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps.
 Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.
 
-Sometimes you need even more control over the file name, in which case two techniques are handy:
-
-* Use `withr::local_file(file.path(tempdir(), "very-specific-file-name"))`,
-  which still creates a self-deleting file, below the temp directory, but with
-  the exact name you provide.
-* Use `withr::local_tempdir()` to create a self-deleting temporary directory and
-  write intentionally-named files inside this directory.
+Sometimes you need even more control over the file name.
+In that case, you can use `withr::local_tempdir()` to create a self-deleting temporary directory and write intentionally-named files inside this directory.
   
-### Files ignored by testthat
-
-testhat only automatically executes files where these are both true:
-
-* File is a direct child of `tests/testthat/`
-* File name starts with one of the specific strings:
-  - `helper`
-  - `setup`
-  - `test`
-
-It is fine to have other files or directories in `tests/testthat/`, but testthat won't automatically do anything with them (other than the `_snaps` directory, which holds snapshots).
-You can keep other files here, for reading or copying, and use `testthat::test_path()` to build filepath.
-
 ## Test fixtures
 
 When it's not practical to make your test entirely self-sufficient, prefer making the necessary object, logic, or conditions available in a structured, explicit way.
@@ -1514,9 +1556,7 @@ A key feature of both options is that the helpers are made available to you duri
 
 If it's fiddly AND costly to create a `useful_thing`, your helper function could even use memoisation to avoid unnecessary re-computation.
 Once you have a helper like `new_useful_thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
-Sometimes you even realize you should just export and document it, so you can use it freely in documentation and tests.
-
-<!-- We're still on the hunt for a good example of such memoisation. -->
+Sometimes you even realize you should just define it below `R/` and export and document it, so you can use it freely in documentation and tests.
 
 ### Create (and destroy) a "local" `useful_thing`
 
@@ -1977,7 +2017,7 @@ Be careful about testing things that are likely to be variable on CRAN machines.
 It's risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available).
 Numerical precision can also vary across platforms, so use `expect_equal()` unless you have a specific reason for using `expect_identical()`.
 
-#### Nuisance failure
+#### Flaky tests
 
 Due to the scale at which CRAN checks packages, there is basically no latitude for a test that's "just flaky", i.e. sometimes fails for incidental reasons.
 CRAN does not process your package's test results the way you do, where you can inspect each failure and exercise some human judgment about how concerning it is.
@@ -2029,4 +2069,25 @@ https://abseil.io/resources/swe-book/html/ch11.html
 Because they make up such a big part of engineers’ lives, Google puts a lot of focus on test maintainability. Maintainable tests  are ones that "just work": after writing them, engineers don’t need to think about them again until they fail, and those failures indicate real bugs with clear causes. The bulk of this chapter focuses on exploring the idea of maintainability and techniques for achieving it.
 
 https://abseil.io/resources/swe-book/html/ch12.html
+-->
+
+<!--
+Another important path-building function to know about is `fs::path_package()`.
+It is essentially `base::system.file()` with one very significant added feature:
+it produces the correct path for both an in-development or an installed package.
+
+```
+during development               after installation                             
+
+/path/to/local/package           /path/to/some/installed/package
+├── DESCRIPTION                  ├── DESCRIPTION
+├── ...                          ├── ...
+├── inst                         └── some-installed-file.txt
+│   └── some-installed-file.txt  
+└── ...
+```
+
+`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
+
+A common theme you've now encountered in multiple places is that devtools and related packages try to eliminate hard choices between having a smooth interactive development experience and arranging things correctly in your package.
 -->
