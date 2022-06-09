@@ -358,13 +358,13 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎊
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 😸
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
@@ -899,9 +899,9 @@ Recall this advice found in section \@ref(code-r-landscape), which covers your p
 > The `.R` files below `R/` should consist almost entirely of function definitions.
 > Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
 
-We have analogous advice for your "testing code", i.e. everything in `tests/testthat/test-*.R` files:
+We have analogous advice for your test files:
 
-> The `test-*.R` file below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
+> The `test-*.R` files below `tests/testthat/` should consist almost entirely of calls to `test_that()`.
 > Any other top-level code is suspicious and should be carefully considered for relocation into calls to `test_that()` or to other files that get special treatment inside an R package or from the testthat.
 
 Eliminating (or at least minimizing) top-level code outside of `test_that()` will have the beneficial effect of making your tests more hermetic.
@@ -975,7 +975,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🌈
 
 exists("thingy")
 #> [1] FALSE
@@ -1009,7 +1009,7 @@ test_that("landscape changes leak outside the test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🥇
 
 grep("jsonlite", search(), value = TRUE)
 #> [1] "package:jsonlite"
@@ -1084,7 +1084,7 @@ test_that("withr makes landscape changes local to a test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🌈
 
 grep("jsonlite", search(), value = TRUE)
 #> character(0)
@@ -1117,7 +1117,7 @@ We regret to inform you that most of the quality time you spend with your tests 
 
 > In its purest form, automating testing consists of three activities: writing tests, running tests, and **reacting to test failures**....
 > 
-> Remember that tests are often revisited only when something breaks
+> Remember that tests are often revisited only when something breaks.
 > When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand.
 > Code is read far more than it is written, so make sure you write the test you’d like to read!
 > 
@@ -1189,13 +1189,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🥳
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😸
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -1210,12 +1210,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥳
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😸
 ```
 
 But we really do think the first form, with the repetition, if often the better choice.
@@ -1721,7 +1721,7 @@ expect_proj_file <- function(...) {
 
 `expect_usethis_error()` checks that an error has the `"usethis_error"` class.
 `expect_proj_file()` is a simple wrapper around `file_exists()` that searches for the file in the current project.
-These are very simple functions, but the sheet amount of repetition and the expressiveness of their names makes them feel justified.
+These are very simple functions, but the sheer amount of repetition and the expressiveness of their names makes them feel justified.
 
 It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat.
 We refer you to the [Custom expectations](https://testthat.r-lib.org/articles/custom-expectation.html) vignette if you wish to learn more about that.
