@@ -237,7 +237,7 @@ devtools::session_info()
 #>  sass          0.4.1      [90m2022-03-23[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  sessioninfo   1.2.2      [90m2021-12-06[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  stringi       1.7.6      [90m2021-11-29[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  stringr       [1m[35m1.4.0.9000[39m[22m [90m2022-06-01[39m [90m[1][39m [1m[35mGithub (tidyverse/stringr@9b46754)[39m[22m
+#>  stringr       [1m[35m1.4.0.9000[39m[22m [90m2022-06-09[39m [90m[1][39m [1m[35mGithub (tidyverse/stringr@9b46754)[39m[22m
 #>  testthat    * 3.1.4      [90m2022-04-26[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  usethis     * 2.1.6      [90m2022-05-25[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  vctrs         0.4.1      [90m2022-04-13[39m [90m[1][39m [1m[35mRSPM[39m[22m
