@@ -13,7 +13,7 @@ To understand the author's wishes, it's useful to understand the two major camps
     The [**MIT**](https://choosealicense.com/licenses/mit/) and [**Apache**](https://choosealicense.com/licenses/apache-2.0/) licenses are the most common modern permissive licenses; older permissive licenses include the various forms of the **BSD** license.
 
 -   **Copyleft** licenses are stricter.
-    The most common copyleft license is the [**GPL**](https://choosealicense.com/licenses/gpl-3.0/') which allows you to freely copy and modify the code for personal use, but if you publish modified versions or bundle with other code, the modified version or complete bundle must also be licensed with the GPL.
+    The most common copyleft license is the [**GPL**](https://choosealicense.com/licenses/gpl-3.0/) which allows you to freely copy and modify the code for personal use, but if you publish modified versions or bundle with other code, the modified version or complete bundle must also be licensed with the GPL.
 
 To get a high-level view of the open source licensing space, and the details of individual licenses, I highly recommend <https://choosealicense.com>, which I've used in the links above.
 
