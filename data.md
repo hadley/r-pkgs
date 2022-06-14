@@ -36,14 +36,14 @@ If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loa
 
 ```r
 pryr::mem_used()
-#> 52.7 MB
+#> 52.6 MB
 library(nycflights13)
 pryr::mem_used()
 #> 59.2 MB
 
 invisible(flights)
 pryr::mem_used()
-#> 99.9 MB
+#> 99.8 MB
 ```
 
 ~~I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.~~ *This text is slated for revision for the 2nd edition. TL;DR do NOT include `LazyData: true` in `DESCRIPTION` unless you actually ship data in your package. usethis v2.1.0 changes the behaviour of `create_package()` and `use_data()` accordingly.*
