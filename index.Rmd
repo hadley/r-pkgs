@@ -13,6 +13,7 @@ twitter-handle: hadley
 cover-image: images/cover.png
 
 documentclass: book
+classoption: oneside
 bibliography: [book.bib, packages.bib]
 biblio-style: apalike
 link-citations: yes
