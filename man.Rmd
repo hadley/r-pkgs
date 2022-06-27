@@ -247,144 +247,11 @@ If you'd like to also see links, you can use this slower but more comprehensive 
 
 3.  Preview documentation with `?`.
 
-## Parameters
-
-`@param name description` describes the function's inputs or parameters.
-The description should provide a succinct summary of the type of the parameter (e.g., string, numeric vector) and what the parameter does.
-It's often useful to describe the default value.
-
-The description should start with a capital letter and end with a full stop.
-Most parameters only require a sentence or two of documentation, but for more complex cases you can write multiple paragraphs or use a lists.
-
-### Multiple parameters
-
-If multiple parameters are related, you can document them together by separating the names with commas (with no spaces).
-For example, `stringr::str_equal()` has:
-
-```{r}
-#' @param x,y A pair of character vectors.
-```
-
-And `str_sub()` uses:
-
-```{r}
-#' @param start,end Two integer vectors. `start` gives the position
-#'   of the first character (defaults to first), `end` gives the position
-#'   of the last (defaults to last character). Alternatively, pass a two-column
-#'   matrix to `start`.
-#'
-#'   Negative values count backwards from the last character.
-```
-
-### Inheriting from other functions
-
-You can inherit parameter descriptions from other functions using `@inheritParams source_function`.
-This tag will bring in all documentation for parameters that are undocumented in the current function, but documented in the source function.
-The source can be a function in the current package, via `@inheritParams function`, or another package, via `@inheritParams package::function`.
-
-stringr uses `@inheritParams` extensively because many functions have `string` and `pattern` arguments.
-So `str_detect()` documents them in detail:
-
-```{r}
-#' @param string Input vector. Either a character vector, or something
-#'  coercible to one.
-#' @param pattern Pattern to look for.
-#'
-#'   The default interpretation is a regular expression, as described
-#'   `vignette("regular-expressions")`. Control options with [regex()].
-#'
-#'   Match a fixed string (i.e. by comparing only bytes), using
-#'   [fixed()]. This is fast, but approximate. Generally,
-#'   for matching human text, you'll want [coll()] which
-#'   respects character matching rules for the specified locale.
-#'
-#'   Match character, word, line and sentence boundaries with
-#'   [boundary()]. An empty pattern, "", is equivalent to
-#'   `boundary("character")`.
-```
-
-Then the other stringr functions can use `@inheritParams str_detect` to get a detailed argument description without having to copy and paste.
-
-`@inheritParams` only inherits parameters that are not already documented, allowing you to document some and inherit others.
-`stringr::str_match()` uses this to good effect to document its unusual `pattern` argument:
-
-```{r}
-#' @inheritParams str_detect
-#' @param pattern Unlike other stringr functions, `str_replace` only supports
-#'   regular expression, as described `vignette("regular-expressions")`. 
-#'   The pattern should contain at least one capturing group.
-```
-
-## Return value
-
-`@return description` describes the output from the function.
-You should briefly summarise the type of output (e.g. a character vector, or a data frame) and its size (length if a vector, or rows and columns if data frame).
-The focus should generally be on describing the "shape" of the output, rather than the precise details of the values, which are better described in the description and details.
-
-::: cran
-For initial CRAN submission, all functions must document their a `@return` value.
-This is not required for subsequent submission, but it's good practice.
-There's currently no way to enforce this (we're [working on it](https://github.com/r-lib/roxygen2/issues/1334)) which is why you'll notice some tidyverse functions are missing it.
-:::
-
-## Examples {#dry2}
-
-`@examples` provides executable R code showing how to use the function in practice.
-This is a very important part of the documentation because many people look at the examples first.
-Example code must work without errors as it is run automatically as part of `R CMD check`.
-
-Use examples to show the basic operation of the function, and then to highlight any particularly important properties.
-Bear in mind that you want examples to execute relatively quickly so users can run them, and so that when you make a website for your package it doesn't take ages to generate the documentation.
-
-::: cran
-If submitting to CRAN, examples must run in under 10 minutes.
-:::
-
-Use `#` to divide into sections.
-
-For the purpose of illustration, it's often useful to include code that causes an error.
-`\dontrun{}` allows you to include code in the example that is not run.
-(You used to be able to use `\donttest{}` for a similar purpose, but it's no longer recommended because it actually **is** tested.)
-
-::: cran
-For initial CRAN submission of your package, all functions must contain some runnable examples (i.e. there must be examples and they must not all be wrapped in `\dontrun{}`.
-:::
-
-### Things you shouldn't do
-
-Examples shouldn't affect the users computer.
-This means:
-
--   Attaching packages
--   Don't change global options.
--   Don't modify files (including creating new ones).
--   Don't copy to the clipboard.
-
-### Conditionally running 
-
-`@examplesIf`
-
-## Sharing documentation
-
-There is a tension between the DRY (don't repeat yourself) principle of programming and the need for documentation to be self-contained.
-It's frustrating to have to navigate through multiple help files in order to pull together all the pieces you need.
-roxygen2 provides a number of ways to avoid you having to repeat yourself as a developer, while not forcing the user to follow a spiderweb of links to find everything they need.
-Here we'll focus on two:
-
--   Sharing documentation across functions with `@inherit`.
-
--   Combining the documentation for multiple related functions into one topics with `@describeIn` or `@rdname`.
-
-There are also two markdown features that are useful in more complex situations:
-
--   You can use child documents to share `Rmd` between topics.
--   You can use inline R code to generate documentation.
-
 ### Documenting multiple functions in the same file
 
-You can document multiple functions in the same file by using either `@rdname` or `@describeIn`.
-However, it's a technique best used with caution: documenting too many functions in one place leads to confusing documentation.
-You should use it when functions have very similar arguments, or have complementary effects (e.g., `open()` and `close()` methods).
+By default, each function gets its own documentation topic, but if functions are closely related it often makes sense to combine them into one topic.
+For example, take `str_length()` and `str_width()` which provide two different ways of computing the size of a string.
+As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:
 
 ```{r}
 #' The length/width of a string
@@ -397,40 +264,20 @@ You should use it when functions have very similar arguments, or have complement
 #' `str_width()` returns how much space the string will occupy when printed
 #' in a fixed width font (i.e. when printed in the console).
 #'
-#' @inheritParams str_detect
-#' @return A numeric vector giving number of characters (code points) in
-#'   each element of the character vector. Missing strings have missing
-#'   length.
-#' @seealso [stringi::stri_length()] which this function wraps.
+#' ...
+str_length <- function(string) {
+  ...
+}
 ```
 
-`@describeIn` is designed for the most common cases:
-
--   Documenting methods in a generic.
--   Documenting methods in a class.
--   Documenting functions with the same (or similar) arguments.
-
-It generates a new section, named either "Methods (by class)", "Methods (by generic)" or "Functions".
-The section contains a bulletted list describing each function.
-They're labelled so that you know what function or method it's talking about.
-Here's an example, documenting an imaginary new generic:
+This works because `str_width()` uses `@rdname str_length` so that its documentation is included an in existing topic:
 
 ```{r}
-#' Foo bar generic
-#'
-#' @param x Object to foo.
-foobar <- function(x) UseMethod("foobar")
-
-#' @describeIn foobar Difference between the mean and the median
-foobar.numeric <- function(x) abs(mean(x) - median(x))
-
-#' @describeIn foobar First and last values pasted together in a string.
-foobar.character <- function(x) paste0(x[1], "-", x[length(x)])
+#' @rdname str_length
+str_width <- function(string) {
+  ...
+}
 ```
-
-An alternative to `@describeIn` is `@rdname`.
-It overrides the default file name generated by roxygen and merges documentation for multiple objects into one file.
-This gives you the complete freedom to combine documentation as you see fit.
 
 There are two ways to use `@rdname`.
 You can add documentation to an existing function:
@@ -462,3 +309,252 @@ times <- function(x, y) x * y
 ```
 
 ## 
+
+## Arguments
+
+For most functions, the bulk of your documentation effort will go towards documenting how each argument affects the output of the function.
+For this purpose, you'll use the `@param` (short for parameter, a synonym of argument), which is always followed by the argument name and then a description of its action.
+The description is a sentence so it should start with a capital letter and end with a full stop.
+
+The most important job of the description should provide a succinct summary of the allowed inputs and what the parameter does.
+For example, here's `stringr::str_detect()`:
+
+```{r}
+#' @param string Input vector. Either a character vector, or something
+#'  coercible to one.
+```
+
+If the argument has a default value, it's a good idea to repeat it in the documentation because the function usage (which shows the default values) and the argument description are quite far apart in the docs.
+For example, here's `str_flatten()`:
+
+```{r}
+#' @param collapse String to insert between each piece. Defaults to `""`.
+```
+
+If an argument has a fixed set of possible parameters, you should list them.
+If they're simple, you can just list them in a sentence, like in `str_trim()`:
+
+```{r}
+#' @param side Side on which to remove whitespace: `"left"`, `"right"`, or
+#'   `"both"` (the default).
+```
+
+If they need more explanation, you might use a bulleted list, as in `str_wrap()`:
+
+```{r}
+#' @param whitespace_only A boolean.
+#'   * `TRUE` (the default): wrapping will only occur at whitespace.
+#'   * `FALSE`: can break on any non-word character (e.g. `/`, `-`).
+```
+
+### Multiple arguments
+
+If multiple arguments are tightly coupled, you can document them together by separating the names with commas (with no spaces).
+For example, in `stringr::str_equal()` `x` and `y` are interchangeable, so they're documented together:
+
+```{r}
+#' @param x,y A pair of character vectors.
+```
+
+In `str_sub()` `start` and `end` define the range of characters to replace, and you can use just `start` if you pass in a two-column matrix.
+So it makes sense to document them together:
+
+```{r}
+#' @param start,end Two integer vectors. `start` gives the position
+#'   of the first character (defaults to first), `end` gives the position
+#'   of the last (defaults to last character). Alternatively, pass a two-column
+#'   matrix to `start`.
+#'
+#'   Negative values count backwards from the last character.
+```
+
+### Inheriting arguments
+
+You can inherit argument docs from another function using `@inheritParams function_name`.
+stringr uses `@inheritParams` extensively because many functions have `string` and `pattern` arguments.
+So `str_detect()` documents them in detail:
+
+```{r}
+#' @param string Input vector. Either a character vector, or something
+#'  coercible to one.
+#' @param pattern Pattern to look for.
+#'
+#'   The default interpretation is a regular expression, as described
+#'   `vignette("regular-expressions")`. Control options with [regex()].
+#'
+#'   Match a fixed string (i.e. by comparing only bytes), using
+#'   [fixed()]. This is fast, but approximate. Generally,
+#'   for matching human text, you'll want [coll()] which
+#'   respects character matching rules for the specified locale.
+#'
+#'   Match character, word, line and sentence boundaries with
+#'   [boundary()]. An empty pattern, "", is equivalent to
+#'   `boundary("character")`.
+```
+
+Then the majority of the other stringr functions use `@inheritParams str_detect` to get a detailed argument description without having to copy and paste.
+
+`@inheritParams` only inherits docs for arguments that aren't already documented, allowing you to document some and inherit others.
+`str_match()` uses this to document its unusual `pattern` argument:
+
+```{r}
+#' @inheritParams str_detect
+#' @param pattern Unlike other stringr functions, `str_match()` only supports
+#'   regular expressions, as described `vignette("regular-expressions")`. 
+#'   The pattern should contain at least one capturing group.
+```
+
+The source can be a function in the current package, via `@inheritParams function`, or another package, via `@inheritParams package::function`.
+
+## Return value
+
+As important as the inputs to the function is the output from the function.
+The job of the `@returns`[^man-1] tag is to document the output.
+Here the goal is not to describe exactly how the values are computed (which the job of the description and details), but to roughly describe the overall "shape" of the output, i.e. what sort of object it is, and if appropriate its size.
+For example, if your function returns a vector you should say what type and its length, or if your function returns a data frame you should describe the names of the columns, the type of each column, and how many rows.
+
+[^man-1]: For historical reasons, you can also use `@return`, but I think you should use `@returns` because it reads a little nicer.
+
+The return documentation for functions in strings are mostly pretty simple, they return a some type of vector the same length as some input.
+For example, take `str_like()`:
+
+```{r}
+#' @returns A logical vector the same length as `string`.
+```
+
+If your package has multiple related functions, it's useful to consistently think about what makes them difference.
+For example, dplyr functions take data frames as inputs and returns data frames as outputs.
+But the details of that transformation is differs so each function documents what happens to the rows, the columns, the groups, and any additional attributes.
+For example, here's `dplyr::filter()`:
+
+```{r}
+#' @returns
+#' An object of the same type as `.data`. The output has the following properties:
+#'
+#' * Rows are a subset of the input, but appear in the same order.
+#' * Columns are not modified.
+#' * The number of groups may be reduced (if `.preserve` is not `TRUE`).
+#' * Data frame attributes are preserved.
+```
+
+It's also appropriate to describe important warnings or errors that the user might see here.
+For example `readr::read_csv()`:
+
+```{r}
+#' @returns A [tibble()]. If there are parsing problems, a warning will alert you.
+#'   You can retrieve the full details by calling [problems()] on your dataset.
+```
+
+::: cran
+For initial CRAN submission, all functions must document their a `@return` value.
+This is not required for subsequent submission, but it's good practice.
+There's currently no way to enforce this (we're [working on it](https://github.com/r-lib/roxygen2/issues/1334)) which is why you'll notice some tidyverse functions lack documentation of their outputs.
+:::
+
+## Examples {#dry2}
+
+Describing how a function works is useful, but showing how it works is often even better.
+That's the purpose of the `@examples` tag, which uses executable R code to show what you can do with the function.
+
+Use examples to show the basic operation of the function, and then to highlight any particularly important properties.
+`str_detct()` starts by showing a few simple variations and then highlights are property you might easily miss from reading the docs: as well as passing a vector of strings and one pattern, you can also pass one string and vector of patterns.
+
+```{r}
+#' @examples
+#' fruit <- c("apple", "banana", "pear", "pineapple")
+#' str_detect(fruit, "a")
+#' str_detect(fruit, "^a")
+#' str_detect(fruit, "a$")
+#' 
+#' # Also vectorised over pattern
+#' str_detect("aecfg", letters)
+```
+
+Try to stay focused on the most important features without getting into the weeds of every last edge case: if you make the examples too long, it becomes hard for the user to find the key application that they're looking for.
+
+Bear in mind that you want examples to execute relatively quickly so users can run them, and so that when you make a website for your package it doesn't take ages to generate the documentation.
+
+::: cran
+If submitting to CRAN, examples must run in under 10 minutes.
+:::
+
+### Execution
+
+Examples are run in four common cases:
+
+-   Interactively using the `example()` function.
+-   R CMD check on a computer you control (e.g. your development machine and your CI/CD server).
+-   R CMD check on a computer you don't control (e.g. CRAN).
+-   When building your pkgdown website
+
+This means that you example code must run without error in all three cases.
+This means that the code must be self-contained, and only uses packages that are listed in the `DESCRIPTION` fields `Imports` and `Suggests`.
+
+### Things to avoid
+
+There are a few constraints imposed by CRAN on examples because if a user runs the example interactively with `example()` you don't want to mess up their current session.
+This means that you shouldn't make changes to the global state, so:
+
+-   Don't change global options with `options()` and don't mess with the working directory.
+-   Don't create create files in the current working directory. Instead write them to a temporary directory, and make sure to clean them up at the end of the example.
+-   Don't write to the clipboard.
+-   Avoid depending on external resources that might occasionally fail.
+
+### Errors
+
+So what can you do if you want to include code that causes an error for the purposes of teaching.
+There are two basic options:
+
+-   You can wrap the code in `try()` so that the error is shown, but doesn't stop execution of the error.
+-   You can wrap the code `\dontrun{}`[^man-2] so it is never run by `example()`.
+
+[^man-2]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommended it because CRAN sets a special flag that causes it to be executed.
+
+### Conditional execution
+
+In other cases, you might want code to run only in specific scenarios.
+In the most common case, you don't want to run code on CRAN because you're doing something that is usually best avoided (see below) or your examples need other setup that CRAN won't have.
+In this case you can use `@examplesIf` instead of `@examples`.
+The code in an `@examplesIf` block will only be executed if some condition is `TRUE`:
+
+```{r}
+#' @examplesIf some_function()
+#' some_other_function()
+#' some_more_functions()
+```
+
+For example, googledrive uses `@examplesIf` in almost every function because the examples can only work if you have an active, authenticated, connection to googledrive as judged by `googledrive::drive_has_token()`.
+For example, here's `googledrive::drive_publish()`:
+
+```{r}
+#' @examplesIf drive_has_token()
+#' # Create a file to publish
+#' file <- drive_example_remote("chicken_sheet") %>%
+#'   drive_cp()
+#'
+#' # Publish file
+#' file <- drive_publish(file)
+#' file$published
+```
+
+::: cran
+For initial CRAN submission of your package, all functions must contain some runnable examples (i.e. there must be examples and they must not all be wrapped in `\dontrun{}`).
+:::
+
+## Sharing documentation
+
+There is a tension between the DRY (don't repeat yourself) principle of programming and the need for documentation to be self-contained.
+It's frustrating to have to navigate through multiple help files in order to pull together all the pieces you need.
+roxygen2 provides a number of ways to avoid you having to repeat yourself as a developer, while not forcing the user to follow a spiderweb of links to find everything they need.
+Here we'll focus on two:
+
+-   Sharing documentation across functions with `@inherit`.
+
+-   Combining the documentation for multiple related functions into one topics with `@describeIn` or `@rdname`.
+
+There are also two markdown features that are useful in more complex situations:
+
+-   You can use child documents to share `Rmd` between topics.
+-   You can use inline R code to generate documentation.
+
+### 
