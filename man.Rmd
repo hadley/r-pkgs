@@ -86,7 +86,7 @@ It then parses the file, converts it into HTML and displays it.
 Here's what the result looks like in RStudio:
 
 ```{r, echo = FALSE}
-knitr::include_graphics("images/man-add.png")
+knitr::include_graphics("images/man-add.png", dpi = 220)
 ```
 
 To preview the development documentation, devtools uses some tricks to override the usual help functions so they know where to look in your source packages.
@@ -181,15 +181,16 @@ As an example, take the titles of some of the key dplyr functions:
 Here we've tried to succinctly describe what the function does, making sure to describe whether it affects rows, columns, or groups.
 Where possible, we've tried to use synonyms of the function name in the title to hopefully give folks another chance to understand the intent of the function.
 
-At the time we wrote this, I think the function titles for stringr were less successful:
+At the time we wrote this, I don't think the function titles for stringr were that successful.
+But they provide a useful negative case study.
 
 -   `str_detect()`: Detect the presence or absence of a pattern in a string.
 -   `str_extract()`: Extract matching patterns from a string.
 -   `str_locate()`: Locate the position of patterns in a string.
 -   `str_match()`: Extract matched groups from a string.
 
-There's a lot of repetition ("pattern", "from a string") and function name is used in the title, so if you don't understand the function already, the title seems unlikely to help much.
-Hopefully by the time you read this, we'll have improved those titles.
+There's a lot of repetition ("pattern", "from a string") and the verb used for the function name is repeated in title, so if you don't understand the function already, the title seems unlikely to help much.
+(In hindsight, it also seems like the function names could have been better chosen.) Hopefully we'll have improved those titles by the time you read this.
 
 ### Description
 
@@ -260,41 +261,6 @@ Note that even though these headings come immediately after the description they
 
 In older code, you might also see the use of `@section title:` which was used to create headings before roxygen2 fully supported RMarkdown.
 You can move these below the description and turn into markdown headings.
-
-### Multiple functions in the one file
-
-By default, each function gets its own documentation topic, but if functions are closely related it often makes sense to combine them into one topic.
-For example, take `str_length()` and `str_width()` which provide two different ways of computing the size of a string.
-As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:
-
-```{r}
-#' The length/width of a string
-#'
-#' @description
-#' `str_length()` returns the number of codepoints in a string. These are
-#' the individual elements (which are often, but not always letters) that
-#' can be extracted with [str_sub()].
-#'
-#' `str_width()` returns how much space the string will occupy when printed
-#' in a fixed width font (i.e. when printed in the console).
-#'
-#' ...
-str_length <- function(string) {
-  ...
-}
-```
-
-This works because `str_width()` uses `@rdname str_length` so that its documentation is included an in existing topic:
-
-```{r}
-#' @rdname str_length
-str_width <- function(string) {
-  ...
-}
-```
-
-There are two ways to use `@rdname`.
-You can add documentation to an existing function:
 
 ## Arguments
 
@@ -391,6 +357,41 @@ Then the majority of the other stringr functions use `@inheritParams str_detect`
 ```
 
 The source can be a function in the current package, via `@inheritParams function`, or another package, via `@inheritParams package::function`.
+
+### Multiple functions in one file
+
+By default, each function gets its own documentation topic, but if functions are closely related it often makes sense to combine them into one topic.
+For example, take `str_length()` and `str_width()` which provide two different ways of computing the size of a string.
+As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:
+
+```{r}
+#' The length/width of a string
+#'
+#' @description
+#' `str_length()` returns the number of codepoints in a string. These are
+#' the individual elements (which are often, but not always letters) that
+#' can be extracted with [str_sub()].
+#'
+#' `str_width()` returns how much space the string will occupy when printed
+#' in a fixed width font (i.e. when printed in the console).
+#'
+#' ...
+str_length <- function(string) {
+  ...
+}
+```
+
+This works because `str_width()` uses `@rdname str_length` so that its documentation is included an in existing topic:
+
+```{r}
+#' @rdname str_length
+str_width <- function(string) {
+  ...
+}
+```
+
+There are two ways to use `@rdname`.
+You can add documentation to an existing function:
 
 ## Return value
 
