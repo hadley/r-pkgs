@@ -1,4 +1,4 @@
-# Releasing to CRAN {#release}
+# Releasing a package {#release}
 
 
 
@@ -14,6 +14,148 @@ To get your package ready to release, follow these steps:
 1. Prepare for the next version by updating version numbers.
 1. Publicise the new version.
 
+## Version number {#release-version}
+
+If you've been following the advice in [versioning](#description-version), the version number of your in-development package will have four components, `major.minor.patch.dev`, where `dev` is at least 9000. The number 9000 is arbitrary, but provides a strong visual signal there's something different about this version number. Released packages don't have a `dev` component, so now you need to drop that and pick a version number based on the changes you've made. For example, if the current version is `0.8.1.9000` will the next CRAN version be `0.8.2`, `0.9.0` or `1.0.0`? Use this advice to decide:
+  
+  * Increment `patch`, e.g. `0.8.2` for a __patch__: you've fixed
+    bugs without adding any significant new features. I'll often do a patch 
+    release if, after release, I discover a show-stopping bug that needs to be
+    fixed ASAP. Most releases will have a patch number of 0.
+  
+  * Increment `minor`, e.g. `0.9.0`, for a __minor release__. A minor 
+    release can include bug fixes, new features and changes in backward
+    compatibility. This is the most common type of release. It's perfectly fine to 
+    have so many minor releases that you need to use two (or even three!) 
+    digits, e.g. `1.17.0`.
+  
+  * Increment `major`, e.g. `1.0.0`, for a __major release__. This is
+    best reserved for changes that are not backward compatible and that are 
+    likely to affect many users. Going from `0.b.c` to `1.0.0` typically 
+    indicates that your package is feature complete with a stable API.
+    
+    In practice, backward compatibility is not an all-or-nothing threshold. For 
+    example, if you make an API-incompatible change to a rarely-used part of 
+    your code, it may not deserve a major number change. But if you fix a bug 
+    that many people depend on, it will feel like an API breaking change. Use 
+    your best judgement.
+    
+## Backward compatibility {#compatibility}
+
+The big difference between major and minor versions is whether or not the code is backward compatible. This difference is a bit academic in the R community because the way most people update packages is by running `update.packages()`, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code. While more R users are becoming familiar with tools like [packrat](https://rstudio.github.io/packrat/), which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number. 
+
+The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time for your users' time. The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes. Backward compatible code also tends to be harder to read because of the need to maintain multiple paths to support functionality from previous versions. Be concerned about backward compatibility, but don't let it paralyse you. 
+
+There are good reasons to make backward incompatible changes - if you made a design mistake that makes your package harder to use it's better to fix it sooner rather than later. If you do need to make a backward incompatible change, it's best to do it gradually. Provide interim version(s) between where are you now and where you'd like to be, and provide advice about what's going to change. Depending on what you're changing, use one of the following techniques to let your users know what's happening:
+
+  * Don't immediately remove a function. First deprecate it. For example, 
+    imagine your package is version `0.5.0` and you want to remove `fun()`. In 
+    version, `0.6.0`, you'd use `.Deprecated()` to display a warning message
+    whenever someone uses the function:
+  
+    
+    ```r
+    # 0.6.0
+    fun <- function(x, y, z) {
+      .Deprecated("sum")
+      x + y + z
+    }
+    
+    fun(1, 2, 3)
+    #> Warning: 'fun' is deprecated.
+    #> Use 'sum' instead.
+    #> See help("Deprecated")
+    #> [1] 6
+    ```
+    
+    Then, remove the function once you got to `0.7.0` (or if you are
+    being very strict, once you got to `1.0.0` since it's a backward 
+    incompatible change).
+
+  * Similarly, if you're removing a function argument, first warn about it:
+  
+    
+    ```r
+    bar <- function(x, y, z) {
+      if (!missing(y)) {
+        warning("argument y is deprecated; please use z instead.", 
+          call. = FALSE)
+        z <- y
+      }
+    }
+    
+    bar(1, 2, 3)
+    #> Warning: argument y is deprecated; please use z instead.
+    ```
+
+  * If you're deprecating a lot of code, it can be useful to add a helper 
+    function. For example, ggplot2 has `gg_dep` which automatically
+    displays a message, warning or error, depending on how much the version
+    number has changed.
+    
+    
+    ```r
+    gg_dep <- function(version, msg) {
+      v <- as.package_version(version)
+      cv <- packageVersion("ggplot2")
+    
+      # If current major number is greater than last-good major number, or if
+      # current minor number is more than 1 greater than last-good minor number,
+      # return an error.
+      if (cv[[1,1]] > v[[1,1]]  ||  cv[[1,2]] > v[[1,2]] + 1) {
+        stop(msg, " (Defunct; last used in version ", version, ")",
+          call. = FALSE)
+    
+      # If minor number differs by one, give a warning
+      } else if (cv[[1,2]] > v[[1,2]]) {
+        warning(msg, " (Deprecated; last used in version ", version, ")",
+          call. = FALSE)
+    
+      # If only subminor number is greater, provide a message
+      } else if (cv[[1,3]] > v[[1,3]]) {
+        message(msg, " (Deprecated; last used in version ", version, ")")
+      }
+    
+      invisible()
+    }
+    ```
+
+  * Significant changes to an existing function requires planning, including 
+    making gradual changes over multiple versions. Try and develop a sequence
+    of transformations where each change can be accompanied by an informative
+    error message.
+
+  * If you want to use functionality in a new version of another package,
+    don't make it a hard install-time dependency in the `DESCRIPTION` (forcing 
+    your users to upgrade that package might break other code). Instead
+    check for the version at run-time:
+    
+    
+    ```r
+    if (packageVersion("ggplot2") < "1.0.0") {
+      stop("ggplot2 >= 1.0.0 needed for this function.", call. = FALSE)
+    }
+    ```
+    
+    This is also useful if you're responding to changes in one of your
+    dependencies - you'll want to have a version that will work both before
+    and after the change. This will allow you to submit it to CRAN at any time, 
+    even before the other package. Doing this may generate some `R CMD check` 
+    notes. For example:
+    
+    
+    ```r
+    if (packageVersion("foo") > "1.0.0") {
+      foo::baz()
+    } else {
+      foo::bar()
+    }
+    ```
+    
+    If `baz` doesn't exist in foo version 1.0.0, you'll get a note that
+    it doesn't exist in foo's namespace. Just explain that you're working 
+    around a difference between versions in your submission to CRAN.
+    
 ## The submission process {#release-process}
 
 To manually submit your package to CRAN, you create a package bundle (with `devtools::build()`) then upload it to <https://cran.r-project.org/submit.html>, along with some comments which describe the process you followed. This section shows you how to make submission as easy as possible by providing a standard structure for those comments. Later, in [submission](#release-submission), you'll see how to actually submit the package with `devtools::release()`.

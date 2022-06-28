@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/Rtmpbm73eY/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpbm73eY/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/Rtmpde0k7R/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpde0k7R/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -109,7 +109,7 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 #>     pick a license
 #> [34mEncoding[39m: UTF-8
 #> [34mRoxygen[39m: list(markdown = TRUE)
-#> [34mRoxygenNote[39m: 7.2.0
+#> [34mRoxygenNote[39m: 7.1.2
 #> [32m✔[39m Writing [34m'NAMESPACE'[39m
 #> [32m✔[39m Writing [34m'regexcite.Rproj'[39m
 #> [32m✔[39m Adding [34m'^regexcite\\.Rproj$'[39m to [34m'.Rbuildignore'[39m
@@ -230,7 +230,7 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 #> [90m# A tibble: 1 × 3[39m
 #>   commit                                   author            message
 #>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m             [3m[90m<chr>[39m[23m  
-#> [90m1[39m 6c9f140e03fa6708a9471f2c89dae11f4b2fd34f jennybc <jennybc… [90m"[39mIniti…
+#> [90m1[39m d685e06184a029865c61b4aa826fd9e2e06796a9 jennybc <jennybc… [90m"[39mIniti…
 ```
 :::
 
@@ -336,7 +336,7 @@ Call `load_all()` to make `strsplit1()` available for experimentation.
 
 ```r
 load_all()
-#> [1m[22m[36mℹ[39m Loading [34mregexcite[39m
+#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
 ```
 
 Now call `strsplit1(x)` to see how it works.
@@ -429,7 +429,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 20.7s
+#> Duration: 24.3s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -584,10 +584,9 @@ We still need to trigger the conversion of this new roxygen comment into `man/st
 ```r
 document()
 #> [36mℹ[39m Updating [34m[34mregexcite[34m[39m documentation
-#> [1m[22mSetting `RoxygenNote` to "7.2.0"
-#> [1m[22m[36mℹ[39m Loading [34mregexcite[39m
-#> [1m[22mWriting [34mNAMESPACE[39m
-#> [1m[22mWriting [34mstrsplit1.Rd[39m
+#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
+#> Writing NAMESPACE
+#> Writing strsplit1.Rd
 ```
 
 :::rstudio-tip
@@ -642,7 +641,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 22.5s
+#> Duration: 25.4s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -659,14 +658,14 @@ install()
 
 
 ```
-* checking for file ‘/tmp/Rtmpbm73eY/regexcite/DESCRIPTION’ ... OK
+* checking for file ‘/tmp/Rtmpde0k7R/regexcite/DESCRIPTION’ ... OK
 * preparing ‘regexcite’:
 * checking DESCRIPTION meta-information ... OK
 * checking for LF line-endings in source and make files and shell scripts
 * checking for empty or unneeded directories
 * building ‘regexcite_0.0.0.9000.tar.gz’
-Running /opt/R/4.2.0/lib/R/bin/R CMD INSTALL \
-  /tmp/Rtmpbm73eY/regexcite_0.0.0.9000.tar.gz --install-tests 
+Running /opt/R/4.1.3/lib/R/bin/R CMD INSTALL \
+  /tmp/Rtmpde0k7R/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
@@ -925,12 +924,13 @@ That always happens when you remove something from the namespace.
 ```r
 document()
 #> [36mℹ[39m Updating [34m[34mregexcite[34m[39m documentation
-#> [1m[22m[36mℹ[39m Loading [34mregexcite[39m
-#> Warning: [1m[22mObjects listed as exports, but not present in namespace:
-#> [36m•[39m strsplit1
-#> [1m[22mWriting [34mNAMESPACE[39m
-#> [1m[22mWriting [34mstr_split_one.Rd[39m
-#> [1m[22mDeleting [34mstrsplit1.Rd[39m
+#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
+#> Warning in setup_ns_exports(path, export_all, export_imports):
+#> Objects listed as exports, but not present in namespace: strsplit1
+#> Writing NAMESPACE
+#> Writing NAMESPACE
+#> Writing str_split_one.Rd
+#> Deleting strsplit1.Rd
 ```
 
 Try out the new `str_split_one()` function by simulating package installation via `load_all()`:
@@ -938,7 +938,7 @@ Try out the new `str_split_one()` function by simulating package installation vi
 
 ```r
 load_all()
-#> [1m[22m[36mℹ[39m Loading [34mregexcite[39m
+#> [36mℹ[39m Loading [34m[34mregexcite[34m[39m
 str_split_one("a, b, c", pattern = ", ")
 #> [1] "a" "b" "c"
 ```
@@ -1094,7 +1094,7 @@ The very best way to render `README.Rmd` is with `build_readme()`, because it ta
 ```r
 build_readme()
 #> [36mℹ[39m Installing [34m[34mregexcite[34m[39m in temporary library
-#> [36mℹ[39m Building [34m[34m/tmp/Rtmpbm73eY/regexcite/README.Rmd[34m[39m
+#> [36mℹ[39m Building [34m[34m/tmp/Rtmpde0k7R/regexcite/README.Rmd[34m[39m
 ```
 
 You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
@@ -1118,7 +1118,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 23.7s
+#> Duration: 27.7s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -1134,15 +1134,15 @@ install()
 
 
 ```
-* checking for file ‘/tmp/Rtmpbm73eY/regexcite/DESCRIPTION’ ... OK
+* checking for file ‘/tmp/Rtmpde0k7R/regexcite/DESCRIPTION’ ... OK
 * preparing ‘regexcite’:
 * checking DESCRIPTION meta-information ... OK
 * checking for LF line-endings in source and make files and shell scripts
 * checking for empty or unneeded directories
 Removed empty directory ‘regexcite/tests/testthat/_snaps’
 * building ‘regexcite_0.0.0.9000.tar.gz’
-Running /opt/R/4.2.0/lib/R/bin/R CMD INSTALL \
-  /tmp/Rtmpbm73eY/regexcite_0.0.0.9000.tar.gz --install-tests 
+Running /opt/R/4.1.3/lib/R/bin/R CMD INSTALL \
+  /tmp/Rtmpde0k7R/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation

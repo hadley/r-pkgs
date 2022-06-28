@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 13 Namespace | R Packages</title>
+<meta name="author" content="Hadley Wickham">
+<meta name="author" content="Jennifer Bryan">
+<meta name="description" content="The package namespace (as recorded in the NAMESPACE file) is one of the more confusing parts of building a package. It’s a fairly advanced topic, and by-and-large, not that important if you’re...">
+<meta name="generator" content="bookdown 0.27 with bs4_book()">
+<meta property="og:title" content="Chapter 13 Namespace | R Packages">
+<meta property="og:type" content="book">
+<meta property="og:url" content="https://r-pkgs.org/namespace.html">
+<meta property="og:image" content="https://r-pkgs.org/images/cover.png">
+<meta property="og:description" content="The package namespace (as recorded in the NAMESPACE file) is one of the more confusing parts of building a package. It’s a fairly advanced topic, and by-and-large, not that important if you’re...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 13 Namespace | R Packages">
+<meta name="twitter:site" content="@hadley">
+<meta name="twitter:description" content="The package namespace (as recorded in the NAMESPACE file) is one of the more confusing parts of building a package. It’s a fairly advanced topic, and by-and-large, not that important if you’re...">
+<meta name="twitter:image" content="https://r-pkgs.org/images/cover.png">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-141182576-1"></script><script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-141182576-1');
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<style type="text/css">
+    /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+        }
+    .hanging div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }
+  </style>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="">R Packages</a>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Welcome!</a></li>
+<li><a class="" href="preface.html">Preface</a></li>
+<li class="book-part">Getting started</li>
+<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
+<li><a class="" href="whole-game.html"><span class="header-section-number">2</span> The whole game</a></li>
+<li><a class="" href="setup.html"><span class="header-section-number">3</span> System setup</a></li>
+<li><a class="" href="package-structure-state.html"><span class="header-section-number">4</span> Package structure and state</a></li>
+<li><a class="" href="workflows101.html"><span class="header-section-number">5</span> Fundamental development workflows</a></li>
+<li><a class="" href="package-within.html"><span class="header-section-number">6</span> The package within</a></li>
+<li class="book-part">Package components</li>
+<li><a class="" href="r.html"><span class="header-section-number">7</span> R code</a></li>
+<li><a class="" href="description.html"><span class="header-section-number">8</span> Package metadata</a></li>
+<li><a class="" href="license.html"><span class="header-section-number">9</span> Licensing</a></li>
+<li><a class="" href="man.html"><span class="header-section-number">10</span> Object documentation</a></li>
+<li><a class="" href="vignettes.html"><span class="header-section-number">11</span> Vignettes: long-form documentation</a></li>
+<li><a class="" href="tests.html"><span class="header-section-number">12</span> Testing</a></li>
+<li><a class="active" href="namespace.html"><span class="header-section-number">13</span> Namespace</a></li>
+<li><a class="" href="data.html"><span class="header-section-number">14</span> External data</a></li>
+<li><a class="" href="src.html"><span class="header-section-number">15</span> Compiled code</a></li>
+<li><a class="" href="inst.html"><span class="header-section-number">16</span> Installed files</a></li>
+<li><a class="" href="misc.html"><span class="header-section-number">17</span> Other components</a></li>
+<li class="book-part">Sharing with others</li>
+<li><a class="" href="git.html"><span class="header-section-number">18</span> Git and GitHub</a></li>
+<li><a class="" href="r-cmd-check.html"><span class="header-section-number">19</span> Automated checking</a></li>
+<li><a class="" href="release.html"><span class="header-section-number">20</span> Releasing a package</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/hadley/r-pkgs">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="namespace" class="section level1" number="13">
+<h1>
+<span class="header-section-number">13</span> Namespace<a class="anchor" aria-label="anchor" href="#namespace"><i class="fas fa-link"></i></a>
+</h1>
+<!--
+Notes re: revision
+
+Move this earlier, because our new export strategy forces people to deal with this much earlier, i.e. we don't "export everything" for anyone, any more.
+-->
+<p>The package namespace (as recorded in the <code>NAMESPACE</code> file) is one of the more confusing parts of building a package. It’s a fairly advanced topic, and by-and-large, not that important if you’re only developing packages for yourself. However, understanding namespaces is vital if you plan to submit your package to CRAN. This is because CRAN requires that your package plays nicely with other packages.</p>
+<p>When you first start using namespaces, it’ll seem like a lot of work for little gain. However, having a high quality namespace helps encapsulate your package and makes it self-contained. This ensures that other packages won’t interfere with your code, that your code won’t interfere with other packages, and that your package works regardless of the environment in which it’s run.</p>
+<div id="namespace-motivation" class="section level2" number="13.1">
+<h2>
+<span class="header-section-number">13.1</span> Motivation<a class="anchor" aria-label="anchor" href="#namespace-motivation"><i class="fas fa-link"></i></a>
+</h2>
+<p>As the name suggests, namespaces provide “spaces” for “names”. They provide a context for looking up the value of an object associated with a name.</p>
+<p>Without knowing it, you’ve probably already used namespaces. For example, have you ever used the <code>::</code> operator? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> function. If you load plyr, then Hmisc, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the Hmisc version. But if you load the packages in the opposite order, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the plyr version. This can be confusing. Instead, you can explicitly refer to specific functions: <code>Hmisc::summarize()</code> and <code>plyr::summarize()</code>. Then the order in which the packages are loaded won’t matter.</p>
+<p>Namespaces make your packages self-contained in two ways: the <strong>imports</strong> and the <strong>exports</strong>. The <strong>imports</strong> defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> function in base R:</p>
+<div class="sourceCode" id="cb250"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nrow</span></span>
+<span><span class="co">#&gt; function (x) </span></span>
+<span><span class="co">#&gt; dim(x)[1L]</span></span>
+<span><span class="co">#&gt; &lt;bytecode: 0x5648b81c0d10&gt;</span></span>
+<span><span class="co">#&gt; &lt;environment: namespace:base&gt;</span></span></code></pre></div>
+<p>It’s defined in terms of <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>. So what will happen if we override <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>
+with our own definition? Does <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> break?</p>
+<div class="sourceCode" id="cb251"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1 1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 32</span></span></code></pre></div>
+<p>Surprisingly, it does not! That’s because when <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> looks for an object
+called <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>, it uses the package namespace, so it finds <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> in
+the base environment, not the <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> we created in the global environment.</p>
+<p>The <strong>exports</strong> helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can’t easily be used by another package). Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. While conflicts aren’t the end of the world because you can always use <code>::</code> to disambiguate, they’re best avoided where possible because it makes the lives of your users easier.</p>
+</div>
+<div id="search-path" class="section level2" number="13.2">
+<h2>
+<span class="header-section-number">13.2</span> Search path<a class="anchor" aria-label="anchor" href="#search-path"><i class="fas fa-link"></i></a>
+</h2>
+<p>To understand why namespaces are important, you need a solid understanding of search paths. To call a function, R first has to find it. R does this by first looking in the global environment. If R doesn’t find it there, it looks in the search path, the list of all the packages you have <strong>attached</strong>. You can see this list by running <code><a href="https://rdrr.io/r/base/search.html">search()</a></code>. For example, here’s the search path for the code in this book:</p>
+<div class="sourceCode" id="cb252"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] ".GlobalEnv"        "package:stats"     "package:graphics" </span></span>
+<span><span class="co">#&gt; [4] "package:grDevices" "package:utils"     "package:datasets" </span></span>
+<span><span class="co">#&gt; [7] "package:methods"   "Autoloads"         "package:base"</span></span></code></pre></div>
+<p>There’s an important difference between loading and attaching a package. Normally when you talk about loading a package you think of <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, but that actually attaches the package.</p>
+<p>If a package is installed,</p>
+<ul>
+<li><p><strong>Loading</strong> will load code, data and any DLLs; register S3 and
+S4 methods; and run the <code>.onLoad()</code> function. After loading, the
+package is available in memory, but because it’s not in the search
+path, you won’t be able to access its components without using <code>::</code>.
+Confusingly, <code>::</code> will also load a package automatically if it
+isn’t already loaded. It’s rare to load a package explicitly, but you
+can do so with <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> or <code><a href="https://rdrr.io/r/base/ns-load.html">loadNamespace()</a></code>.</p></li>
+<li><p><strong>Attaching</strong> puts the package in the search path. You can’t attach a
+package without first loading it, so both <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> load
+then attach the package. You can see the currently attached packages with
+<code><a href="https://rdrr.io/r/base/search.html">search()</a></code>.</p></li>
+</ul>
+<p>If a package isn’t installed, loading (and hence attaching) will fail with an error.</p>
+<p>To see the differences more clearly, consider two ways of running <code><a href="https://testthat.r-lib.org/reference/expect_that.html">expect_that()</a></code> from the testthat package. If we use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, testthat is attached to the search path. If we use <code>::</code>, it’s not.</p>
+<div class="sourceCode" id="cb253"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">old</span><span class="op">)</span></span>
+<span><span class="co">#&gt; character(0)</span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in expect_true(TRUE): could not find function "expect_true"</span></span>
+<span>    </span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org">testthat</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">old</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "package:testthat"</span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>There are four functions that make a package available. They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).</p>
+<div class="inline-table"><table class="table table-sm">
+<thead><tr class="header">
+<th></th>
+<th>Throws error</th>
+<th>Returns <code>FALSE</code>
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Load</td>
+<td><code>loadNamespace("x")</code></td>
+<td><code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("x", quietly = TRUE)</a></code></td>
+</tr>
+<tr class="even">
+<td>Attach</td>
+<td><code><a href="https://rdrr.io/r/base/library.html">library(x)</a></code></td>
+<td><code><a href="https://rdrr.io/r/base/library.html">require(x, quietly = TRUE)</a></code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Of the four, you should only ever use two:</p>
+<ul>
+<li><p>Use <code><a href="https://rdrr.io/r/base/library.html">library(x)</a></code> in data analysis scripts. It will throw an error if the
+package is not installed, and will terminate the script. You want to attach
+the package to save typing. Never use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> in a package.</p></li>
+<li><p>Use <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("x", quietly = TRUE)</a></code> inside a package if you want a
+specific action (e.g. throw an error) depending on whether or not
+a suggested package is installed.</p></li>
+</ul>
+<p>You never need to use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> (<code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> is almost always better), or <code><a href="https://rdrr.io/r/base/ns-load.html">loadNamespace()</a></code> (which is only needed for internal R code). You should never use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> in a package: instead, use the <code>Depends</code> or <code>Imports</code> fields in the <code>DESCRIPTION</code>.</p>
+<p>Now’s a good time to come back to an important issue which we glossed over earlier. What’s the difference between <code>Depends</code> and <code>Imports</code> in the <code>DESCRIPTION</code>? When should you use one or the other?</p>
+<p>Listing a package in either <code>Depends</code> or <code>Imports</code> ensures that it’s installed when needed. The main difference is that where <code>Imports</code> just <em>loads</em> the package, <code>Depends</code> <em>attaches</em> it. There are no other differences. The rest of the advice in this chapter applies whether or not the package is in <code>Depends</code> or <code>Imports</code>.</p>
+<p>Unless there is a good reason otherwise, you should always list packages in <code>Imports</code> not <code>Depends</code>. That’s because a good package is self-contained, and minimises changes to the global environment (including the search path). The only exception is if your package is designed to be used in conjunction with another package. For example, the <a href="https://github.com/gavinsimpson/analogue">analogue</a> package builds on top of <a href="https://github.com/vegandevs/vegan">vegan</a>. It’s not useful without vegan, so it has vegan in <code>Depends</code> instead of <code>Imports</code>. Similarly, ggplot2 should really <code>Depend</code> on scales, rather than <code>Import</code>ing it.</p>
+<p>Now that you understand the importance of the namespace, let’s dive into the nitty gritty details. The two sides of the package namespace, imports and exports, are both described by the <code>NAMESPACE</code>. You’ll learn what this file looks like in the next section. In the section after that, you’ll learn the details of exporting and importing functions and other objects.</p>
+</div>
+<div id="namespace-NAMESPACE" class="section level2" number="13.3">
+<h2>
+<span class="header-section-number">13.3</span> The <code>NAMESPACE</code><a class="anchor" aria-label="anchor" href="#namespace-NAMESPACE"><i class="fas fa-link"></i></a>
+</h2>
+<p>The following code is an excerpt of the <code>NAMESPACE</code> file from the testthat package.</p>
+<pre><code># Generated by roxygen2 (4.0.2): do not edit by hand
+S3method(as.character,expectation)
+S3method(compare,character)
+export(auto_test)
+export(auto_test_package)
+export(colourise)
+export(context)
+exportClasses(ListReporter)
+exportClasses(MinimalReporter)
+importFrom(methods,setRefClass)
+useDynLib(testthat,duplicate_)
+useDynLib(testthat,reassign_function)</code></pre>
+<p>You can see that the <code>NAMESPACE</code> file looks a bit like R code. Each line contains a <strong>directive</strong>: <code>S3method()</code>, <code>export()</code>, <code>exportClasses()</code>, and so on. Each directive describes an R object, and says whether it’s exported from this package to be used by others, or it’s imported from another package to be used locally.</p>
+<p>In total, there are eight namespace directives. Four describe exports:</p>
+<ul>
+<li>
+<code>export()</code>: export functions (including S3 and S4 generics).</li>
+<li>
+<code>exportPattern()</code>: export all functions that match a pattern.</li>
+<li>
+<code>exportClasses()</code>, <code>exportMethods()</code>: export S4 classes and methods.</li>
+<li>
+<code>S3method()</code>: export S3 methods.</li>
+</ul>
+<p>And four describe imports:</p>
+<ul>
+<li>
+<code>import()</code>: import all functions from a package.</li>
+<li>
+<code>importFrom()</code>: import selected functions (including S4 generics).</li>
+<li>
+<code>importClassesFrom()</code>, <code>importMethodsFrom()</code>: import S4 classes and methods.</li>
+<li>
+<code>useDynLib()</code>: import a function from C. This is described in more
+detail in <a href="src.html#src">compiled code</a>.</li>
+</ul>
+<p>I don’t recommend writing these directives by hand. Instead, in this chapter you’ll learn how to generate the <code>NAMESPACE</code> file with roxygen2. There are three main advantages to using roxygen2:</p>
+<ul>
+<li><p>Namespace definitions live next to its associated function, so when you
+read the code it’s easier to see what’s being imported and exported.</p></li>
+<li><p>Roxygen2 abstracts away some of the details of <code>NAMESPACE</code>. You only
+need to learn one tag, <code>@export</code>, which will automatically generate the right
+directive for functions, S3 methods, S4 methods and S4 classes.</p></li>
+<li><p>Roxygen2 makes <code>NAMESPACE</code> tidy. No matter how many times you use
+<code>@importFrom foo bar</code> you’ll only get one <code>importFrom(foo, bar)</code> in your
+<code>NAMESPACE</code>. This makes it easy to attach import directives to every function
+that need them, rather than trying to manage in one central place.</p></li>
+</ul>
+<p>Note that you can choose to use roxygen2 to generate just <code>NAMESPACE</code>, just <code>man/*.Rd</code>, or both. If you don’t use any namespace related tags, roxygen2 won’t touch <code>NAMESPACE</code>. If you don’t use any documentation related tags, roxygen2 won’t touch <code>man/</code>.</p>
+</div>
+<div id="namespace-workflow" class="section level2" number="13.4">
+<h2>
+<span class="header-section-number">13.4</span> Workflow<a class="anchor" aria-label="anchor" href="#namespace-workflow"><i class="fas fa-link"></i></a>
+</h2>
+<p>Generating the namespace with roxygen2 is just like generating function documentation with roxygen2. You use roxygen2 blocks (starting with <code>#'</code>) and tags (starting with <code>@</code>). The workflow is the same:</p>
+<ol style="list-style-type: decimal">
+<li><p>Add roxygen comments to your <code>.R</code> files.</p></li>
+<li><p>Run <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code> (or press Ctrl/Cmd + Shift + D in RStudio) to
+convert roxygen comments to <code>.Rd</code> files.</p></li>
+<li><p>Look at <code>NAMESPACE</code> and run tests to check that the specification is
+correct.</p></li>
+<li><p>Rinse and repeat until the correct functions are exported.</p></li>
+</ol>
+</div>
+<div id="exports" class="section level2" number="13.5">
+<h2>
+<span class="header-section-number">13.5</span> Exports<a class="anchor" aria-label="anchor" href="#exports"><i class="fas fa-link"></i></a>
+</h2>
+<p>For a function to be usable outside of your package, you must <strong>export</strong> it. When you create a new package with <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code>, it produces a temporary <code>NAMESPACE</code> that exports everything in your package that doesn’t start with <code>.</code> (a single period). If you’re just working locally, it’s fine to export everything in your package. However, if you’re planning on sharing your package with others, it’s a really good idea to only export needed functions. This reduces the chances of a conflict with another package.</p>
+<p>To export an object, put <code>@export</code> in its roxygen block. For example:</p>
+<div class="sourceCode" id="cb255"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#' @export</span></span>
+<span><span class="va">foo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>This will then generate <code>export()</code>, <code>exportMethods()</code>, <code>exportClass()</code> or <code>S3method()</code> depending on the type of the object.</p>
+<p>You export functions that you want other people to use. Exported functions must be documented, and you must be cautious when changing their interface — other people are using them! Generally, it’s better to export too little than too much. It’s easy to export things that you didn’t before; it’s hard to stop exporting a function because it might break existing code. Always err on the side of caution, and simplicity. It’s easier to give people more functionality than it is to take away stuff they’re used to.</p>
+<p>I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or a set of closely related problems). Any functions not related to that purpose should not be exported. For example, most of my packages have a <code>utils.R</code> file that contains many small functions that are useful for me, but aren’t part of the core purpose of those packages. I never export these functions.</p>
+<div class="sourceCode" id="cb256"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Defaults for NULL values</span></span>
+<span><span class="va">`%||%`</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span> <span class="va">b</span> <span class="kw">else</span> <span class="va">a</span></span>
+<span></span>
+<span><span class="co"># Remove NULLs from a list</span></span>
+<span><span class="va">compact</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">x</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">vapply</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">is.null</span>, <span class="fu"><a href="https://rdrr.io/r/base/logical.html">logical</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>That said, if you’re creating a package for yourself, it’s far less important to be so disciplined. Because you know what’s in your package, it’s fine to have a local “misc” package that contains a passel of functions that you find useful. But I don’t think you should release such a package.</p>
+<p>The following sections describe what you should export if you’re using S3, S4 or RC.</p>
+<div id="export-s3" class="section level3" number="13.5.1">
+<h3>
+<span class="header-section-number">13.5.1</span> S3<a class="anchor" aria-label="anchor" href="#export-s3"><i class="fas fa-link"></i></a>
+</h3>
+<p>If you want others to be able to create instances of an S3 class, <code>@export</code> the constructor function. S3 generics are just regular R functions, you can <code>@export</code> them like functions.</p>
+<p>S3 methods represent the most complicated case because there are four different scenarios:</p>
+<ul>
+<li><p>A method for an exported generic: export every method.</p></li>
+<li><p>A method for an internal generic: technically, you don’t need to export
+these methods. However, I recommend exporting every S3 method you write
+because it’s simpler and makes it less likely that you’ll introduce hard to
+find bugs. Use <code><a href="https://devtools.r-lib.org/reference/missing_s3.html">devtools::missing_s3()</a></code> to list all S3 methods that
+you’ve forgotten to export.</p></li>
+<li><p>A method for a generic in a required package. You’ll need to import the
+generic (see below), and export the method.</p></li>
+<li><p>A method for a generic in a suggested package. Namespace directives must
+refer to available functions, so they can not reference suggested packages.
+It’s possible to use package hooks and code to add this at run-time,
+but this is sufficiently complicated that I currently wouldn’t recommend it.
+Instead, you’ll have to design your package dependencies in a way that avoids this
+scenario.</p></li>
+</ul>
+</div>
+<div id="export-s4" class="section level3" number="13.5.2">
+<h3>
+<span class="header-section-number">13.5.2</span> S4<a class="anchor" aria-label="anchor" href="#export-s4"><i class="fas fa-link"></i></a>
+</h3>
+<p>S4 classes: if you want others to be able to extend your class, <code>@export</code> it.
+If you want others to create instances of your class but not to extend it,
+<code>@export</code> the constructor function, not the class.</p>
+<div class="sourceCode" id="cb257"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Can extend and create with new("A", ...)</span></span>
+<span><span class="co">#' @export</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"A"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Can extend and create with new("B", ...). You can use B()</span></span>
+<span><span class="co"># to construct instances in your own code, but others can not</span></span>
+<span><span class="co">#' @export</span></span>
+<span><span class="va">B</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"B"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Can create with C(...) and new("C", ...), but can't create</span></span>
+<span><span class="co"># a subclass that extends C</span></span>
+<span><span class="co">#' @export C</span></span>
+<span><span class="va">C</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"C"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Can extend and create with D(...) or new("D", ...)</span></span>
+<span><span class="co">#' @export D</span></span>
+<span><span class="co">#' @exportClass D</span></span>
+<span><span class="va">D</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/methods/setClass.html">setClass</a></span><span class="op">(</span><span class="st">"D"</span><span class="op">)</span></span></code></pre></div>
+<p>S4 generics: <code>@export</code> if you want the generic to be publicly usable.</p>
+<p>S4 methods: you only need to <code>@export</code> methods for generics that you did not define. But I think it’s a good idea to <code>@export</code> every method: that way you don’t need to remember whether or not you created the generic.</p>
+</div>
+<div id="export-rc" class="section level3" number="13.5.3">
+<h3>
+<span class="header-section-number">13.5.3</span> RC<a class="anchor" aria-label="anchor" href="#export-rc"><i class="fas fa-link"></i></a>
+</h3>
+<p>The principles used for S4 classes apply here. Note that due to the way that RC is currently implemented, it’s typically impossible for your classes to be extended outside of your package.</p>
+</div>
+<div id="export-data" class="section level3" number="13.5.4">
+<h3>
+<span class="header-section-number">13.5.4</span> Data<a class="anchor" aria-label="anchor" href="#export-data"><i class="fas fa-link"></i></a>
+</h3>
+<p>As you’ll learn about in <a href="data.html#data">data</a>, files that live in <code>data/</code> don’t use the usual namespace mechanism and don’t need to be exported.</p>
+</div>
+</div>
+<div id="imports" class="section level2" number="13.6">
+<h2>
+<span class="header-section-number">13.6</span> Imports<a class="anchor" aria-label="anchor" href="#imports"><i class="fas fa-link"></i></a>
+</h2>
+<p><code>NAMESPACE</code> also controls which external functions can be used by your package without having to use <code>::</code>.</p>
+<p>It’s confusing that both <code>DESCRIPTION</code> (through the <code>Imports</code> field) and
+<code>NAMESPACE</code> (through import directives) seem to be involved in imports. This is just an unfortunate choice of names. The <code>Imports</code> field really has nothing to do with functions imported into the namespace: it just makes sure the package is installed when your package is. It doesn’t make functions available. You need to import functions in exactly the same way regardless of whether or not the package is attached.</p>
+<p><code>Depends</code> is just a convenience for the user: if your package is attached, it also attaches all packages listed in <code>Depends</code>. If your package is loaded, packages in <code>Depends</code> are loaded, but not attached, so you need to qualify function names with <code>::</code> or specifically import them.</p>
+<p>It’s common for packages to be listed in <code>Imports</code> in <code>DESCRIPTION</code>, but not in <code>NAMESPACE</code>. In fact, this is what I recommend: list the package in <code>DESCRIPTION</code> so that it’s installed, then always refer to it explicitly with <code>pkg::fun()</code>. Unless there is a strong reason not to, it’s better to be explicit. It’s a little more work to write, but a lot easier to read when you come back to the code in the future. The converse is not true. Every package mentioned in <code>NAMESPACE</code> must also be present in the <code>Imports</code> or <code>Depends</code> fields.</p>
+<div id="import-r" class="section level3" number="13.6.1">
+<h3>
+<span class="header-section-number">13.6.1</span> R functions<a class="anchor" aria-label="anchor" href="#import-r"><i class="fas fa-link"></i></a>
+</h3>
+<p>If you are using just a few functions from another package, my recommendation is to note the package name in the <code>Imports:</code> field of the <code>DESCRIPTION</code> file and call the function(s) explicitly using <code>::</code>, e.g., <code>pkg::fun()</code>.</p>
+<p>If you are using functions repeatedly, you can avoid <code>::</code> by importing the function with <code>@importFrom pkg fun</code>. This also has a small performance benefit, because <code>::</code> adds approximately 5 µs to function evaluation time. Operators can also be imported in a similar manner, e.g., <code>@importFrom magrittr %&gt;%</code>.</p>
+<p>Alternatively, if you are repeatedly using many functions from another package, you can import all of them using <code>@import package</code>. This is the least recommended solution because it makes your code harder to read (you can’t tell where a function is coming from), and if you <code>@import</code> many packages, it increases the chance of conflicting function names.</p>
+</div>
+<div id="import-s3" class="section level3" number="13.6.2">
+<h3>
+<span class="header-section-number">13.6.2</span> S3<a class="anchor" aria-label="anchor" href="#import-s3"><i class="fas fa-link"></i></a>
+</h3>
+<p>S3 generics are just functions, so the same rules for functions apply. S3 methods always accompany the generic, so as long as you can access the generic (either implicitly or explicitly), the methods will also be available. In other words, you don’t need to do anything special for S3 methods. As long as you’ve imported the generic, all the methods will also be available.</p>
+</div>
+<div id="import-s4" class="section level3" number="13.6.3">
+<h3>
+<span class="header-section-number">13.6.3</span> S4<a class="anchor" aria-label="anchor" href="#import-s4"><i class="fas fa-link"></i></a>
+</h3>
+<p>To use classes defined in another package, place <code>@importClassesFrom package ClassA ClassB ...</code> next to the classes that inherit from the imported classes, or next to the methods that implement a generic for the imported classes.</p>
+<p>To use generics defined in another package, place <code>@importMethodsFrom package GenericA GenericB ...</code> next to the methods that use the imported generics.</p>
+<p>Since S4 is implemented in the methods package, you need to make sure it’s available. This is easy to overlook because while the methods package is always available in the search path when you’re working interactively, it’s not automatically loaded by <code>Rscript</code>, the tool often used to run R from the command line.</p>
+<ul>
+<li><p>Pre R 3.2.0: <code>Depends: methods</code> in <code>DESCRIPTION</code>.<br>
+Post R 3.2.0: <code>Imports: methods</code> in <code>DESCRIPTION</code>.</p></li>
+<li>
+<p>Since you’ll being using a lot of functions from <code>methods</code>,
+you’ll probably also want to import the complete package with:</p>
+<div class="sourceCode" id="cb258"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#' @import methods</span></span>
+<span><span class="cn">NULL</span></span></code></pre></div>
+<p>Or you might just want to import the most commonly used functions:</p>
+<div class="sourceCode" id="cb259"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#' @importFrom methods setClass setGeneric setMethod setRefClass</span></span>
+<span><span class="cn">NULL</span></span></code></pre></div>
+<p>Here I’m documenting “NULL” to make it clear that these directives don’t
+apply to just one function. It doesn’t matter where they go, but if you have
+package docs, as described in <a href="man.html#man-packages">documenting packages</a>, that’s
+a natural place to put them.</p>
+</li>
+</ul>
+</div>
+<div id="import-src" class="section level3" number="13.6.4">
+<h3>
+<span class="header-section-number">13.6.4</span> Compiled functions<a class="anchor" aria-label="anchor" href="#import-src"><i class="fas fa-link"></i></a>
+</h3>
+<p>To make C/C++ functions available in R, see <a href="src.html#src">compiled code</a>.</p>
+
+</div>
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="tests.html"><span class="header-section-number">12</span> Testing</a></div>
+<div class="next"><a href="data.html"><span class="header-section-number">14</span> External data</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#namespace"><span class="header-section-number">13</span> Namespace</a></li>
+<li><a class="nav-link" href="#namespace-motivation"><span class="header-section-number">13.1</span> Motivation</a></li>
+<li><a class="nav-link" href="#search-path"><span class="header-section-number">13.2</span> Search path</a></li>
+<li><a class="nav-link" href="#namespace-NAMESPACE"><span class="header-section-number">13.3</span> The NAMESPACE</a></li>
+<li><a class="nav-link" href="#namespace-workflow"><span class="header-section-number">13.4</span> Workflow</a></li>
+<li>
+<a class="nav-link" href="#exports"><span class="header-section-number">13.5</span> Exports</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#export-s3"><span class="header-section-number">13.5.1</span> S3</a></li>
+<li><a class="nav-link" href="#export-s4"><span class="header-section-number">13.5.2</span> S4</a></li>
+<li><a class="nav-link" href="#export-rc"><span class="header-section-number">13.5.3</span> RC</a></li>
+<li><a class="nav-link" href="#export-data"><span class="header-section-number">13.5.4</span> Data</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#imports"><span class="header-section-number">13.6</span> Imports</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#import-r"><span class="header-section-number">13.6.1</span> R functions</a></li>
+<li><a class="nav-link" href="#import-s3"><span class="header-section-number">13.6.2</span> S3</a></li>
+<li><a class="nav-link" href="#import-s4"><span class="header-section-number">13.6.3</span> S4</a></li>
+<li><a class="nav-link" href="#import-src"><span class="header-section-number">13.6.4</span> Compiled functions</a></li>
+</ul>
+</li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/hadley/r-pkgs/blob/main/namespace.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/hadley/r-pkgs/edit/main/namespace.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>R Packages</strong>" was written by Hadley Wickham, Jennifer Bryan. </p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>
