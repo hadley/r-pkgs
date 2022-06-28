@@ -1,0 +1,196 @@
+# Lifecycle
+
+## Version {#description-version}
+
+Formally, an R package version is a sequence of at least two integers separated by either `.` or `-`.
+For example, `1.0` and `0.9.1-10` are valid versions, but `1` and `1.0-devel` are not.
+You can parse a version number with `numeric_version()`.
+
+```{r}
+numeric_version("1.9") == numeric_version("1.9.0")
+numeric_version("1.9.0") < numeric_version("1.10.0")
+```
+
+For example, a package might have a version 1.9.
+This version number is considered by R to be the same as 1.9.0, less than version 1.9.2, and all of these are less than version 1.10 (which is version "one point ten", not "one point one zero").
+R uses version numbers to determine whether package dependencies are satisfied.
+A package might, for example, import package `devtools (>= 1.9.2)`, in which case version 1.9 or 1.9.0 wouldn't work.
+
+Here is our recommended framework for managing the package version number:
+
+* Always use `.` as the separator, never `-`.
+
+* A released version number consists of three numbers, `<major>.<minor>.<patch>`. 
+  For version number 1.9.2, 1 is the major number, 9 is the minor number, and 
+  2 is the patch number.
+  Never use versions like `1.0`, instead always spell out the three components,
+  `1.0.0`.
+  
+* An in-development package has a fourth component: the development version.
+  This should start at 9000.
+  For example, the first version of the package should be `0.0.0.9000`.
+  There are two reasons for this recommendation:
+  First, it makes it easy to see if a package is released or in-development.
+  Also, the use of the fourth place means that you're not limited to what the
+  next version will be.
+  `0.0.1`, `0.1.0`, and `1.0.0` are all greater than `0.0.0.9000`.
+  
+  Increment the development version, e.g. from `9000` to `9001`, if you've
+  added an important feature that another development package needs to depend 
+  on.
+
+The advice above is inspired in part by [Semantic Versioning](https://semver.org) and by the [X.Org](https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
+Read them if you'd like to understand more about the standards of versioning used by many open source projects.
+Finally, know that other maintainers follow different philosophies on how to manage the package version number.
+
+The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
+We discuss this and more in Section \@ref(release-version).
+For now, just remember that the first version of your package should be `0.0.0.9000`.
+`usethis::create_package()` does this, by default.
+`usethis::use_version()` increments the package version; when called interactively, with no argument, it presents a helpful menu:
+
+```{r, eval = FALSE}
+usethis::use_version()
+#> Current version is 0.1.
+#> What should the new version be? (0 to exit) 
+#> 
+#> 1: major --> 1.0
+#> 2: minor --> 0.2
+#> 3: patch --> 0.1.1
+#> 4:   dev --> 0.1.0.9000
+#> 
+#> Selection: 
+```
+
+## Version number {#release-version}
+
+If you've been following the advice in [versioning](#description-version), the version number of your in-development package will have four components, `major.minor.patch.dev`, where `dev` is at least 9000. The number 9000 is arbitrary, but provides a strong visual signal there's something different about this version number. Released packages don't have a `dev` component, so now you need to drop that and pick a version number based on the changes you've made. For example, if the current version is `0.8.1.9000` will the next CRAN version be `0.8.2`, `0.9.0` or `1.0.0`? Use this advice to decide:
+  
+  * Increment `patch`, e.g. `0.8.2` for a __patch__: you've fixed
+    bugs without adding any significant new features. I'll often do a patch 
+    release if, after release, I discover a show-stopping bug that needs to be
+    fixed ASAP. Most releases will have a patch number of 0.
+  
+  * Increment `minor`, e.g. `0.9.0`, for a __minor release__. A minor 
+    release can include bug fixes, new features and changes in backward
+    compatibility. This is the most common type of release. It's perfectly fine to 
+    have so many minor releases that you need to use two (or even three!) 
+    digits, e.g. `1.17.0`.
+  
+  * Increment `major`, e.g. `1.0.0`, for a __major release__. This is
+    best reserved for changes that are not backward compatible and that are 
+    likely to affect many users. Going from `0.b.c` to `1.0.0` typically 
+    indicates that your package is feature complete with a stable API.
+    
+    In practice, backward compatibility is not an all-or-nothing threshold. For 
+    example, if you make an API-incompatible change to a rarely-used part of 
+    your code, it may not deserve a major number change. But if you fix a bug 
+    that many people depend on, it will feel like an API breaking change. Use 
+    your best judgement.
+    
+## Backward compatibility {#compatibility}
+
+The big difference between major and minor versions is whether or not the code is backward compatible. This difference is a bit academic in the R community because the way most people update packages is by running `update.packages()`, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code. While more R users are becoming familiar with tools like [packrat](https://rstudio.github.io/packrat/), which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number. 
+
+The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time for your users' time. The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes. Backward compatible code also tends to be harder to read because of the need to maintain multiple paths to support functionality from previous versions. Be concerned about backward compatibility, but don't let it paralyse you. 
+
+There are good reasons to make backward incompatible changes - if you made a design mistake that makes your package harder to use it's better to fix it sooner rather than later. If you do need to make a backward incompatible change, it's best to do it gradually. Provide interim version(s) between where are you now and where you'd like to be, and provide advice about what's going to change. Depending on what you're changing, use one of the following techniques to let your users know what's happening:
+
+  * Don't immediately remove a function. First deprecate it. For example, 
+    imagine your package is version `0.5.0` and you want to remove `fun()`. In 
+    version, `0.6.0`, you'd use `.Deprecated()` to display a warning message
+    whenever someone uses the function:
+  
+    ```{r}
+    # 0.6.0
+    fun <- function(x, y, z) {
+      .Deprecated("sum")
+      x + y + z
+    }
+    
+    fun(1, 2, 3)
+    ```
+    
+    Then, remove the function once you got to `0.7.0` (or if you are
+    being very strict, once you got to `1.0.0` since it's a backward 
+    incompatible change).
+
+  * Similarly, if you're removing a function argument, first warn about it:
+  
+    ```{r}
+    bar <- function(x, y, z) {
+      if (!missing(y)) {
+        warning("argument y is deprecated; please use z instead.", 
+          call. = FALSE)
+        z <- y
+      }
+    }
+    
+    bar(1, 2, 3)
+    ```
+
+  * If you're deprecating a lot of code, it can be useful to add a helper 
+    function. For example, ggplot2 has `gg_dep` which automatically
+    displays a message, warning or error, depending on how much the version
+    number has changed.
+    
+    ```{r}
+    gg_dep <- function(version, msg) {
+      v <- as.package_version(version)
+      cv <- packageVersion("ggplot2")
+    
+      # If current major number is greater than last-good major number, or if
+      # current minor number is more than 1 greater than last-good minor number,
+      # return an error.
+      if (cv[[1,1]] > v[[1,1]]  ||  cv[[1,2]] > v[[1,2]] + 1) {
+        stop(msg, " (Defunct; last used in version ", version, ")",
+          call. = FALSE)
+    
+      # If minor number differs by one, give a warning
+      } else if (cv[[1,2]] > v[[1,2]]) {
+        warning(msg, " (Deprecated; last used in version ", version, ")",
+          call. = FALSE)
+    
+      # If only subminor number is greater, provide a message
+      } else if (cv[[1,3]] > v[[1,3]]) {
+        message(msg, " (Deprecated; last used in version ", version, ")")
+      }
+    
+      invisible()
+    }
+    ```
+
+  * Significant changes to an existing function requires planning, including 
+    making gradual changes over multiple versions. Try and develop a sequence
+    of transformations where each change can be accompanied by an informative
+    error message.
+
+  * If you want to use functionality in a new version of another package,
+    don't make it a hard install-time dependency in the `DESCRIPTION` (forcing 
+    your users to upgrade that package might break other code). Instead
+    check for the version at run-time:
+    
+    ```{r, eval = FALSE}
+    if (packageVersion("ggplot2") < "1.0.0") {
+      stop("ggplot2 >= 1.0.0 needed for this function.", call. = FALSE)
+    }
+    ```
+    
+    This is also useful if you're responding to changes in one of your
+    dependencies - you'll want to have a version that will work both before
+    and after the change. This will allow you to submit it to CRAN at any time, 
+    even before the other package. Doing this may generate some `R CMD check` 
+    notes. For example:
+    
+    ```{r, eval = FALSE}
+    if (packageVersion("foo") > "1.0.0") {
+      foo::baz()
+    } else {
+      foo::bar()
+    }
+    ```
+    
+    If `baz` doesn't exist in foo version 1.0.0, you'll get a note that
+    it doesn't exist in foo's namespace. Just explain that you're working 
+    around a difference between versions in your submission to CRAN.
+    

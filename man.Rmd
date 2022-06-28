@@ -1,3 +1,5 @@
+# (PART) Documentation {-}
+
 # Object documentation {#man}
 
 <!--
