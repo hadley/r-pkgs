@@ -1,6 +1,8 @@
 # Other components {#misc}
 
-
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
+:::
 
 There are five other directories that are valid top-level directories. They are rarely used:
 
