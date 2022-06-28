@@ -360,18 +360,18 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😀
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥳
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🌈
 ```
 
 This file shows a typical mix of tests:
@@ -977,7 +977,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😀
 
 exists("thingy")
 #> [1] FALSE
@@ -1011,7 +1011,7 @@ test_that("landscape changes leak outside the test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥇
 
 grep("jsonlite", search(), value = TRUE)
 #> [1] "package:jsonlite"
@@ -1086,7 +1086,7 @@ test_that("withr makes landscape changes local to a test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥳
 
 grep("jsonlite", search(), value = TRUE)
 #> character(0)
@@ -1191,7 +1191,7 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   useful_thing <- 3
@@ -1212,12 +1212,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🌈
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😀
 ```
 
 But we really do think the first form, with the repetition, if often the better choice.
