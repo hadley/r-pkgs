@@ -3,8 +3,7 @@
 # `R CMD check`  {#r-cmd-check}
 
 ::: {.rmdnote}
-You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
-:::
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::
 
 An important part of the package development process is `R CMD check`. `R CMD check` automatically checks your code for common problems. It's essential if you're planning on submitting to CRAN, but it's useful even if you're not because it automatically detects many common problems that you'd otherwise discover the hard way.
 

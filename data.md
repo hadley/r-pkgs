@@ -1,6 +1,7 @@
 # Data {#data}
 
-
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::
 
 It's often useful to include data in a package. If you're releasing the package to a broad audience, it's a way to provide compelling use cases for the package's functions. If you're releasing the package to a more specific audience, interested either in the data (e.g., NZ census data) or the subject (e.g., demography), it's a way to distribute that data along with its documentation (as long as your audience is R users).
 
@@ -43,7 +44,7 @@ pryr::mem_used()
 
 invisible(flights)
 pryr::mem_used()
-#> 99.2 MB
+#> 99.3 MB
 ```
 
 ~~I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.~~ *This text is slated for revision for the 2nd edition. TL;DR do NOT include `LazyData: true` in `DESCRIPTION` unless you actually ship data in your package. usethis v2.1.0 changes the behaviour of `create_package()` and `use_data()` accordingly.*

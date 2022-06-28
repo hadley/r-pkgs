@@ -1,8 +1,7 @@
 # Dependencies: What does your package need? {#description-dependencies}
 
 ::: {.rmdnote}
-You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
-:::
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::
 
 A dependency is a code that your package needs to run. Dependencies are managed by two files. The `DESCRIPTION` manages dependencies at the package level; i.e. what packages needs to be installed for your package to work.  R has a rich set of ways to describe different types of dependencies.
 A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.
@@ -452,7 +451,7 @@ Namespaces make your packages self-contained in two ways: the __imports__ and th
 nrow
 #> function (x) 
 #> dim(x)[1L]
-#> <bytecode: 0x561feb25ed00>
+#> <bytecode: 0x561655a13d60>
 #> <environment: namespace:base>
 ```
 

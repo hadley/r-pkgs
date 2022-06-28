@@ -1,8 +1,7 @@
 # Other markdown files {#important-files}
 
 ::: {.rmdnote}
-You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
-:::
+You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. :::
 
 You now have a package that's ready to submit to CRAN.
 But before you do, there are two important files that you should update: `README.md` which describes what the package does, and `NEWS.md` which describes what's changed since the previous version.

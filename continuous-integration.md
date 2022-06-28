@@ -1,8 +1,7 @@
 # Continuous integration
 
 ::: {.rmdnote}
-You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
-:::
+You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. :::
 
 ## Checking after every commit with GitHub actions {#gha}
 

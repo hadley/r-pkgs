@@ -1,5 +1,8 @@
 # Preface {-}
 
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::
+
 Welcome to the 2nd edition of R Packages! If you're familiar with the 1st edition, this preface describes the major changes so that you can focus your reading on the new areas.
 
 There are X main goals for this edition:
