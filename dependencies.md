@@ -1,0 +1,582 @@
+# Dependencies: What does your package need? {#description-dependencies}
+
+
+
+A dependency is a code that your package needs to run. Dependencies are managed by two files. The `DESCRIPTION` manages dependencies at the package level; i.e. what packages needs to be installed for your package to work.  R has a rich set of ways to describe different types of dependencies.
+A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.
+
+The flip-side is that your package will also be a dependency of other people's scripts and packages. The job of the `NAMESPACE` is to define what functions you make available for others to use. 
+The package namespace (as recorded in the `NAMESPACE` file) is one of the more confusing parts of building a package. It's a fairly advanced topic, and by-and-large, not that important if you're only developing packages for yourself. However, understanding namespaces is vital if you plan to submit your package to CRAN. This is because CRAN requires that your package plays nicely with other packages. When you first start using namespaces, it'll seem like a lot of work for little gain. However, having a high quality namespace helps encapsulate your package and makes it self-contained. This ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
+
+
+## Run-time vs develop-time dependencies
+
+Packages listed in `Imports` are needed by your users at runtime.
+The following lines indicate that your package absolutely needs both dplyr and tidyr to work.
+
+```yaml
+Imports:
+    dplyr,
+    tidyr
+```
+
+Packages listed in `Suggests` are either needed for development tasks or *might* unlock optional functionality for your users.
+The lines below indicate that, while your package can take advantage of ggplot2 and testthat, they're not absolutely required:
+
+```yaml
+Suggests:
+    ggplot2,
+    testthat
+```
+
+For example, the [withr package](https://withr.r-lib.org) is very useful for writing tests that clean up after themselves.
+Such usage is compatible with listing withr in `Suggests`, since regular users don't need to run the tests.
+But sometimes a package might also use withr in its own functions, perhaps to offer its own `with_*()` and `local_*()` functions.
+In that case, withr should be listed in `Imports`.
+
+Both `Imports` and `Suggests` take a comma-separated list of package names.
+We recommend putting one package on each line, and keeping them in alphabetical order.
+A non-haphazard order makes it easier for humans to parse this field and appreciate changes.
+The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
+If the dependencies are already in alphabetical order, `use_package()` will keep it that way. 
+In general, it can be nice to run `usethis::use_tidy_description()` regularly, which orders and formats `DESCRIPTION` fields according to a fixed standard.
+
+`Imports` and `Suggests` differ in the strength and nature of dependency:
+
+* `Imports`: packages listed here _must_ be present for your package to work.
+  Any time your package is installed, those packages will also be installed, if
+  not already present.
+  `devtools::load_all()` also checks that all packages in `Imports` are
+  installed.
+    
+  Adding a package to `Imports` ensures it will be installed, but it does *not*
+  mean that it will be attached along with your package, i.e. it does not do the
+  equivalent of `library(otherpkg)`[^load-vs-attach].
+  Inside your package, the best practice is to explicitly refer to external
+  functions using the syntax `package::function()`.
+  This makes it very easy to identify which functions live outside of your
+  package.
+  This is especially useful when you read your code in the future.
+  
+  If you use a lot of functions from another package, this is rather verbose.
+  There's also a minor performance penalty associated with `::` (on the order of
+  5µs, so it will only matter if you call the function millions of times).
+  You'll learn about alternative ways to make functions in other packages
+  available inside your package in section \@ref(imports).
+
+* `Suggests`: your package can use these packages, but doesn't require them.
+  You might use suggested packages for example datasets, to run tests, build
+  vignettes, or maybe there's only one function that needs the package.
+  
+  Packages listed in `Suggests` are not automatically installed along with
+  your package.
+  This means that you can't assume the package is available unconditionally.
+  Below we show various ways to handle these checks.
+
+[^load-vs-attach]: The difference between loading and attaching a package is covered in more detail in \@ref(search-path).
+
+If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
+
+
+
+
+
+
+```r
+usethis::use_package("dplyr") # Default is "Imports"
+#> [32m✔[39m Adding [34m'dplyr'[39m to [32mImports[39m field in DESCRIPTION
+#> [31m•[39m Refer to functions with [90m`dplyr::fun()`[39m
+
+usethis::use_package("ggplot2", "Suggests")
+#> [32m✔[39m Adding [34m'ggplot2'[39m to [32mSuggests[39m field in DESCRIPTION
+#> [31m•[39m Use [90m`requireNamespace("ggplot2", quietly = TRUE)`[39m to test if package is installed
+#> [31m•[39m Then directly refer to functions with [90m`ggplot2::fun()`[39m
+```
+
+
+
+### Guarding the use of a suggested package
+
+Inside a function in your own package, check for the availability of a suggested package with `requireNamespace("pkg", quietly = TRUE)`.
+There are two basic scenarios:
+    
+
+```r
+# the suggested package is required 
+my_fun <- function(a, b) {
+  if (!requireNamespace("pkg", quietly = TRUE)) {
+    stop(
+      "Package \"pkg\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+  # code that includes calls such as pkg::f()
+}
+
+# the suggested package is optional; a fallback method is available
+my_fun <- function(a, b) {
+  if (requireNamespace("pkg", quietly = TRUE)) {
+    pkg::f()
+  } else {
+    g()
+  }
+}
+```
+
+The rlang package has some useful functions for checking package availability.
+Here's how the checks around a suggested package could look if you use rlang:
+  
+
+```r
+# the suggested package is required 
+my_fun <- function(a, b) {
+  rlang::check_installed("pkg", reason = "to use `my_fun()`")
+  # code that includes calls such as pkg::f()
+}
+
+# the suggested package is optional; a fallback method is available
+my_fun <- function(a, b) {
+  if (rlang::is_installed("pkg")) {
+    pkg::f()
+  } else {
+    g()
+  }
+}
+```
+    
+These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
+  
+`Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
+In that case, it's reasonable to just use `Imports` for everything.
+Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
+It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
+
+Another common place to use a suggested package is in an example and here we often guard with `require()` (but you'll also see `requireNamespace()` used for this).
+This example is from `ggplot2::coord_map()`.
+
+
+```r
+#' @examples
+#' if (require("maps")) {
+#'   nz <- map_data("nz")
+#'   # Prepare a map of NZ
+#'   nzmap <- ggplot(nz, aes(x = long, y = lat, group = group)) +
+#'     geom_polygon(fill = "white", colour = "black")
+#'  
+#'   # Plot it in cartesian coordinates
+#'   nzmap
+#' }
+```
+
+An example is basically the only place where we would use `require()` inside a package.
+
+Another place you might use a suggested package is in a vignette.
+The tidyverse team generally writes vignettes as if all suggested packages are available.
+But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options `purl` and `eval` may be useful for achieving this.
+See Chapter \@ref(vignettes) for more discussion of vignettes.
+
+#### Whether and how to guard in a test {#suggested-packages-and-tests}
+
+As with vignettes, the tidyverse team does not usually guard the use of a suggested package in a test.
+In general, for vignettes and tests, we assume all suggested packages are available.
+The motivation for this posture is self-consistency and pragmatism.
+The key packages needed to run tests or build vignettes (e.g. testthat or knitr) appear in `Suggests`, not in `Imports` or `Depends`.
+Therefore, if the tests are actually executing or the vignettes are being built, that implies that an expansive notion of package dependencies has been applied.
+Also, empirically, in every important scenario of running `R CMD check`, the suggested packages are installed.
+This is generally true for CRAN and we ensure that it's true in our own automated checks.
+However, it's important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.
+
+Sometimes even the tidyverse team makes an exception and guards the use of a suggested package in a test.
+Here's a test from ggplot2, which uses `testthat::skip_if_not_installed()` to skip execution if the suggested sf package is not available.
+
+
+```r
+test_that("basic plot builds without error", {
+  skip_if_not_installed("sf")
+
+  nc_tiny_coords <- matrix(
+    c(-81.473, -81.741, -81.67, -81.345, -81.266, -81.24, -81.473,
+      36.234, 36.392, 36.59, 36.573, 36.437, 36.365, 36.234),
+    ncol = 2
+  )
+
+  nc <- sf::st_as_sf(
+    data_frame(
+      NAME = "ashe",
+      geometry = sf::st_sfc(sf::st_polygon(list(nc_tiny_coords)), crs = 4326)
+    )
+  )
+
+  expect_doppelganger("sf-polygons", ggplot(nc) + geom_sf() + coord_sf())
+})
+```
+
+What might justify the use of `skip_if_not_installed()`?
+In this case, the sf package can be nontrivial to install and it is conceivable that a contributor would want to run the remaining tests, even if sf is not available.
+
+Finally, note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
+
+### Minimum versions
+
+If you need a specific version of a package, specify it in parentheses after the package name:
+
+```yaml
+Imports:
+    dplyr (>= 1.0.0),
+    tidyr (>= 1.1.0)
+```
+
+You always want to specify a minimum version (`dplyr (>= 1.0.0)`) rather than an exact version (`dplyr (== 1.0.0)`).
+Since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions[^pointer-to-renv].
+
+[^pointer-to-renv]: The need to specify the exact versions of packages, rather than minimum versions, comes up more often in the development of non-package projects.
+The [renv package](https://rstudio.github.io/renv/) provides a way to do this, by implementing project-specific environments (package libraries).
+renv is a reboot of an earlier package called packrat.
+If you want to freeze the dependencies of a project at exact versions, use renv instead of (or possibly in addition to) a `DESCRIPTION` file.   
+
+Versioning is most important if you will release your package for use by others.
+Usually people don't have exactly the same versions of packages installed that you do.
+If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message if your package does not advertise the minimum version it needs.
+However, if you state a minimum version, they'll learn about this problem clearly, probably at the time of installing your package.
+
+Think carefully if you declare a minimum version for a dependency.
+In some sense, the safest thing to do is to require a version greater than or equal to the package's current version.
+For public work, this is most naturally defined as the current CRAN version of a package; private or personal projects may adopt some other convention.
+But it's important to appreciate the implications for people who try to install your package: if their local installation doesn't fulfill all of your requirements around versions, installation will either fail or force upgrades of these dependencies.
+This is desirable if your minimum version requirements are genuine, i.e. your package would be broken otherwise.
+But if your stated requirements have a less solid rationale, this may be unnecessarily conservative and inconvenient.
+
+In the absence of clear, hard requirements, you should set minimum versions (or not) based on your expected user base, the package versions they are likely to have, and a cost-benefit analysis of being too lax versus too conservative.
+The *de facto* policy of the tidyverse team is to specify a minimum version when using a known new feature or when someone encounters a version problem in authentic use.
+This isn't perfect, but we don't currently have the tooling to do better, and it seems to work fairly well in practice.
+
+### Other dependencies
+
+There are three other fields that allow you to express more specialised dependencies:
+
+* `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends`
+  was the only way to "depend" on another package.
+  Now, despite the name, you should almost always use `Imports`, not `Depends`.
+  You'll learn why, and when you should still use `Depends`, in
+  [namespaces](#namespace).
+    
+  You can also use `Depends` to state a minimum version for R itself, e.g.
+  `Depends: R (>= 4.0.0)`.
+  Again, think carefully if you do this.
+  This raises the same issues as setting a minimum version for a package you
+  depend on, except the stakes are much higher when it comes to R itself.
+  Users can't simply consent to the necessary upgrade, so, if other packages
+  depend on yours, your minimum version requirement for R can cause a cascade of
+  package installation failures.
+
+  - The [backports package](https://cran.r-project.org/package=backports) is
+    useful if you want to use a function like `tools::R_user_dir()`, which was
+    introduced in 4.0.0 in 2020, while still supporting older R versions.
+  - The tidyverse packages officially support the current R version, the devel
+    version, and four previous versions.
+    We proactively test this support in the standard build matrix we use for
+    continuous integration.
+  - Packages with a lower level of use may not need this level of rigour.
+    The main takeaway is: if you state a minimum of R, you should have a reason
+    and you should take reasonable measures to test your claim regularly.      
+    
+* `LinkingTo`: packages listed here rely on C or C++ code in another package. 
+  You'll learn more about `LinkingTo` in Chapter \@ref(src).
+    
+* `Enhances`: packages listed here are "enhanced" by your package.
+  Typically, this means you provide methods for classes defined in another
+  package (a sort of reverse `Suggests`).
+  But it's hard to define what that means, so we don't recommend using
+  `Enhances`.
+    
+You can also list things that your package needs outside of R in the `SystemRequirements` field.
+But this is just a plain text field and is not automatically checked.
+Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
+
+<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
+
+#### An R version gotcha
+
+Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
+The `saveRDS()` function writes a single R object as an `.rds` file, an R-specific format.
+For almost 20 years, `.rds` files used the "version 2" serialization format.
+"Version 3" became the new default in R 3.6.0 (released April 2019) and cannot be read by R versions prior to 3.5.0 (released April 2018).
+
+Many R packages have at least one `.rds` file lurking within and, if that gets re-generated with a modern R version, by default, the new `.rds` file will have the "version 3" format.
+When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signaled by this message:
+
+```console
+NB: this package now depends on R (>= 3.5.0)
+  WARNING: Added dependency on R >= 3.5.0 because serialized objects in
+  serialize/load version 3 cannot be read in older versions of R.
+  File(s) containing such objects:
+    'path/to/some_file.rds'
+```
+
+Literally, the `DESCRIPTION` file in the bundled package says `Depends: R (>= 3.5.0)`, even if `DESCRIPTION` in the source package says differently[^recall-package-states].
+
+[^recall-package-states]: The different package states, such as source vs. bundled, are explained in section \@ref(package-states).
+
+When such a package is released on CRAN, the new minimum R version is viral, in the sense that all packages listing the original package in `Imports` or even `Suggests` have, to varying degrees, inherited the new dependency on R >= 3.5.0.
+
+The immediate take-away is to be very deliberate about the `version` of `.rds` files until R versions prior to 3.5.0 have fallen off the edge of what you intend to support.
+This particular `.rds` issue won't be with us forever, but similar issues crop up elsewhere, such as in the standards implicit in compiled C or C++ source code.
+The broader message is that the more reverse dependencies your package has, the more thought you need to give to your package's stated minimum versions, especially for R itself.
+
+<!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
+
+### Nonstandard dependencies
+
+In packages developed with devtools, you may see `DESCRIPTION` files that use a couple other nonstandard fields for package dependencies specific to development tasks.
+
+The `Remotes` field can be used when you need to install a dependency from a nonstandard place, i.e. from somewhere besides CRAN or Bioconductor.
+One common example of this is when you're developing against a development version of one of your dependencies.
+During this time, you'll want to install the dependency from its development repository, which is often GitHub.
+The way to specify various remote sources is described in a [devtools vignette](https://devtools.r-lib.org/articles/dependencies.html).
+
+<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along. -->
+
+The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
+`usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
+If your package temporarily relies on a development version of usethis, the affected `DESCRIPTION` fields might evolve like this:
+
+<!-- This is unlovely, but I just wanted to get the content down "on paper". It's easier to convey with a concrete example. -->
+
+```
+Stable -->               Dev -->                       Stable again
+----------------------   ---------------------------   ----------------------
+Package: yourpkg         Package: yourpkg              Package: yourpkg
+Version: 1.0.0           Version: 1.0.0.9000           Version: 1.1.0
+Imports:                 Imports:                      Imports: 
+    usethis (>= 2.1.3)       usethis (>= 2.1.3.9000)       usethis (>= 2.2.0)
+                         Remotes:   
+                             r-lib/usethis 
+```
+
+It's important to note that you should not submit your package to CRAN in the intermediate state, meaning with a `Remotes` field and with a dependency required at a version that's not available from CRAN or Bioconductor.
+For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.
+
+You may also see devtools-developed packages with packages listed in `DESCRIPTION` fields in the form of `Config/Needs/*`.
+This pattern takes advantage of the fact that fields prefixed with `Config/` are ignored by CRAN and also do not trigger a NOTE about "Unknown, possibly mis-spelled, fields in `DESCRIPTION`".
+
+<!--
+https://github.com/wch/r-source/blob/de49776d9fe54cb4580fbbd04906b40fe2f6117e/src/library/tools/R/QC.R#L7133
+https://github.com/wch/r-source/blob/efacf56dcf2f880b9db8eafa28d49a08d56e861e/src/library/tools/R/utils.R#L1316-L1389
+-->
+
+The use of `Config/Needs/*` is not directly related to devtools.
+It's more accurate to say that it's associated with continuous integration workflows made available to the community at <https://github.com/r-lib/actions/> and exposed via functions such as `usethis::use_github_actions()`.
+A `Config/Needs/*` field tells the [`setup-r-dependencies`](https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme) GitHub Action about extra packages that need to be installed.
+
+`Config/Needs/website` is the most common and it provides a place to specify packages that aren't a formal dependency, but that must be present in order to build the package's website.
+On the left is an example of what might appear in `DESCRIPTION` for a package that uses various tidyverse packages in the non-vignette articles on its website, which is also formatted with styling that lives in the `tidyverse/template` GitHub repo.
+On the right is the corresponding excerpt from the configuration of the workflow that builds and deploys the website.
+
+```
+in DESCRIPTION                  in .github/workflows/pkgdown.yaml
+--------------------------      ---------------------------------
+Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
+    tidyverse,                    with:
+    tidyverse/tidytemplate          extra-packages: pkgdown
+                                    needs: website
+```
+
+Continuous integration and package websites are discussed more in ?? and ??, respectively.
+*These chapters are a yet-to-be-(re)written task for the 2nd edition.*
+
+<!-- TODO: Link to CI and pkgdown material when it has been written and/or revised. -->
+
+The `Config/Needs/*` convention is handy because it allows a developer to use `DESCRIPTION` as their definitive record of package dependencies, while maintaining a clean distinction between true runtime dependencies versus those that are only needed for specialized development tasks.
+
+<!-- re: describing different types of dependencies, another term you see for "runtime" dependency is "production" -->
+
+## Exports {#exports}
+
+For a function to be usable outside of your package, you must __export__ it. When you create a new package with `usethis::create_package()`, it produces a temporary `NAMESPACE` that exports everything in your package that doesn't start with `.` (a single period). If you're just working locally, it's fine to export everything in your package. However, if you're planning on sharing your package with others, it's a really good idea to only export needed functions. This reduces the chances of a conflict with another package.
+
+To export an object, put `@export` in its roxygen block. For example:
+
+
+```r
+#' @export
+foo <- function(x, y, z) {
+  ...
+}
+```
+
+This will then generate `export()`, `exportMethods()`, `exportClass()` or `S3method()` depending on the type of the object.
+
+You export functions that you want other people to use. Exported functions must be documented, and you must be cautious when changing their interface --- other people are using them! Generally, it's better to export too little than too much. It's easy to export things that you didn't before; it's hard to stop exporting a function because it might break existing code. Always err on the side of caution, and simplicity. It's easier to give people more functionality than it is to take away stuff they're used to.
+
+I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or a set of closely related problems). Any functions not related to that purpose should not be exported. For example, most of my packages have a `utils.R` file that contains many small functions that are useful for me, but aren't part of the core purpose of those packages. I never export these functions.
+
+
+```r
+# Defaults for NULL values
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
+# Remove NULLs from a list
+compact <- function(x) {
+  x[!vapply(x, is.null, logical(1))]
+}
+```
+
+That said, if you're creating a package for yourself, it's far less important to be so disciplined. Because you know what's in your package, it's fine to have a local "misc" package that contains a passel of functions that you find useful. But I don't think you should release such a package.
+
+The following sections describe what you should export if you're using S3, S4 or RC.
+
+## When should you take a dependency?
+
+<https://www.tidyverse.org/blog/2019/05/itdepends/>
+
+### Tidyverse dependencies
+
+Here's our policies about the role of different packages.
+`use_tidy_dependencies()`. 
+"Free" dependencies.
+
+## Namespace
+
+### Motivation {#namespace-motivation}
+
+As the name suggests, namespaces provide "spaces" for "names". They provide a context for looking up the value of an object associated with a name. 
+
+Without knowing it, you've probably already used namespaces. For example, have you ever used the `::` operator? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a `summarize()` function. If you load plyr, then Hmisc, `summarize()` will refer to the Hmisc version. But if you load the packages in the opposite order, `summarize()` will refer to the plyr version. This can be confusing. Instead, you can explicitly refer to specific functions: `Hmisc::summarize()` and `plyr::summarize()`. Then the order in which the packages are loaded won't matter.
+
+Namespaces make your packages self-contained in two ways: the __imports__ and the __exports__. The __imports__ defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple `nrow()` function in base R:
+  
+
+```r
+nrow
+#> function (x) 
+#> dim(x)[1L]
+#> <bytecode: 0x56043fc30d00>
+#> <environment: namespace:base>
+```
+
+It's defined in terms of `dim()`. So what will happen if we override `dim()` 
+with our own definition? Does `nrow()` break?
+
+
+```r
+dim <- function(x) c(1, 1)
+dim(mtcars)
+#> [1] 1 1
+nrow(mtcars)
+#> [1] 32
+```
+
+Surprisingly, it does not! That's because when `nrow()` looks for an object 
+called `dim()`, it uses the package namespace, so it finds `dim()` in 
+the base environment, not the `dim()` we created in the global environment.
+
+The __exports__ helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can't easily be used by another package). Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible because it makes the lives of your users easier.
+
+### Search path {#search-path}
+
+To understand why namespaces are important, you need a solid understanding of search paths. To call a function, R first has to find it. R does this by first looking in the global environment. If R doesn't find it there, it looks in the search path, the list of all the packages you have __attached__. You can see this list by running `search()`. For example, here's the search path for the code in this book:
+
+
+```r
+search()
+#> [1] ".GlobalEnv"        "package:stats"     "package:graphics" 
+#> [4] "package:grDevices" "package:utils"     "package:datasets" 
+#> [7] "package:methods"   "Autoloads"         "package:base"
+```
+
+There's an important difference between loading and attaching a package. Normally when you talk about loading a package you think of `library()`, but that actually attaches the package. 
+
+If a package is installed,
+
+* __Loading__ will load code, data and any DLLs; register S3 and 
+  S4 methods; and run the `.onLoad()` function. After loading, the 
+  package is available in memory, but because it's not in the search 
+  path, you won't be able to access its components without using `::`. 
+  Confusingly, `::` will also load a package automatically if it 
+  isn't already loaded. It's rare to load a package explicitly, but you
+  can do so with `requireNamespace()` or `loadNamespace()`.
+  
+* __Attaching__ puts the package in the search path. You can't attach a 
+  package without first loading it, so both `library()` or `require()` load
+  then attach the package. You can see the currently attached packages with 
+  `search()`.
+
+If a package isn't installed, loading (and hence attaching) will fail with an error.
+
+To see the differences more clearly, consider two ways of running `expect_that()` from the testthat package. If we use `library()`, testthat is attached to the search path. If we use `::`, it's not.
+
+
+```r
+old <- search()
+testthat::expect_equal(1, 1)
+setdiff(search(), old)
+#> character(0)
+expect_true(TRUE)
+#> Error in expect_true(TRUE): could not find function "expect_true"
+    
+library(testthat)
+expect_equal(1, 1)
+setdiff(search(), old)
+#> [1] "package:testthat"
+expect_true(TRUE)
+```
+
+There are four functions that make a package available. They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).
+
+|        | Throws error         | Returns `FALSE`                           |
+|--------|----------------------|-------------------------------------------|
+| Load   | `loadNamespace("x")` | `requireNamespace("x", quietly = TRUE)`   |
+| Attach | `library(x)`         | `require(x, quietly = TRUE)`              |
+
+Of the four, you should only ever use two:
+
+* Use `library(x)` in data analysis scripts. It will throw an error if the
+  package is not installed, and will terminate the script. You want to attach 
+  the package to save typing. Never use `library()` in a package.
+  
+* Use `requireNamespace("x", quietly = TRUE)` inside a package if you want a
+  specific action (e.g. throw an error) depending on whether or not
+  a suggested package is installed.
+  
+You never need to use `require()` (`requireNamespace()` is almost always better), or `loadNamespace()` (which is only needed for internal R code). You should never use `require()` or `library()` in a package: instead, use the `Depends` or `Imports` fields in the `DESCRIPTION`.
+
+Now's a good time to come back to an important issue which we glossed over earlier. What's the difference between `Depends` and `Imports` in the `DESCRIPTION`? When should you use one or the other? 
+
+Listing a package in either `Depends` or `Imports` ensures that it's installed when needed. The main difference is that where `Imports` just _loads_ the package, `Depends` _attaches_ it. There are no other differences. The rest of the advice in this chapter applies whether or not the package is in `Depends` or `Imports`.
+
+Unless there is a good reason otherwise, you should always list packages in `Imports` not `Depends`. That's because a good package is self-contained, and minimises changes to the global environment (including the search path). The only exception is if your package is designed to be used in conjunction with another package. For example, the [analogue](https://github.com/gavinsimpson/analogue) package builds on top of [vegan](https://github.com/vegandevs/vegan). It's not useful without vegan, so it has vegan in `Depends` instead of `Imports`. Similarly, ggplot2 should really `Depend` on scales, rather than `Import`ing it.
+
+Now that you understand the importance of the namespace, let's dive into the nitty gritty details. The two sides of the package namespace, imports and exports, are both described by the `NAMESPACE`. You'll learn what this file looks like in the next section. In the section after that, you'll learn the details of exporting and importing functions and other objects.
+
+### Workflow {#namespace-workflow}
+
+Generating the namespace with roxygen2 is just like generating function documentation with roxygen2. You use roxygen2 blocks (starting with `#'`) and tags (starting with `@`). The workflow is the same:
+
+1. Add roxygen comments to your `.R` files.
+
+1. Run `devtools::document()` (or press Ctrl/Cmd + Shift + D in RStudio) to 
+   convert roxygen comments to `.Rd` files.
+
+1. Look at `NAMESPACE` and run tests to check that the specification is
+   correct.
+
+1. Rinse and repeat until the correct functions are exported.
+
+### Imports {#imports}
+
+`NAMESPACE` also controls which external functions can be used by your package without having to use `::`.
+
+It's confusing that both `DESCRIPTION` (through the `Imports` field) and 
+`NAMESPACE` (through import directives) seem to be involved in imports. This is just an unfortunate choice of names. The `Imports` field really has nothing to do with functions imported into the namespace: it just makes sure the package is installed when your package is. It doesn't make functions available. You need to import functions in exactly the same way regardless of whether or not the package is attached.
+
+`Depends` is just a convenience for the user: if your package is attached, it also attaches all packages listed in `Depends`. If your package is loaded, packages in `Depends` are loaded, but not attached, so you need to qualify function names with `::` or specifically import them.  
+
+It's common for packages to be listed in `Imports` in `DESCRIPTION`, but not in `NAMESPACE`. In fact, this is what I recommend: list the package in `DESCRIPTION` so that it's installed, then always refer to it explicitly with `pkg::fun()`. Unless there is a strong reason not to, it's better to be explicit. It's a little more work to write, but a lot easier to read when you come back to the code in the future. The converse is not true. Every package mentioned in `NAMESPACE` must also be present in the `Imports` or `Depends` fields.
+
+### R functions {#import-r}
+
+If you are using just a few functions from another package, my recommendation is to note the package name in the `Imports:` field of the `DESCRIPTION` file and call the function(s) explicitly using `::`, e.g., `pkg::fun()`. 
+
+If you are using functions repeatedly, you can avoid `::` by importing the function with `@importFrom pkg fun`. This also has a small performance benefit, because `::` adds approximately 5 µs to function evaluation time. Operators can also be imported in a similar manner, e.g., `@importFrom magrittr %>%`.
+
+Alternatively, if you are repeatedly using many functions from another package, you can import all of them using `@import package`. This is the least recommended solution because it makes your code harder to read (you can't tell where a function is coming from), and if you `@import` many packages, it increases the chance of conflicting function names.
