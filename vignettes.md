@@ -10,6 +10,8 @@ Maybe can be combined with object documentation? Unifying theme: "Built-in docs"
 ::: {.rmdnote}
 You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::
 
+## Introduction
+
 A vignette is a long-form guide to your package.
 Function documentation is great if you know the name of the function you need, but it's useless otherwise.
 A vignette is like a book chapter or an academic paper: it can describe the problem that your package is designed to solve, and then show the reader how to solve it.

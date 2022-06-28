@@ -1,0 +1,599 @@
+# Advanced testing techniques {#testing-advanced}
+
+
+
+::: rmdnote
+Your test files should not include these `library()` calls.
+We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
+
+
+```r
+library(testthat)
+local_edition(3)
+```
+:::
+
+## Test fixtures
+
+When it's not practical to make your test entirely self-sufficient, prefer making the necessary object, logic, or conditions available in a structured, explicit way.
+There's a pre-existing term for this in software engineering: a *test fixture*.
+
+> A test fixture is something used to consistently test some item, device, or piece of software.
+> --- Wikipedia
+
+The main idea is that we need to make it as easy and obvious as possible to arrange the world into a state that is conducive for testing.
+We describe several specific solutions to this problem:
+
+-   Put repeated code in a constructor-type helper function. Memoise it, if construction is demonstrably slow.
+-   If the repeated code has side effects, write a custom `local_*()` function to do what's needed and clean up afterwards.
+-   If the above approaches are too slow or awkward and the thing you need is fairly stable, save it as a static file and load it.
+
+```{=html}
+<!--
+I have not found a good example of memoising a test helper in the wild.
+
+Here's a clean little example of low-tech memoisation, taken from pillar, in
+case I come back to this.
+
+# Only check if we have color support once per session
+num_colors <- local({
+  num_colors <- NULL
+  function(forget = FALSE) {
+    if (is.null(num_colors) || forget) {
+      num_colors <<- cli::num_ansi_colors()
+    }
+    num_colors
+  }
+})
+-->
+```
+### Create `useful_thing`s with a helper function
+
+Is it fiddly to create a `useful_thing`?
+Does it take several lines of code, but not much time or memory?
+In that case, write a helper function to create a `useful_thing` on-demand:
+
+
+```r
+new_useful_thing <- function() {
+  # your fiddly code to create a useful_thing goes here
+}
+```
+
+and call that helper in the affected tests:
+
+
+```r
+test_that("foofy() does this", {
+  useful_thing1 <- new_useful_thing()
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
+})
+
+test_that("foofy() does that", {
+  useful_thing2 <- new_useful_thing()
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
+})
+```
+
+Where should the `new_useful_thing()` helper be defined?
+This comes back to what we outlined in section \@ref(tests-files-overview).
+Test helpers can be defined below `R/`, just like any other internal utility in your package.
+Another popular location is in a test helper file, e.g. `tests/testthat/helper.R`.
+A key feature of both options is that the helpers are made available to you during interactive maintenance via `devtools::load_all()`.
+
+If it's fiddly AND costly to create a `useful_thing`, your helper function could even use memoisation to avoid unnecessary re-computation.
+Once you have a helper like `new_useful_thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette.
+Sometimes you even realize you should just define it below `R/` and export and document it, so you can use it freely in documentation and tests.
+
+### Create (and destroy) a "local" `useful_thing`
+
+So far, our example of a `useful_thing` was a regular R object, which is cleaned-up automatically at the end of each test.
+What if the creation of a `useful_thing` has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like?
+Then your helper function should create a `useful_thing` **and clean up afterwards**.
+Instead of a simple `new_useful_thing()` constructor, you'll write a customized function in the style of withr's `local_*()` functions:
+
+
+```r
+local_useful_thing <- function(..., env = parent.frame()) {
+  # your fiddly code to create a useful_thing goes here
+  withr::defer(
+    # your fiddly code to clean up after a useful_thing goes here
+    envir = env
+  )
+}
+```
+
+Use it in your tests like this:
+
+
+```r
+test_that("foofy() does this", {
+  useful_thing1 <- local_useful_thing()
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
+})
+
+test_that("foofy() does that", {
+  useful_thing2 <- local_useful_thing()
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
+})
+```
+
+Where should the `local_useful_thing()` helper be defined?
+All the advice given above for `new_useful_thing()` applies: define it below `R/` or in a test helper file.
+
+To learn more about writing custom helpers like `local_useful_thing()`, see the [testthat vignette on test fixtures](https://testthat.r-lib.org/articles/test-fixtures.html).
+
+### Store a concrete `useful_thing` persistently
+
+If a `useful_thing` is costly to create, in terms of time or memory, maybe you don't actually need to re-create it for each test run.
+You could make the `useful_thing` once, store it as a static test fixture, and load it in the tests that need it.
+Here's a sketch of how this could look:
+
+
+```r
+test_that("foofy() does this", {
+  useful_thing1 <- readRDS(test_path("fixtures", "useful_thing.rds"))
+  expect_equal(foofy(useful_thing1, x = "this"), EXPECTED_FOOFY_OUTPUT)
+})
+
+test_that("foofy() does that", {
+  useful_thing2 <- readRDS(test_path("fixtures", "useful_thing.rds"))
+  expect_equal(foofy(useful_thing2, x = "that"), EXPECTED_FOOFY_OUTPUT)
+})
+```
+
+Now we can revisit a file listing from earlier, which addressed exactly this scenario:
+
+    .
+    ├── ...
+    └── tests
+        ├── testthat
+        │   ├── fixtures
+        │   │   ├── make-useful-things.R
+        │   │   ├── useful_thing1.rds
+        │   │   └── useful_thing2.rds
+        │   ├── helper.R
+        │   ├── setup.R
+        │   └── (all the test files)
+        └── testthat.R
+
+This shows static test files stored in `tests/testthat/fixtures/`, but also notice the companion R script, `make-useful-things.R`.
+From data analysis, we all know there is no such things as a script that is run only once.
+Refinement and iteration is inevitable.
+This also holds true for test objects like `useful_thing1.rds`.
+We highly recommend saving the R code used to create your test objects, so that they can be re-created as needed.
+
+## Building your own testing tools
+
+Let's return to the topic of duplication in your test code.
+We've encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious.
+But there's still a limit to how much repetition to tolerate.
+We've covered techniques such as loading static objects with `test_path()`, writing a constructor like `new_useful_thing()`, or implementing a test fixture like `local_useful_thing()`.
+There are even more types of test helpers that can be useful in certain situations.
+
+### Helper defined inside a test
+
+Consider this test for the `str_trunc()` function in stringr:
+
+
+```r
+# from stringr (hypothetically)
+test_that("truncations work for all sides", {
+  expect_equal(
+    str_trunc("This string is moderately long", width = 20, side = "right"),
+    "This string is mo..."
+  )
+  expect_equal(
+    str_trunc("This string is moderately long", width = 20, side = "left"),
+    "...s moderately long"
+  )
+  expect_equal(
+    str_trunc("This string is moderately long", width = 20, side = "center"),
+    "This stri...ely long"
+  )
+})
+```
+
+There's a lot of repetition here, which increases the chance of copy / paste errors and generally makes your eyes glaze over.
+Sometimes it's nice to create a hyper-local helper, *inside the test*.
+Here's how the test actually looks in stringr
+
+
+```r
+# from stringr (actually)
+test_that("truncations work for all sides", {
+
+  trunc <- function(direction) str_trunc(
+    "This string is moderately long",
+    direction,
+    width = 20
+  )
+
+  expect_equal(trunc("right"),   "This string is mo...")
+  expect_equal(trunc("left"),    "...s moderately long")
+  expect_equal(trunc("center"),  "This stri...ely long")
+})
+```
+
+A hyper-local helper like `trunc()` is particularly useful when it allows you to fit all the important business for each expectation on one line.
+Then your expectations can be read almost like a table of actual vs. expected, for a set of related use cases.
+Above, it's very easy to watch the result change as we truncate the input from the right, left, and in the center.
+
+Note that this technique should be used in extreme moderation.
+A helper like `trunc()` is yet another place where you can introduce a bug, so it's best to keep such helpers extremely short and simple.
+
+### Custom expectatations
+
+If a more complicated helper feels necessary, it's a good time to reflect on why that is.
+If it's fussy to get into position to *test* a function, that could be a sign that it's also fussy to *use* that function.
+Do you need to refactor it?
+If the function seems sound, then you probably need to use a more formal helper, defined outside of any individual test, as described earlier.
+
+One specific type of helper you might want to create is a custom expectation.
+Here are two very simple ones from usethis:
+
+
+```r
+expect_usethis_error <- function(...) {
+  expect_error(..., class = "usethis_error")
+}
+
+expect_proj_file <- function(...) {
+  expect_true(file_exists(proj_path(...)))
+}
+```
+
+`expect_usethis_error()` checks that an error has the `"usethis_error"` class.
+`expect_proj_file()` is a simple wrapper around `file_exists()` that searches for the file in the current project.
+These are very simple functions, but the sheer amount of repetition and the expressiveness of their names makes them feel justified.
+
+It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat.
+We refer you to the [Custom expectations](https://testthat.r-lib.org/articles/custom-expectation.html) vignette if you wish to learn more about that.
+
+Finally, it can be handy to know that testthat makes specific information available when it's running:
+
+-   The environment variable `TESTTHAT` is set to `"true"`.
+    `testthat::is_testing()` is a shortcut:
+
+    
+    ```r
+    is_testing <- function() {
+      Sys.getenv("TESTTHAT_PKG")
+    }
+    ```
+
+-   The package-under-test is available as the environment variable `TESTTHAT_PKG` and `testthat::testing_package()` is a shortcut:
+
+    
+    ```r
+    testing_package <- function() {
+      Sys.getenv("TESTTHAT_PKG")
+    }
+    ```
+
+In some situations, you may want to exploit this information without taking a run-time dependency on testthat.
+In that case, just inline the source of these functions directly into your package.
+
+## When testing gets hard
+
+Despite all the techniques we've covered so far, there remain situations where it still feels very difficult to write tests.
+In this section, we review more ways to deal with challenging situations:
+
+-   Skipping a test in certain situations
+-   Mocking an external service
+-   Dealing with secrets
+
+### Skipping a test {#tests-skipping}
+
+Sometimes it's impossible to perform a test - you may not have an internet connection or you may not have access to the necessary credentials.
+Unfortunately, another likely reason follows from this simple rule: the more platforms you use to test your code, the more likely it is that you won't be able to run all of your tests, all of the time.
+In short, there are times when, instead of getting a failure, you just want to skip a test.
+
+#### `testthat::skip()`
+
+Here we use `testthat::skip()` to write a hypothetical custom skipper, `skip_if_no_api()`:
+
+
+```r
+skip_if_no_api() <- function() {
+  if (api_unavailable()) {
+    skip("API not available")
+  }
+}
+
+test_that("foo api returns bar when given baz", {
+  skip_if_no_api()
+  ...
+})
+```
+
+`skip_if_no_api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
+
+`skip()`s and the associated reasons are reported inline as tests are executed and are also indicated clearly in the summary:
+
+
+```r
+devtools::test()
+#> ℹ Loading abcde
+#> ℹ Testing abcde
+#> ✔ | F W S  OK | Context
+#> ✔ |         2 | blarg
+#> ✔ |     1   2 | foofy
+#> ────────────────────────────────────────────────────────────────────────────────
+#> Skip (test-foofy.R:6:3): foo api returns bar when given baz
+#> Reason: API not available
+#> ────────────────────────────────────────────────────────────────────────────────
+#> ✔ |         0 | yo                                                              
+#> ══ Results ═════════════════════════════════════════════════════════════════════
+#> ── Skipped tests  ──────────────────────────────────────────────────────────────
+#> • API not available (1)
+#> 
+#> [ FAIL 0 | WARN 0 | SKIP 1 | PASS 4 ]
+#> 
+#> 🥳
+```
+
+Something like `skip_if_no_api()` is likely to appear many times in your test suite.
+This is another occasion where it is tempting to DRY things out, by hoisting the `skip()` to the top-level of the file.
+However, we still lean towards calling `skip_if_no_api()` in each test where it's needed.
+
+
+```r
+# we prefer this:
+test_that("foo api returns bar when given baz", {
+  skip_if_no_api()
+  ...
+})
+
+test_that("foo api returns an errors when given qux", {
+  skip_if_no_api()
+  ...
+})
+
+# over this:
+skip_if_no_api()
+
+test_that("foo api returns bar when given baz", {...})
+
+test_that("foo api returns an errors when given qux", {...})
+```
+
+Within the realm of top-level code in test files, having a `skip()` at the very beginning of a test file is one of the more benign situations.
+But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the `skip()` and individual tests.
+
+#### Built-in `skip()` functions
+
+Similar to testthat's built-in expectations, there is a family of `skip()` functions that anticipate some common situations.
+These functions often relieve you of the need to write a custom skipper.
+Here are some examples of the most useful `skip()` functions:
+
+
+```r
+test_that("foo api returns bar when given baz", {
+  skip_if(api_unavailable(), "API not available")
+  ...
+})
+test_that("foo api returns bar when given baz", {
+  skip_if_not(api_available(), "API not available")
+  ...
+})
+
+skip_if_not_installed("sp")
+skip_if_not_installed("stringi", "1.2.2")
+
+skip_if_offline()
+skip_on_cran()
+skip_on_os("windows")
+```
+
+#### Dangers of skipping
+
+One challenge with skips is that they are currently completely invisible in CI --- if you automatically skip too many tests, it's easy to fool yourself that all your tests are passing when in fact they're just being skipped!
+In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
+
+*2022-06-01: Recent changes to GitHub Actions mean that we will likely have better test reporting before the second edition of this book is published. Stay tuned!*
+
+It's a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect.
+But this tends to be something you have to learn through experience.
+
+### Mocking
+
+The practice known as mocking is when we replace something that's complicated or unreliable or out of our control with something simpler, that's fully within our control.
+Usually we are mocking an external service, such as a REST API, or a function that reports something about session state, such as whether the session is interactive.
+
+The classic application of mocking is in the context of a package that wraps an external API.
+In order to test your functions, technically you need to make a live call to that API to get a response, which you then process.
+But what if that API requires authentication or what if it's somewhat flaky and has occasional downtime?
+It can be more productive to just *pretend* to call the API but, instead, to test the code under your control by processing a pre-recorded response from the actual API.
+
+Our main advice about mocking is to avoid it if you can.
+This is not an indictment of mocking, but just a realistic assessment that mocking introduces new complexity that is not always justified by the payoffs.
+
+Since most R packages do not need full-fledged mocking, we do not cover it here.
+Instead we'll point you to the packages that represent the state-of-the-art for mocking in R today:
+
+-   mockery: <https://github.com/r-lib/mockery>
+-   mockr: <https://krlmlr.github.io/mockr/>
+-   httptest: <https://enpiar.com/r/httptest/>
+-   httptest2: <https://enpiar.com/httptest2/>
+-   webfakes: <https://webfakes.r-lib.org>
+
+### Secrets
+
+Another common challenge for packages that wrap an external service is the need to manage credentials.
+Specifically, it is likely that you will need to provide a set of test credentials to fully test your package.
+
+Our main advice here is to design your package so that large parts of it can be tested without live, authenticated assess to the external service.
+
+Of course, you will still want to be able to test your package against the actual service that it wraps, in environments that support secure environment variables.
+Since this is also a very specialized topic, we won't go into more detail here.
+Instead we refer you to the [Wrapping APIs](https://httr2.r-lib.org/articles/wrapping-apis.html#secret-management) vignette in the httr2 package, which offers substantial support for secret management.
+
+## Special considerations for CRAN packages
+
+### CRAN check flavors and related services {#tests-cran-flavors-services}
+
+*This section will likely move to a different location, once we revise and expand the content elsewhere in the book on `R CMD check` and package release. But it can gestate here.*
+
+CRAN runs `R CMD check` on all contributed packages on a regular basis, on multiple platforms or what they call "flavors".
+This check includes, but is not limited to, your testthat tests.
+CRAN's check flavors almost certainly include platforms other than your preferred development environment(s), so you must proactively plan ahead if you want your tests to pass there.
+
+You can see CRAN's current check flavors here: <https://cran.r-project.org/web/checks/check_flavors.html>.
+There are various combinations of:
+
+-   Operating system and CPU: Windows, macOS (x86_64, arm64), Linux (various distributions)
+-   R version: r-devel, r-release, r-oldrel
+-   C, C++, FORTRAN compilers
+-   Locale, in the sense of the `LC_CTYPE` environment variable (this is about which human language is in use and character encoding)
+
+It would be impractical for individual package developers to personally maintain all of these testing platforms.
+Instead, we turn to various community- and CRAN-maintained resources to test our packages.
+In order of how often we use them:
+
+-   GitHub Actions (GHA).
+    Many R package developers host their source code on GitHub and use GHA to check their package, e.g., every time they push.
+
+    The usethis package offers several functions to help you configure GHA workflows for checking your package.
+    The most appropriate level of checking depends on the nature of your user base and how likely it is that your package could behave differently across the flavors (e.g. does it contain compiled code?)
+
+    -   `usethis::use_github_action_check_release()`: an entry-level, bare-minimum workflow that checks with the latest release of R on Linux.
+    -   `usethis::use_github_action_check_standard()`: Covers the three major operating systems and both the released and development versions of R. This is a good choice for a package that is (or aspires to be) on CRAN or Bioconductor.
+    -   The tidyverse/r-lib team uses an even more extensive check matrix, which would be overkill for most other packages. It's necessary in this case in order to meet our commitment to support the current version, the development version, and four previous versions of R.
+
+-   R-hub builder (R-hub).
+    This is a service supported by the R Consortium where package developers can submit their package for checks that replicate various CRAN check flavors.
+    This is useful when you're doing the due diligence leading up to a CRAN submission.
+
+    You can use R-hub via a web interface (<https://builder.r-hub.io>) or, as we recommend, through the [rhub R package](https://r-hub.github.io/rhub/).
+
+    The `rhub::check_for_cran()` function is morally similar to the GHA workflow configured by `usethis::use_github_action_check_standard()`, i.e. it's a good solution for a typical package heading to CRAN.
+    rhub has many other functions for accessing individual check flavors.
+
+-   Win-Builder is a service maintained by the CRAN personnel who build the Windows binaries for CRAN packages.
+    You use it in a similar way as R-hub, i.e. it's a good check to run when preparing a CRAN submission.
+    (Win-Builder is basically the inspiration for R-hub, i.e. Win-builder is such a convenient service that it makes sense to extend it for more flavors.)
+
+    The Win-Builder homepage (<https://win-builder.r-project.org>) explains how to upload a package via ftp, but we recommend using the convenience functions `devtools::check_win_release()` and friends.
+
+-   macOS builder is a service maintained by the CRAN personnel who build the macOS binaries for CRAN packages.
+    This is a relatively new addition to the list and checks packages with "the same setup and available packages as the CRAN M1 build machine".
+
+    You can submit your package using the web interface (<https://mac.r-project.org/macbuilder/submit.html>) or with `devtools::check_mac_release()`.
+
+### Testing on CRAN
+
+The need to pass tests on all of CRAN's flavors is not the only thing you need to think about.
+There are other considerations that will influence how you write your tests and how (or whether) they run on CRAN.
+When a package runs afoul of the CRAN Repository Policy (<https://cran.r-project.org/web/packages/policies.html>), the test suite is very often the culprit (although not always).
+
+If a specific test simply isn't appropriate to be run by CRAN, include `skip_on_cran()` at the very start.
+
+
+```r
+test_that("some long-running thing works", {
+  skip_on_cran()
+  # test code that can potentially take "a while" to run  
+})
+```
+
+Under the hood, `skip_on_cran()` consults the `NOT_CRAN` environment variable.
+Such tests will only run when `NOT_CRAN` has been explicitly defined as `"true"`.
+This variable is set by devtools and testthat, allowing those tests to run in environments where you expect success (and where you can tolerate and troubleshoot occasional failure).
+
+In particular, the GitHub Actions workflows that we recommend elsewhere **will** run tests with `NOT_CRAN = "true"` call.
+For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GHA or an equivalent continuous integration service, are your best method of quality assurance.
+
+There are even rare cases where it makes sense to maintain tests outside of your package altogether.
+The tidymodels team uses this strategy for integration-type tests of their whole ecosystem that would be impossible to host inside an individual CRAN package.
+
+The following subsections enumerate other thing to keep in mind for maximum success when testing on CRAN.
+
+#### Speed
+
+Your tests need to run relatively quickly - ideally, less than a minute, in total.
+Use `skip_on_cran()` in a test that is unavoidably long-running.
+
+#### Reproducibility
+
+Be careful about testing things that are likely to be variable on CRAN machines.
+It's risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available).
+Numerical precision can also vary across platforms, so use `expect_equal()` unless you have a specific reason for using `expect_identical()`.
+
+#### Flaky tests
+
+Due to the scale at which CRAN checks packages, there is basically no latitude for a test that's "just flaky", i.e. sometimes fails for incidental reasons.
+CRAN does not process your package's test results the way you do, where you can inspect each failure and exercise some human judgment about how concerning it is.
+
+It's probably a good idea to eliminate flaky tests, just for your own sake!
+But if you have valuable, well-written tests that are prone to occasional nuisance failure, definitely put `skip_on_cran()` at the start.
+
+The classic example is any test that accesses a website or web API.
+Given that any web resource in the world will experience occasional downtime, it's best to not let such tests run on CRAN.
+The CRAN Repository Policy says:
+
+> Packages which use Internet resources should fail gracefully with an informative message if the resource is not available or has changed (and not give a check warning nor error).
+
+Often making such a failure "graceful" would run counter to the behaviour you actually want in practice, i.e. you would want your user to get an error if their request fails.
+This is why it is usually more practical to test such functionality elsewhere.
+
+Recall that snapshot tests, by default, are also skipped on CRAN.
+You typically use such tests to monitor, e.g., how various informational messages look.
+Slight changes in message formatting are something you want to be alerted to, but do not indicate a major defect in your package.
+This is the motivation for the default `skip_on_cran()` behaviour of snapshot tests.
+
+Finally, flaky tests cause problems for the maintainers of your dependencies.
+When the packages you depend on are updated, CRAN runs `R CMD check` on all reverse dependencies, including your package.
+If your package has flaky tests, your package can be the reason another package does not clear CRAN's incoming checks and can delay its release.
+
+#### Process and file system hygiene
+
+In section \@ref(tests-files-where-write), we urged you to only write into the session temp directory and to clean up after yourself.
+This practice makes your test suite much more maintainable and predictable.
+For packages that are (or aspire to be) on CRAN, this is absolutely required per the CRAN repository policy:
+
+> Packages should not write in the user's home filespace (including clipboards), nor anywhere else on the file system apart from the R session's temporary directory (or during installation in the location pointed to by TMPDIR: and such usage should be cleaned up)....
+> Limited exceptions may be allowed in interactive sessions if the package obtains confirmation from the user.
+
+Similarly, you should make an effort to be hygienic with respect to any processes you launch:
+
+> Packages should not start external software (such as PDF viewers or browsers) during examples or tests unless that specific instance of the software is explicitly closed afterwards.
+
+Accessing the clipboard is the perfect storm that potentially runs afoul of both of these guidelines, as the clipboard is considered part of the user's home filespace and, on Linux, can launch an external process (e.g. xsel or xclip).
+Therefore it is best to turn off any clipboard functionality in your tests (and to ensure that, during authentic usage, your user is clearly opting-in to that).
+
+```{=html}
+<!--
+Creating and maintaining a healthy test suite takes real effort. As a codebase grows, so too will the test suite. It will begin to face challenges like instability and slowness. A failure to address these problems will cripple a test suite. Keep in mind that tests derive their value from the trust engineers place in them. If testing becomes a productivity sink, constantly inducing toil and uncertainty, engineers will lose trust and begin to find workarounds. A bad test suite can be worse than no test suite at all.
+
+Remember that tests are often revisited only when something breaks. When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand. Code is read far more than it is written, so make sure you write the test you’d like to read!
+
+https://abseil.io/resources/swe-book/html/ch11.html
+
+Because they make up such a big part of engineers’ lives, Google puts a lot of focus on test maintainability. Maintainable tests  are ones that "just work": after writing them, engineers don’t need to think about them again until they fail, and those failures indicate real bugs with clear causes. The bulk of this chapter focuses on exploring the idea of maintainability and techniques for achieving it.
+
+https://abseil.io/resources/swe-book/html/ch12.html
+-->
+```
+````{=html}
+<!--
+Another important path-building function to know about is `fs::path_package()`.
+It is essentially `base::system.file()` with one very significant added feature:
+it produces the correct path for both an in-development or an installed package.
+
+```
+during development               after installation                             
+
+/path/to/local/package           /path/to/some/installed/package
+├── DESCRIPTION                  ├── DESCRIPTION
+├── ...                          ├── ...
+├── inst                         └── some-installed-file.txt
+│   └── some-installed-file.txt  
+└── ...
+```
+
+`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
+
+A common theme you've now encountered in multiple places is that devtools and related packages try to eliminate hard choices between having a smooth interactive development experience and arranging things correctly in your package.
+-->
+````

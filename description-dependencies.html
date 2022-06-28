@@ -7,17 +7,17 @@
 <title>Chapter 11 Dependencies: What does your package need? | R Packages</title>
 <meta name="author" content="Hadley Wickham">
 <meta name="author" content="Jennifer Bryan">
-<meta name="description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. ::: A dependency is a code that...">
+<meta name="description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::  11.1 Introduction A...">
 <meta name="generator" content="bookdown 0.27 with bs4_book()">
 <meta property="og:title" content="Chapter 11 Dependencies: What does your package need? | R Packages">
 <meta property="og:type" content="book">
 <meta property="og:url" content="https://r-pkgs.org/description-dependencies.html">
 <meta property="og:image" content="https://r-pkgs.org/images/cover.png">
-<meta property="og:description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. ::: A dependency is a code that...">
+<meta property="og:description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::  11.1 Introduction A...">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Chapter 11 Dependencies: What does your package need? | R Packages">
 <meta name="twitter:site" content="@hadley">
-<meta name="twitter:description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. ::: A dependency is a code that...">
+<meta name="twitter:description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::  11.1 Introduction A...">
 <meta name="twitter:image" content="https://r-pkgs.org/images/cover.png">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
@@ -94,18 +94,19 @@
 <li><a class="active" href="description-dependencies.html"><span class="header-section-number">11</span> Dependencies: What does your package need?</a></li>
 <li><a class="" href="license.html"><span class="header-section-number">12</span> Licensing</a></li>
 <li class="book-part">Testing</li>
-<li><a class="" href="tests.html"><span class="header-section-number">13</span> Testing</a></li>
+<li><a class="" href="tests.html"><span class="header-section-number">13</span> Testing basics</a></li>
+<li><a class="" href="test-design.html"><span class="header-section-number">14</span> Designing your test suite</a></li>
+<li><a class="" href="testing-advanced.html"><span class="header-section-number">15</span> Advanced testing techniques</a></li>
 <li class="book-part">Documentation</li>
-<li><a class="" href="doc-intro.html"><span class="header-section-number">14</span> Introduction</a></li>
-<li><a class="" href="man.html"><span class="header-section-number">15</span> Function documentation</a></li>
-<li><a class="" href="vignettes.html"><span class="header-section-number">16</span> Vignettes</a></li>
-<li><a class="" href="important-files.html"><span class="header-section-number">17</span> Other markdown files</a></li>
-<li><a class="" href="website.html"><span class="header-section-number">18</span> Website</a></li>
+<li><a class="" href="man.html"><span class="header-section-number">16</span> Function documentation</a></li>
+<li><a class="" href="vignettes.html"><span class="header-section-number">17</span> Vignettes</a></li>
+<li><a class="" href="important-files.html"><span class="header-section-number">18</span> Other markdown files</a></li>
+<li><a class="" href="website.html"><span class="header-section-number">19</span> Website</a></li>
 <li class="book-part">Maintenance and distribution</li>
-<li><a class="" href="r-cmd-check.html"><span class="header-section-number">19</span> R CMD check</a></li>
-<li><a class="" href="continuous-integration.html"><span class="header-section-number">20</span> Continuous integration</a></li>
-<li><a class="" href="release.html"><span class="header-section-number">21</span> Releasing to CRAN</a></li>
-<li><a class="" href="lifecycle.html"><span class="header-section-number">22</span> Lifecycle</a></li>
+<li><a class="" href="r-cmd-check.html"><span class="header-section-number">20</span> R CMD check</a></li>
+<li><a class="" href="continuous-integration.html"><span class="header-section-number">21</span> Continuous integration</a></li>
+<li><a class="" href="release.html"><span class="header-section-number">22</span> Releasing to CRAN</a></li>
+<li><a class="" href="lifecycle.html"><span class="header-section-number">23</span> Lifecycle</a></li>
 </ul>
 
         <div class="book-extra">
@@ -119,24 +120,39 @@
 </h1>
 <p>::: {.rmdnote}
 You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. :::</p>
-<p>A dependency is a code that your package needs to run. Dependencies are managed by two files. The <code>DESCRIPTION</code> manages dependencies at the package level; i.e. what packages needs to be installed for your package to work. R has a rich set of ways to describe different types of dependencies.
-A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.</p>
-<p>The flip-side is that your package will also be a dependency of other people’s scripts and packages. The job of the <code>NAMESPACE</code> is to define what functions you make available for others to use.
-The package namespace (as recorded in the <code>NAMESPACE</code> file) is one of the more confusing parts of building a package. It’s a fairly advanced topic, and by-and-large, not that important if you’re only developing packages for yourself. However, understanding namespaces is vital if you plan to submit your package to CRAN. This is because CRAN requires that your package plays nicely with other packages. When you first start using namespaces, it’ll seem like a lot of work for little gain. However, having a high quality namespace helps encapsulate your package and makes it self-contained. This ensures that other packages won’t interfere with your code, that your code won’t interfere with other packages, and that your package works regardless of the environment in which it’s run.</p>
-<div id="run-time-vs-develop-time-dependencies" class="section level2" number="11.1">
+<div id="introduction-8" class="section level2" number="11.1">
 <h2>
-<span class="header-section-number">11.1</span> Run-time vs develop-time dependencies<a class="anchor" aria-label="anchor" href="#run-time-vs-develop-time-dependencies"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.1</span> Introduction<a class="anchor" aria-label="anchor" href="#introduction-8"><i class="fas fa-link"></i></a>
+</h2>
+<p>A dependency is a code that your package needs to run.
+Dependencies are managed by two files.
+The <code>DESCRIPTION</code> manages dependencies at the package level; i.e. what packages needs to be installed for your package to work.
+R has a rich set of ways to describe different types of dependencies.
+A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.</p>
+<p>The flip-side is that your package will also be a dependency of other people’s scripts and packages.
+The job of the <code>NAMESPACE</code> is to define what functions you make available for others to use.
+The package namespace (as recorded in the <code>NAMESPACE</code> file) is one of the more confusing parts of building a package.
+It’s a fairly advanced topic, and by-and-large, not that important if you’re only developing packages for yourself.
+However, understanding namespaces is vital if you plan to submit your package to CRAN.
+This is because CRAN requires that your package plays nicely with other packages.
+When you first start using namespaces, it’ll seem like a lot of work for little gain.
+However, having a high quality namespace helps encapsulate your package and makes it self-contained.
+This ensures that other packages won’t interfere with your code, that your code won’t interfere with other packages, and that your package works regardless of the environment in which it’s run.</p>
+</div>
+<div id="run-time-vs-develop-time-dependencies" class="section level2" number="11.2">
+<h2>
+<span class="header-section-number">11.2</span> Run-time vs develop-time dependencies<a class="anchor" aria-label="anchor" href="#run-time-vs-develop-time-dependencies"><i class="fas fa-link"></i></a>
 </h2>
 <p>Packages listed in <code>Imports</code> are needed by your users at runtime.
 The following lines indicate that your package absolutely needs both dplyr and tidyr to work.</p>
-<div class="sourceCode" id="cb141"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb141-1"><a href="description-dependencies.html#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Imports</span><span class="kw">:</span></span>
-<span id="cb141-2"><a href="description-dependencies.html#cb141-2" aria-hidden="true" tabindex="-1"></a><span class="at">    dplyr,</span></span>
-<span id="cb141-3"><a href="description-dependencies.html#cb141-3" aria-hidden="true" tabindex="-1"></a><span class="at">    tidyr</span></span></code></pre></div>
+<div class="sourceCode" id="cb140"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb140-1"><a href="description-dependencies.html#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Imports</span><span class="kw">:</span></span>
+<span id="cb140-2"><a href="description-dependencies.html#cb140-2" aria-hidden="true" tabindex="-1"></a><span class="at">    dplyr,</span></span>
+<span id="cb140-3"><a href="description-dependencies.html#cb140-3" aria-hidden="true" tabindex="-1"></a><span class="at">    tidyr</span></span></code></pre></div>
 <p>Packages listed in <code>Suggests</code> are either needed for development tasks or <em>might</em> unlock optional functionality for your users.
 The lines below indicate that, while your package can take advantage of ggplot2 and testthat, they’re not absolutely required:</p>
-<div class="sourceCode" id="cb142"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb142-1"><a href="description-dependencies.html#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Suggests</span><span class="kw">:</span></span>
-<span id="cb142-2"><a href="description-dependencies.html#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="at">    ggplot2,</span></span>
-<span id="cb142-3"><a href="description-dependencies.html#cb142-3" aria-hidden="true" tabindex="-1"></a><span class="at">    testthat</span></span></code></pre></div>
+<div class="sourceCode" id="cb141"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb141-1"><a href="description-dependencies.html#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Suggests</span><span class="kw">:</span></span>
+<span id="cb141-2"><a href="description-dependencies.html#cb141-2" aria-hidden="true" tabindex="-1"></a><span class="at">    ggplot2,</span></span>
+<span id="cb141-3"><a href="description-dependencies.html#cb141-3" aria-hidden="true" tabindex="-1"></a><span class="at">    testthat</span></span></code></pre></div>
 <p>For example, the <a href="https://withr.r-lib.org">withr package</a> is very useful for writing tests that clean up after themselves.
 Such usage is compatible with listing withr in <code>Suggests</code>, since regular users don’t need to run the tests.
 But sometimes a package might also use withr in its own functions, perhaps to offer its own <code>with_*()</code> and <code>local_*()</code> functions.
@@ -151,36 +167,25 @@ In general, it can be nice to run <code><a href="https://usethis.r-lib.org/refer
 <ul>
 <li>
 <p><code>Imports</code>: packages listed here <em>must</em> be present for your package to work.
-Any time your package is installed, those packages will also be installed, if
-not already present.
-<code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> also checks that all packages in <code>Imports</code> are
-installed.</p>
-<p>Adding a package to <code>Imports</code> ensures it will be installed, but it does <em>not</em>
-mean that it will be attached along with your package, i.e. it does not do the
-equivalent of <code><a href="https://rdrr.io/r/base/library.html">library(otherpkg)</a></code><a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The difference between loading and attaching a package is covered in more detail in &lt;a href="description-dependencies.html#search-path"&gt;11.4.2&lt;/a&gt;.&lt;/p&gt;'><sup>18</sup></a>.
-Inside your package, the best practice is to explicitly refer to external
-functions using the syntax <code>package::function()</code>.
-This makes it very easy to identify which functions live outside of your
-package.
+Any time your package is installed, those packages will also be installed, if not already present.
+<code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> also checks that all packages in <code>Imports</code> are installed.</p>
+<p>Adding a package to <code>Imports</code> ensures it will be installed, but it does <em>not</em> mean that it will be attached along with your package, i.e. it does not do the equivalent of <code><a href="https://rdrr.io/r/base/library.html">library(otherpkg)</a></code><a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The difference between loading and attaching a package is covered in more detail in &lt;a href="description-dependencies.html#search-path"&gt;11.5.2&lt;/a&gt;.&lt;/p&gt;'><sup>18</sup></a>.
+Inside your package, the best practice is to explicitly refer to external functions using the syntax <code>package::function()</code>. This makes it very easy to identify which functions live outside of your package.
 This is especially useful when you read your code in the future.</p>
 <p>If you use a lot of functions from another package, this is rather verbose.
-There’s also a minor performance penalty associated with <code>::</code> (on the order of
-5µs, so it will only matter if you call the function millions of times).
-You’ll learn about alternative ways to make functions in other packages
-available inside your package in section <a href="description-dependencies.html#imports">11.4.4</a>.</p>
+There’s also a minor performance penalty associated with <code>::</code> (on the order of 5µs, so it will only matter if you call the function millions of times).
+You’ll learn about alternative ways to make functions in other packages available inside your package in section <a href="description-dependencies.html#imports">11.5.4</a>.</p>
 </li>
 <li>
 <p><code>Suggests</code>: your package can use these packages, but doesn’t require them.
-You might use suggested packages for example datasets, to run tests, build
-vignettes, or maybe there’s only one function that needs the package.</p>
-<p>Packages listed in <code>Suggests</code> are not automatically installed along with
-your package.
+You might use suggested packages for example datasets, to run tests, build vignettes, or maybe there’s only one function that needs the package.</p>
+<p>Packages listed in <code>Suggests</code> are not automatically installed along with your package.
 This means that you can’t assume the package is available unconditionally.
 Below we show various ways to handle these checks.</p>
 </li>
 </ul>
 <p>If you add packages to <code>DESCRIPTION</code> with <code><a href="https://usethis.r-lib.org/reference/use_package.html">usethis::use_package()</a></code>, it will also remind you of the recommended way to call them.</p>
-<div class="sourceCode" id="cb143"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb142"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_package.html">use_package</a></span><span class="op">(</span><span class="st">"dplyr"</span><span class="op">)</span> <span class="co"># Default is "Imports"</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'dplyr'</span> to <span style="color: #00BB00;">Imports</span> field in DESCRIPTION</span></span>
 <span><span class="co">#&gt; <span style="color: #BB0000;">•</span> Refer to functions with <span style="color: #555555;">`dplyr::fun()`</span></span></span>
@@ -189,13 +194,13 @@ Below we show various ways to handle these checks.</p>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Adding <span style="color: #0000BB;">'ggplot2'</span> to <span style="color: #00BB00;">Suggests</span> field in DESCRIPTION</span></span>
 <span><span class="co">#&gt; <span style="color: #BB0000;">•</span> Use <span style="color: #555555;">`requireNamespace("ggplot2", quietly = TRUE)`</span> to test if package is installed</span></span>
 <span><span class="co">#&gt; <span style="color: #BB0000;">•</span> Then directly refer to functions with <span style="color: #555555;">`ggplot2::fun()`</span></span></span></code></pre></div>
-<div id="guarding-the-use-of-a-suggested-package" class="section level3" number="11.1.1">
+<div id="guarding-the-use-of-a-suggested-package" class="section level3" number="11.2.1">
 <h3>
-<span class="header-section-number">11.1.1</span> Guarding the use of a suggested package<a class="anchor" aria-label="anchor" href="#guarding-the-use-of-a-suggested-package"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.2.1</span> Guarding the use of a suggested package<a class="anchor" aria-label="anchor" href="#guarding-the-use-of-a-suggested-package"><i class="fas fa-link"></i></a>
 </h3>
 <p>Inside a function in your own package, check for the availability of a suggested package with <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("pkg", quietly = TRUE)</a></code>.
 There are two basic scenarios:</p>
-<div class="sourceCode" id="cb144"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb143"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># the suggested package is required </span></span>
 <span><span class="va">my_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"pkg"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -217,7 +222,7 @@ There are two basic scenarios:</p>
 <span><span class="op">}</span></span></code></pre></div>
 <p>The rlang package has some useful functions for checking package availability.
 Here’s how the checks around a suggested package could look if you use rlang:</p>
-<div class="sourceCode" id="cb145"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb144"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># the suggested package is required </span></span>
 <span><span class="va">my_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/is_installed.html">check_installed</a></span><span class="op">(</span><span class="st">"pkg"</span>, reason <span class="op">=</span> <span class="st">"to use `my_fun()`"</span><span class="op">)</span></span>
@@ -239,7 +244,7 @@ Using <code>Suggests</code> is mostly a courtesy to external users or to accommo
 It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.</p>
 <p>Another common place to use a suggested package is in an example and here we often guard with <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> (but you’ll also see <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> used for this).
 This example is from <code><a href="https://ggplot2.tidyverse.org/reference/coord_map.html">ggplot2::coord_map()</a></code>.</p>
-<div class="sourceCode" id="cb146"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb145"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' @examples</span></span>
 <span><span class="co">#' if (require("maps")) {</span></span>
 <span><span class="co">#'   nz &lt;- map_data("nz")</span></span>
@@ -254,10 +259,10 @@ This example is from <code><a href="https://ggplot2.tidyverse.org/reference/coor
 <p>Another place you might use a suggested package is in a vignette.
 The tidyverse team generally writes vignettes as if all suggested packages are available.
 But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk options <code>purl</code> and <code>eval</code> may be useful for achieving this.
-See Chapter <a href="vignettes.html#vignettes">16</a> for more discussion of vignettes.</p>
-<div id="suggested-packages-and-tests" class="section level4" number="11.1.1.1">
+See Chapter <a href="vignettes.html#vignettes">17</a> for more discussion of vignettes.</p>
+<div id="suggested-packages-and-tests" class="section level4" number="11.2.1.1">
 <h4>
-<span class="header-section-number">11.1.1.1</span> Whether and how to guard in a test<a class="anchor" aria-label="anchor" href="#suggested-packages-and-tests"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.2.1.1</span> Whether and how to guard in a test<a class="anchor" aria-label="anchor" href="#suggested-packages-and-tests"><i class="fas fa-link"></i></a>
 </h4>
 <p>As with vignettes, the tidyverse team does not usually guard the use of a suggested package in a test.
 In general, for vignettes and tests, we assume all suggested packages are available.
@@ -269,7 +274,7 @@ This is generally true for CRAN and we ensure that it’s true in our own automa
 However, it’s important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.</p>
 <p>Sometimes even the tidyverse team makes an exception and guards the use of a suggested package in a test.
 Here’s a test from ggplot2, which uses <code><a href="https://testthat.r-lib.org/reference/skip.html">testthat::skip_if_not_installed()</a></code> to skip execution if the suggested sf package is not available.</p>
-<div class="sourceCode" id="cb147"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb146"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"basic plot builds without error"</span>, <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/skip.html">skip_if_not_installed</a></span><span class="op">(</span><span class="st">"sf"</span><span class="op">)</span></span>
 <span></span>
@@ -293,14 +298,14 @@ In this case, the sf package can be nontrivial to install and it is conceivable 
 <p>Finally, note that <code>testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")</code> can be used to conditionally skip a test based on the version of the other package.</p>
 </div>
 </div>
-<div id="minimum-versions" class="section level3" number="11.1.2">
+<div id="minimum-versions" class="section level3" number="11.2.2">
 <h3>
-<span class="header-section-number">11.1.2</span> Minimum versions<a class="anchor" aria-label="anchor" href="#minimum-versions"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.2.2</span> Minimum versions<a class="anchor" aria-label="anchor" href="#minimum-versions"><i class="fas fa-link"></i></a>
 </h3>
 <p>If you need a specific version of a package, specify it in parentheses after the package name:</p>
-<div class="sourceCode" id="cb148"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb148-1"><a href="description-dependencies.html#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Imports</span><span class="kw">:</span></span>
-<span id="cb148-2"><a href="description-dependencies.html#cb148-2" aria-hidden="true" tabindex="-1"></a><span class="at">    dplyr (&gt;= 1.0.0),</span></span>
-<span id="cb148-3"><a href="description-dependencies.html#cb148-3" aria-hidden="true" tabindex="-1"></a><span class="at">    tidyr (&gt;= 1.1.0)</span></span></code></pre></div>
+<div class="sourceCode" id="cb147"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb147-1"><a href="description-dependencies.html#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Imports</span><span class="kw">:</span></span>
+<span id="cb147-2"><a href="description-dependencies.html#cb147-2" aria-hidden="true" tabindex="-1"></a><span class="at">    dplyr (&gt;= 1.0.0),</span></span>
+<span id="cb147-3"><a href="description-dependencies.html#cb147-3" aria-hidden="true" tabindex="-1"></a><span class="at">    tidyr (&gt;= 1.1.0)</span></span></code></pre></div>
 <p>You always want to specify a minimum version (<code>dplyr (&gt;= 1.0.0)</code>) rather than an exact version (<code>dplyr (== 1.0.0)</code>).
 Since R can’t have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The need to specify the exact versions of packages, rather than minimum versions, comes up more often in the development of non-package projects.
 The &lt;a href="https://rstudio.github.io/renv/"&gt;renv package&lt;/a&gt; provides a way to do this, by implementing project-specific environments (package libraries).
@@ -320,54 +325,40 @@ But if your stated requirements have a less solid rationale, this may be unneces
 The <em>de facto</em> policy of the tidyverse team is to specify a minimum version when using a known new feature or when someone encounters a version problem in authentic use.
 This isn’t perfect, but we don’t currently have the tooling to do better, and it seems to work fairly well in practice.</p>
 </div>
-<div id="other-dependencies" class="section level3" number="11.1.3">
+<div id="other-dependencies" class="section level3" number="11.2.3">
 <h3>
-<span class="header-section-number">11.1.3</span> Other dependencies<a class="anchor" aria-label="anchor" href="#other-dependencies"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.2.3</span> Other dependencies<a class="anchor" aria-label="anchor" href="#other-dependencies"><i class="fas fa-link"></i></a>
 </h3>
 <p>There are three other fields that allow you to express more specialised dependencies:</p>
 <ul>
 <li>
-<p><code>Depends</code>: Prior to the roll-out of namespaces in R 2.14.0 in 2011, <code>Depends</code>
-was the only way to “depend” on another package.
+<p><code>Depends</code>: Prior to the roll-out of namespaces in R 2.14.0 in 2011, <code>Depends</code> was the only way to “depend” on another package.
 Now, despite the name, you should almost always use <code>Imports</code>, not <code>Depends</code>.
-You’ll learn why, and when you should still use <code>Depends</code>, in
-<a href="description-dependencies.html#namespace">namespaces</a>.</p>
+You’ll learn why, and when you should still use <code>Depends</code>, in <a href="description-dependencies.html#namespace">namespaces</a>.</p>
 <p>You can also use <code>Depends</code> to state a minimum version for R itself, e.g.
 <code>Depends: R (&gt;= 4.0.0)</code>.
 Again, think carefully if you do this.
-This raises the same issues as setting a minimum version for a package you
-depend on, except the stakes are much higher when it comes to R itself.
-Users can’t simply consent to the necessary upgrade, so, if other packages
-depend on yours, your minimum version requirement for R can cause a cascade of
-package installation failures.</p>
+This raises the same issues as setting a minimum version for a package you depend on, except the stakes are much higher when it comes to R itself.
+Users can’t simply consent to the necessary upgrade, so, if other packages depend on yours, your minimum version requirement for R can cause a cascade of package installation failures.</p>
 <ul>
-<li>The <a href="https://cran.r-project.org/package=backports">backports package</a> is
-useful if you want to use a function like <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code>, which was
-introduced in 4.0.0 in 2020, while still supporting older R versions.</li>
-<li>The tidyverse packages officially support the current R version, the devel
-version, and four previous versions.
-We proactively test this support in the standard build matrix we use for
-continuous integration.</li>
-<li>Packages with a lower level of use may not need this level of rigour.
-The main takeaway is: if you state a minimum of R, you should have a reason
-and you should take reasonable measures to test your claim regularly.</li>
+<li>The <a href="https://cran.r-project.org/package=backports">backports package</a> is useful if you want to use a function like <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code>, which was introduced in 4.0.0 in 2020, while still supporting older R versions.</li>
+<li>The tidyverse packages officially support the current R version, the devel version, and four previous versions. We proactively test this support in the standard build matrix we use for continuous integration.</li>
+<li>Packages with a lower level of use may not need this level of rigour. The main takeaway is: if you state a minimum of R, you should have a reason and you should take reasonable measures to test your claim regularly.</li>
 </ul>
 </li>
 <li><p><code>LinkingTo</code>: packages listed here rely on C or C++ code in another package.
 You’ll learn more about <code>LinkingTo</code> in Chapter <a href="#src"><strong>??</strong></a>.</p></li>
 <li><p><code>Enhances</code>: packages listed here are “enhanced” by your package.
-Typically, this means you provide methods for classes defined in another
-package (a sort of reverse <code>Suggests</code>).
-But it’s hard to define what that means, so we don’t recommend using
-<code>Enhances</code>.</p></li>
+Typically, this means you provide methods for classes defined in another package (a sort of reverse <code>Suggests</code>).
+But it’s hard to define what that means, so we don’t recommend using <code>Enhances</code>.</p></li>
 </ul>
 <p>You can also list things that your package needs outside of R in the <code>SystemRequirements</code> field.
 But this is just a plain text field and is not automatically checked.
 Think of it as a quick reference; you’ll also need to include detailed system requirements (and how to install them) in your README.</p>
 <!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
-<div id="an-r-version-gotcha" class="section level4" number="11.1.3.1">
+<div id="an-r-version-gotcha" class="section level4" number="11.2.3.1">
 <h4>
-<span class="header-section-number">11.1.3.1</span> An R version gotcha<a class="anchor" aria-label="anchor" href="#an-r-version-gotcha"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.2.3.1</span> An R version gotcha<a class="anchor" aria-label="anchor" href="#an-r-version-gotcha"><i class="fas fa-link"></i></a>
 </h4>
 <p>Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
 The <code><a href="https://rdrr.io/r/base/readRDS.html">saveRDS()</a></code> function writes a single R object as an <code>.rds</code> file, an R-specific format.
@@ -380,7 +371,7 @@ When that R package is next built, such as for a CRAN submission, the required R
   serialize/load version 3 cannot be read in older versions of R.
   File(s) containing such objects:
     'path/to/some_file.rds'</code></pre>
-<p>Literally, the <code>DESCRIPTION</code> file in the bundled package says <code>Depends: R (&gt;= 3.5.0)</code>, even if <code>DESCRIPTION</code> in the source package says differently<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The different package states, such as source vs. bundled, are explained in section &lt;a href="package-structure-state.html#package-states"&gt;4.1&lt;/a&gt;.&lt;/p&gt;'><sup>20</sup></a>.</p>
+<p>Literally, the <code>DESCRIPTION</code> file in the bundled package says <code>Depends: R (&gt;= 3.5.0)</code>, even if <code>DESCRIPTION</code> in the source package says differently<a class="footnote-ref" tabindex="0" data-toggle="popover" data-content='&lt;p&gt;The different package states, such as source vs. bundled, are explained in section &lt;a href="package-structure-state.html#package-states"&gt;4.2&lt;/a&gt;.&lt;/p&gt;'><sup>20</sup></a>.</p>
 <p>When such a package is released on CRAN, the new minimum R version is viral, in the sense that all packages listing the original package in <code>Imports</code> or even <code>Suggests</code> have, to varying degrees, inherited the new dependency on R &gt;= 3.5.0.</p>
 <p>The immediate take-away is to be very deliberate about the <code>version</code> of <code>.rds</code> files until R versions prior to 3.5.0 have fallen off the edge of what you intend to support.
 This particular <code>.rds</code> issue won’t be with us forever, but similar issues crop up elsewhere, such as in the standards implicit in compiled C or C++ source code.
@@ -388,9 +379,9 @@ The broader message is that the more reverse dependencies your package has, the 
 <!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
 </div>
 </div>
-<div id="nonstandard-dependencies" class="section level3" number="11.1.4">
+<div id="nonstandard-dependencies" class="section level3" number="11.2.4">
 <h3>
-<span class="header-section-number">11.1.4</span> Nonstandard dependencies<a class="anchor" aria-label="anchor" href="#nonstandard-dependencies"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.2.4</span> Nonstandard dependencies<a class="anchor" aria-label="anchor" href="#nonstandard-dependencies"><i class="fas fa-link"></i></a>
 </h3>
 <p>In packages developed with devtools, you may see <code>DESCRIPTION</code> files that use a couple other nonstandard fields for package dependencies specific to development tasks.</p>
 <p>The <code>Remotes</code> field can be used when you need to install a dependency from a nonstandard place, i.e. from somewhere besides CRAN or Bioconductor.
@@ -430,28 +421,44 @@ Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
     tidyverse,                    with:
     tidyverse/tidytemplate          extra-packages: pkgdown
                                     needs: website</code></pre>
-<p>Continuous integration and package websites are discussed more in ?? and ??, respectively.
+<p>Continuous integration and package websites are discussed more in ??
+and ??,
+respectively.
 <em>These chapters are a yet-to-be-(re)written task for the 2nd edition.</em></p>
 <!-- TODO: Link to CI and pkgdown material when it has been written and/or revised. -->
 <p>The <code>Config/Needs/*</code> convention is handy because it allows a developer to use <code>DESCRIPTION</code> as their definitive record of package dependencies, while maintaining a clean distinction between true runtime dependencies versus those that are only needed for specialized development tasks.</p>
 <!-- re: describing different types of dependencies, another term you see for "runtime" dependency is "production" -->
 </div>
 </div>
-<div id="exports" class="section level2" number="11.2">
+<div id="exports" class="section level2" number="11.3">
 <h2>
-<span class="header-section-number">11.2</span> Exports<a class="anchor" aria-label="anchor" href="#exports"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.3</span> Exports<a class="anchor" aria-label="anchor" href="#exports"><i class="fas fa-link"></i></a>
 </h2>
-<p>For a function to be usable outside of your package, you must <strong>export</strong> it. When you create a new package with <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code>, it produces a temporary <code>NAMESPACE</code> that exports everything in your package that doesn’t start with <code>.</code> (a single period). If you’re just working locally, it’s fine to export everything in your package. However, if you’re planning on sharing your package with others, it’s a really good idea to only export needed functions. This reduces the chances of a conflict with another package.</p>
-<p>To export an object, put <code>@export</code> in its roxygen block. For example:</p>
-<div class="sourceCode" id="cb152"><pre class="downlit sourceCode r">
+<p>For a function to be usable outside of your package, you must <strong>export</strong> it.
+When you create a new package with <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code>, it produces a temporary <code>NAMESPACE</code> that exports everything in your package that doesn’t start with <code>.</code> (a single period).
+If you’re just working locally, it’s fine to export everything in your package.
+However, if you’re planning on sharing your package with others, it’s a really good idea to only export needed functions.
+This reduces the chances of a conflict with another package.</p>
+<p>To export an object, put <code>@export</code> in its roxygen block.
+For example:</p>
+<div class="sourceCode" id="cb151"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' @export</span></span>
 <span><span class="va">foo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>This will then generate <code>export()</code>, <code>exportMethods()</code>, <code>exportClass()</code> or <code>S3method()</code> depending on the type of the object.</p>
-<p>You export functions that you want other people to use. Exported functions must be documented, and you must be cautious when changing their interface — other people are using them! Generally, it’s better to export too little than too much. It’s easy to export things that you didn’t before; it’s hard to stop exporting a function because it might break existing code. Always err on the side of caution, and simplicity. It’s easier to give people more functionality than it is to take away stuff they’re used to.</p>
-<p>I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or a set of closely related problems). Any functions not related to that purpose should not be exported. For example, most of my packages have a <code>utils.R</code> file that contains many small functions that are useful for me, but aren’t part of the core purpose of those packages. I never export these functions.</p>
-<div class="sourceCode" id="cb153"><pre class="downlit sourceCode r">
+<p>You export functions that you want other people to use.
+Exported functions must be documented, and you must be cautious when changing their interface — other people are using them!
+Generally, it’s better to export too little than too much.
+It’s easy to export things that you didn’t before; it’s hard to stop exporting a function because it might break existing code.
+Always err on the side of caution, and simplicity.
+It’s easier to give people more functionality than it is to take away stuff they’re used to.</p>
+<p>I believe that packages that have a wide audience should strive to do one thing and do it well.
+All functions in a package should be related to a single problem (or a set of closely related problems).
+Any functions not related to that purpose should not be exported.
+For example, most of my packages have a <code>utils.R</code> file that contains many small functions that are useful for me, but aren’t part of the core purpose of those packages.
+I never export these functions.</p>
+<div class="sourceCode" id="cb152"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Defaults for NULL values</span></span>
 <span><span class="va">`%||%`</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span> <span class="va">b</span> <span class="kw">else</span> <span class="va">a</span></span>
 <span></span>
@@ -459,81 +466,100 @@ Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
 <span><span class="va">compact</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">x</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">vapply</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">is.null</span>, <span class="fu"><a href="https://rdrr.io/r/base/logical.html">logical</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>That said, if you’re creating a package for yourself, it’s far less important to be so disciplined. Because you know what’s in your package, it’s fine to have a local “misc” package that contains a passel of functions that you find useful. But I don’t think you should release such a package.</p>
+<p>That said, if you’re creating a package for yourself, it’s far less important to be so disciplined.
+Because you know what’s in your package, it’s fine to have a local “misc” package that contains a passel of functions that you find useful.
+But I don’t think you should release such a package.</p>
 <p>The following sections describe what you should export if you’re using S3, S4 or RC.</p>
 </div>
-<div id="when-should-you-take-a-dependency" class="section level2" number="11.3">
+<div id="when-should-you-take-a-dependency" class="section level2" number="11.4">
 <h2>
-<span class="header-section-number">11.3</span> When should you take a dependency?<a class="anchor" aria-label="anchor" href="#when-should-you-take-a-dependency"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.4</span> When should you take a dependency?<a class="anchor" aria-label="anchor" href="#when-should-you-take-a-dependency"><i class="fas fa-link"></i></a>
 </h2>
 <p><a href="https://www.tidyverse.org/blog/2019/05/itdepends/" class="uri">https://www.tidyverse.org/blog/2019/05/itdepends/</a></p>
-<div id="tidyverse-dependencies" class="section level3" number="11.3.1">
+<div id="tidyverse-dependencies" class="section level3" number="11.4.1">
 <h3>
-<span class="header-section-number">11.3.1</span> Tidyverse dependencies<a class="anchor" aria-label="anchor" href="#tidyverse-dependencies"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.4.1</span> Tidyverse dependencies<a class="anchor" aria-label="anchor" href="#tidyverse-dependencies"><i class="fas fa-link"></i></a>
 </h3>
 <p>Here’s our policies about the role of different packages.
 <code><a href="https://usethis.r-lib.org/reference/tidyverse.html">use_tidy_dependencies()</a></code>.
 “Free” dependencies.</p>
 </div>
 </div>
-<div id="namespace" class="section level2" number="11.4">
+<div id="namespace" class="section level2" number="11.5">
 <h2>
-<span class="header-section-number">11.4</span> Namespace<a class="anchor" aria-label="anchor" href="#namespace"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.5</span> Namespace<a class="anchor" aria-label="anchor" href="#namespace"><i class="fas fa-link"></i></a>
 </h2>
-<div id="namespace-motivation" class="section level3" number="11.4.1">
+<div id="namespace-motivation" class="section level3" number="11.5.1">
 <h3>
-<span class="header-section-number">11.4.1</span> Motivation<a class="anchor" aria-label="anchor" href="#namespace-motivation"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.5.1</span> Motivation<a class="anchor" aria-label="anchor" href="#namespace-motivation"><i class="fas fa-link"></i></a>
 </h3>
-<p>As the name suggests, namespaces provide “spaces” for “names”. They provide a context for looking up the value of an object associated with a name.</p>
-<p>Without knowing it, you’ve probably already used namespaces. For example, have you ever used the <code>::</code> operator? It disambiguates functions with the same name. For example, both plyr and Hmisc provide a <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> function. If you load plyr, then Hmisc, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the Hmisc version. But if you load the packages in the opposite order, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the plyr version. This can be confusing. Instead, you can explicitly refer to specific functions: <code>Hmisc::summarize()</code> and <code>plyr::summarize()</code>. Then the order in which the packages are loaded won’t matter.</p>
-<p>Namespaces make your packages self-contained in two ways: the <strong>imports</strong> and the <strong>exports</strong>. The <strong>imports</strong> defines how a function in one package finds a function in another. To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> function in base R:</p>
-<div class="sourceCode" id="cb154"><pre class="downlit sourceCode r">
+<p>As the name suggests, namespaces provide “spaces” for “names”.
+They provide a context for looking up the value of an object associated with a name.</p>
+<p>Without knowing it, you’ve probably already used namespaces.
+For example, have you ever used the <code>::</code> operator?
+It disambiguates functions with the same name.
+For example, both plyr and Hmisc provide a <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> function.
+If you load plyr, then Hmisc, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the Hmisc version.
+But if you load the packages in the opposite order, <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> will refer to the plyr version.
+This can be confusing.
+Instead, you can explicitly refer to specific functions: <code>Hmisc::summarize()</code> and <code>plyr::summarize()</code>.
+Then the order in which the packages are loaded won’t matter.</p>
+<p>Namespaces make your packages self-contained in two ways: the <strong>imports</strong> and the <strong>exports</strong>.
+The <strong>imports</strong> defines how a function in one package finds a function in another.
+To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> function in base R:</p>
+<div class="sourceCode" id="cb153"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nrow</span></span>
 <span><span class="co">#&gt; function (x) </span></span>
 <span><span class="co">#&gt; dim(x)[1L]</span></span>
-<span><span class="co">#&gt; &lt;bytecode: 0x561655a13d60&gt;</span></span>
+<span><span class="co">#&gt; &lt;bytecode: 0x55f865df4d00&gt;</span></span>
 <span><span class="co">#&gt; &lt;environment: namespace:base&gt;</span></span></code></pre></div>
-<p>It’s defined in terms of <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>. So what will happen if we override <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>
-with our own definition? Does <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> break?</p>
-<div class="sourceCode" id="cb155"><pre class="downlit sourceCode r">
+<p>It’s defined in terms of <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>.
+So what will happen if we override <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> with our own definition?
+Does <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> break?</p>
+<div class="sourceCode" id="cb154"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1 1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 32</span></span></code></pre></div>
-<p>Surprisingly, it does not! That’s because when <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> looks for an object
-called <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>, it uses the package namespace, so it finds <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> in
-the base environment, not the <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> we created in the global environment.</p>
-<p>The <strong>exports</strong> helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can’t easily be used by another package). Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. While conflicts aren’t the end of the world because you can always use <code>::</code> to disambiguate, they’re best avoided where possible because it makes the lives of your users easier.</p>
+<p>Surprisingly, it does not!
+That’s because when <code><a href="https://rdrr.io/r/base/nrow.html">nrow()</a></code> looks for an object called <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code>, it uses the package namespace, so it finds <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> in the base environment, not the <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> we created in the global environment.</p>
+<p>The <strong>exports</strong> helps you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can’t easily be used by another package).
+Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict.
+While conflicts aren’t the end of the world because you can always use <code>::</code> to disambiguate, they’re best avoided where possible because it makes the lives of your users easier.</p>
 </div>
-<div id="search-path" class="section level3" number="11.4.2">
+<div id="search-path" class="section level3" number="11.5.2">
 <h3>
-<span class="header-section-number">11.4.2</span> Search path<a class="anchor" aria-label="anchor" href="#search-path"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.5.2</span> Search path<a class="anchor" aria-label="anchor" href="#search-path"><i class="fas fa-link"></i></a>
 </h3>
-<p>To understand why namespaces are important, you need a solid understanding of search paths. To call a function, R first has to find it. R does this by first looking in the global environment. If R doesn’t find it there, it looks in the search path, the list of all the packages you have <strong>attached</strong>. You can see this list by running <code><a href="https://rdrr.io/r/base/search.html">search()</a></code>. For example, here’s the search path for the code in this book:</p>
-<div class="sourceCode" id="cb156"><pre class="downlit sourceCode r">
+<p>To understand why namespaces are important, you need a solid understanding of search paths.
+To call a function, R first has to find it.
+R does this by first looking in the global environment.
+If R doesn’t find it there, it looks in the search path, the list of all the packages you have <strong>attached</strong>.
+You can see this list by running <code><a href="https://rdrr.io/r/base/search.html">search()</a></code>.
+For example, here’s the search path for the code in this book:</p>
+<div class="sourceCode" id="cb155"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] ".GlobalEnv"        "package:stats"     "package:graphics" </span></span>
 <span><span class="co">#&gt; [4] "package:grDevices" "package:utils"     "package:datasets" </span></span>
 <span><span class="co">#&gt; [7] "package:methods"   "Autoloads"         "package:base"</span></span></code></pre></div>
-<p>There’s an important difference between loading and attaching a package. Normally when you talk about loading a package you think of <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, but that actually attaches the package.</p>
+<p>There’s an important difference between loading and attaching a package.
+Normally when you talk about loading a package you think of <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, but that actually attaches the package.</p>
 <p>If a package is installed,</p>
 <ul>
-<li><p><strong>Loading</strong> will load code, data and any DLLs; register S3 and
-S4 methods; and run the <code>.onLoad()</code> function. After loading, the
-package is available in memory, but because it’s not in the search
-path, you won’t be able to access its components without using <code>::</code>.
-Confusingly, <code>::</code> will also load a package automatically if it
-isn’t already loaded. It’s rare to load a package explicitly, but you
-can do so with <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> or <code><a href="https://rdrr.io/r/base/ns-load.html">loadNamespace()</a></code>.</p></li>
-<li><p><strong>Attaching</strong> puts the package in the search path. You can’t attach a
-package without first loading it, so both <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> load
-then attach the package. You can see the currently attached packages with
-<code><a href="https://rdrr.io/r/base/search.html">search()</a></code>.</p></li>
+<li><p><strong>Loading</strong> will load code, data and any DLLs; register S3 and S4 methods; and run the <code>.onLoad()</code> function.
+After loading, the package is available in memory, but because it’s not in the search path, you won’t be able to access its components without using <code>::</code>.
+Confusingly, <code>::</code> will also load a package automatically if it isn’t already loaded.
+It’s rare to load a package explicitly, but you can do so with <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> or <code><a href="https://rdrr.io/r/base/ns-load.html">loadNamespace()</a></code>.</p></li>
+<li><p><strong>Attaching</strong> puts the package in the search path.
+You can’t attach a package without first loading it, so both <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> load then attach the package.
+You can see the currently attached packages with <code><a href="https://rdrr.io/r/base/search.html">search()</a></code>.</p></li>
 </ul>
 <p>If a package isn’t installed, loading (and hence attaching) will fail with an error.</p>
-<p>To see the differences more clearly, consider two ways of running <code><a href="https://testthat.r-lib.org/reference/expect_that.html">expect_that()</a></code> from the testthat package. If we use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, testthat is attached to the search path. If we use <code>::</code>, it’s not.</p>
-<div class="sourceCode" id="cb157"><pre class="downlit sourceCode r">
+<p>To see the differences more clearly, consider two ways of running <code><a href="https://testthat.r-lib.org/reference/expect_that.html">expect_that()</a></code> from the testthat package.
+If we use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, testthat is attached to the search path.
+If we use <code>::</code>, it’s not.</p>
+<div class="sourceCode" id="cb156"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">old</span><span class="op">)</span></span>
@@ -546,7 +572,8 @@ then attach the package. You can see the currently attached packages with
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">old</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "package:testthat"</span></span>
 <span><span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>There are four functions that make a package available. They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).</p>
+<p>There are four functions that make a package available.
+They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).</p>
 <div class="inline-table"><table class="table table-sm">
 <thead><tr class="header">
 <th></th>
@@ -569,50 +596,75 @@ then attach the package. You can see the currently attached packages with
 </table></div>
 <p>Of the four, you should only ever use two:</p>
 <ul>
-<li><p>Use <code><a href="https://rdrr.io/r/base/library.html">library(x)</a></code> in data analysis scripts. It will throw an error if the
-package is not installed, and will terminate the script. You want to attach
-the package to save typing. Never use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> in a package.</p></li>
-<li><p>Use <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("x", quietly = TRUE)</a></code> inside a package if you want a
-specific action (e.g. throw an error) depending on whether or not
-a suggested package is installed.</p></li>
+<li><p>Use <code><a href="https://rdrr.io/r/base/library.html">library(x)</a></code> in data analysis scripts.
+It will throw an error if the package is not installed, and will terminate the script.
+You want to attach the package to save typing.
+Never use <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> in a package.</p></li>
+<li><p>Use <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("x", quietly = TRUE)</a></code> inside a package if you want a specific action (e.g. throw an error) depending on whether or not a suggested package is installed.</p></li>
 </ul>
-<p>You never need to use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> (<code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> is almost always better), or <code><a href="https://rdrr.io/r/base/ns-load.html">loadNamespace()</a></code> (which is only needed for internal R code). You should never use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> in a package: instead, use the <code>Depends</code> or <code>Imports</code> fields in the <code>DESCRIPTION</code>.</p>
-<p>Now’s a good time to come back to an important issue which we glossed over earlier. What’s the difference between <code>Depends</code> and <code>Imports</code> in the <code>DESCRIPTION</code>? When should you use one or the other?</p>
-<p>Listing a package in either <code>Depends</code> or <code>Imports</code> ensures that it’s installed when needed. The main difference is that where <code>Imports</code> just <em>loads</em> the package, <code>Depends</code> <em>attaches</em> it. There are no other differences. The rest of the advice in this chapter applies whether or not the package is in <code>Depends</code> or <code>Imports</code>.</p>
-<p>Unless there is a good reason otherwise, you should always list packages in <code>Imports</code> not <code>Depends</code>. That’s because a good package is self-contained, and minimises changes to the global environment (including the search path). The only exception is if your package is designed to be used in conjunction with another package. For example, the <a href="https://github.com/gavinsimpson/analogue">analogue</a> package builds on top of <a href="https://github.com/vegandevs/vegan">vegan</a>. It’s not useful without vegan, so it has vegan in <code>Depends</code> instead of <code>Imports</code>. Similarly, ggplot2 should really <code>Depend</code> on scales, rather than <code>Import</code>ing it.</p>
-<p>Now that you understand the importance of the namespace, let’s dive into the nitty gritty details. The two sides of the package namespace, imports and exports, are both described by the <code>NAMESPACE</code>. You’ll learn what this file looks like in the next section. In the section after that, you’ll learn the details of exporting and importing functions and other objects.</p>
+<p>You never need to use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> (<code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code> is almost always better), or <code><a href="https://rdrr.io/r/base/ns-load.html">loadNamespace()</a></code> (which is only needed for internal R code).
+You should never use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> in a package: instead, use the <code>Depends</code> or <code>Imports</code> fields in the <code>DESCRIPTION</code>.</p>
+<p>Now’s a good time to come back to an important issue which we glossed over earlier.
+What’s the difference between <code>Depends</code> and <code>Imports</code> in the <code>DESCRIPTION</code>?
+When should you use one or the other?</p>
+<p>Listing a package in either <code>Depends</code> or <code>Imports</code> ensures that it’s installed when needed.
+The main difference is that where <code>Imports</code> just <em>loads</em> the package, <code>Depends</code> <em>attaches</em> it.
+There are no other differences.
+The rest of the advice in this chapter applies whether or not the package is in <code>Depends</code> or <code>Imports</code>.</p>
+<p>Unless there is a good reason otherwise, you should always list packages in <code>Imports</code> not <code>Depends</code>.
+That’s because a good package is self-contained, and minimises changes to the global environment (including the search path).
+The only exception is if your package is designed to be used in conjunction with another package.
+For example, the <a href="https://github.com/gavinsimpson/analogue">analogue</a> package builds on top of <a href="https://github.com/vegandevs/vegan">vegan</a>.
+It’s not useful without vegan, so it has vegan in <code>Depends</code> instead of <code>Imports</code>.
+Similarly, ggplot2 should really <code>Depend</code> on scales, rather than <code>Import</code>ing it.</p>
+<p>Now that you understand the importance of the namespace, let’s dive into the nitty gritty details.
+The two sides of the package namespace, imports and exports, are both described by the <code>NAMESPACE</code>.
+You’ll learn what this file looks like in the next section.
+In the section after that, you’ll learn the details of exporting and importing functions and other objects.</p>
 </div>
-<div id="namespace-workflow" class="section level3" number="11.4.3">
+<div id="namespace-workflow" class="section level3" number="11.5.3">
 <h3>
-<span class="header-section-number">11.4.3</span> Workflow<a class="anchor" aria-label="anchor" href="#namespace-workflow"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.5.3</span> Workflow<a class="anchor" aria-label="anchor" href="#namespace-workflow"><i class="fas fa-link"></i></a>
 </h3>
-<p>Generating the namespace with roxygen2 is just like generating function documentation with roxygen2. You use roxygen2 blocks (starting with <code>#'</code>) and tags (starting with <code>@</code>). The workflow is the same:</p>
+<p>Generating the namespace with roxygen2 is just like generating function documentation with roxygen2.
+You use roxygen2 blocks (starting with <code>#'</code>) and tags (starting with <code>@</code>).
+The workflow is the same:</p>
 <ol style="list-style-type: decimal">
 <li><p>Add roxygen comments to your <code>.R</code> files.</p></li>
-<li><p>Run <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code> (or press Ctrl/Cmd + Shift + D in RStudio) to
-convert roxygen comments to <code>.Rd</code> files.</p></li>
-<li><p>Look at <code>NAMESPACE</code> and run tests to check that the specification is
-correct.</p></li>
+<li><p>Run <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code> (or press Ctrl/Cmd + Shift + D in RStudio) to convert roxygen comments to <code>.Rd</code> files.</p></li>
+<li><p>Look at <code>NAMESPACE</code> and run tests to check that the specification is correct.</p></li>
 <li><p>Rinse and repeat until the correct functions are exported.</p></li>
 </ol>
 </div>
-<div id="imports" class="section level3" number="11.4.4">
+<div id="imports" class="section level3" number="11.5.4">
 <h3>
-<span class="header-section-number">11.4.4</span> Imports<a class="anchor" aria-label="anchor" href="#imports"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.5.4</span> Imports<a class="anchor" aria-label="anchor" href="#imports"><i class="fas fa-link"></i></a>
 </h3>
 <p><code>NAMESPACE</code> also controls which external functions can be used by your package without having to use <code>::</code>.</p>
-<p>It’s confusing that both <code>DESCRIPTION</code> (through the <code>Imports</code> field) and
-<code>NAMESPACE</code> (through import directives) seem to be involved in imports. This is just an unfortunate choice of names. The <code>Imports</code> field really has nothing to do with functions imported into the namespace: it just makes sure the package is installed when your package is. It doesn’t make functions available. You need to import functions in exactly the same way regardless of whether or not the package is attached.</p>
-<p><code>Depends</code> is just a convenience for the user: if your package is attached, it also attaches all packages listed in <code>Depends</code>. If your package is loaded, packages in <code>Depends</code> are loaded, but not attached, so you need to qualify function names with <code>::</code> or specifically import them.</p>
-<p>It’s common for packages to be listed in <code>Imports</code> in <code>DESCRIPTION</code>, but not in <code>NAMESPACE</code>. In fact, this is what I recommend: list the package in <code>DESCRIPTION</code> so that it’s installed, then always refer to it explicitly with <code>pkg::fun()</code>. Unless there is a strong reason not to, it’s better to be explicit. It’s a little more work to write, but a lot easier to read when you come back to the code in the future. The converse is not true. Every package mentioned in <code>NAMESPACE</code> must also be present in the <code>Imports</code> or <code>Depends</code> fields.</p>
+<p>It’s confusing that both <code>DESCRIPTION</code> (through the <code>Imports</code> field) and <code>NAMESPACE</code> (through import directives) seem to be involved in imports.
+This is just an unfortunate choice of names.
+The <code>Imports</code> field really has nothing to do with functions imported into the namespace: it just makes sure the package is installed when your package is.
+It doesn’t make functions available.
+You need to import functions in exactly the same way regardless of whether or not the package is attached.</p>
+<p><code>Depends</code> is just a convenience for the user: if your package is attached, it also attaches all packages listed in <code>Depends</code>.
+If your package is loaded, packages in <code>Depends</code> are loaded, but not attached, so you need to qualify function names with <code>::</code> or specifically import them.</p>
+<p>It’s common for packages to be listed in <code>Imports</code> in <code>DESCRIPTION</code>, but not in <code>NAMESPACE</code>.
+In fact, this is what I recommend: list the package in <code>DESCRIPTION</code> so that it’s installed, then always refer to it explicitly with <code>pkg::fun()</code>.
+Unless there is a strong reason not to, it’s better to be explicit.
+It’s a little more work to write, but a lot easier to read when you come back to the code in the future.
+The converse is not true.
+Every package mentioned in <code>NAMESPACE</code> must also be present in the <code>Imports</code> or <code>Depends</code> fields.</p>
 </div>
-<div id="import-r" class="section level3" number="11.4.5">
+<div id="import-r" class="section level3" number="11.5.5">
 <h3>
-<span class="header-section-number">11.4.5</span> R functions<a class="anchor" aria-label="anchor" href="#import-r"><i class="fas fa-link"></i></a>
+<span class="header-section-number">11.5.5</span> R functions<a class="anchor" aria-label="anchor" href="#import-r"><i class="fas fa-link"></i></a>
 </h3>
 <p>If you are using just a few functions from another package, my recommendation is to note the package name in the <code>Imports:</code> field of the <code>DESCRIPTION</code> file and call the function(s) explicitly using <code>::</code>, e.g., <code>pkg::fun()</code>.</p>
-<p>If you are using functions repeatedly, you can avoid <code>::</code> by importing the function with <code>@importFrom pkg fun</code>. This also has a small performance benefit, because <code>::</code> adds approximately 5 µs to function evaluation time. Operators can also be imported in a similar manner, e.g., <code>@importFrom magrittr %&gt;%</code>.</p>
-<p>Alternatively, if you are repeatedly using many functions from another package, you can import all of them using <code>@import package</code>. This is the least recommended solution because it makes your code harder to read (you can’t tell where a function is coming from), and if you <code>@import</code> many packages, it increases the chance of conflicting function names.</p>
+<p>If you are using functions repeatedly, you can avoid <code>::</code> by importing the function with <code>@importFrom pkg fun</code>.
+This also has a small performance benefit, because <code>::</code> adds approximately 5 µs to function evaluation time.
+Operators can also be imported in a similar manner, e.g., <code>@importFrom magrittr %&gt;%</code>.</p>
+<p>Alternatively, if you are repeatedly using many functions from another package, you can import all of them using <code>@import package</code>.
+This is the least recommended solution because it makes your code harder to read (you can’t tell where a function is coming from), and if you <code>@import</code> many packages, it increases the chance of conflicting function names.</p>
 
 </div>
 </div>
@@ -625,25 +677,26 @@ correct.</p></li>
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
 <li><a class="nav-link" href="#description-dependencies"><span class="header-section-number">11</span> Dependencies: What does your package need?</a></li>
+<li><a class="nav-link" href="#introduction-8"><span class="header-section-number">11.1</span> Introduction</a></li>
 <li>
-<a class="nav-link" href="#run-time-vs-develop-time-dependencies"><span class="header-section-number">11.1</span> Run-time vs develop-time dependencies</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#guarding-the-use-of-a-suggested-package"><span class="header-section-number">11.1.1</span> Guarding the use of a suggested package</a></li>
-<li><a class="nav-link" href="#minimum-versions"><span class="header-section-number">11.1.2</span> Minimum versions</a></li>
-<li><a class="nav-link" href="#other-dependencies"><span class="header-section-number">11.1.3</span> Other dependencies</a></li>
-<li><a class="nav-link" href="#nonstandard-dependencies"><span class="header-section-number">11.1.4</span> Nonstandard dependencies</a></li>
+<a class="nav-link" href="#run-time-vs-develop-time-dependencies"><span class="header-section-number">11.2</span> Run-time vs develop-time dependencies</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#guarding-the-use-of-a-suggested-package"><span class="header-section-number">11.2.1</span> Guarding the use of a suggested package</a></li>
+<li><a class="nav-link" href="#minimum-versions"><span class="header-section-number">11.2.2</span> Minimum versions</a></li>
+<li><a class="nav-link" href="#other-dependencies"><span class="header-section-number">11.2.3</span> Other dependencies</a></li>
+<li><a class="nav-link" href="#nonstandard-dependencies"><span class="header-section-number">11.2.4</span> Nonstandard dependencies</a></li>
 </ul>
 </li>
-<li><a class="nav-link" href="#exports"><span class="header-section-number">11.2</span> Exports</a></li>
+<li><a class="nav-link" href="#exports"><span class="header-section-number">11.3</span> Exports</a></li>
 <li>
-<a class="nav-link" href="#when-should-you-take-a-dependency"><span class="header-section-number">11.3</span> When should you take a dependency?</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#tidyverse-dependencies"><span class="header-section-number">11.3.1</span> Tidyverse dependencies</a></li></ul>
+<a class="nav-link" href="#when-should-you-take-a-dependency"><span class="header-section-number">11.4</span> When should you take a dependency?</a><ul class="nav navbar-nav"><li><a class="nav-link" href="#tidyverse-dependencies"><span class="header-section-number">11.4.1</span> Tidyverse dependencies</a></li></ul>
 </li>
 <li>
-<a class="nav-link" href="#namespace"><span class="header-section-number">11.4</span> Namespace</a><ul class="nav navbar-nav">
-<li><a class="nav-link" href="#namespace-motivation"><span class="header-section-number">11.4.1</span> Motivation</a></li>
-<li><a class="nav-link" href="#search-path"><span class="header-section-number">11.4.2</span> Search path</a></li>
-<li><a class="nav-link" href="#namespace-workflow"><span class="header-section-number">11.4.3</span> Workflow</a></li>
-<li><a class="nav-link" href="#imports"><span class="header-section-number">11.4.4</span> Imports</a></li>
-<li><a class="nav-link" href="#import-r"><span class="header-section-number">11.4.5</span> R functions</a></li>
+<a class="nav-link" href="#namespace"><span class="header-section-number">11.5</span> Namespace</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#namespace-motivation"><span class="header-section-number">11.5.1</span> Motivation</a></li>
+<li><a class="nav-link" href="#search-path"><span class="header-section-number">11.5.2</span> Search path</a></li>
+<li><a class="nav-link" href="#namespace-workflow"><span class="header-section-number">11.5.3</span> Workflow</a></li>
+<li><a class="nav-link" href="#imports"><span class="header-section-number">11.5.4</span> Imports</a></li>
+<li><a class="nav-link" href="#import-r"><span class="header-section-number">11.5.5</span> R functions</a></li>
 </ul>
 </li>
 </ul>

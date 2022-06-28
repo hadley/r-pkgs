@@ -3,6 +3,8 @@
 ::: {.rmdnote}
 You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. :::
 
+## Introduction
+
 You now have a package that's ready to submit to CRAN.
 But before you do, there are two important files that you should update: `README.md` which describes what the package does, and `NEWS.md` which describes what's changed since the previous version.
 I recommend using Markdown for these files, because it's useful for them to be readable as both plain text (e.g. in emails) and HTML (e.g. on GitHub, in blog posts).

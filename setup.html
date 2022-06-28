@@ -94,18 +94,19 @@
 <li><a class="" href="description-dependencies.html"><span class="header-section-number">11</span> Dependencies: What does your package need?</a></li>
 <li><a class="" href="license.html"><span class="header-section-number">12</span> Licensing</a></li>
 <li class="book-part">Testing</li>
-<li><a class="" href="tests.html"><span class="header-section-number">13</span> Testing</a></li>
+<li><a class="" href="tests.html"><span class="header-section-number">13</span> Testing basics</a></li>
+<li><a class="" href="test-design.html"><span class="header-section-number">14</span> Designing your test suite</a></li>
+<li><a class="" href="testing-advanced.html"><span class="header-section-number">15</span> Advanced testing techniques</a></li>
 <li class="book-part">Documentation</li>
-<li><a class="" href="doc-intro.html"><span class="header-section-number">14</span> Introduction</a></li>
-<li><a class="" href="man.html"><span class="header-section-number">15</span> Function documentation</a></li>
-<li><a class="" href="vignettes.html"><span class="header-section-number">16</span> Vignettes</a></li>
-<li><a class="" href="important-files.html"><span class="header-section-number">17</span> Other markdown files</a></li>
-<li><a class="" href="website.html"><span class="header-section-number">18</span> Website</a></li>
+<li><a class="" href="man.html"><span class="header-section-number">16</span> Function documentation</a></li>
+<li><a class="" href="vignettes.html"><span class="header-section-number">17</span> Vignettes</a></li>
+<li><a class="" href="important-files.html"><span class="header-section-number">18</span> Other markdown files</a></li>
+<li><a class="" href="website.html"><span class="header-section-number">19</span> Website</a></li>
 <li class="book-part">Maintenance and distribution</li>
-<li><a class="" href="r-cmd-check.html"><span class="header-section-number">19</span> R CMD check</a></li>
-<li><a class="" href="continuous-integration.html"><span class="header-section-number">20</span> Continuous integration</a></li>
-<li><a class="" href="release.html"><span class="header-section-number">21</span> Releasing to CRAN</a></li>
-<li><a class="" href="lifecycle.html"><span class="header-section-number">22</span> Lifecycle</a></li>
+<li><a class="" href="r-cmd-check.html"><span class="header-section-number">20</span> R CMD check</a></li>
+<li><a class="" href="continuous-integration.html"><span class="header-section-number">21</span> Continuous integration</a></li>
+<li><a class="" href="release.html"><span class="header-section-number">22</span> Releasing to CRAN</a></li>
+<li><a class="" href="lifecycle.html"><span class="header-section-number">23</span> Lifecycle</a></li>
 </ul>
 
         <div class="book-extra">
@@ -124,7 +125,10 @@
 <p>To get started, make sure you have the latest version of R (at least 4.2.0, which is the version being used to render this book), then run the following code to get the packages you’ll need:</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"roxygen2"</span>, <span class="st">"testthat"</span>, <span class="st">"knitr"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Make sure you have a recent version of the RStudio integrated development environment (IDE). In fact, consider using the preview version and updating regularly. Compared to the official released version, the preview gives you access to the latest and greatest features and only slightly increases your chances of finding a bug. It is distinct from the more volatile daily build.</p>
+<p>Make sure you have a recent version of the RStudio integrated development environment (IDE).
+In fact, consider using the preview version and updating regularly.
+Compared to the official released version, the preview gives you access to the latest and greatest features and only slightly increases your chances of finding a bug.
+It is distinct from the more volatile daily build.</p>
 <ul>
 <li>Preview version: <a href="https://www.rstudio.com/products/rstudio/download/preview/" class="uri">https://www.rstudio.com/products/rstudio/download/preview/</a>
 </li>
@@ -143,8 +147,12 @@
 <p>“I am large, I contain multitudes.”</p>
 <p>— Walt Whitman, Song of Myself</p>
 </blockquote>
-<p>After 7 years of development, devtools had grown into a rather unwieldy package, making maintenance difficult. Version 2.0.0, released in late 2018, marked the <a href="https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/">conscious uncoupling</a> of devtools, with most functionality moving into seven smaller packages. Through various means, devtools continues to expose all its usual functionality, although it is mostly maintained elsewhere. For example, devtools might provide a wrapper function in order to set user-friendly defaults, introduce helpful interactive behaviour, or to combine functionality from multiple sub-packages.</p>
-<p>What’s our recommended approach to devtools and its constituent packages? It varies, depending on whether you’re working in useR or developeR mode:</p>
+<p>After 7 years of development, devtools had grown into a rather unwieldy package, making maintenance difficult.
+Version 2.0.0, released in late 2018, marked the <a href="https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/">conscious uncoupling</a> of devtools, with most functionality moving into seven smaller packages.
+Through various means, devtools continues to expose all its usual functionality, although it is mostly maintained elsewhere.
+For example, devtools might provide a wrapper function in order to set user-friendly defaults, introduce helpful interactive behaviour, or to combine functionality from multiple sub-packages.</p>
+<p>What’s our recommended approach to devtools and its constituent packages?
+It varies, depending on whether you’re working in useR or developeR mode:</p>
 <ul>
 <li>For interactive use, useRs should attach devtools and think of it as the provider of your favorite functions for package development.</li>
 <li>For programmatic use, such as inside another package, developeRs should NOT depend on devtools, but should instead access functions via the package that is their primary home.
@@ -162,7 +170,11 @@
 <p>If that same functionality is used inside an R package, this is the preferred call:</p>
 <div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pkgload</span><span class="fu">::</span><span class="fu"><a href="https://pkgload.r-lib.org/reference/load_all.html">load_all</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>The usethis package is the one constituent package that more people may be aware of and that they may use directly. It now holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package. All functions in usethis are made available by devtools. So, once you attach devtools, you can use any function in usethis without qualification, i.e. just call <code><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat()</a></code>. If you choose to specify the namespace, such as when working in a more programmatic style, then access usethis functions directly: do <code><a href="https://usethis.r-lib.org/reference/use_testthat.html">usethis::use_testthat()</a></code> instead of <code>devtools::use_testthat()</code>.</p>
+<p>The usethis package is the one constituent package that more people may be aware of and that they may use directly.
+It now holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package.
+All functions in usethis are made available by devtools.
+So, once you attach devtools, you can use any function in usethis without qualification, i.e. just call <code><a href="https://usethis.r-lib.org/reference/use_testthat.html">use_testthat()</a></code>.
+If you choose to specify the namespace, such as when working in a more programmatic style, then access usethis functions directly: do <code><a href="https://usethis.r-lib.org/reference/use_testthat.html">usethis::use_testthat()</a></code> instead of <code>devtools::use_testthat()</code>.</p>
 <div id="personal-startup-configuration" class="section level3" number="3.2.1">
 <h3>
 <span class="header-section-number">3.2.1</span> Personal startup configuration<a class="anchor" aria-label="anchor" href="#personal-startup-configuration"><i class="fas fa-link"></i></a>
@@ -170,16 +182,22 @@
 <p>You can attach devtools like so:</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span></span></code></pre></div>
-<p>But it soon grows aggravating to repeatedly attach devtools in every R session. Therefore, we strongly recommend attaching devtools in your <code>.Rprofile</code> startup file, like so:</p>
+<p>But it soon grows aggravating to repeatedly attach devtools in every R session.
+Therefore, we strongly recommend attaching devtools in your <code>.Rprofile</code> startup file, like so:</p>
 <div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html">suppressMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>For convenience, the function <code><a href="https://usethis.r-lib.org/reference/rprofile-helper.html">use_devtools()</a></code> creates <code>.Rprofile</code>, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen. Another package you may want to handle this way is testthat.</p>
+<p>For convenience, the function <code><a href="https://usethis.r-lib.org/reference/rprofile-helper.html">use_devtools()</a></code> creates <code>.Rprofile</code>, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen.
+Another package you may want to handle this way is testthat.</p>
 <div class="tip">
-<p>In general, it’s a bad idea to attach packages in <code>.Rprofile</code>, as it invites you to create R scripts that don’t reflect all of their dependencies via explicit calls to <code><a href="https://rdrr.io/r/base/library.html">library(foo)</a></code>. But devtools is a workflow package that smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts. Note how we still take care to only attach in interactive sessions.</p>
+<p>In general, it’s a bad idea to attach packages in <code>.Rprofile</code>, as it invites you to create R scripts that don’t reflect all of their dependencies via explicit calls to <code><a href="https://rdrr.io/r/base/library.html">library(foo)</a></code>.
+But devtools is a workflow package that smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts.
+Note how we still take care to only attach in interactive sessions.</p>
 </div>
-<p>usethis consults certain options when, for example, creating R packages <em>de novo</em>. This allows you to specify personal defaults for yourself as a package maintainer or for your preferred license. Here’s an example of a code snippet that could go in <code>.Rprofile</code>:</p>
+<p>usethis consults certain options when, for example, creating R packages <em>de novo</em>.
+This allows you to specify personal defaults for yourself as a package maintainer or for your preferred license.
+Here’s an example of a code snippet that could go in <code>.Rprofile</code>:</p>
 <div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span></span>
 <span>  usethis.full_name <span class="op">=</span> <span class="st">"Jane Doe"</span>,</span>
@@ -201,15 +219,20 @@
 <h2>
 <span class="header-section-number">3.3</span> R build toolchain<a class="anchor" aria-label="anchor" href="#setup-tools"><i class="fas fa-link"></i></a>
 </h2>
-<p>To be fully capable of building R packages from source, you’ll also need a compiler and a few other command line tools. This may not be strictly necessary until you want to build packages containing C or C++ code (the topic of chapter <a href="#src"><strong>??</strong></a>). Especially if you are using RStudio, you can set this aside for now. The IDE will alert you and provide support once you try to do something that requires you to setup your development environment. Read on for advice on doing this yourself.</p>
+<p>To be fully capable of building R packages from source, you’ll also need a compiler and a few other command line tools.
+This may not be strictly necessary until you want to build packages containing C or C++ code (the topic of chapter <a href="#src"><strong>??</strong></a>).
+Especially if you are using RStudio, you can set this aside for now.
+The IDE will alert you and provide support once you try to do something that requires you to setup your development environment.
+Read on for advice on doing this yourself.</p>
 <div id="windows" class="section level3" number="3.3.1">
 <h3>
 <span class="header-section-number">3.3.1</span> Windows<a class="anchor" aria-label="anchor" href="#windows"><i class="fas fa-link"></i></a>
 </h3>
 <p>On Windows the collection of tools needed for building packages from source is called Rtools.</p>
-<p>Rtools is NOT an R package. It is NOT installed with <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages()</a></code>. Instead, download it from <a href="https://cran.r-project.org/bin/windows/Rtools/" class="uri">https://cran.r-project.org/bin/windows/Rtools/</a> and run the installer.</p>
-<p>During the Rtools installation you may see a window asking you to “Select
-Additional Tasks”.</p>
+<p>Rtools is NOT an R package.
+It is NOT installed with <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages()</a></code>.
+Instead, download it from <a href="https://cran.r-project.org/bin/windows/Rtools/" class="uri">https://cran.r-project.org/bin/windows/Rtools/</a> and run the installer.</p>
+<p>During the Rtools installation you may see a window asking you to “Select Additional Tasks”.</p>
 <ul>
 <li>Do <em>not</em> select the box for “Edit the system PATH”. devtools and RStudio should put Rtools on the <code>PATH</code> automatically when it is needed.</li>
 <li>Do select the box for “Save version information to registry”. It should be selected by default.</li>
@@ -222,13 +245,15 @@ Additional Tasks”.</p>
 <p>You need to install the Xcode command line tools, which requires that you <a href="https://developer.apple.com/programs/register/">register as an Apple developer</a> (don’t worry, it’s free).</p>
 <p>Then, in the shell, do:</p>
 <pre class="shell"><code>xcode-select --install</code></pre>
-<p>Alternatively, you can install the current release of full <a href="https://itunes.apple.com/ca/app/xcode/id497799835?mt=12">Xcode from the Mac App Store</a>. This includes a very great deal that you do not need, but it offers the advantage of App Store convenience.</p>
+<p>Alternatively, you can install the current release of full <a href="https://itunes.apple.com/ca/app/xcode/id497799835?mt=12">Xcode from the Mac App Store</a>.
+This includes a very great deal that you do not need, but it offers the advantage of App Store convenience.</p>
 </div>
 <div id="linux" class="section level3" number="3.3.3">
 <h3>
 <span class="header-section-number">3.3.3</span> Linux<a class="anchor" aria-label="anchor" href="#linux"><i class="fas fa-link"></i></a>
 </h3>
-<p>Make sure you’ve installed not only R, but also the R development tools. For example, on Ubuntu (and Debian) you need to install the <code>r-base-dev</code> package.</p>
+<p>Make sure you’ve installed not only R, but also the R development tools.
+For example, on Ubuntu (and Debian) you need to install the <code>r-base-dev</code> package.</p>
 </div>
 <div id="verify-system-prep" class="section level3" number="3.3.4">
 <h3>
