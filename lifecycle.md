@@ -1,5 +1,9 @@
 # Lifecycle
 
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
+:::
+
 ## Version {#description-version}
 
 Formally, an R package version is a sequence of at least two integers separated by either `.` or `-`.
@@ -9,18 +13,9 @@ You can parse a version number with `numeric_version()`.
 
 ```r
 numeric_version("1.9") == numeric_version("1.9.0")
-```
-
-```
-## [1] TRUE
-```
-
-```r
+#> [1] TRUE
 numeric_version("1.9.0") < numeric_version("1.10.0")
-```
-
-```
-## [1] TRUE
+#> [1] TRUE
 ```
 
 For example, a package might have a version 1.9.
@@ -123,16 +118,10 @@ There are good reasons to make backward incompatible changes - if you made a des
     }
     
     fun(1, 2, 3)
-    ```
-    
-    ```
-    ## Warning: 'fun' is deprecated.
-    ## Use 'sum' instead.
-    ## See help("Deprecated")
-    ```
-    
-    ```
-    ## [1] 6
+    #> Warning: 'fun' is deprecated.
+    #> Use 'sum' instead.
+    #> See help("Deprecated")
+    #> [1] 6
     ```
     
     Then, remove the function once you got to `0.7.0` (or if you are
@@ -152,10 +141,7 @@ There are good reasons to make backward incompatible changes - if you made a des
     }
     
     bar(1, 2, 3)
-    ```
-    
-    ```
-    ## Warning: argument y is deprecated; please use z instead.
+    #> Warning: argument y is deprecated; please use z instead.
     ```
 
   * If you're deprecating a lot of code, it can be useful to add a helper 

@@ -1,6 +1,8 @@
 # Function documentation {#man}
 
-
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
+:::
 
 Documentation is one of the most important aspects of a good package: without it, users won't know how to use your package!
 Documentation is also useful for future-you (so you remember what your functions were supposed to do) and for developers extending your package.
@@ -572,7 +574,6 @@ It's also possible to show example code in the text with code blocks, either ```
 #' df <- tibble(x = 1:2, y = list("1", 1:3))
 #' try(df %>% unchop(y))
 ```
-
 
 ## Links and images
 

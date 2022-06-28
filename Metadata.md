@@ -2,7 +2,9 @@
 
 # `DESCRIPTION` and `NAMESPACE` 
 
-
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
+:::
 
 There are two important files that provide metadata about your package `DESCRIPTION` and `NAMESPACE`. The `DESCRIPTION` provides overall metadata about the package, and the `NAMESPACE` describes which functions you use from other packages and you expose to the world. In this chapter, you'll learn the basic structure of these files and some of their simple applications: like the name and title of your package and who wrote it.
 

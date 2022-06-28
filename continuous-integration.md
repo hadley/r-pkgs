@@ -1,5 +1,9 @@
 # Continuous integration
 
+::: {.rmdnote}
+You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don't recommend reading it. You can find the complete first edition at <https://r-pkgs.had.co.nz>.
+:::
+
 ## Checking after every commit with GitHub actions {#gha}
 
 If you're already using GitHub, as described in [git and GitHub](#git), I highly recommend also using GitHub actions. GitHub actions allow you to run code every time you push to GitHub.

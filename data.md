@@ -39,7 +39,7 @@ pryr::mem_used()
 #> 52 MB
 library(nycflights13)
 pryr::mem_used()
-#> 58.5 MB
+#> 58.6 MB
 
 invisible(flights)
 pryr::mem_used()
