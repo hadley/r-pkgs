@@ -109,7 +109,6 @@ status <- function(type) {
     "::: {.rmdnote}\n",
     "You are reading the work-in-progress second edition of R Packages. ",
     "This chapter ", status, ". ",
-    "You can find the complete first edition at <https://r-pkgs.had.co.nz>.\n",
     ":::\n"
   ))
 }
