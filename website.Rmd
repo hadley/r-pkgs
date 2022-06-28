@@ -1,0 +1,11 @@
+# Website
+
+## Logo
+
+Website is also a great way to show off your package logo.
+
+`use_logo()`
+
+Include hexagon spec.
+
+Mention how to get as a sticker.
