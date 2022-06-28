@@ -95,8 +95,8 @@ Behind the scenes, we're executing our own `create_package()` command, but don't
 :::downlit
 
 ```
-#> [32m✔[39m Creating [34m'/tmp/Rtmpbm73eY/regexcite/'[39m
-#> [32m✔[39m Setting active project to [34m'/tmp/Rtmpbm73eY/regexcite'[39m
+#> [32m✔[39m Creating [34m'/tmp/RtmpQCHbfq/regexcite/'[39m
+#> [32m✔[39m Setting active project to [34m'/tmp/RtmpQCHbfq/regexcite'[39m
 #> [32m✔[39m Creating [34m'R/'[39m
 #> [32m✔[39m Writing [34m'DESCRIPTION'[39m
 #> [34mPackage[39m: regexcite
@@ -230,7 +230,7 @@ Click on History (the clock icon in the Git pane) and, if you consented, you wil
 #> [90m# A tibble: 1 × 3[39m
 #>   commit                                   author            message
 #>   [3m[90m<chr>[39m[23m                                    [3m[90m<chr>[39m[23m             [3m[90m<chr>[39m[23m  
-#> [90m1[39m 6c9f140e03fa6708a9471f2c89dae11f4b2fd34f jennybc <jennybc… [90m"[39mIniti…
+#> [90m1[39m 5978ece0d64bcc9c3af255a306067e82ae4ba6ec hadley <hadley@u… [90m"[39mIniti…
 ```
 :::
 
@@ -429,7 +429,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 20.7s
+#> Duration: 23.5s
 #> 
 #> [35m❯ checking DESCRIPTION meta-information ... WARNING[39m
 #>   Non-standard license specification:
@@ -642,7 +642,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 22.5s
+#> Duration: 24.8s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -659,14 +659,14 @@ install()
 
 
 ```
-* checking for file ‘/tmp/Rtmpbm73eY/regexcite/DESCRIPTION’ ... OK
+* checking for file ‘/tmp/RtmpQCHbfq/regexcite/DESCRIPTION’ ... OK
 * preparing ‘regexcite’:
 * checking DESCRIPTION meta-information ... OK
 * checking for LF line-endings in source and make files and shell scripts
 * checking for empty or unneeded directories
 * building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.2.0/lib/R/bin/R CMD INSTALL \
-  /tmp/Rtmpbm73eY/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/RtmpQCHbfq/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
@@ -1094,7 +1094,7 @@ The very best way to render `README.Rmd` is with `build_readme()`, because it ta
 ```r
 build_readme()
 #> [36mℹ[39m Installing [34m[34mregexcite[34m[39m in temporary library
-#> [36mℹ[39m Building [34m[34m/tmp/Rtmpbm73eY/regexcite/README.Rmd[34m[39m
+#> [36mℹ[39m Building [34m[34m/tmp/RtmpQCHbfq/regexcite/README.Rmd[34m[39m
 ```
 
 You can see the rendered `README.md` simply by [visiting regexcite on GitHub](https://github.com/jennybc/regexcite#readme).
@@ -1118,7 +1118,7 @@ check()
 
 ```
 #> [36m── R CMD check results ─────────────────── regexcite 0.0.0.9000 ────[39m
-#> Duration: 23.7s
+#> Duration: 26.3s
 #> 
 #> [32m0 errors ✔[39m | [32m0 warnings ✔[39m | [32m0 notes ✔[39m
 ```
@@ -1134,7 +1134,7 @@ install()
 
 
 ```
-* checking for file ‘/tmp/Rtmpbm73eY/regexcite/DESCRIPTION’ ... OK
+* checking for file ‘/tmp/RtmpQCHbfq/regexcite/DESCRIPTION’ ... OK
 * preparing ‘regexcite’:
 * checking DESCRIPTION meta-information ... OK
 * checking for LF line-endings in source and make files and shell scripts
@@ -1142,7 +1142,7 @@ install()
 Removed empty directory ‘regexcite/tests/testthat/_snaps’
 * building ‘regexcite_0.0.0.9000.tar.gz’
 Running /opt/R/4.2.0/lib/R/bin/R CMD INSTALL \
-  /tmp/Rtmpbm73eY/regexcite_0.0.0.9000.tar.gz --install-tests 
+  /tmp/RtmpQCHbfq/regexcite_0.0.0.9000.tar.gz --install-tests 
 * installing to library ‘/home/runner/work/_temp/Library’
 * installing *source* package ‘regexcite’ ...
 ** using staged installation
