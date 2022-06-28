@@ -488,7 +488,7 @@ Here is a typical sequence of calls when using devtools for package development:
 1. `document()` (if you've made any changes that impact help files or NAMESPACE)
 1. `load_all()`
 1. Run some examples interactively.
-1. `test()` (or `test_file()`)
+1. `test()` (or `test_active_file()`)
 1. `check()`
 
 An interesting question is how frequently and rapidly you move through this development cycle.
