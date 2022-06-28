@@ -6,25 +6,28 @@
 
 
 
-In R, the fundamental unit of shareable code is the package. A package bundles together code, data, documentation, and tests, and is easy to share with others. As of June 2019, there were over 14,000 packages available on the **C**omprehensive **R** **A**rchive **N**etwork, or CRAN, the public clearing house for R packages. This huge variety of packages is one of the reasons that R is so successful: the chances are that someone has already solved a problem that you're working on, and you can benefit from their work by downloading their package.
+In R, the fundamental unit of shareable code is the package. A package bundles together code, data, documentation, and tests, and is easy to share with others.
+As of June 2022, there were over 18,000 packages available on the **C**omprehensive **R** **A**rchive **N**etwork, or CRAN, the public clearing house for R packages.
+This huge variety of packages is one of the reasons that R is so successful:
+the chances are that someone has already solved a problem that you're working on, and you can benefit from their work by downloading their package.
 
-If you're reading this book, you already know how to use packages:
+If you're reading this book, you already know how to work with packages in the following ways:
 
 * You install them from CRAN with `install.packages("x")`.
-* You use them in R with `library("x")`.
+* You use them in R with `library("x")` or `library(x)`.
 * You get help on them with `package?x` and `help(package = "x")`.
 
 The goal of this book is to teach you how to develop packages so that you can write your own, not just use other people's. Why write a package? One compelling reason is that you have code that you want to share with others. Bundling your code into a package makes it easy for other people to use it, because like you, they already know how to use packages. If your code is in a package, any R user can easily download it, install it and learn how to use it.
 
 But packages are useful even if you never share your code. As Hilary Parker says in her [introduction to packages](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/): "Seriously, it doesn't have to be about sharing your code (although that is an added benefit!). It is about saving yourself time." Organising code in a package makes your life easier because packages come with conventions. For example, you put R code in `R/`, you put tests in `tests/` and you put data in `data/`. These conventions are helpful because:
 
-* They save you time --- you don't need to think about the best way to organise
+* They save time --- you don't need to think about the best way to organise
   a project, you can just follow a template.
   
 * Standardised conventions lead to standardised tools --- if you buy into
   R's package conventions, you get many tools for free.
 
-It's even possible to use packages to structure your data analyses, as described by Marwick, Boettiger, and Mullen in [@marwick2018-tas] [@marwick2018-peerj].
+It's even possible to use packages to structure your data analyses (see, e.g., [@marwick2018-tas] [@marwick2018-peerj]), although we won't delve deeply into that use case here.
 
 ## Philosophy {#intro-phil}
 
@@ -35,7 +38,7 @@ This philosophy is realised primarily through the devtools package, which is the
 As always, the goal of devtools is to make package development as painless as possible. It encapsulates the best practices developed by first author Hadley Wickham, initially from years as a prolific solo developer. More recently, he has assembled a team of ~10 developers at RStudio, who collectively look after ~150 open source R packages, including those known as [the tidyverse](https://www.tidyverse.org). The reach of this team allows us to explore the space of all possible mistakes at an extraordinary scale. Fortunately, it also affords us the opportunity to reflect on both the successes and failures, in the company of expert and sympathetic colleagues. We try to develop practices that make life more enjoyable for both the maintainer and users of a package. The devtools meta-package is where these lessons are made concrete.
 
 :::rstudio-tip
-Through the book, we highlight specific ways that RStudio can expedite your package development workflow, in specially formatted sections like this.
+Throughout the book, we highlight specific ways that RStudio can expedite your package development workflow, in specially formatted sections like this.
 :::
 
 devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users. The main alternative is [Emacs Speaks Statistics](http://ess.r-project.org/) (ESS), which is a rewarding environment if you're willing to put in the time to learn Emacs and customise it to your needs. The history of ESS stretches back over 20 years (predating R!), but it's still actively developed and many of the workflows described in this book are also available there. For those loyal to vim, we recommend the [Nvim-R plugin](https://github.com/jalvesaq/Nvim-R).
@@ -44,13 +47,13 @@ Together, devtools and RStudio insulate you from the low-level details of how pa
 
 ## In this book {#intro-outline}
 
-Chapter \@ref(whole-game) runs through the development of a small toy package. It's meant to paint the Big Picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.
+Chapter \@ref(whole-game) runs through the development of a small toy package. It's meant to paint the big picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.
 
 Chapter \@ref(setup) describes how to prepare your system for package development, which has more requirements than simply running R scripts. This includes recommendations on some optional setup that can make your workflow more pleasant, which tends to lead to a higher-quality product.
 
 The basic structure of a package and how that varies across different states is explained in chapter \@ref(package-structure-state).
 
-Chapter \@ref(workflows101) goes over core workflows that come up repeatedly for package developers. This chapter also covers connections between our favored tools, such as devtools/usethis and RStudio, and the philosophies that drive the design of these tools.
+Chapter \@ref(workflows101) goes over core workflows that come up repeatedly for package developers. This chapter also covers connections between our favored tools, such as devtools (and its underlying packages, such as usethis) and RStudio, and the philosophies that drive the design of these tools.
 
 Subsequent chapters of the book go into more details about each package component. They're roughly organised in order of importance:
 
@@ -194,7 +197,7 @@ devtools::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2022-06-27
+#>  date     2022-06-28
 #>  pandoc   2.14.2 @ /usr/bin/ (via rmarkdown)
 #> 
 #> [1m[36m─ Packages ───────────────────────────────────────────────────────[39m[22m
@@ -206,10 +209,9 @@ devtools::session_info()
 #>  callr         3.7.0      [90m2021-04-20[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  cli           3.3.0      [90m2022-04-25[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  crayon        1.5.1      [90m2022-03-26[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  desc          1.4.1      [90m2022-03-06[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  devtools    * 2.4.3      [90m2021-11-30[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  digest        0.6.29     [90m2021-12-01[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  downlit       0.4.0      [90m2021-10-29[39m [90m[1][39m [1m[35mRSPM[39m[22m
+#>  downlit       [1m[35m0.4.1.9000[39m[22m [90m2022-06-28[39m [90m[1][39m [1m[35mGithub (r-lib/downlit@24ccb0b)[39m[22m
 #>  ellipsis      0.3.2      [90m2021-04-29[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  evaluate      0.15       [90m2022-02-18[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  fastmap       1.1.0      [90m2021-01-25[39m [90m[1][39m [1m[35mRSPM[39m[22m
@@ -223,17 +225,16 @@ devtools::session_info()
 #>  magrittr      2.0.3      [90m2022-03-30[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  memoise       2.0.1      [90m2021-11-26[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  pkgbuild      1.3.1      [90m2021-12-20[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  pkgload       1.2.4      [90m2021-11-30[39m [90m[1][39m [1m[35mRSPM[39m[22m
+#>  pkgload       1.3.0      [90m2022-06-27[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  prettyunits   1.1.1      [90m2020-01-24[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  processx      3.6.1      [90m2022-06-17[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  ps            1.7.1      [90m2022-06-18[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  purrr         0.3.4      [90m2020-04-17[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  R6            2.5.1      [90m2021-08-19[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  remotes       2.4.2      [90m2021-11-30[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  rlang         1.0.2      [90m2022-03-04[39m [90m[1][39m [1m[35mRSPM[39m[22m
+#>  rlang         1.0.3      [90m2022-06-27[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  rmarkdown     2.14       [90m2022-04-25[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  roxygen2    * 7.2.0      [90m2022-05-13[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  rprojroot     2.0.3      [90m2022-04-02[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  sass          0.4.1      [90m2022-03-23[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  sessioninfo   1.2.2      [90m2021-12-06[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  stringi       1.7.6      [90m2021-11-29[39m [90m[1][39m [1m[35mRSPM[39m[22m
@@ -241,7 +242,6 @@ devtools::session_info()
 #>  testthat    * 3.1.4      [90m2022-04-26[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  usethis     * 2.1.6      [90m2022-05-25[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  vctrs         0.4.1      [90m2022-04-13[39m [90m[1][39m [1m[35mRSPM[39m[22m
-#>  withr         2.5.0      [90m2022-03-03[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  xfun          0.31       [90m2022-05-10[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  xml2          1.3.3      [90m2021-11-30[39m [90m[1][39m [1m[35mRSPM[39m[22m
 #>  yaml          2.3.5      [90m2022-02-21[39m [90m[1][39m [1m[35mRSPM[39m[22m

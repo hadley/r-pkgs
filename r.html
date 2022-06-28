@@ -275,19 +275,19 @@ Luckily, once you diagnose this problem, it is generally not difficult to fix.</
 </h3>
 <p>The shinybootstrap2 package once had this code below <code>R/</code>:</p>
 <div class="sourceCode" id="cb105"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dataTableDependency</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-  <span class="fu">htmlDependency</span><span class="op">(</span>
-    <span class="st">"datatables"</span>, <span class="st">"1.10.2"</span>,
-    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"www/datatables"</span>, package <span class="op">=</span> <span class="st">"shinybootstrap2"</span><span class="op">)</span><span class="op">)</span>,
-    script <span class="op">=</span> <span class="st">"js/jquery.dataTables.min.js"</span>
-  <span class="op">)</span>,
-  <span class="fu">htmlDependency</span><span class="op">(</span>
-    <span class="st">"datatables-bootstrap"</span>, <span class="st">"1.10.2"</span>,
-    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"www/datatables"</span>, package <span class="op">=</span> <span class="st">"shinybootstrap2"</span><span class="op">)</span><span class="op">)</span>,
-    stylesheet <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"css/dataTables.bootstrap.css"</span>, <span class="st">"css/dataTables.extra.css"</span><span class="op">)</span>,
-    script <span class="op">=</span> <span class="st">"js/dataTables.bootstrap.js"</span>
-  <span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">dataTableDependency</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu">htmlDependency</span><span class="op">(</span></span>
+<span>    <span class="st">"datatables"</span>, <span class="st">"1.10.2"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"www/datatables"</span>, package <span class="op">=</span> <span class="st">"shinybootstrap2"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    script <span class="op">=</span> <span class="st">"js/jquery.dataTables.min.js"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu">htmlDependency</span><span class="op">(</span></span>
+<span>    <span class="st">"datatables-bootstrap"</span>, <span class="st">"1.10.2"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"www/datatables"</span>, package <span class="op">=</span> <span class="st">"shinybootstrap2"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    stylesheet <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"css/dataTables.bootstrap.css"</span>, <span class="st">"css/dataTables.extra.css"</span><span class="op">)</span>,</span>
+<span>    script <span class="op">=</span> <span class="st">"js/dataTables.bootstrap.js"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>So <code>dataTableDependency</code> was an object defined in top-level package code and it depends on some paths obtained via <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>.
 As described in <a href="https://github.com/rstudio/htmltools/issues/22">a GitHub issue</a>,</p>
 <blockquote>
@@ -326,25 +326,25 @@ Users of the installed package could still call <code>show_ansi_colors()</code> 
 But then an un-coloured object would print to screen (the original GitHub issue is <a href="https://github.com/r-lib/crayon/issues/37">r-lib/crayon#37</a>).</p>
 <p>The solution was to compute the display objects with a function at run time (in commit <a href="https://github.com/r-lib/crayon/commit/e2b368ac27331d82154f85299f18efbc36227caa">e2b368a</a>:</p>
 <div class="sourceCode" id="cb107"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">show_ansi_colors</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">colors</span> <span class="op">=</span> <span class="fu">num_colors</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-  <span class="kw">if</span> <span class="op">(</span><span class="va">colors</span> <span class="op">&lt;</span> <span class="fl">8</span><span class="op">)</span> <span class="op">{</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Colors are not supported"</span><span class="op">)</span>
-  <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">colors</span> <span class="op">&lt;</span> <span class="fl">256</span><span class="op">)</span> <span class="op">{</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu">ansi_colors_8</span><span class="op">(</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="fu">ansi_colors_8</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu">ansi_colors_256</span><span class="op">(</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="fu">ansi_colors_256</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-  <span class="op">}</span>
-<span class="op">}</span>
-
-<span class="va">ansi_colors_8</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
-  <span class="co"># code to generate a vector covering basic terminal colors</span>
-<span class="op">}</span>
-  
-<span class="va">ansi_colors_256</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span>
-  <span class="co"># code to generate a vector covering 256 colors</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">show_ansi_colors</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">colors</span> <span class="op">=</span> <span class="fu">num_colors</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">colors</span> <span class="op">&lt;</span> <span class="fl">8</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Colors are not supported"</span><span class="op">)</span></span>
+<span>  <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">colors</span> <span class="op">&lt;</span> <span class="fl">256</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu">ansi_colors_8</span><span class="op">(</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="fu">ansi_colors_8</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu">ansi_colors_256</span><span class="op">(</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="fu">ansi_colors_256</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">ansi_colors_8</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># code to generate a vector covering basic terminal colors</span></span>
+<span><span class="op">}</span></span>
+<span>  </span>
+<span><span class="va">ansi_colors_256</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># code to generate a vector covering 256 colors</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Literally, the same code is used, it is simply pushed down into the body of a function taking no arguments (similar to the shinybootstrap2 example).
 Each reference to, e.g., the <code>ansi_colors_8</code> object is replaced by a call to the <code>ansi_colors_8()</code> function.</p>
 <p>The main takeaway is that functions that assess or expose the capabilities of your package on a user’s system must fully execute on your user’s system.
@@ -358,12 +358,12 @@ It’s fairly easy to accidentally rely on results that were cached at build tim
 Imagine that you want the function <code>foo()</code> in your package to basically be an alias for the function <code>blah()</code> from some other package, e.g. pkgB.
 You might be tempted to do this:</p>
 <div class="sourceCode" id="cb108"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">foo</span> <span class="op">&lt;-</span> <span class="fu">pkgB</span><span class="fu">::</span><span class="va">blah</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">foo</span> <span class="op">&lt;-</span> <span class="fu">pkgB</span><span class="fu">::</span><span class="va">blah</span></span></code></pre></div>
 <p>However, this will cause <code>foo()</code> in your package to reflect the definition of <code>pkgB::blah()</code> at the version present on the machine where the binary package is built (often CRAN), at that moment in time.
 If a bug is discovered in <code>pkgB::blah()</code> and subsequently fixed, your package will still use the older, buggy version, until your package is rebuilt (often by CRAN) and your users upgrade, which is completely out of your control.
 This alternative approach protects you from this:</p>
 <div class="sourceCode" id="cb109"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">foo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="fu">pkgB</span><span class="fu">::</span><span class="fu">blah</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">foo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="fu">pkgB</span><span class="fu">::</span><span class="fu">blah</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
 <p>Now, when your user calls <code>foo()</code>, they are effectively calling <code>pkgB::blah()</code>, at the version installed on <em>their</em> machine at that very moment.</p>
 <p>A real example of this affected an older version of knitr, related to how the default “evaluate” hook was being set to <code><a href="https://rdrr.io/pkg/evaluate/man/evaluate.html">evaluate::evaluate()</a></code> (original issue is <a href="https://github.com/yihui/knitr/issues/1441">yihui/knitr#1441</a>, resolved in commit <a href="https://github.com/yihui/knitr/commit/d6b53e0f15a8afd1de4987a86931ba54f886278d">d6b53e0</a>).</p>
 </div>
@@ -422,12 +422,12 @@ If you expect it to be <code>TRUE</code> (the default), and the user has set it 
 <p>The general pattern is to capture the original state, schedule its eventual restoration “on exit”, then make the state change.
 Some setters, such as <code><a href="https://rdrr.io/r/base/options.html">options()</a></code> or <code><a href="https://rdrr.io/r/graphics/par.html">par()</a></code>, return the old value when you provide a new value, leading to usage that looks like this:</p>
 <div class="sourceCode" id="cb110"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">...</span>
-  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pty <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span>
-  <span class="fu">defer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span>
-  <span class="va">...</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">...</span></span>
+<span>  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pty <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span></span>
+<span>  <span class="fu">defer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers.
 Here a few of the state change helpers in withr that you are most likely to find useful:</p>
 <div class="inline-table"><table class="table table-sm">
@@ -469,24 +469,24 @@ Here a few of the state change helpers in withr that you are most likely to find
 temporarily modified state. (These functions are inspired by how
 <code><a href="https://rdrr.io/r/base/with.html">base::with()</a></code> works.)</p>
 <div class="sourceCode" id="cb111"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span>
-  <span class="co"># imagine lots of code here</span>
-  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">with_options</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>digits <span class="op">=</span> <span class="va">sig_digits</span><span class="op">)</span>,
-    <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
-  <span class="op">)</span>
-  <span class="co"># ... and a lot more code here</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># imagine lots of code here</span></span>
+<span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">with_options</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>digits <span class="op">=</span> <span class="va">sig_digits</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="co"># ... and a lot more code here</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 </li>
 <li>
 <p><code>local_*()</code> functions are best for modifying state “from now until the
 function exits”.</p>
 <div class="sourceCode" id="cb112"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>digits <span class="op">=</span> <span class="va">sig_digits</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
-  <span class="co"># imagine lots of code here</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>digits <span class="op">=</span> <span class="va">sig_digits</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span>  <span class="co"># imagine lots of code here</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 </li>
 </ul>
 <p>Developing code interactively with withr is pleasant, because deferred actions can be scheduled even on the global environment.
@@ -500,21 +500,21 @@ Without this feature, it can be tricky to experiment with code that needs cleanu
 </h3>
 <p>Here is how the general “save, schedule restoration, change” pattern looks when using <code><a href="https://rdrr.io/r/base/on.exit.html">base::on.exit()</a></code>.</p>
 <div class="sourceCode" id="cb113"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">...</span>
-  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pty <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-  <span class="va">...</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">...</span></span>
+<span>  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pty <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Other state changes aren’t available with that sort of setter and you must implement it yourself.</p>
 <div class="sourceCode" id="cb114"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span>, <span class="va">c</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">...</span>
-  <span class="va">scratch_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html">unlink</a></span><span class="op">(</span><span class="va">scratch_file</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/files.html">file.create</a></span><span class="op">(</span><span class="va">scratch_file</span><span class="op">)</span>
-  <span class="va">...</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span>, <span class="va">c</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">...</span></span>
+<span>  <span class="va">scratch_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html">unlink</a></span><span class="op">(</span><span class="va">scratch_file</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/files.html">file.create</a></span><span class="op">(</span><span class="va">scratch_file</span><span class="op">)</span></span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Note that we specify <code>on.exit(..., add = TRUE)</code>, because you almost always want this behaviour, i.e. to <em>add</em> to the list of deferred cleanup tasks rather than to <em>replace</em> them entirely.
 This (and the default value of <code>after</code>) are related to our preference for <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code>, when we’re willing to take a dependency on withr.
 These issues are explored in a <a href="https://withr.r-lib.org/articles/changing-and-restoring-state.html">withr vignette</a>.</p>
@@ -534,24 +534,24 @@ For example, if you separate data preparation and plotting into two functions, o
 </h3>
 <p>Occasionally, packages do need side-effects.
 This is most common if your package talks to an external system — you might need to do some initial setup when the package loads.
-To do that, you can use two special functions: <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code> and <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onAttach()</a></code>.
+To do that, you can use two special functions: <code>.onLoad()</code> and <code>.onAttach()</code>.
 These are called when the package is loaded and attached.
 You’ll learn about the distinction between the two in <a href="namespace.html#namespace">Namespaces</a>.
-For now, you should always use <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code> unless explicitly directed otherwise.</p>
-<p>Some common uses of <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code> and <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onAttach()</a></code> are:</p>
+For now, you should always use <code>.onLoad()</code> unless explicitly directed otherwise.</p>
+<p>Some common uses of <code>.onLoad()</code> and <code>.onAttach()</code> are:</p>
 <ul>
 <li>
 <p>To display an informative message when the package loads. This might make
 usage conditions clear or display package capabilities based on current
 system conditions. Startup messages are one place where you should use
-<code><a href="https://rdrr.io/r/base/ns-hooks.html">.onAttach()</a></code> instead of <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code>. To display startup messages, always
+<code>.onAttach()</code> instead of <code>.onLoad()</code>. To display startup messages, always
 use <code><a href="https://rdrr.io/r/base/message.html">packageStartupMessage()</a></code>, and not <code><a href="https://rdrr.io/r/base/message.html">message()</a></code>. (This allows
 <code><a href="https://rdrr.io/r/base/message.html">suppressPackageStartupMessages()</a></code> to selectively suppress package startup
 messages).</p>
 <div class="sourceCode" id="cb115"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">.onAttach</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/message.html">packageStartupMessage</a></span><span class="op">(</span><span class="st">"Welcome to my package"</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">.onAttach</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html">packageStartupMessage</a></span><span class="op">(</span><span class="st">"Welcome to my package"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 </li>
 <li>
 <p>To set custom options for your package with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>. To avoid conflicts
@@ -561,22 +561,22 @@ has already set.</p>
 <p><em>TODO: update this to reflect current usethis options.</em>
 I use the following code in devtools to set up useful options:</p>
 <div class="sourceCode" id="cb116"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="op">)</span>
-  <span class="va">op.devtools</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-    devtools.path <span class="op">=</span> <span class="st">"~/R-dev"</span>,
-    devtools.install.args <span class="op">=</span> <span class="st">""</span>,
-    devtools.name <span class="op">=</span> <span class="st">"Your name goes here"</span>,
-    devtools.desc.author <span class="op">=</span> <span class="st">"First Last &lt;first.last@example.com&gt; [aut, cre]"</span>,
-    devtools.desc.license <span class="op">=</span> <span class="st">"What license is it under?"</span>,
-    devtools.desc.suggests <span class="op">=</span> <span class="cn">NULL</span>,
-    devtools.desc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span>
-  <span class="op">)</span>
-  <span class="va">toset</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op.devtools</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span><span class="op">)</span>
-  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/any.html">any</a></span><span class="op">(</span><span class="va">toset</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">op.devtools</span><span class="op">[</span><span class="va">toset</span><span class="op">]</span><span class="op">)</span>
-
-  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="va">op.devtools</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
+<span>    devtools.path <span class="op">=</span> <span class="st">"~/R-dev"</span>,</span>
+<span>    devtools.install.args <span class="op">=</span> <span class="st">""</span>,</span>
+<span>    devtools.name <span class="op">=</span> <span class="st">"Your name goes here"</span>,</span>
+<span>    devtools.desc.author <span class="op">=</span> <span class="st">"First Last &lt;first.last@example.com&gt; [aut, cre]"</span>,</span>
+<span>    devtools.desc.license <span class="op">=</span> <span class="st">"What license is it under?"</span>,</span>
+<span>    devtools.desc.suggests <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>    devtools.desc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">toset</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op.devtools</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/any.html">any</a></span><span class="op">(</span><span class="va">toset</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">op.devtools</span><span class="op">[</span><span class="va">toset</span><span class="op">]</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Then devtools functions can use e.g. <code>getOption("devtools.name")</code> to
 get the name of the package author, and know that a sensible default value
 has already been set.</p>
@@ -584,12 +584,12 @@ has already been set.</p>
 <li><p>To register vignette engines with <code><a href="https://rdrr.io/r/tools/vignetteEngine.html">tools::vignetteEngine()</a></code>.
 <em>TODO: update / remove this?</em></p></li>
 </ul>
-<!-- TODO: Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. --><p>As you can see in the examples, <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code> and <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onAttach()</a></code> are called with two arguments: <code>libname</code> and <code>pkgname</code>.
+<!-- TODO: Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. --><p>As you can see in the examples, <code>.onLoad()</code> and <code>.onAttach()</code> are called with two arguments: <code>libname</code> and <code>pkgname</code>.
 They’re rarely used (they’re a holdover from the days when you needed to use <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> to load compiled code).
 They give the path where the package is installed (the “library”), and the name of the package.</p>
-<p>If you use <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code>, consider using <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onUnload()</a></code> to clean up any side effects.
-By convention, <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code> and friends are usually saved in a file called <code>R/zzz.R</code>.
-(Note that <code><a href="https://rdrr.io/r/base/base-defunct.html">.First.lib()</a></code> and <code><a href="https://rdrr.io/r/base/ns-hooks.html">.Last.lib()</a></code> are old versions of <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onLoad()</a></code> and <code><a href="https://rdrr.io/r/base/ns-hooks.html">.onUnload()</a></code> and should no longer be used.)</p>
+<p>If you use <code>.onLoad()</code>, consider using <code>.onUnload()</code> to clean up any side effects.
+By convention, <code>.onLoad()</code> and friends are usually saved in a file called <code>R/zzz.R</code>.
+(Note that <code>.First.lib()</code> and <code>.Last.lib()</code> are old versions of <code>.onLoad()</code> and <code>.onUnload()</code> and should no longer be used.)</p>
 </div>
 </div>
 <div id="constant-health-checks" class="section level2" number="7.6">
@@ -637,12 +637,12 @@ In practice, this means you are limited to the digits 0 to 9, lowercase letters 
 You can use any Unicode character as long as you specify it in the special Unicode escape <code>"\u1234"</code> format.
 The easiest way to find the correct code point is to use <code><a href="https://rdrr.io/pkg/stringi/man/stri_escape_unicode.html">stringi::stri_escape_unicode()</a></code>:</p>
 <div class="sourceCode" id="cb117"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet •"</span>
-<span class="va">y</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet \u2022"</span>
-<span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>
-<span class="co">#&gt; [1] TRUE</span>
-<span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu">stringi</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_escape_unicode.html">stri_escape_unicode</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; This is a bullet \u2022</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet •"</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet \u2022"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu">stringi</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_escape_unicode.html">stri_escape_unicode</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; This is a bullet \u2022</span></span></code></pre></div>
 <p>Sometimes you have the opposite problem.
 You don’t <em>intentionally</em> have any non-ASCII characters in your R code, but automated checks reveal that you do.</p>
 <pre><code>W  checking R files for non-ASCII characters ...
@@ -654,8 +654,8 @@ You don’t <em>intentionally</em> have any non-ASCII characters in your R code,
 <p>The most common offenders are “curly” or “smart” single and double quotes that sneak in through copy/paste.
 The functions <code><a href="https://rdrr.io/r/tools/showNonASCII.html">tools::showNonASCII()</a></code> and <code>tools::showNonASCIIfile(file)</code> help you find the offending file(s) and line(s).</p>
 <div class="sourceCode" id="cb119"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/showNonASCII.html">showNonASCIIfile</a></span><span class="op">(</span><span class="st">"R/foo.R"</span><span class="op">)</span>
-<span class="co">#&gt; 666: #' If you&lt;e2&gt;&lt;80&gt;&lt;99&gt;ve copy/pasted quotes, watch out!</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/showNonASCII.html">showNonASCIIfile</a></span><span class="op">(</span><span class="st">"R/foo.R"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 666: #' If you&lt;e2&gt;&lt;80&gt;&lt;99&gt;ve copy/pasted quotes, watch out!</span></span></code></pre></div>
 
 </div>
 </div>
