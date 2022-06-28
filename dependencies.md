@@ -269,8 +269,7 @@ There are three other fields that allow you to express more specialised dependen
     -   The tidyverse packages officially support the current R version, the devel version, and four previous versions. We proactively test this support in the standard build matrix we use for continuous integration.
     -   Packages with a lower level of use may not need this level of rigour. The main takeaway is: if you state a minimum of R, you should have a reason and you should take reasonable measures to test your claim regularly.
 
--   `LinkingTo`: packages listed here rely on C or C++ code in another package.
-    You'll learn more about `LinkingTo` in Chapter \@ref(src).
+-   `LinkingTo`: if your package uses C or C++ code from another package, you need to list it here.
 
 -   `Enhances`: packages listed here are "enhanced" by your package.
     Typically, this means you provide methods for classes defined in another package (a sort of reverse `Suggests`).
@@ -463,7 +462,7 @@ To illustrate, consider what happens when someone changes the definition of a fu
 nrow
 #> function (x) 
 #> dim(x)[1L]
-#> <bytecode: 0x55f865df4d00>
+#> <bytecode: 0x55ee3b4f6d00>
 #> <environment: namespace:base>
 ```
 

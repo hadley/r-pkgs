@@ -170,11 +170,6 @@ library(devtools)
 
 ## `use_git()`
 
-::: tip
-The use of Git or another version control system is optional, but a recommended practice in the long-term.
-We explain its importance in Chapter \@ref(git).
-:::
-
 The regexcite directory is an R source package and an RStudio Project.
 Now we make it also a Git repository, with `use_git()`.
 

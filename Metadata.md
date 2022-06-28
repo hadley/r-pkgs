@@ -195,8 +195,7 @@ Every package must have at least one author (`aut`) and one maintainer (`cre`) (
 The maintainer (`cre`) must have an email address.
 These fields are used to generate the basic citation for the package (e.g. `citation("pkgname")`).
 Only people listed as authors will be included in the auto-generated citation.
-There are a few extra details if you're including code that other people have written.
-Since this typically occurs when you're wrapping a C library, it's discussed in Chapter \@ref(src).
+There are a few extra details if you're including code that other people have written, which you can learn about in Section \@ref(code-you-bundle).
 
 An older, still valid approach is to have separate `Maintainer` and `Author` fields in `DESCRIPTION`.
 However, we strongly recommend the more modern approach of `Authors@R` and the `person()` function, because it offers richer metadata for various downstream uses.
@@ -226,7 +225,6 @@ A few other `DESCRIPTION` fields are heavily used and worth knowing about:
 
 -   `Collate` controls the order in which R files are sourced.
     This only matters if your code has side-effects; most commonly because you're using S4.
-    This is described in more depth in Section \@ref(man-s4).
 
 -   `Version` is really important as a way of communicating where your package is in its lifecycle and how it is evolving over time.
     Learn more in Chapter \@ref(lifecycle).
@@ -293,7 +291,6 @@ And four describe imports:
 -   `import()`: import all functions from a package.
 -   `importFrom()`: import selected functions (including S4 generics).
 -   `importClassesFrom()`, `importMethodsFrom()`: import S4 classes and methods.
--   `useDynLib()`: import a function from C. This is described in more detail in [compiled code](#src).
 
 I don't recommend writing these directives by hand.
 Instead, in this chapter you'll learn how to generate the `NAMESPACE` file with roxygen2.
