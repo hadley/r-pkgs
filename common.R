@@ -95,3 +95,21 @@ pretty_install <- function(...) {
   output <- grep("^(\\s*|[-|])$", output, value = TRUE, invert = TRUE)
   c(output, out$messages)
 }
+
+status <- function(type) {
+  status <- switch(type,
+    polishing = "should be readable but is currently undergoing final polishing",
+    restructuring = "is undergoing heavy restructuring and may be confusing or incomplete",
+    drafting = "is currently a dumping ground for ideas, and we don't recommend reading it",
+    complete = "is largely complete and just needs final proof reading",
+    stop("Invalid `type`", call. = FALSE)
+  )
+
+  knitr::asis_output(paste0(
+    "::: {.rmdnote}\n",
+    "You are reading the work-in-progress second edition of R Packages. ",
+    "This chapter ", status, ". ",
+    "You can find the complete first edition at <https://r-pkgs.had.co.nz>.\n",
+    ":::\n"
+  ))
+}
