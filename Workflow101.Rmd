@@ -4,8 +4,7 @@
 source("common.R")
 ```
 
-Having peeked under the hood of R packages and libraries in Chapter \@ref(package-structure-state), here
-we provide the basic workflows for creating a package and moving it through the different states that come up during development.
+Having peeked under the hood of R packages and libraries in Chapter \@ref(package-structure-state), here we provide the basic workflows for creating a package and moving it through the different states that come up during development.
 
 ## Create a package
 
@@ -13,90 +12,102 @@ we provide the basic workflows for creating a package and moving it through the 
 
 <!-- TODO: would love to put some version of the "geeks and repetitive tasks" figure here, but it would take more time than I want to spend right now to figure out original source, licensing, etc. Revisit when I do a concentrated push on figures. -->
 
-Many packages are born out of one person's frustration at some common task that should be easier. How should you decide whether something is package-worthy? There's no definitive answer, but it's helpful to appreciate at least two types of payoff:
+Many packages are born out of one person's frustration at some common task that should be easier.
+How should you decide whether something is package-worthy?
+There's no definitive answer, but it's helpful to appreciate at least two types of payoff:
 
-  * Product: your life will be better when this functionality is implemented
-    formally, in a package.
-  * Process: greater mastery of R will make you more effective in your work.
-  
-If all you care about is the existence of a product, then your main goal is to navigate the space of existing packages. Silge, Nash, and Graves organized a survey and sessions around this at useR! 2017 and their write up for the R Journal [@silge-nash-graves] provides a comprehensive roundup of resources.
+-   Product: your life will be better when this functionality is implemented formally, in a package.
+-   Process: greater mastery of R will make you more effective in your work.
 
-If you are looking for ways to increase your R mastery, you should still educate yourself about the landscape. But there are plenty of good reasons to make your own package, even if there is relevant prior work. The way experts got that way is by actually building things, often very basic things, and you deserve the same chance to learn by tinkering. If you're only allowed to work on things that have never been touched, you're likely looking at problems that are either very obscure or very difficult.
+If all you care about is the existence of a product, then your main goal is to navigate the space of existing packages.
+Silge, Nash, and Graves organized a survey and sessions around this at useR!
+2017 and their write up for the R Journal [@silge-nash-graves] provides a comprehensive roundup of resources.
 
-Finally, it's also valid to evaluate the suitability of existing tools on the basis of user interface, defaults, and edge case behaviour. If a package can technically do what you need, but it's very unergonomic for your use case, it's fair to say it doesn't meet your needs. In this case, it can still make sense for you to develop your own implementation or to write wrapper functions that hide the sharp edges.
+If you are looking for ways to increase your R mastery, you should still educate yourself about the landscape.
+But there are plenty of good reasons to make your own package, even if there is relevant prior work.
+The way experts got that way is by actually building things, often very basic things, and you deserve the same chance to learn by tinkering.
+If you're only allowed to work on things that have never been touched, you're likely looking at problems that are either very obscure or very difficult.
 
-If your work falls into a well-defined domain, educate yourself about the existing R packages, even if you've resolved to create your own package. Do they follow specific design patterns? Are there specific data structures that are common as the primary input and output? For example, there is a very active R community around spatial data analysis ([r-spatial.org](https://www.r-spatial.org)) that has successfully self-organised to promote greater consistency across packages with different maintainers. In modeling, the [hardhat package](https://hardhat.tidymodels.org) provides scaffolding for creating a modeling package that plays well with the [tidymodels](https://www.tidymodels.org) ecosystem. Your package will get more usage and will need less documentation if it fits nicely into the surrounding landscape.
+Finally, it's also valid to evaluate the suitability of existing tools on the basis of user interface, defaults, and edge case behaviour.
+If a package can technically do what you need, but it's very unergonomic for your use case, it's fair to say it doesn't meet your needs.
+In this case, it can still make sense for you to develop your own implementation or to write wrapper functions that hide the sharp edges.
+
+If your work falls into a well-defined domain, educate yourself about the existing R packages, even if you've resolved to create your own package.
+Do they follow specific design patterns?
+Are there specific data structures that are common as the primary input and output?
+For example, there is a very active R community around spatial data analysis ([r-spatial.org](https://www.r-spatial.org)) that has successfully self-organised to promote greater consistency across packages with different maintainers.
+In modeling, the [hardhat package](https://hardhat.tidymodels.org) provides scaffolding for creating a modeling package that plays well with the [tidymodels](https://www.tidymodels.org) ecosystem.
+Your package will get more usage and will need less documentation if it fits nicely into the surrounding landscape.
 
 ### Name your package {#naming}
 
-> "There are only two hard things in Computer Science: cache invalidation and 
-> naming things." 
+> "There are only two hard things in Computer Science: cache invalidation and naming things."
 >
 > --- Phil Karlton
 
-Before you can create your package, you need to come up with a name for it. This can be the hardest part of creating a package! (Not least because no one can automate it for you.)
+Before you can create your package, you need to come up with a name for it.
+This can be the hardest part of creating a package!
+(Not least because no one can automate it for you.)
 
 #### Formal requirements
 
 There are three formal requirements:
 
-  1. The name can only consist of letters, numbers, and periods, i.e., `.`.
-  1. It must start with a letter.
-  1. It cannot end with a period.
-  
-Unfortunately, this means you can't use either hyphens or underscores, i.e., `-` or `_`, in your package name. We recommend against using periods in package names, due to confusing associations with file extensions and S3 methods.
+1.  The name can only consist of letters, numbers, and periods, i.e., `.`.
+2.  It must start with a letter.
+3.  It cannot end with a period.
+
+Unfortunately, this means you can't use either hyphens or underscores, i.e., `-` or `_`, in your package name.
+We recommend against using periods in package names, due to confusing associations with file extensions and S3 methods.
 
 #### Pragmatic advice
 
-If you plan to share your package with others, it's worth spending a few minutes to come up with a good name. Here are some things to consider:
+If you plan to share your package with others, it's worth spending a few minutes to come up with a good name.
+Here are some things to consider:
 
-* Pick a unique name that's easy to Google. This makes it easy for potential
-  users to find your package (and associated resources) and for you to see who's
-  using it.
-  
-* Don't pick a name that's already in use on CRAN or Bioconductor. You may
-  also want to consider some other types of name collision:
-  - Is there an in-development package maturing on, say, GitHub that already
-    has some history and seems to be heading towards release?
-  - Is this name already used for another piece of software or for a library or
-    framework in, e.g., the Python or JavaScript ecosystem?
+-   Pick a unique name that's easy to Google.
+    This makes it easy for potential users to find your package (and associated resources) and for you to see who's using it.
 
-* Avoid using both upper and lower case letters: doing so makes the package name
-  hard to type and even harder to remember. For example, it's hard to remember
-  if it's Rgtk2 or RGTK2 or RGtk2.
-  
-* Give preference to names that are pronounceable, so people are comfortable
-  talking about your package and have a way to hear it inside their head.
+-   Don't pick a name that's already in use on CRAN or Bioconductor.
+    You may also want to consider some other types of name collision:
 
-* Find a word that evokes the problem and modify it so that it's unique:
+    -   Is there an in-development package maturing on, say, GitHub that already has some history and seems to be heading towards release?
+    -   Is this name already used for another piece of software or for a library or framework in, e.g., the Python or JavaScript ecosystem?
 
-  - lubridate makes dates and times easier.
-  - rvest "harvests" the content from web pages.
-  - r2d3 provides utilities for working with D3 visualisations.
-  - forcats is an anagram of factors, which we use __for__ <b>cat</b>egorical data.
+-   Avoid using both upper and lower case letters: doing so makes the package name hard to type and even harder to remember.
+    For example, it's hard to remember if it's Rgtk2 or RGTK2 or RGtk2.
 
-* Use abbreviations: 
+-   Give preference to names that are pronounceable, so people are comfortable talking about your package and have a way to hear it inside their head.
 
-  - Rcpp = R + C++ (plus plus)
-  - brms = Bayesian Regression Models using Stan
+-   Find a word that evokes the problem and modify it so that it's unique:
 
-* Add an extra R: 
+    -   lubridate makes dates and times easier.
+    -   rvest "harvests" the content from web pages.
+    -   r2d3 provides utilities for working with D3 visualisations.
+    -   forcats is an anagram of factors, which we use **for** <b>cat</b>egorical data.
 
-  - stringr provides string tools.
-  - beepr plays notification sounds.
-  - callr calls R, from R.
-  
-* Don't get sued.
+-   Use abbreviations:
 
-  - If you're creating a package that talks to a commercial service, check the
-    branding guidelines. For example, rDrop isn't called rDropbox because
-    Dropbox prohibits any applications from using the full trademarked name.
-    
-Nick Tierney presents a fun typology of package names in his [Naming Things](https://www.njtierney.com/post/2018/06/20/naming-things/) blog post; see that for more inspiring examples. He also has some experience with renaming packages, so the post [So, you’ve decided to change your r package name](https://www.njtierney.com/post/2017/10/27/change-pkg-name/) is a good resource if you don't get this right the first time.
-  
+    -   Rcpp = R + C++ (plus plus)
+    -   brms = Bayesian Regression Models using Stan
+
+-   Add an extra R:
+
+    -   stringr provides string tools.
+    -   beepr plays notification sounds.
+    -   callr calls R, from R.
+
+-   Don't get sued.
+
+    -   If you're creating a package that talks to a commercial service, check the branding guidelines. For example, rDrop isn't called rDropbox because Dropbox prohibits any applications from using the full trademarked name.
+
+Nick Tierney presents a fun typology of package names in his [Naming Things](https://www.njtierney.com/post/2018/06/20/naming-things/) blog post; see that for more inspiring examples.
+He also has some experience with renaming packages, so the post [So, you've decided to change your r package name](https://www.njtierney.com/post/2017/10/27/change-pkg-name/) is a good resource if you don't get this right the first time.
+
 #### Use the available package
 
-It is impossible to abide by all of the above suggestions simultaneously, so obviously you will need to make some trade-offs. The [available package](https://cran.r-project.org/package=available) has a function called `available()` that helps you evaluate a potential package name from many angles:
+It is impossible to abide by all of the above suggestions simultaneously, so obviously you will need to make some trade-offs.
+The [available package](https://cran.r-project.org/package=available) has a function called `available()` that helps you evaluate a potential package name from many angles:
 
 ```{r, eval = FALSE}
 library(available)
@@ -118,37 +129,36 @@ available("doofus")
 
 `available::available()` does the following:
 
-* Checks for validity.
-* Checks availability on CRAN, Bioconductor, and beyond.
-* Searches various websites to help you discover any unintended meanings. In an
-  interactive session, the URLs you see above are opened in browser tabs.
-* Attempts to report whether name has positive or negative sentiment.
+-   Checks for validity.
+-   Checks availability on CRAN, Bioconductor, and beyond.
+-   Searches various websites to help you discover any unintended meanings. In an interactive session, the URLs you see above are opened in browser tabs.
+-   Attempts to report whether name has positive or negative sentiment.
 
 ### Package creation {#creating}
 
 Once you've come up with a name, there are two ways to create the package.
 
-  * Call `usethis::create_package()`.
-  * In RStudio, do *File > New Project > New Directory > R Package*. This
-    ultimately calls `usethis::create_package()`, so really there's just one
-    way.
+-   Call `usethis::create_package()`.
+-   In RStudio, do *File \> New Project \> New Directory \> R Package*. This ultimately calls `usethis::create_package()`, so really there's just one way.
 
-*TODO: revisit when I tackle usethis + RStudio project templates https://github.com/r-lib/usethis/issues/770. In particular, contemplate whether to reinstate any screenshot-y coverage of RStudio workflows here.*
+*TODO: revisit when I tackle usethis + RStudio project templates <https://github.com/r-lib/usethis/issues/770>. In particular, contemplate whether to reinstate any screenshot-y coverage of RStudio workflows here.*
 
 This produces the smallest possible *working* package, with three components:
 
-1. An `R/` directory, which you'll learn about in [R code](#r).
+1.  An `R/` directory, which you'll learn about in [R code](#r).
 
-1. A basic `DESCRIPTION` file, which you'll learn about in
-  [package metadata](#description).
+2.  A basic `DESCRIPTION` file, which you'll learn about in [package metadata](#description).
 
-1. A basic `NAMESPACE` file, which you'll learn about in 
-   [the namespace](#namespace).
+3.  A basic `NAMESPACE` file, which you'll learn about in [the namespace](#namespace).
 
-It may also include an RStudio project file, `pkgname.Rproj`, that makes your package easy to use with RStudio, as described below. Basic `.Rbuildignore` and `.gitignore` files are also left behind.
+It may also include an RStudio project file, `pkgname.Rproj`, that makes your package easy to use with RStudio, as described below.
+Basic `.Rbuildignore` and `.gitignore` files are also left behind.
 
-Don’t use `package.skeleton()` to create a package. Because this function comes with R, you might be tempted to use it, but it creates a package that immediately throws errors with `R CMD build`. It anticipates a different development process than we use here, so repairing this broken initial state just makes unnecessary work for people who use devtools (and, especially, roxygen2). Use `create_package()`.
-    
+Don't use `package.skeleton()` to create a package.
+Because this function comes with R, you might be tempted to use it, but it creates a package that immediately throws errors with `R CMD build`.
+It anticipates a different development process than we use here, so repairing this broken initial state just makes unnecessary work for people who use devtools (and, especially, roxygen2).
+Use `create_package()`.
+
 ### Where should you `create_package()`? {#where-source-package}
 
 The main and only required argument to `create_package()` is the `path` where your new package will live:
@@ -157,91 +167,101 @@ The main and only required argument to `create_package()` is the `path` where yo
 create_package("path/to/package/pkgname")
 ```
 
-Remember that this is where your package lives in its __source__ form (section \@ref(source-package)), not in its __installed__ form (section \@ref(installed-package)). Installed packages live in a __library__ and we discussed conventional setups for libraries in section \@ref(library).
+Remember that this is where your package lives in its **source** form (section \@ref(source-package)), not in its **installed** form (section \@ref(installed-package)).
+Installed packages live in a **library** and we discussed conventional setups for libraries in section \@ref(library).
 
-Where should you keep source packages? The main principle is that this location should be distinct from where installed packages live. In the absence of external considerations, a typical user should designate a directory inside their home directory for R (source) packages. We discussed this with colleagues and the source of some of your favorite R packages lives inside directories like `~/rrr/`, `~/documents/tidyverse/`, `~/r/packages/`, or `~/pkg/`. Some of us use one directory for this, others divide source packages among a few directories based on their development role (contributor vs. not), GitHub organization (tidyverse vs r-lib), development stage (active vs. not), and so on.
+Where should you keep source packages?
+The main principle is that this location should be distinct from where installed packages live.
+In the absence of external considerations, a typical user should designate a directory inside their home directory for R (source) packages.
+We discussed this with colleagues and the source of some of your favorite R packages lives inside directories like `~/rrr/`, `~/documents/tidyverse/`, `~/r/packages/`, or `~/pkg/`.
+Some of us use one directory for this, others divide source packages among a few directories based on their development role (contributor vs. not), GitHub organization (tidyverse vs r-lib), development stage (active vs. not), and so on.
 
-The above probably reflects that we are primarily tool-builders. An academic researcher might organize their files around individual publications, whereas a data scientist might organize around data products and reports. There is no particular technical or traditional reason for one specific approach. As long as you keep a clear distinction between source and installed packages, just pick a strategy that works within your overall system for file organization, and use it consistently.
+The above probably reflects that we are primarily tool-builders.
+An academic researcher might organize their files around individual publications, whereas a data scientist might organize around data products and reports.
+There is no particular technical or traditional reason for one specific approach.
+As long as you keep a clear distinction between source and installed packages, just pick a strategy that works within your overall system for file organization, and use it consistently.
 
 ## RStudio Projects {#projects}
 
-devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users. To be clear, you can use devtools without using RStudio and you can develop packages in RStudio without using devtools. But there is a special, two-way relationship that makes it very rewarding to use devtools and RStudio together.
+devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users.
+To be clear, you can use devtools without using RStudio and you can develop packages in RStudio without using devtools.
+But there is a special, two-way relationship that makes it very rewarding to use devtools and RStudio together.
 
-:::rstudio-tip
-An RStudio **Project**, with a capital "P", is a regular directory on your computer that includes some (mostly hidden) RStudio infrastructure to facilitate your work on one or more **projects**, with a lowercase "p". A project might be an R package, a data analysis, a Shiny app, a book, a blog, etc.
+::: rstudio-tip
+An RStudio **Project**, with a capital "P", is a regular directory on your computer that includes some (mostly hidden) RStudio infrastructure to facilitate your work on one or more **projects**, with a lowercase "p".
+A project might be an R package, a data analysis, a Shiny app, a book, a blog, etc.
 :::
 
 ### Benefits of RStudio Projects
 
-From section \@ref(source-package), you already know that a source package lives in a directory on your computer. We strongly recommend that each source package is also an RStudio Project. Here are some of the payoffs:
+From section \@ref(source-package), you already know that a source package lives in a directory on your computer.
+We strongly recommend that each source package is also an RStudio Project.
+Here are some of the payoffs:
 
-* Projects are very "launch-able". It's easy to fire up a fresh instance of
-  RStudio in a Project, with the file browser and working directory set exactly
-  the way you need, ready for work.
-  
-* Each Project is isolated; code run in one Project does not affect any other
-  Project.
-  - You can have several RStudio Projects open at once and code
-    executed in Project A does not have any effect on the R session and
-    workspace of Project B.
-    
-* You get handy code navigation tools like `F2` to jump to a function definition
-  and `Ctrl + .` to look up functions or files by name.
+-   Projects are very "launch-able".
+    It's easy to fire up a fresh instance of RStudio in a Project, with the file browser and working directory set exactly the way you need, ready for work.
 
-* You get useful keyboard shortcuts and a clickable interface for common package
-  development tasks, like generating documentation, running tests, or checking
-  the entire package.
-    
+-   Each Project is isolated; code run in one Project does not affect any other Project.
+
+    -   You can have several RStudio Projects open at once and code executed in Project A does not have any effect on the R session and workspace of Project B.
+
+-   You get handy code navigation tools like `F2` to jump to a function definition and `Ctrl + .` to look up functions or files by name.
+
+-   You get useful keyboard shortcuts and a clickable interface for common package development tasks, like generating documentation, running tests, or checking the entire package.
+
     ```{r, echo = FALSE}
     knitr::include_graphics("images/keyboard-shortcuts.png")
     ```
- 
-:::rstudio-tip
-To see the most useful keyboard shortcuts, press `Alt + Shift + K` or use *Help > Keyboard Shortcuts Help*.
+
+::: rstudio-tip
+To see the most useful keyboard shortcuts, press `Alt + Shift + K` or use *Help \> Keyboard Shortcuts Help*.
 :::
 
-:::rstudio-tip
-Follow @[rstudiotips](https://twitter.com/rstudiotips) on Twitter for a regular dose of RStudio tips and tricks.
+::: rstudio-tip
+Follow \@[rstudiotips](https://twitter.com/rstudiotips) on Twitter for a regular dose of RStudio tips and tricks.
 :::
 
 ### How to get an RStudio Project
 
-If you follow our recommendation to create new packages with `create_package()`, this takes care of itself. Each new package will also be an RStudio Project, if you're working from RStudio.
+If you follow our recommendation to create new packages with `create_package()`, this takes care of itself.
+Each new package will also be an RStudio Project, if you're working from RStudio.
 
 There are various ways to designate the directory of a pre-existing source package as an RStudio Project:
 
-  * In RStudio, do *File > New Project > Existing Directory*.
-  * Call `create_package()` with the path to the pre-existing R source package.
-  * Call `usethis::use_rstudio()`, with the active usethis project set to an
-    existing R package. In practice, this probably means you just need to make
-    sure working directory is inside the pre-existing package.
-    
+-   In RStudio, do *File \> New Project \> Existing Directory*.
+-   Call `create_package()` with the path to the pre-existing R source package.
+-   Call `usethis::use_rstudio()`, with the active usethis project set to an existing R package. In practice, this probably means you just need to make sure working directory is inside the pre-existing package.
+
 ### What makes an RStudio Project?
 
-A directory that is an RStudio Project will contain an `.Rproj` file. Typically, if the directory is named "foo", the Project file is `foo.Rproj`. And if that directory is also an R package, then the package name is usually also "foo". The path of least resistance is to make all of these names coincide and to NOT nest your package inside a subdirectory inside the Project. If you settle on a different workflow, just know it may feel like you are fighting with the tools.
+A directory that is an RStudio Project will contain an `.Rproj` file.
+Typically, if the directory is named "foo", the Project file is `foo.Rproj`.
+And if that directory is also an R package, then the package name is usually also "foo".
+The path of least resistance is to make all of these names coincide and to NOT nest your package inside a subdirectory inside the Project.
+If you settle on a different workflow, just know it may feel like you are fighting with the tools.
 
-An `.Rproj` file is just a text file. Here's the default project file used by usethis:
+An `.Rproj` file is just a text file.
+Here's the default project file used by usethis:
 
-```
-Version: 1.0
+    Version: 1.0
 
-RestoreWorkspace: No
-SaveWorkspace: No
-AlwaysSaveHistory: Default
+    RestoreWorkspace: No
+    SaveWorkspace: No
+    AlwaysSaveHistory: Default
 
-EnableCodeIndexing: Yes
-Encoding: UTF-8
+    EnableCodeIndexing: Yes
+    Encoding: UTF-8
 
-AutoAppendNewline: Yes
-StripTrailingWhitespace: Yes
+    AutoAppendNewline: Yes
+    StripTrailingWhitespace: Yes
 
-BuildType: Package
-PackageUseDevtools: Yes
-PackageInstallArgs: --no-multiarch --with-keep.source
-PackageRoxygenize: rd,collate,namespace
-```
+    BuildType: Package
+    PackageUseDevtools: Yes
+    PackageInstallArgs: --no-multiarch --with-keep.source
+    PackageRoxygenize: rd,collate,namespace
 
-You don't need to modify this file by hand. Instead, use the interface available via *Tools > Project Options* or *Project Options* in the Projects menu in the top-right corner.
+You don't need to modify this file by hand.
+Instead, use the interface available via *Tools \> Project Options* or *Project Options* in the Projects menu in the top-right corner.
 
 *TODO: update these and deal with layout.*
 
@@ -257,23 +277,30 @@ knitr::include_graphics("images/project-options-2.png")
 
 Double-click the `foo.Rproj` file in macOS's Finder or Windows Explorer to launch the foo Project in RStudio.
 
-You can also launch Projects from within RStudio via *File > Open Project (in New Session)* or the Projects menu in the top-right corner.
+You can also launch Projects from within RStudio via *File \> Open Project (in New Session)* or the Projects menu in the top-right corner.
 
-If you use a productivity or launcher app, you can probably configure it to do something delightful for `.Rproj` files. We both use Alfred for this ^[(ref:alfred)], which is macOS only, but similar tools exist for Windows. In fact, this is a very good reason to use a productivity app in the first place.
+If you use a productivity or launcher app, you can probably configure it to do something delightful for `.Rproj` files.
+We both use Alfred for this [^workflow101-1], which is macOS only, but similar tools exist for Windows.
+In fact, this is a very good reason to use a productivity app in the first place.
 
-(ref:alfred) Specifically, we configure Alfred to favor `.Rproj` files in its search results when proposing apps or files to open. To register the `.Rproj` file type with Alfred, go to *Preferences > Features > Default Results > Advanced*. Drag any `.Rproj` file onto this space and then close.
+[^workflow101-1]: (ref:alfred)
 
-It is very normal -- and productive! -- to have multiple Projects open at once.
+(ref:alfred) Specifically, we configure Alfred to favor `.Rproj` files in its search results when proposing apps or files to open. To register the `.Rproj` file type with Alfred, go to *Preferences \> Features \> Default Results \> Advanced*. Drag any `.Rproj` file onto this space and then close.
+
+It is very normal -- and productive!
+-- to have multiple Projects open at once.
 
 ### RStudio Project vs. active usethis project
 
-You will notice that most usethis functions don't take a path: they operate on the files in the "active usethis project". The usethis package assumes that 95% of the time all of these coincide:
+You will notice that most usethis functions don't take a path: they operate on the files in the "active usethis project".
+The usethis package assumes that 95% of the time all of these coincide:
 
-  * The current RStudio Project, if using RStudio.
-  * The active usethis project.
-  * Current working directory for the R process.
-  
-If things seem funky, call `proj_sitrep()` to get a "situation report". This will identify peculiar situations and propose ways to get back to a happier state.
+-   The current RStudio Project, if using RStudio.
+-   The active usethis project.
+-   Current working directory for the R process.
+
+If things seem funky, call `proj_sitrep()` to get a "situation report".
+This will identify peculiar situations and propose ways to get back to a happier state.
 
 ```{r eval = FALSE}
 # these should usually be the same (or unset)
@@ -285,25 +312,26 @@ proj_sitrep()
 
 ## Working directory and filepath discipline
 
-As you develop your package, you will be executing R code. This will be a mix of workflow calls (e.g., `document()` or `test()`) and *ad hoc* calls that help you write your functions, examples, and tests. We *strongly recommend* that you leave the working directory of your R process set to the top-level of the source package.
+As you develop your package, you will be executing R code.
+This will be a mix of workflow calls (e.g., `document()` or `test()`) and *ad hoc* calls that help you write your functions, examples, and tests.
+We *strongly recommend* that you leave the working directory of your R process set to the top-level of the source package.
 
-If you're totally new to package development, you don't have much basis for supporting or resisting this proposal. But those with some experience may find it somewhat upsetting. How are we supposed to express paths when working in subdirectories, like `tests/`? As it becomes relevant, we'll show you how to exploit path-building helpers, such as `testthat::test_path()`, that determine paths at execution time.
+If you're totally new to package development, you don't have much basis for supporting or resisting this proposal.
+But those with some experience may find it somewhat upsetting.
+How are we supposed to express paths when working in subdirectories, like `tests/`?
+As it becomes relevant, we'll show you how to exploit path-building helpers, such as `testthat::test_path()`, that determine paths at execution time.
 
-The basic idea is that by leaving working directory alone, you are encouraged to write paths that convey intent explicitly ("read `foo.csv` from the test directory") instead of implicitly ("read `foo.csv` from current working directory, which I *think* is going to be the test directory"). A sure sign of reliance on implicit paths is incessant fiddling with your working directory, because you're using `setwd()` to manually fulfill the assumptions that are implicit in your paths.
+The basic idea is that by leaving working directory alone, you are encouraged to write paths that convey intent explicitly ("read `foo.csv` from the test directory") instead of implicitly ("read `foo.csv` from current working directory, which I *think* is going to be the test directory").
+A sure sign of reliance on implicit paths is incessant fiddling with your working directory, because you're using `setwd()` to manually fulfill the assumptions that are implicit in your paths.
 
-This mentality can design away a whole class of path headaches and makes day-to-day development more pleasant as well. There are two reasons why implicit paths are hard to get right:
+This mentality can design away a whole class of path headaches and makes day-to-day development more pleasant as well.
+There are two reasons why implicit paths are hard to get right:
 
-  * Recall the different forms that a package can take during the development
-    cycle (Chapter \@ref(package-structure-state)). These states differ from
-    each other in terms of which files and folders exist and their relative
-    positions within the hierarchy. It's tricky to write relative paths that
-    work across all package states.
-  * Eventually, your package will be processed with built-in tools like
-    `R CMD build`, `R CMD check`, and `R CMD INSTALL`, by you and potentially
-    CRAN. It's hard to keep track of what the working directory will be at
-    every stage of these processes.
+-   Recall the different forms that a package can take during the development cycle (Chapter \@ref(package-structure-state)). These states differ from each other in terms of which files and folders exist and their relative positions within the hierarchy. It's tricky to write relative paths that work across all package states.
+-   Eventually, your package will be processed with built-in tools like `R CMD build`, `R CMD check`, and `R CMD INSTALL`, by you and potentially CRAN. It's hard to keep track of what the working directory will be at every stage of these processes.
 
-Path helpers like `testthat::test_path()`, `fs::path_package()`, and the [rprojroot package](https://rprojroot.r-lib.org) are extremely useful for building resilient paths that hold up across the whole range of situations that come up during development and usage. Another way to eliminate brittle paths is to be rigorous in your use of proper methods for storing data inside your package (Chapter \@ref(data)) and to target the session temp directory when appropriate, such as for ephemeral testing artefacts (Chapter \@ref(tests)).
+Path helpers like `testthat::test_path()`, `fs::path_package()`, and the [rprojroot package](https://rprojroot.r-lib.org) are extremely useful for building resilient paths that hold up across the whole range of situations that come up during development and usage.
+Another way to eliminate brittle paths is to be rigorous in your use of proper methods for storing data inside your package (Chapter \@ref(data)) and to target the session temp directory when appropriate, such as for ephemeral testing artefacts (Chapter \@ref(tests)).
 
 ## Test drive with `load_all()` {#load-all}
 
@@ -320,32 +348,32 @@ load_all()
 
 `load_all()` is the key step in this "lather, rinse, repeat" cycle of package development:
 
-  1. Tweak a function definition.
-  1. `load_all()`
-  1. Try out the change by running a small example or some tests.
+1.  Tweak a function definition.
+2.  `load_all()`
+3.  Try out the change by running a small example or some tests.
 
 When you're new to package development or to devtools, it's easy to overlook the importance of `load_all()` and fall into some awkward habits from a data analysis workflow.
 
 ### Benefits of `load_all()`
 
-When you first start to use a development environment, like RStudio or Emacs + ESS, the biggest win is the ability to send lines of code from an `.R` script for execution in R console. The fluidity of this is what makes it tolerable to follow the best practice of regarding your source code as real ^[(ref:source-is-real)] (as opposed to objects in the workspace) and saving `.R` files (as opposed to saving and reloading `.Rdata`).
+When you first start to use a development environment, like RStudio or Emacs + ESS, the biggest win is the ability to send lines of code from an `.R` script for execution in R console.
+The fluidity of this is what makes it tolerable to follow the best practice of regarding your source code as real [^workflow101-2] (as opposed to objects in the workspace) and saving `.R` files (as opposed to saving and reloading `.Rdata`).
+
+[^workflow101-2]: (ref:source-is-real)
 
 (ref:source-is-real) Quoting the usage philosophy favored by [Emacs Speaks Statistics](https://ess.r-project.org/Manual/ess.html#Philosophies-for-using-ESS_0028R_0029) (ESS).
 
-`load_all()` has the same significance for package development and, ironically, requires that you NOT test drive package code in the same way as script code. `load_all()` *simulates* the fullblown process for seeing the effect of a source code change, which is clunky enough ^[(ref:load-all-alternatives)] that you won't want to do it very often. The main benefits of `load_all()`:
+`load_all()` has the same significance for package development and, ironically, requires that you NOT test drive package code in the same way as script code.
+`load_all()` *simulates* the fullblown process for seeing the effect of a source code change, which is clunky enough [^workflow101-3] that you won't want to do it very often.
+The main benefits of `load_all()`:
 
-  * You can iterate quickly, which encourages exploration and incremental
-    progress.
-    - This iterative speedup is especially noticeable for packages with
-      compiled code.
-  * You get to develop interactively under a namespace regime that accurately
-    mimics how things are when someone uses your installed package:
-    - You can call your own internal functions directly, without using `:::`
-      and without being tempted to temporarily define your functions in the 
-      global workspace.
-    - You can also call functions from other packages that you've imported into
-      your `NAMESPACE`, without being tempted to attach these dependencies via
-      `library()`.
+[^workflow101-3]: (ref:load-all-alternatives)
+
+-   You can iterate quickly, which encourages exploration and incremental progress.
+    -   This iterative speedup is especially noticeable for packages with compiled code.
+-   You get to develop interactively under a namespace regime that accurately mimics how things are when someone uses your installed package:
+    -   You can call your own internal functions directly, without using `:::` and without being tempted to temporarily define your functions in the global workspace.
+    -   You can also call functions from other packages that you've imported into your `NAMESPACE`, without being tempted to attach these dependencies via `library()`.
 
 (ref:load-all-alternatives) The command line approach is to quit R, go to the shell, do `R CMD build foo` in the package's parent directory, then `R CMD INSTALL foo_x.y.x.tar.gz`, restart R, and call `library(foo`). From R, an approximation is to `detach("package:foo", unload = TRUE); install.packages(".", repos = NULL, type = "source"); library(foo)`.
 
@@ -355,11 +383,12 @@ When you first start to use a development environment, like RStudio or Emacs + E
 
 When working in a Project that is a package, RStudio offers several ways to call `load_all()`:
 
-  * Keyboard shortcut: Cmd+Shift+L (macOS), Ctrl+Shift+L (Windows, Linux)
-  * Build pane's *More ...* menu
-  * *Build > Load All*
-  
-`devtools::load_all()` is a thin wrapper around `pkgload::load_all()` that adds a bit of user-friendliness. It is unlikely you will use `load_all()` programatically or inside another package, but if you do, you should probably use `pkgload::load_all()` directly.
+-   Keyboard shortcut: Cmd+Shift+L (macOS), Ctrl+Shift+L (Windows, Linux)
+-   Build pane's *More ...* menu
+-   *Build \> Load All*
+
+`devtools::load_all()` is a thin wrapper around `pkgload::load_all()` that adds a bit of user-friendliness.
+It is unlikely you will use `load_all()` programatically or inside another package, but if you do, you should probably use `pkgload::load_all()` directly.
 
 *TODO: Decide how to update this diagram and then reposition and re-integrate it with the prose. For example, figure out how to frame w.r.t. RStudio Install and Restart vs. Clean and Rebuild.*
 

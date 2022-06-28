@@ -28,8 +28,7 @@ We start with a data analysis script and show how to find the package that lurks
 We isolate and then extract reusable data and logic from the script, put this into an R package, and then use that package in a much simplified script.
 We make a few rookie mistakes along the way, in order to highlight special considerations for the R code inside a package.
 
-*The section headers incorporate the NATO phonetic alphabet and have no specific meaning.
-They are just a convenient way to mark our progress towards a working package.*
+*The section headers incorporate the NATO phonetic alphabet and have no specific meaning. They are just a convenient way to mark our progress towards a working package.*
 
 ## Alfa: a script that works
 
@@ -72,9 +71,10 @@ dat
 ```
 
 Finally, this cleaned (cleaner?) data is written back out to a CSV file.
-They like to capture a timestamp in the filename when they do this[^format-posixct].
+They like to capture a timestamp in the filename when they do this[^package-within-1].
 
-[^format-posixct]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`. Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
+[^package-within-1]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
+    Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
 ```{r}
 now <- Sys.time()
@@ -143,15 +143,9 @@ cleanup()
 
 The key features to note are:
 
-  * We are using functions from tidyverse packages (specifically from readr and
-    dplyr).
-  * The map between different "beach" words and whether they are considered to be
-    US or UK English is now isolated in a lookup table, which lets us create
-    the `english` column in one go with a `left_join()`. This also makes it
-    easier to add new words in the future
-  * The `f_to_c()`, `timestamp()`, and `outfile_path()` functions now hold the
-    logic for converting temperatures and forming the timestamped output file
-    name.
+-   We are using functions from tidyverse packages (specifically from readr and dplyr).
+-   The map between different "beach" words and whether they are considered to be US or UK English is now isolated in a lookup table, which lets us create the `english` column in one go with a `left_join()`. This also makes it easier to add new words in the future
+-   The `f_to_c()`, `timestamp()`, and `outfile_path()` functions now hold the logic for converting temperatures and forming the timestamped output file name.
 
 It's getting easier to recognize the reusable bits of this script, i.e. the bits that have nothing to do with a specific input file, like `swim.csv`.
 This sort of refactoring often happens naturally on the way to creating your own package, but if it does not, it's a good idea to do this intentionally.
@@ -243,24 +237,21 @@ Sure, the existing code is not perfect, but this is a typical developmental stag
 
 ## Delta: an attempt at a package
 
-Let's make a package! Here's the simplest thing you might hope will "just work": make `cleaning-helpers.R` into an R package. Somehow.
+Let's make a package!
+Here's the simplest thing you might hope will "just work": make `cleaning-helpers.R` into an R package.
+Somehow.
 
 Concretely, we do this:
 
-  * Use `usethis::create_package()` to scaffold a new R package.
-    - This is a good first step!
-  * Copy `cleaning-helpers.R` into the new package, specifically, to
-    `R/cleaning-helpers.R`.
-    - This is morally correct, but mechanically wrong in several ways, as we
-      will soon see.
-  * Copy `beach-lookup-table.csv` into the new package. But where? Let's try
-    the top-level of the source package.
-    - This is not going to end well. Shipping data in a package is a special
-      topic, which is covered in chapter \@ref(data).
-  * Install this package.
-    - Despite all of the problems identified above, this actually works! Which
-      is interesting, because we can (try to) use it and see what happens.
-      
+-   Use `usethis::create_package()` to scaffold a new R package.
+    -   This is a good first step!
+-   Copy `cleaning-helpers.R` into the new package, specifically, to `R/cleaning-helpers.R`.
+    -   This is morally correct, but mechanically wrong in several ways, as we will soon see.
+-   Copy `beach-lookup-table.csv` into the new package. But where? Let's try the top-level of the source package.
+    -   This is not going to end well. Shipping data in a package is a special topic, which is covered in chapter \@ref(data).
+-   Install this package.
+    -   Despite all of the problems identified above, this actually works! Which is interesting, because we can (try to) use it and see what happens.
+
 Here's the version of the script that you hope will run after successfully installing this package.
 
 ```{cat, engine.opts = list(file = "Package-within-files/delta-main.R"), class.source = "R"}
@@ -351,23 +342,21 @@ Before we abandon this initial experiment, let's also marvel at the fact that we
 This is a sobering reminder that you should be running `R CMD check`, probably via `check()`, very often during development.
 This will quickly alert you to many problems that simple installation and usage does not reveal.
 
-Indeed, `R CMD check` fails for this package and we see this[^configure-license]:
+Indeed, `R CMD check` fails for this package and we see this[^package-within-2]:
 
-[^configure-license]: If you have not done so already, you'll also need to configure a license to satisfy `R CMD check`.
-For a quick experiment like this, `usethis::use_mit_license()` is fine.
-For real work, see chapter \@ref(license) for guidance.
+[^package-within-2]: If you have not done so already, you'll also need to configure a license to satisfy `R CMD check`.
+    For a quick experiment like this, `usethis::use_mit_license()` is fine.
+    For real work, see chapter \@ref(license) for guidance.
 
-```
-* installing *source* package ‘delta’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-Error in library(tidyverse) : there is no package called ‘tidyverse’
-Error: unable to load R code in package ‘delta’
-Execution halted
-ERROR: lazy loading failed for package ‘delta’
-* removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
-```
+    * installing *source* package ‘delta’ ...
+    ** using staged installation
+    ** R
+    ** byte-compile and prepare package for lazy loading
+    Error in library(tidyverse) : there is no package called ‘tidyverse’
+    Error: unable to load R code in package ‘delta’
+    Execution halted
+    ERROR: lazy loading failed for package ‘delta’
+    * removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
 
 What do you mean "there is no package called 'tidyverse'"?!?
 We're using it, with no problems, in our main script!
@@ -387,19 +376,18 @@ A "regular" installation succeeds, simply because the tidyverse is available in 
 
 To review, copying `cleaning-helpers.R` to `R/cleaning-helpers.R`, without further modification, was problematic in (at least) these ways:
 
-* Does not account for exported vs. non-exported functions.
-* The CSV file holding our lookup table cannot be found in the installed 
-  package.
-* Does not properly declare our dependency on other add-on packages.
+-   Does not account for exported vs. non-exported functions.
+-   The CSV file holding our lookup table cannot be found in the installed package.
+-   Does not properly declare our dependency on other add-on packages.
 
 ## Echo: a working package
 
 We're ready to make the most minimal version of this package that actually works.
 
-Here is the new version of `R/cleaning-helpers.R`[^bad-file-name]:
+Here is the new version of `R/cleaning-helpers.R`[^package-within-3]:
 
-[^bad-file-name]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
-We discuss organising and naming the files below `R/` in section \@ref(code-organising).
+[^package-within-3]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
+    We discuss organising and naming the files below `R/` in section \@ref(code-organising).
 
 ```{cat, engine.opts = list(file = "Package-within-files/echo-cleaning-helpers.R"), class.source = "R"}
 lookup_table <- dplyr::tribble(
@@ -436,20 +424,18 @@ This is OK for small, internal, static data, but remember to see chapter \@ref(d
 
 All of our calls to tidyverse functions have now been qualified with the name of the specific package that actually provides the function, e.g. `dplyr::mutate()`.
 There are other ways to access functions in another package, explained in chapter \@ref(namespace), but this is our recommended default.
-It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^do-not-depend-on-tidyverse].
+It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^package-within-4].
 Instead, it is better to identify the specific package(s) you actually use.
 In this case, our package only uses dplyr.
 
-[^do-not-depend-on-tidyverse]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
+[^package-within-4]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
 
 The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
 
-```
-Package: echo
-(... other lines omitted ...)
-Imports: 
-    dplyr
-```
+    Package: echo
+    (... other lines omitted ...)
+    Imports: 
+        dplyr
 
 This, together with our use of namespace-qualified calls, like `dplyr::left_join()`, constitutes a valid way to use another package within ours.
 The metadata conveyed via DESCRIPTION is covered in chapter \@ref(description).
@@ -459,25 +445,23 @@ Note that `f_to_c()` is currently only used internally, inside `celsify_temp()`,
 
 This version of the package can be installed, used, AND it technically passes `R CMD check`, though with 1 note and 1 warning.
 
-```
-* checking R code for possible problems ... NOTE
-celsify_temp: no visible binding for global variable ‘english’
-celsify_temp: no visible binding for global variable ‘temp’
-Undefined global functions or variables:
-  english temp
+    * checking R code for possible problems ... NOTE
+    celsify_temp: no visible binding for global variable ‘english’
+    celsify_temp: no visible binding for global variable ‘temp’
+    Undefined global functions or variables:
+      english temp
 
-* checking for missing documentation entries ... WARNING
-Undocumented code objects:
-  ‘celsify_temp’ ‘localize_beach’ ‘outfile_path’
-All user-level objects in a package should have documentation entries.
-See chapter ‘Writing R documentation files’ in the ‘Writing R
-Extensions’ manual.
-```
+    * checking for missing documentation entries ... WARNING
+    Undocumented code objects:
+      ‘celsify_temp’ ‘localize_beach’ ‘outfile_path’
+    All user-level objects in a package should have documentation entries.
+    See chapter ‘Writing R documentation files’ in the ‘Writing R
+    Extensions’ manual.
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
-We could add either of these lines to any file below `R/` to eliminate this note[^dplyr-global-variables-note]:
+We could add either of these lines to any file below `R/` to eliminate this note[^package-within-5]:
 
-[^dplyr-global-variables-note]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
+[^package-within-5]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
 
 ```{r, eval = FALSE}
 # option 1 (then you should also put utils in Imports)
@@ -581,15 +565,18 @@ There are some types of sloppiness that are fairly harmless when a function is d
 
 The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.
-The heart of the timestamp strategy is this format string[^format-posixct]:
+The heart of the timestamp strategy is this format string[^package-within-6]:
+
+[^package-within-6]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
+    Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
 ```{r}
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 
-This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^month-name-vs-number].
+This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-7].
 
-[^month-name-vs-number]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
+[^package-within-7]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
 
 Here's such a timestamp produced by a few hypothetical colleagues cleaning some data at exactly the same instant in time.
 
@@ -663,6 +650,7 @@ as_if(LC_TIME = "pt_BR.UTF-8", tz = "America/Sao_Paulo")
 ```
 
 After:
+
 ```{r}
 outfile_path("INFILE.csv")
 
@@ -680,7 +668,7 @@ if (tz == "") {
 
 Notice that her month name switched from Portuguese to English and the time is clearly being reported in a different time zone.
 Our calls to `Sys.setlocale()` and `Sys.setenv()` inside `timestamp()` have made persistent (and very surprising) changes to her R session.
-This sort of side effect is very undesirable and is extremely difficult to track down and debug, especially in more complicated settings. 
+This sort of side effect is very undesirable and is extremely difficult to track down and debug, especially in more complicated settings.
 
 Here are better versions of `timestamp()`:
 
@@ -721,6 +709,7 @@ If such changes are unavoidable, make sure to reverse them (if possible) or to d
 fs::file_delete(c("beach-lookup-table.csv", "swim.csv"))
 ```
 
+```{=html}
 <!--
 
 Loose ends and Unimplemented ideas
@@ -732,7 +721,8 @@ Another data cleaning idea was to deal with dysfunctional missing value codes, e
 Could also show using the degree symbol properly with unicode escape sequence.
 
 -->
-
+```
+```{=html}
 <!--
 
 Text to possible reuse?
@@ -747,3 +737,4 @@ Typically these functions co-evolve with the code where you use them, i.e. your 
 If you use these functions across multiple projects, you also face the uncomfortable dilemma of where to define them and whether to have multiple, slightly different copies of this code lying around.
 
 -->
+```
