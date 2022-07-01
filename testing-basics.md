@@ -333,7 +333,7 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🥳
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
