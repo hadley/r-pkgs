@@ -76,7 +76,7 @@ They like to capture a timestamp in the filename when they do this[^package-with
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2022-July-02_07-13-05_swim_clean.csv"
+#> [1] "2022-July-03_07-13-04_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
@@ -582,7 +582,7 @@ The heart of the timestamp strategy is this format string[^package-within-6]:
 
 ```r
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-July-02_07-13-07"
+#> [1] "2022-July-03_07-13-05"
 ```
 
 This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-7].
@@ -631,7 +631,7 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 
 
 ```
-#> [1] "2022-julho-02_04-13-07"
+#> [1] "2022-julho-03_04-13-05"
 ```
 
 After:
@@ -639,10 +639,10 @@ After:
 
 ```r
 outfile_path("INFILE.csv")
-#> [1] "2022-July-02_07-13-07_INFILE_clean.csv"
+#> [1] "2022-July-03_07-13-05_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2022-July-02_07-13-07"
+#> [1] "2022-July-03_07-13-05"
 ```
 
 
