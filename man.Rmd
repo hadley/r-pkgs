@@ -5,6 +5,7 @@
 ```{r, echo = FALSE}
 source("common.R")
 status("restructuring")
+library(stringr) # for links
 ```
 
 ## Introduction
@@ -151,9 +152,9 @@ You can get more documentation style advice in the [tidyverse style guide](https
 The following sections will work through the most important tags.
 We'll start with the introduction which provides the title, description, and details, then we'll cover the inputs (the function arguments), outputs (the return value), and examples.
 
-## Title, description, and details
+## Title, description, details
 
-The introduction provides the title, description, and, optionally, the details, of the function:
+The introduction of the block provides the title, description, and, optionally, the details, of the function:
 
 -   The **title** is taken from the first sentence.
     The title is shown in various function indexes so is what the user will see when browsing functions.
@@ -202,7 +203,7 @@ The goal of the description is to summarize the goal of the function, usually in
 This can be challenging to because the title of the function is also a very concise summary of the function.
 And it's often especially hard if you've just written the function because the purpose seems so intuitively obvious it's hard to understand why anyone would need an explanation.
 
-It's ok for the description to be a little duplicative of the rest of the documentation; it's often useful for the reader to see the same thing expressed in two different ways.
+It's okay for the description to be a little duplicative of the rest of the documentation; it's often useful for the reader to see the same thing expressed in two different ways.
 It's a little extra work keeping it all up to date, but the extra effort is often worth it.
 
 ```{r}
@@ -213,8 +214,8 @@ It's a little extra work keeping it all up to date, but the extra effort is ofte
 #' `grepl(pattern, string)`.
 ```
 
-If you want to include multiple paragraphs of text or other organisations (like a bulleted list), you can use the explicit `@description` tag.
-Here's an example from the documentation of `stringr::str_like()` which mimic's the `LIKE` operator from SQL:
+If you want to use multiple paragraphs or other structures like a bulleted list, you can use the explicit `@description` tag.
+Here's an example from `stringr::str_like()`, which mimics the `LIKE` operator from SQL:
 
 ```{r}
 #' Detect the a pattern in the same way as `SQL`'s `LIKE` operator.
@@ -229,13 +230,13 @@ Here's an example from the documentation of `stringr::str_like()` which mimic's 
 #' * The match is case insensitive by default.
 ```
 
-You can also use explicit `@title` and `@details` tags but we don't recommend it as it adds extra noise to the docs without enabling any additional functionality.
+You can also use explicit `@title` and `@details` tags if needed, but we don't generally recommend it because it adds extra noise to the docs without enabling any additional functionality.
 
 ### Details
 
 If you have a lot of information to convey in the details, I recommend using markdown headings to break up the documentation in to sections.
 Here's a example from `dplyr::mutate()`.
-We've elided some of the details to keep this example short, but you should still get a sense of how we used headings to break up the content in to skimable chunks.
+We've elided some of the details to keep this example short, but you should still get a sense of how we used headings to break up the content in to skimmable chunks.
 
 ```{r}
 #' Create, modify, and delete columns
@@ -268,24 +269,29 @@ You can move these below the description and turn into markdown headings.
 
 ## Arguments
 
-For most functions, the bulk of your documentation effort will go towards documenting how each argument affects the output of the function.
-For this purpose, you'll use the `@param` (short for parameter, a synonym of argument), which is always followed by the argument name and then a description of its action.
-The description is a sentence so it should start with a capital letter and end with a full stop.
+For most functions, the bulk of your work will go towards documenting how each argument affects the output of the function.
+For this purpose, you'll use `@param` (short for parameter, a synonym of argument) followed by the argument name and a description of its action.
 
-The most important job of the description should provide a succinct summary of the allowed inputs and what the parameter does.
-For example, here's `stringr::str_detect()`:
+The most important job of the description is to provide a succinct summary of the allowed inputs and what the parameter does.
+For example, here's `str_detect()`:
 
 ```{r}
 #' @param string Input vector. Either a character vector, or something
 #'  coercible to one.
 ```
 
-If the argument has a default value, it's a good idea to repeat it in the documentation because the function usage (which shows the default values) and the argument description are quite far apart in the docs.
-For example, here's `str_flatten()`:
+And here are three of the arguments to `str_flatten()`:
 
 ```{r}
 #' @param collapse String to insert between each piece. Defaults to `""`.
+#' @param last Optional string use in place of final separator.
+#' @param na.rm Remove missing values? If `FALSE` (the default), the result 
+#'   will be `NA` if any element of `string` is `NA`.
 ```
+
+Note that `@param collapse` and `@param na.rm` describes the default argument.
+This is good practice because the function usage (which shows the default values) and the argument description are quite far apart in the docs.
+The primary downside is that introducing this duplication means that you'll need to update the docs if you change the default value; we believe this small amount of extra work is worth it to make the life of the user easier.
 
 If an argument has a fixed set of possible parameters, you should list them.
 If they're simple, you can just list them in a sentence, like in `str_trim()`:
@@ -303,10 +309,13 @@ If they need more explanation, you might use a bulleted list, as in `str_wrap()`
 #'   * `FALSE`: can break on any non-word character (e.g. `/`, `-`).
 ```
 
+The documentation for most arguments tends to be relatively short, often one or two sentences.
+But you should take as much space as you need, and you'll see some examples of multi-paragraph argument documentation shortly.
+
 ### Multiple arguments
 
-If multiple arguments are tightly coupled, you can document them together by separating the names with commas (with no spaces).
-For example, in `stringr::str_equal()` `x` and `y` are interchangeable, so they're documented together:
+If the behavior of multiple arguments is tightly coupled, you can document them together by separating the names with commas (with no spaces).
+For example, in `str_equal()` `x` and `y` are interchangeable, so they're documented together:
 
 ```{r}
 #' @param x,y A pair of character vectors.
@@ -324,10 +333,19 @@ So it makes sense to document them together:
 #'   Negative values count backwards from the last character.
 ```
 
+In `str_wrap()` `indent` and `exdent` define the indentation for the first line and all subsequent lines respectively:
+
+```{r}
+#' @param indent,exdent A non-negative integer giving the indent for the
+#'   first line (`indent`) and all subsequent lines (`exdent`).
+```
+
 ### Inheriting arguments
 
-You can inherit argument docs from another function using `@inheritParams function_name`.
-stringr uses `@inheritParams` extensively because many functions have `string` and `pattern` arguments.
+If your package contains many closely related functions, it's common for them to have arguments with the same name and meaning.
+It would be annoying and error prone to copy and paste the same `@param` documentation to every function so roxygen2 provides `@inheritParams` which allows you to inherit argument documentation from another package.
+
+stringr uses `@inheritParams` extensively because most functions have `string` and `pattern` arguments.
 So `str_detect()` documents them in detail:
 
 ```{r}
@@ -348,10 +366,10 @@ So `str_detect()` documents them in detail:
 #'   `boundary("character")`.
 ```
 
-Then the majority of the other stringr functions use `@inheritParams str_detect` to get a detailed argument description without having to copy and paste.
+Then other stringr functions use `@inheritParams str_detect` to get a detailed documentation for `string` and `pattern` without having to duplicate that text.
 
-`@inheritParams` only inherits docs for arguments that aren't already documented, allowing you to document some and inherit others.
-`str_match()` uses this to document its unusual `pattern` argument:
+`@inheritParams` only inherits docs for arguments that aren't already documented, so you can document some arguments and inherit others.
+`str_match()` uses this to inherit its standard `string` argument but document its unusual `pattern` argument:
 
 ```{r}
 #' @inheritParams str_detect
@@ -360,11 +378,15 @@ Then the majority of the other stringr functions use `@inheritParams str_detect`
 #'   The pattern should contain at least one capturing group.
 ```
 
-The source can be a function in the current package, via `@inheritParams function`, or another package, via `@inheritParams package::function`.
+You can documentation from a function in another package but using the standard `::` notation: `@inheritParams package::function`.
+This can introduce one small annoyance: now the documentation for your package is no longer self-contained and the version of the remote package can affect the generated docs.
+This can introduce spurious diffs if you have multiple contributors with different versions installed.
 
 ### Multiple functions in one file
 
-By default, each function gets its own documentation topic, but if functions are closely related it often makes sense to combine them into one topic.
+There's another powerful tool to share not just argument docs but all doc across multiple functions: `@rdname`.
+By default, each function gets its own documentation topic, but you can combine the documentation for `fun2` into `fun1` by using `@rdname fun1`.
+
 For example, take `str_length()` and `str_width()` which provide two different ways of computing the size of a string.
 As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:
 
@@ -394,28 +416,28 @@ str_width <- function(string) {
 }
 ```
 
-There are two ways to use `@rdname`.
-You can add documentation to an existing function:
+This technique is best used for functions that have not just similar arguments, but also similar return value and related examples, as discussed next.
 
 ## Return value
 
-As important as the inputs to the function is the output from the function.
-The job of the `@returns`[^man-2] tag is to document the output.
-Here the goal is not to describe exactly how the values are computed (which the job of the description and details), but to roughly describe the overall "shape" of the output, i.e. what sort of object it is, and if appropriate its size.
-For example, if your function returns a vector you should say what type and its length, or if your function returns a data frame you should describe the names of the columns, the type of each column, and how many rows.
+As important as a function's inputs are its outputs.
+Documenting the outputs is the job of the `@returns`[^man-2] tag.
+Here the goal of the docs is not to describe exactly how the values are computed (which is the job of the description and details), but to roughly describe the overall "shape" of the output, i.e. what sort of object it is, and its dimensions (if that makes sense).
+For example, if your function returns a vector you might describe its type and length, or if your function returns a data frame you might describe the names and types of the columns and the expected number of rows.
 
 [^man-2]: For historical reasons, you can also use `@return`, but I think you should use `@returns` because it reads a little nicer.
 
-The return documentation for functions in strings are mostly pretty simple, they return a some type of vector the same length as some input.
-For example, take `str_like()`:
+The return documentation for functions in stringr are straightforward because almost all functions return some type of vector with the same length as some input.
+For example, here's `str_like()`:
 
 ```{r}
 #' @returns A logical vector the same length as `string`.
 ```
 
-If your package has multiple related functions, it's useful to consistently think about what makes them different.
-For example, dplyr functions take data frames as inputs and returns data frames as outputs.
-But the details of that transformation is differs so each function documents what happens to the rows, the columns, the groups, and any additional attributes.
+In more complicated cases, it's often easier to figure out what to describe by about the set of functions and how they differ.
+For example, most dplyr functions return data frames, so just saying `@return A data frame` is not useful.
+Instead we had to sit down and think about exactly what makes the functions different.
+It took some thinking, but we eventually decided it makes sense to describe each function in terms of how it affects the rows, the columns, the groups, and the attributes.
 For example, here's `dplyr::filter()`:
 
 ```{r}
@@ -428,7 +450,7 @@ For example, here's `dplyr::filter()`:
 #' * Data frame attributes are preserved.
 ```
 
-It's also appropriate to describe important warnings or errors that the user might see here.
+`@return` is also a good place to describe any important warnings or errors that the user might see here.
 For example `readr::read_csv()`:
 
 ```{r}
