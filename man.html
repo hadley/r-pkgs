@@ -542,7 +542,9 @@ That’s the purpose of the <code>@examples</code> tag, which uses executable R 
 <span><span class="co">#' # Also vectorised over pattern</span></span>
 <span><span class="co">#' str_detect("aecfg", letters)</span></span></code></pre></div>
 <p>Try to stay focused on the most important features without getting into the weeds of every last edge case: if you make the examples too long, it becomes hard for the user to find the key application that they’re looking for.</p>
-<p>Bear in mind that you want examples to execute relatively quickly so users can run them, and so that when you make a website for your package it doesn’t take ages to generate the documentation.</p>
+<p>Bear in mind that you want examples to execute relatively quickly so users can run them, and so that when you make a website for your package it doesn’t take ages to generate the documentation.
+R CMD check records the total amount of time taking by all examples in a package, and each topic individually.
+Make sure that your example run quickly.</p>
 <div class="cran">
 <p>If submitting to CRAN, examples must run in under 10 minutes.</p>
 </div>
@@ -567,11 +569,17 @@ This means that the code must be self-contained, and only uses packages that are
 <p>There are a few constraints imposed by CRAN on examples because if a user runs the example interactively with <code><a href="https://rdrr.io/r/utils/example.html">example()</a></code> you don’t want to mess up their current session.
 This means that you shouldn’t make changes to the global state, so:</p>
 <ul>
-<li>Don’t change global options with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code> and don’t mess with the working directory.</li>
+<li>Don’t change global options with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>
+</li>
+<li>Don’t mess with the working directory.</li>
 <li>Don’t create create files in the current working directory. Instead write them to a temporary directory, and make sure to clean them up at the end of the example.</li>
+<li>In general, “Pack it in, pack it out”, i.e. don’t leave stuff or a changed state behind.</li>
 <li>Don’t write to the clipboard.</li>
 <li>Avoid depending on external resources that might occasionally fail.</li>
+<li>If you can make the point with a familiar built-in dataset, like <code>iris</code>, do that.</li>
 </ul>
+<p>These points are in tension with good documentation.
+So if it’s really hard to follow these rules, consider that the thing you want to show is better expressed via a different form of documentation.</p>
 </div>
 <div id="errors" class="section level3" number="16.6.3">
 <h3>
@@ -584,9 +592,23 @@ There are two basic options:</p>
 <li>You can wrap the code <code>\dontrun{}</code><a class="footnote-ref" tabindex="0" data-toggle="popover" data-content="&lt;p&gt;You used to be able to use &lt;code&gt;\donttest{}&lt;/code&gt; for a similar purpose, but we no longer recommended it because CRAN sets a special flag that causes it to be executed.&lt;/p&gt;"><sup>34</sup></a> so it is never run by <code><a href="https://rdrr.io/r/utils/example.html">example()</a></code>.</li>
 </ul>
 </div>
-<div id="conditional-execution" class="section level3" number="16.6.4">
+<div id="other-packages" class="section level3" number="16.6.4">
 <h3>
-<span class="header-section-number">16.6.4</span> Conditional execution<a class="anchor" aria-label="anchor" href="#conditional-execution"><i class="fas fa-link"></i></a>
+<span class="header-section-number">16.6.4</span> Other packages<a class="anchor" aria-label="anchor" href="#other-packages"><i class="fas fa-link"></i></a>
+</h3>
+<p>You can only use packages in examples that you packages depends on (i.e. appears in imports or suggests).
+You do need to explicitly load these packages because example code is run in the user’s environment, not the package environment.</p>
+<p>For either imported or suggested packages we reccomend using <code>::</code>, unless it’s really a lot of duplication.</p>
+<p>Previously, we recommended protecting any suggested packages inside an if block that used <code>if (requireNamespace("suggested_package", quietly = TRUE))</code>.
+However, we no longer recommend that because:</p>
+<ul>
+<li>We expect that suggested packages are installed when running R CMD check (since they are effectively required for developers).</li>
+<li>The cost of wrapping code in <code><a href="https://rdrr.io/r/base/Paren.html">{}</a></code> is high, because you don’t see intermediate results. And the cost for a package not being installed is low, because users generally know how to recognise the package not loaded error and can resolve themselves.</li>
+</ul>
+</div>
+<div id="conditional-execution" class="section level3" number="16.6.5">
+<h3>
+<span class="header-section-number">16.6.5</span> Conditional execution<a class="anchor" aria-label="anchor" href="#conditional-execution"><i class="fas fa-link"></i></a>
 </h3>
 <p>In other cases, you might want code to run only in specific scenarios.
 In the most common case, you don’t want to run code on CRAN because you’re doing something that is usually best avoided (see below) or your examples need other setup that CRAN won’t have.
@@ -611,15 +633,15 @@ For example, here’s <code><a href="https://googledrive.tidyverse.org/reference
 <p>For initial CRAN submission of your package, all functions must contain some runnable examples (i.e. there must be examples and they must not all be wrapped in <code>\dontrun{}</code>).</p>
 </div>
 </div>
-<div id="intermixing-examples-and-text" class="section level3" number="16.6.5">
+<div id="intermixing-examples-and-text" class="section level3" number="16.6.6">
 <h3>
-<span class="header-section-number">16.6.5</span> Intermixing examples and text<a class="anchor" aria-label="anchor" href="#intermixing-examples-and-text"><i class="fas fa-link"></i></a>
+<span class="header-section-number">16.6.6</span> Intermixing examples and text<a class="anchor" aria-label="anchor" href="#intermixing-examples-and-text"><i class="fas fa-link"></i></a>
 </h3>
 <p>It’s also possible to show example code in the text with code blocks, either <code>```R</code> if you just want to show some code or <code>```{r}</code> if you want the code to be run.</p>
 </div>
-<div id="organisation" class="section level3" number="16.6.6">
+<div id="organisation" class="section level3" number="16.6.7">
 <h3>
-<span class="header-section-number">16.6.6</span> Organisation<a class="anchor" aria-label="anchor" href="#organisation"><i class="fas fa-link"></i></a>
+<span class="header-section-number">16.6.7</span> Organisation<a class="anchor" aria-label="anchor" href="#organisation"><i class="fas fa-link"></i></a>
 </h3>
 <p><code><a href="https://tidyr.tidyverse.org/reference/chop.html">tidyr::chop()</a></code> + <code><a href="https://tidyr.tidyverse.org/reference/chop.html">tidyr::unchop()</a></code>:</p>
 <div class="sourceCode" id="cb249"><pre class="downlit sourceCode r">
@@ -729,9 +751,10 @@ Here we’ll focus on two:</p>
 <li><a class="nav-link" href="#execution"><span class="header-section-number">16.6.1</span> Execution</a></li>
 <li><a class="nav-link" href="#things-to-avoid"><span class="header-section-number">16.6.2</span> Things to avoid</a></li>
 <li><a class="nav-link" href="#errors"><span class="header-section-number">16.6.3</span> Errors</a></li>
-<li><a class="nav-link" href="#conditional-execution"><span class="header-section-number">16.6.4</span> Conditional execution</a></li>
-<li><a class="nav-link" href="#intermixing-examples-and-text"><span class="header-section-number">16.6.5</span> Intermixing examples and text</a></li>
-<li><a class="nav-link" href="#organisation"><span class="header-section-number">16.6.6</span> Organisation</a></li>
+<li><a class="nav-link" href="#other-packages"><span class="header-section-number">16.6.4</span> Other packages</a></li>
+<li><a class="nav-link" href="#conditional-execution"><span class="header-section-number">16.6.5</span> Conditional execution</a></li>
+<li><a class="nav-link" href="#intermixing-examples-and-text"><span class="header-section-number">16.6.6</span> Intermixing examples and text</a></li>
+<li><a class="nav-link" href="#organisation"><span class="header-section-number">16.6.7</span> Organisation</a></li>
 </ul>
 </li>
 <li><a class="nav-link" href="#links-and-images"><span class="header-section-number">16.7</span> Links and images</a></li>

@@ -501,6 +501,8 @@ Use examples to show the basic operation of the function, and then to highlight 
 Try to stay focused on the most important features without getting into the weeds of every last edge case: if you make the examples too long, it becomes hard for the user to find the key application that they're looking for.
 
 Bear in mind that you want examples to execute relatively quickly so users can run them, and so that when you make a website for your package it doesn't take ages to generate the documentation.
+R CMD check records the total amount of time taking by all examples in a package, and each topic individually.
+Make sure that your example run quickly.
 
 ::: cran
 If submitting to CRAN, examples must run in under 10 minutes.
@@ -523,10 +525,16 @@ This means that the code must be self-contained, and only uses packages that are
 There are a few constraints imposed by CRAN on examples because if a user runs the example interactively with `example()` you don't want to mess up their current session.
 This means that you shouldn't make changes to the global state, so:
 
--   Don't change global options with `options()` and don't mess with the working directory.
+-   Don't change global options with `options()`
+-   Don't mess with the working directory.
 -   Don't create create files in the current working directory. Instead write them to a temporary directory, and make sure to clean them up at the end of the example.
+-   In general, "Pack it in, pack it out", i.e. don't leave stuff or a changed state behind.
 -   Don't write to the clipboard.
 -   Avoid depending on external resources that might occasionally fail.
+-   If you can make the point with a familiar built-in dataset, like `iris`, do that.
+
+These points are in tension with good documentation.
+So if it's really hard to follow these rules, consider that the thing you want to show is better expressed via a different form of documentation.
 
 ### Errors
 
@@ -537,6 +545,19 @@ There are two basic options:
 -   You can wrap the code `\dontrun{}`[^man-3] so it is never run by `example()`.
 
 [^man-3]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommended it because CRAN sets a special flag that causes it to be executed.
+
+### Other packages
+
+You can only use packages in examples that you packages depends on (i.e. appears in imports or suggests).
+You do need to explicitly load these packages because example code is run in the user's environment, not the package environment.
+
+For either imported or suggested packages we reccomend using `::`, unless it's really a lot of duplication.
+
+Previously, we recommended protecting any suggested packages inside an if block that used `if (requireNamespace("suggested_package", quietly = TRUE))`.
+However, we no longer recommend that because:
+
+-   We expect that suggested packages are installed when running R CMD check (since they are effectively required for developers).
+-   The cost of wrapping code in `{}` is high, because you don't see intermediate results. And the cost for a package not being installed is low, because users generally know how to recognise the package not loaded error and can resolve themselves.
 
 ### Conditional execution
 

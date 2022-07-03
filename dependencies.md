@@ -378,10 +378,8 @@ The `Config/Needs/*` convention is handy because it allows a developer to use `D
 ## Exports {#exports}
 
 For a function to be usable outside of your package, you must **export** it.
-When you create a new package with `usethis::create_package()`, it produces a temporary `NAMESPACE` that exports everything in your package that doesn't start with `.` (a single period).
-If you're just working locally, it's fine to export everything in your package.
-However, if you're planning on sharing your package with others, it's a really good idea to only export needed functions.
-This reduces the chances of a conflict with another package.
+When you create a new package with `usethis::create_package()`, it starts by exporting nothing.
+You can still experiment interactively with `load_all()` (since that loads all functions, not just exported), but if install the package and reload RStudio you'll notice that no functions are available.
 
 To export an object, put `@export` in its roxygen block.
 For example:
@@ -462,7 +460,7 @@ To illustrate, consider what happens when someone changes the definition of a fu
 nrow
 #> function (x) 
 #> dim(x)[1L]
-#> <bytecode: 0x55b416023d10>
+#> <bytecode: 0x562c00a99d60>
 #> <environment: namespace:base>
 ```
 
