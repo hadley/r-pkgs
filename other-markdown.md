@@ -77,6 +77,14 @@ This prevents `git commit` from succeeding unless `README.md` is more recent tha
 If you get a false positive, you can ignore the check with `git commit --no-verify`.
 Note that git commit hooks are not stored in the repository, so every time you clone the repo, you'll need to run `usethis::use_readme_rmd()` to set it up again.
 
+### Development badges
+
+A number of usethis helpers automatically add development status badges to your readme so that readers can see:
+
+-   The current version of your package on CRAN, `usethis::use_cran_badge()`.
+-   The amount of code coverage, added by `use_coverage()`.
+-   The R CMD check status of your development package, added by `use_github_action_check_standard()` and friends.
+
 ## NEWS.md {#news}
 
 The `README.md` is aimed at new users.
@@ -88,6 +96,7 @@ Organise your `NEWS.md` as follows:
 
 -   Use a top-level heading for each version: e.g. `# mypackage 1.0`.
     The most recent version should go at the top.
+    (pkgdown supports a few other formats, see more at <https://pkgdown.r-lib.org/reference/build_news.html>)
 
 -   Each change should be included in a bulleted list.
     If you have a lot of changes you might want to break them up using subheadings, `## Major changes`, `## Bug fixes` etc.

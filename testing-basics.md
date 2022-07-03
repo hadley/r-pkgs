@@ -339,12 +339,12 @@ test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> [32mTest passed[39m 😀
+#> [32mTest passed[39m 🥇
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 🥳
 ```
 
 This file shows a typical mix of tests:
