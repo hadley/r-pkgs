@@ -46,13 +46,14 @@ The template looks like:
 
     <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-    `​``{r, echo = FALSE}
+    ``` {r, include = FALSE}
     knitr::opts_chunk$set(
       collapse = TRUE,
       comment = "#>",
-      fig.path = "README-"
+      fig.path = "man/figures/README-",
+      out.width = "100%"
     )
-    `​``
+    ```
 
 This:
 
@@ -60,7 +61,7 @@ This:
 
 -   Includes a comment in `README.md` to remind you to edit `README.Rmd`, not `README.md`.
 
--   Sets up my recommended knitr options, including saving an image to `README-chunkname.png` (which is automatically `.Rbuildignore`d.)
+-   Sets up my recommended knitr options, including saving images to `man/figures/README-` which ensures that they're included in your built package (which is important so that your README works when it's displayed by CRAN).
 
 You'll need to remember to re-knit `README.Rmd` each time you modify it.
 If you use git, `use_readme_rmd()` automatically adds the following "pre-commit" hook:
