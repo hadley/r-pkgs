@@ -464,13 +464,22 @@ This is not required for subsequent submission, but it's good practice.
 There's currently no way to enforce this (we're [working on it](https://github.com/r-lib/roxygen2/issues/1334)) which is why you'll notice some tidyverse functions lack documentation of their outputs.
 :::
 
-## Examples {#dry2}
+## Examples {#sec-examples}
 
 Describing how a function works is useful, but showing how it works is often even better.
 That's the purpose of the `@examples` tag, which uses executable R code to show what you can do with the function.
+Unlike other parts of the documentation where we've focused mainly on what you should write, here we'll briefly give some advice as to what to put in the examples and then focus on the mechanics.
+The mechanics are more complex here because examples are commonly run in four different situations:
+
+-   Interactively using the `example()` function.
+-   When building your pkgdown website.
+-   R CMD check on a computer you control (e.g. your computer and your CI/CD server).
+-   R CMD check on a computer you don't control (e.g. CRAN).
+
+### Contents
 
 Use examples to show the basic operation of the function, and then to highlight any particularly important properties.
-`str_detct()` starts by showing a few simple variations and then highlights are property you might easily miss from reading the docs: as well as passing a vector of strings and one pattern, you can also pass one string and vector of patterns.
+`str_detect()` starts by showing a few simple variations and then highlights are property you might easily miss from reading the docs: as well as passing a vector of strings and one pattern, you can also pass one string and vector of patterns.
 
 ```{r}
 #' @examples
@@ -484,42 +493,38 @@ Use examples to show the basic operation of the function, and then to highlight 
 ```
 
 Try to stay focused on the most important features without getting into the weeds of every last edge case: if you make the examples too long, it becomes hard for the user to find the key application that they're looking for.
+If you find yourself writing very long examples, it may be a sign that you should write a vignette instead.
 
-Bear in mind that you want examples to execute relatively quickly so users can run them, and so that when you make a website for your package it doesn't take ages to generate the documentation.
-R CMD check records the total amount of time taking by all examples in a package, and each topic individually.
-Make sure that your example run quickly.
+Try and keep the examples focused on the function that you're documenting.
+If you can make the point with a familiar built-in dataset, like `iris`, do that.
+If you find yourself needing to do a bunch of setup to create a dataset or object to use the in example, it may be a sign that you need to create a package dataset.
+See Chapter \@ref(data) for details.
+
+### Pack it in; pack it out
+
+As much as possible, you want to keep your examples as self-contained as possible.
+You want to "take nothing but photographs and leaving nothing but footprints".
+For example, this means:
+
+-   If you modify the global `options()`, make sure to reset them at the end of the example.
+-   If you have to create a file, make sure to write somewhere in `tempdir()` and make sure to delete it at the end of the example.
+-   Don't change the working directory.
+-   Don't write to the clipboard.
+
+These points can be in tension with good documentation if you're trying to demonstrate functions that somehow change the state of the world.
+So if you're finding it really hard to follow these rules, it may be that you need to switch to to different form of documentation.
 
 ::: cran
-If submitting to CRAN, examples must run in under 10 minutes.
+Many of these constraints are also mentioned in the [CRAN repository policy](https://cran.r-project.org/web/packages/policies.html), which you must adhere to when submitting to CRAN.
+Use find in page to search for "malicious or anti-social" to see the details.
 :::
 
-### Execution
+Additionally, you want your examples to send the users on a short walk, not a long hike.
+Examples need to execute relatively quickly so users can run them, so it doesn't take ages to make a website, your automated checks happen quickly, and it doesn't take up computing resources when submitting to CRAN.
 
-Examples are run in four common cases:
-
--   Interactively using the `example()` function.
--   R CMD check on a computer you control (e.g. your development machine and your CI/CD server).
--   R CMD check on a computer you don't control (e.g. CRAN).
--   When building your pkgdown website
-
-This means that you example code must run without error in all three cases.
-This means that the code must be self-contained, and only uses packages that are listed in the `DESCRIPTION` fields `Imports` and `Suggests`.
-
-### Things to avoid
-
-There are a few constraints imposed by CRAN on examples because if a user runs the example interactively with `example()` you don't want to mess up their current session.
-This means that you shouldn't make changes to the global state, so:
-
--   Don't change global options with `options()`
--   Don't mess with the working directory.
--   Don't create create files in the current working directory. Instead write them to a temporary directory, and make sure to clean them up at the end of the example.
--   In general, "Pack it in, pack it out", i.e. don't leave stuff or a changed state behind.
--   Don't write to the clipboard.
--   Avoid depending on external resources that might occasionally fail.
--   If you can make the point with a familiar built-in dataset, like `iris`, do that.
-
-These points are in tension with good documentation.
-So if it's really hard to follow these rules, consider that the thing you want to show is better expressed via a different form of documentation.
+::: cran
+If submitting to CRAN, all examples must run in under 10 minutes.
+:::
 
 ### Errors
 
@@ -531,7 +536,7 @@ There are two basic options:
 
 [^man-3]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommended it because CRAN sets a special flag that causes it to be executed.
 
-### Other packages
+### Dependencies
 
 You can only use packages in examples that you packages depends on (i.e. appears in imports or suggests).
 You do need to explicitly load these packages because example code is run in the user's environment, not the package environment.
@@ -543,6 +548,9 @@ However, we no longer recommend that because:
 
 -   We expect that suggested packages are installed when running R CMD check (since they are effectively required for developers).
 -   The cost of wrapping code in `{}` is high, because you don't see intermediate results. And the cost for a package not being installed is low, because users generally know how to recognise the package not loaded error and can resolve themselves.
+
+As much as possible, avoid accessing websites in examples.
+If the website is down, your example will fail and hence `R CMD check` will error.
 
 ### Conditional execution
 
