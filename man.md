@@ -662,3 +662,5 @@ There are two RMarkdown features supported by roxygen2 that you can use to share
 ### Child documents
 
 Allows you to share documentation
+
+### Inline R code

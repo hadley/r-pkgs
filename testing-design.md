@@ -167,7 +167,7 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> [32mTest passed[39m 😸
+#> [32mTest passed[39m 🎊
 
 exists("thingy")
 #> [1] FALSE
@@ -200,7 +200,7 @@ test_that("landscape changes leak outside the test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 🎉
 
 grep("jsonlite", search(), value = TRUE)
 #> [1] "package:jsonlite"
@@ -375,13 +375,13 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> [32mTest passed[39m 🌈
+#> [32mTest passed[39m 🎊
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🥇
+#> [32mTest passed[39m 😸
 ```
 
 In real life, `useful_thing` is usually a more complicated object that somehow feels burdensome to instantiate.
@@ -401,7 +401,7 @@ test_that("multiplication works", {
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> [32mTest passed[39m 🎊
+#> [32mTest passed[39m 😀
 ```
 
 But we really do think the first form, with the repetition, if often the better choice.

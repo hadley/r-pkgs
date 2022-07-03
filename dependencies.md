@@ -460,7 +460,7 @@ To illustrate, consider what happens when someone changes the definition of a fu
 nrow
 #> function (x) 
 #> dim(x)[1L]
-#> <bytecode: 0x562c00a99d60>
+#> <bytecode: 0x56304a8abd10>
 #> <environment: namespace:base>
 ```
 
@@ -606,9 +606,6 @@ You need to import functions in exactly the same way regardless of whether or no
 If your package is loaded, packages in `Depends` are loaded, but not attached, so you need to qualify function names with `::` or specifically import them.
 
 It's common for packages to be listed in `Imports` in `DESCRIPTION`, but not in `NAMESPACE`.
-In fact, this is what I recommend: list the package in `DESCRIPTION` so that it's installed, then always refer to it explicitly with `pkg::fun()`.
-Unless there is a strong reason not to, it's better to be explicit.
-It's a little more work to write, but a lot easier to read when you come back to the code in the future.
 The converse is not true.
 Every package mentioned in `NAMESPACE` must also be present in the `Imports` or `Depends` fields.
 
@@ -617,7 +614,6 @@ Every package mentioned in `NAMESPACE` must also be present in the `Imports` or 
 If you are using just a few functions from another package, my recommendation is to note the package name in the `Imports:` field of the `DESCRIPTION` file and call the function(s) explicitly using `::`, e.g., `pkg::fun()`.
 
 If you are using functions repeatedly, you can avoid `::` by importing the function with `@importFrom pkg fun`.
-This also has a small performance benefit, because `::` adds approximately 5 µs to function evaluation time.
 Operators can also be imported in a similar manner, e.g., `@importFrom magrittr %>%`.
 
 Alternatively, if you are repeatedly using many functions from another package, you can import all of them using `@import package`.
