@@ -151,6 +151,8 @@ If you do need to re-license a package, we recommend the following steps:
 [^license-2]: Very simple contributions like typo fixes are generally not protected by copyright because they're not creative works.
     But even a single sentence can be considered a creative work, so err on the side of safety, and if you have any doubts leave the contributor in.
 
+You can read about how the tidyverse followed this process to unify on the MIT license at <https://www.tidyverse.org/blog/2021/12/relicensing-packages/>.
+
 ### Data {#license-data}
 
 Open source licenses are designed specifically to apply to source code, so if you're releasing a package that primarily contains data, you should use a different type of license.
