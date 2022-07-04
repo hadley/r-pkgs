@@ -344,14 +344,17 @@ Before we abandon this initial experiment, let's also marvel at the fact that we
 This is a sobering reminder that you should be running `R CMD check`, probably via `check()`, very often during development.
 This will quickly alert you to many problems that simple installation and usage does not reveal.
 
-Indeed, `R CMD check` fails for this package and we see this[^package-within-2]:
+Indeed, `R CMD check` fails for this package and we see this:
 
-[^package-within-2]: If you have not done so already, you'll also need to configure a license to satisfy `R CMD check`.
-    For a quick experiment like this, `usethis::use_mit_license()` is fine.
-    For real work, see @sec-license for guidance.
-
-    -   installing *source* package 'delta' ... \*\* using staged installation \*\* R \*\* byte-compile and prepare package for lazy loading Error in library(tidyverse) : there is no package called 'tidyverse' Error: unable to load R code in package 'delta' Execution halted ERROR: lazy loading failed for package 'delta'
-    -   removing '/Users/jenny/rrr/delta.Rcheck/delta'
+     * installing *source* package ‘delta’ ...
+     ** using staged installation
+     ** R
+     ** byte-compile and prepare package for lazy loading
+     Error in library(tidyverse) : there is no package called ‘tidyverse’
+     Error: unable to load R code in package ‘delta’
+     Execution halted
+     ERROR: lazy loading failed for package ‘delta’
+     * removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
 
 What do you mean "there is no package called 'tidyverse'"?!?
 We're using it, with no problems, in our main script!
@@ -379,9 +382,9 @@ To review, copying `cleaning-helpers.R` to `R/cleaning-helpers.R`, without furth
 
 We're ready to make the most minimal version of this package that actually works.
 
-Here is the new version of `R/cleaning-helpers.R`[^package-within-3]:
+Here is the new version of `R/cleaning-helpers.R`[^package-within-2]:
 
-[^package-within-3]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
+[^package-within-2]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
     We discuss organising and naming the files below `R/` in @sec-code-organising.
 
 ```{cat, engine.opts = list(file = "Package-within-files/echo-cleaning-helpers.R"), class.source = "R"}
@@ -419,11 +422,11 @@ This is OK for small, internal, static data, but remember to see @sec-data for m
 
 All of our calls to tidyverse functions have now been qualified with the name of the specific package that actually provides the function, e.g. `dplyr::mutate()`.
 There are other ways to access functions in another package, explained in @sec-namespace, but this is our recommended default.
-It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^package-within-4].
+It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^package-within-3].
 Instead, it is better to identify the specific package(s) you actually use.
 In this case, our package only uses dplyr.
 
-[^package-within-4]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
+[^package-within-3]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
 
 The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
 
@@ -454,9 +457,9 @@ This version of the package can be installed, used, AND it technically passes `R
     Extensions’ manual.
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
-We could add either of these lines to any file below `R/` to eliminate this note[^package-within-5]:
+We could add either of these lines to any file below `R/` to eliminate this note[^package-within-4]:
 
-[^package-within-5]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
+[^package-within-4]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
 
 ```{r, eval = FALSE}
 # option 1 (then you should also put utils in Imports)
@@ -560,18 +563,18 @@ There are some types of sloppiness that are fairly harmless when a function is d
 
 The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.
-The heart of the timestamp strategy is this format string[^package-within-6]:
+The heart of the timestamp strategy is this format string[^package-within-5]:
 
-[^package-within-6]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
+[^package-within-5]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
     Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
 ```{r}
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 
-This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-7].
+This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-6].
 
-[^package-within-7]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
+[^package-within-6]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
 
 Here's such a timestamp produced by a few hypothetical colleagues cleaning some data at exactly the same instant in time.
 
