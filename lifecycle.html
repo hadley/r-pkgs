@@ -1,172 +1,403 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Chapter 23 Lifecycle | R Packages</title>
-<meta name="author" content="Hadley Wickham">
-<meta name="author" content="Jennifer Bryan">
-<meta name="description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don’t recommend reading it. :::  23.1 Introduction  ...">
-<meta name="generator" content="bookdown 0.27 with bs4_book()">
-<meta property="og:title" content="Chapter 23 Lifecycle | R Packages">
-<meta property="og:type" content="book">
-<meta property="og:url" content="https://r-pkgs.org/lifecycle.html">
-<meta property="og:image" content="https://r-pkgs.org/images/cover.png">
-<meta property="og:description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don’t recommend reading it. :::  23.1 Introduction  ...">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Chapter 23 Lifecycle | R Packages">
-<meta name="twitter:site" content="@hadley">
-<meta name="twitter:description" content="::: {.rmdnote} You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don’t recommend reading it. :::  23.1 Introduction  ...">
-<meta name="twitter:image" content="https://r-pkgs.org/images/cover.png">
-<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
-<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-141182576-1"></script><script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+<meta name="generator" content="quarto-0.9.640">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>R Packages (2e) - 23&nbsp; Lifecycle</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
 
-      gtag('config', 'UA-141182576-1');
-    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
-    
-    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  </style>
-<style type="text/css">
-    /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
-    div.csl-bib-body { }
-    div.csl-entry {
-      clear: both;
-        }
-    .hanging div.csl-entry {
-      margin-left:2em;
-      text-indent:-2em;
-    }
-    div.csl-left-margin {
-      min-width:2em;
-      float:left;
-    }
-    div.csl-right-inline {
-      margin-left:2em;
-      padding-left:1em;
-    }
-    div.csl-indent {
-      margin-left: 2em;
-    }
-  </style>
-<link rel="stylesheet" href="style.css">
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./release.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet"><script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script><script defer="" data-domain="r-pkgs.org" src="https://plausible.io/js/plausible.js"></script>
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body class="nav-sidebar floating">
 
-<div class="container-fluid">
-<div class="row">
-  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
-
-    <div class="d-flex align-items-start justify-content-between">
-      <h1>
-        <a href="index.html" title="">R Packages</a>
-      </h1>
-      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
-    </div>
-
-    <div id="main-nav" class="collapse-lg">
-      <form role="search">
-        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
-</form>
-
-      <nav aria-label="Table of contents"><h2>Table of contents</h2>
-        <ul class="book-toc list-unstyled">
-<li><a class="" href="index.html">Welcome!</a></li>
-<li><a class="" href="preface.html">Preface</a></li>
-<li class="book-part">Getting started</li>
-<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
-<li><a class="" href="whole-game.html"><span class="header-section-number">2</span> The whole game</a></li>
-<li><a class="" href="setup.html"><span class="header-section-number">3</span> System setup</a></li>
-<li><a class="" href="package-structure-state.html"><span class="header-section-number">4</span> Package structure and state</a></li>
-<li><a class="" href="workflows101.html"><span class="header-section-number">5</span> Fundamental development workflows</a></li>
-<li><a class="" href="package-within.html"><span class="header-section-number">6</span> The package within</a></li>
-<li class="book-part">Package components</li>
-<li><a class="" href="r.html"><span class="header-section-number">7</span> R code</a></li>
-<li><a class="" href="data.html"><span class="header-section-number">8</span> Data</a></li>
-<li><a class="" href="misc.html"><span class="header-section-number">9</span> Other components</a></li>
-<li class="book-part">Package metadata</li>
-<li><a class="" href="description-and-namespace.html"><span class="header-section-number">10</span> DESCRIPTION and NAMESPACE</a></li>
-<li><a class="" href="description-dependencies.html"><span class="header-section-number">11</span> Dependencies: What does your package need?</a></li>
-<li><a class="" href="license.html"><span class="header-section-number">12</span> Licensing</a></li>
-<li class="book-part">Testing</li>
-<li><a class="" href="tests.html"><span class="header-section-number">13</span> Testing basics</a></li>
-<li><a class="" href="test-design.html"><span class="header-section-number">14</span> Designing your test suite</a></li>
-<li><a class="" href="testing-advanced.html"><span class="header-section-number">15</span> Advanced testing techniques</a></li>
-<li class="book-part">Documentation</li>
-<li><a class="" href="man.html"><span class="header-section-number">16</span> Function documentation</a></li>
-<li><a class="" href="vignettes.html"><span class="header-section-number">17</span> Vignettes</a></li>
-<li><a class="" href="important-files.html"><span class="header-section-number">18</span> Other markdown files</a></li>
-<li><a class="" href="website.html"><span class="header-section-number">19</span> Website</a></li>
-<li class="book-part">Maintenance and distribution</li>
-<li><a class="" href="r-cmd-check.html"><span class="header-section-number">20</span> R CMD check</a></li>
-<li><a class="" href="continuous-integration.html"><span class="header-section-number">21</span> Continuous integration</a></li>
-<li><a class="" href="release.html"><span class="header-section-number">22</span> Releasing to CRAN</a></li>
-<li><a class="active" href="lifecycle.html"><span class="header-section-number">23</span> Lifecycle</a></li>
-</ul>
-
-        <div class="book-extra">
-          <p><a id="book-repo" href="https://github.com/hadley/r-pkgs">View book source <i class="fab fa-github"></i></a></p>
-        </div>
-      </nav>
-</div>
-  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="lifecycle" class="section level1" number="23">
-<h1>
-<span class="header-section-number">23</span> Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"><i class="fas fa-link"></i></a>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top"><nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }"><div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title">
+<span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Lifecycle</span>
 </h1>
-<p>::: {.rmdnote}
-You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don’t recommend reading it. :::</p>
-<div id="description-version" class="section level2" number="23.1">
-<h2>
-<span class="header-section-number">23.1</span> Introduction<a class="anchor" aria-label="anchor" href="#description-version"><i class="fas fa-link"></i></a>
-</h2>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav></header><!-- content --><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto"><div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">R Packages (2e)</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/hadley/r-pkgs/" title="Source Code" class="sidebar-tool px-1"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-reader-toggle sidebar-tool" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
 </div>
-<div id="version" class="section level2" number="23.2">
-<h2>
-<span class="header-section-number">23.2</span> Version<a class="anchor" aria-label="anchor" href="#version"><i class="fas fa-link"></i></a>
-</h2>
-<p>Formally, an R package version is a sequence of at least two integers separated by either <code>.</code> or <code>-</code>.
-For example, <code>1.0</code> and <code>0.9.1-10</code> are valid versions, but <code>1</code> and <code>1.0-devel</code> are not.
-You can parse a version number with <code><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version()</a></code>.</p>
-<div class="sourceCode" id="cb262"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version</a></span><span class="op">(</span><span class="st">"1.9"</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version</a></span><span class="op">(</span><span class="st">"1.9.0"</span><span class="op">)</span></span>
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Welcome!</a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Preface.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">Getting started</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Introduction.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Whole-game.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The whole game</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Setup.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">System setup</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Structure.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Package structure and state</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Workflow101.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fundamental development workflows</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Package-within.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The package within</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">Package components</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Code.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">R code</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./misc.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Other components</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">Package metadata</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Metadata.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><code>DESCRIPTION</code> and <code>NAMESPACE</code></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./dependencies.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Dependencies: What does your package need?</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./license.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Licensing</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">Testing</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-basics.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Testing basics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-design.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Designing your test suite</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-advanced.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Advanced testing techniques</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-expanded="true">Documentation</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./man.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Function documentation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./vignettes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Vignettes</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./other-markdown.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Other markdown files</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./website.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Website</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-expanded="true">Maintenance and distribution</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./check.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title"><code>R CMD check</code></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./continuous-integration.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Continuous integration</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./release.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Releasing to CRAN</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lifecycle.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Lifecycle</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+    </ul>
+</div>
+</nav><!-- margin-sidebar --><div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc"><h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+<li><a href="#description-version" id="toc-description-version" class="nav-link active" data-scroll-target="#description-version"> <span class="header-section-number">23.1</span> Introduction</a></li>
+  <li><a href="#version" id="toc-version" class="nav-link" data-scroll-target="#version"> <span class="header-section-number">23.2</span> Version</a></li>
+  <li><a href="#release-version" id="toc-release-version" class="nav-link" data-scroll-target="#release-version"> <span class="header-section-number">23.3</span> Version number</a></li>
+  <li><a href="#compatibility" id="toc-compatibility" class="nav-link" data-scroll-target="#compatibility"> <span class="header-section-number">23.4</span> Backward compatibility</a></li>
+  </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/lifecycle.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block default"><div class="quarto-title">
+<h1 class="title d-none d-lg-block">
+<span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Lifecycle</span>
+</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header><div class="cell">
+<div class="cell-output-display">
+<div class="callout-warning callout callout-style-simple">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>You are reading the work-in-progress second edition of R Packages. This chapter is currently a dumping ground for ideas, and we don’t recommend reading it.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section id="description-version" class="level2" data-number="23.1"><h2 data-number="23.1" class="anchored" data-anchor-id="description-version">
+<span class="header-section-number">23.1</span> Introduction</h2>
+</section><section id="version" class="level2" data-number="23.2"><h2 data-number="23.2" class="anchored" data-anchor-id="version">
+<span class="header-section-number">23.2</span> Version</h2>
+<p>Formally, an R package version is a sequence of at least two integers separated by either <code>.</code> or <code>-</code>. For example, <code>1.0</code> and <code>0.9.1-10</code> are valid versions, but <code>1</code> and <code>1.0-devel</code> are not. You can parse a version number with <code><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version()</a></code>.</p>
+<div class="cell">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version</a></span><span class="op">(</span><span class="st">"1.9"</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version</a></span><span class="op">(</span><span class="st">"1.9.0"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version</a></span><span class="op">(</span><span class="st">"1.9.0"</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">numeric_version</a></span><span class="op">(</span><span class="st">"1.10.0"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p>For example, a package might have a version 1.9.
-This version number is considered by R to be the same as 1.9.0, less than version 1.9.2, and all of these are less than version 1.10 (which is version “one point ten”, not “one point one zero”).
-R uses version numbers to determine whether package dependencies are satisfied.
-A package might, for example, import package <code>devtools (&gt;= 1.9.2)</code>, in which case version 1.9 or 1.9.0 wouldn’t work.</p>
+<span><span class="co">#&gt; [1] TRUE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For example, a package might have a version 1.9. This version number is considered by R to be the same as 1.9.0, less than version 1.9.2, and all of these are less than version 1.10 (which is version “one point ten”, not “one point one zero”). R uses version numbers to determine whether package dependencies are satisfied. A package might, for example, import package <code>devtools (&gt;= 1.9.2)</code>, in which case version 1.9 or 1.9.0 wouldn’t work.</p>
 <p>Here is our recommended framework for managing the package version number:</p>
 <ul>
 <li><p>Always use <code>.</code> as the separator, never <code>-</code>.</p></li>
-<li><p>A released version number consists of three numbers, <code>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;</code>.
-For version number 1.9.2, 1 is the major number, 9 is the minor number, and 2 is the patch number.
-Never use versions like <code>1.0</code>, instead always spell out the three components, <code>1.0.0</code>.</p></li>
+<li><p>A released version number consists of three numbers, <code>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;</code>. For version number 1.9.2, 1 is the major number, 9 is the minor number, and 2 is the patch number. Never use versions like <code>1.0</code>, instead always spell out the three components, <code>1.0.0</code>.</p></li>
 <li>
-<p>An in-development package has a fourth component: the development version.
-This should start at 9000.
-For example, the first version of the package should be <code>0.0.0.9000</code>.
-There are two reasons for this recommendation: First, it makes it easy to see if a package is released or in-development.
-Also, the use of the fourth place means that you’re not limited to what the next version will be.
-<code>0.0.1</code>, <code>0.1.0</code>, and <code>1.0.0</code> are all greater than <code>0.0.0.9000</code>.</p>
-<p>Increment the development version, e.g. from <code>9000</code> to <code>9001</code>, if you’ve added an important feature that another development package needs to depend on.</p>
+<p>An in-development package has a fourth component: the development version. This should start at 9000. For example, the first version of the package should be <code>0.0.0.9000</code>. There are two reasons for this recommendation: First, it makes it easy to see if a package is released or in-development. Also, the use of the fourth place means that you’re not limited to what the next version will be. <code>0.0.1</code>, <code>0.1.0</code>, and <code>1.0.0</code> are all greater than <code>0.0.0.9000</code>.</p>
+<p>Increment the development version, e.g.&nbsp;from <code>9000</code> to <code>9001</code>, if you’ve added an important feature that another development package needs to depend on.</p>
 </li>
 </ul>
-<p>The advice above is inspired in part by <a href="https://semver.org">Semantic Versioning</a> and by the <a href="https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html">X.Org</a> versioning schemes.
-Read them if you’d like to understand more about the standards of versioning used by many open source projects.
-Finally, know that other maintainers follow different philosophies on how to manage the package version number.</p>
-<p>The version number of your package increases with subsequent releases of a package, but it’s more than just an incrementing counter – the way the number changes with each release can convey information about what kind of changes are in the package.
-We discuss this and more in Section <a href="lifecycle.html#release-version">23.3</a>.
-For now, just remember that the first version of your package should be <code>0.0.0.9000</code>.
-<code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code> does this, by default.
-<code><a href="https://usethis.r-lib.org/reference/use_version.html">usethis::use_version()</a></code> increments the package version; when called interactively, with no argument, it presents a helpful menu:</p>
-<div class="sourceCode" id="cb263"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_version.html">use_version</a></span><span class="op">(</span><span class="op">)</span></span>
+<p>The advice above is inspired in part by <a href="https://semver.org">Semantic Versioning</a> and by the <a href="https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html">X.Org</a> versioning schemes. Read them if you’d like to understand more about the standards of versioning used by many open source projects. Finally, know that other maintainers follow different philosophies on how to manage the package version number.</p>
+<p>The version number of your package increases with subsequent releases of a package, but it’s more than just an incrementing counter – the way the number changes with each release can convey information about what kind of changes are in the package. We discuss this and more in Section @ref(release-version). For now, just remember that the first version of your package should be <code>0.0.0.9000</code>. <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code> does this, by default. <code><a href="https://usethis.r-lib.org/reference/use_version.html">usethis::use_version()</a></code> increments the package version; when called interactively, with no argument, it presents a helpful menu:</p>
+<div class="cell">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_version.html">use_version</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Current version is 0.1.</span></span>
 <span><span class="co">#&gt; What should the new version be? (0 to exit) </span></span>
 <span><span class="co">#&gt; </span></span>
@@ -175,59 +406,28 @@ For now, just remember that the first version of your package should be <code>0.
 <span><span class="co">#&gt; 3: patch --&gt; 0.1.1</span></span>
 <span><span class="co">#&gt; 4:   dev --&gt; 0.1.0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Selection: </span></span></code></pre></div>
+<span><span class="co">#&gt; Selection: </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="release-version" class="section level2" number="23.3">
-<h2>
-<span class="header-section-number">23.3</span> Version number<a class="anchor" aria-label="anchor" href="#release-version"><i class="fas fa-link"></i></a>
-</h2>
-<p>If you’ve been following the advice in <a href="lifecycle.html#description-version">versioning</a>, the version number of your in-development package will have four components, <code>major.minor.patch.dev</code>, where <code>dev</code> is at least 9000.
-The number 9000 is arbitrary, but provides a strong visual signal there’s something different about this version number.
-Released packages don’t have a <code>dev</code> component, so now you need to drop that and pick a version number based on the changes you’ve made.
-For example, if the current version is <code>0.8.1.9000</code> will the next CRAN version be <code>0.8.2</code>, <code>0.9.0</code> or <code>1.0.0</code>?
-Use this advice to decide:</p>
+</section><section id="release-version" class="level2" data-number="23.3"><h2 data-number="23.3" class="anchored" data-anchor-id="release-version">
+<span class="header-section-number">23.3</span> Version number</h2>
+<p>If you’ve been following the advice in <a href="#description-version">versioning</a>, the version number of your in-development package will have four components, <code>major.minor.patch.dev</code>, where <code>dev</code> is at least 9000. The number 9000 is arbitrary, but provides a strong visual signal there’s something different about this version number. Released packages don’t have a <code>dev</code> component, so now you need to drop that and pick a version number based on the changes you’ve made. For example, if the current version is <code>0.8.1.9000</code> will the next CRAN version be <code>0.8.2</code>, <code>0.9.0</code> or <code>1.0.0</code>? Use this advice to decide:</p>
 <ul>
-<li><p>Increment <code>patch</code>, e.g. <code>0.8.2</code> for a <strong>patch</strong>: you’ve fixed bugs without adding any significant new features.
-I’ll often do a patch release if, after release, I discover a show-stopping bug that needs to be fixed ASAP.
-Most releases will have a patch number of 0.</p></li>
-<li><p>Increment <code>minor</code>, e.g. <code>0.9.0</code>, for a <strong>minor release</strong>.
-A minor release can include bug fixes, new features and changes in backward compatibility.
-This is the most common type of release.
-It’s perfectly fine to have so many minor releases that you need to use two (or even three!) digits, e.g. <code>1.17.0</code>.</p></li>
+<li><p>Increment <code>patch</code>, e.g.&nbsp;<code>0.8.2</code> for a <strong>patch</strong>: you’ve fixed bugs without adding any significant new features. I’ll often do a patch release if, after release, I discover a show-stopping bug that needs to be fixed ASAP. Most releases will have a patch number of 0.</p></li>
+<li><p>Increment <code>minor</code>, e.g.&nbsp;<code>0.9.0</code>, for a <strong>minor release</strong>. A minor release can include bug fixes, new features and changes in backward compatibility. This is the most common type of release. It’s perfectly fine to have so many minor releases that you need to use two (or even three!) digits, e.g.&nbsp;<code>1.17.0</code>.</p></li>
 <li>
-<p>Increment <code>major</code>, e.g. <code>1.0.0</code>, for a <strong>major release</strong>.
-This is best reserved for changes that are not backward compatible and that are likely to affect many users.
-Going from <code>0.b.c</code> to <code>1.0.0</code> typically indicates that your package is feature complete with a stable API.</p>
-<p>In practice, backward compatibility is not an all-or-nothing threshold.
-For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change.
-But if you fix a bug that many people depend on, it will feel like an API breaking change.
-Use your best judgement.</p>
+<p>Increment <code>major</code>, e.g.&nbsp;<code>1.0.0</code>, for a <strong>major release</strong>. This is best reserved for changes that are not backward compatible and that are likely to affect many users. Going from <code>0.b.c</code> to <code>1.0.0</code> typically indicates that your package is feature complete with a stable API.</p>
+<p>In practice, backward compatibility is not an all-or-nothing threshold. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change. But if you fix a bug that many people depend on, it will feel like an API breaking change. Use your best judgement.</p>
 </li>
-</ul>
-</div>
-<div id="compatibility" class="section level2" number="23.4">
-<h2>
-<span class="header-section-number">23.4</span> Backward compatibility<a class="anchor" aria-label="anchor" href="#compatibility"><i class="fas fa-link"></i></a>
-</h2>
-<p>The big difference between major and minor versions is whether or not the code is backward compatible.
-This difference is a bit academic in the R community because the way most people update packages is by running <code><a href="https://rdrr.io/r/utils/update.packages.html">update.packages()</a></code>, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code.
-While more R users are becoming familiar with tools like <a href="https://rstudio.github.io/packrat/">packrat</a>, which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number.</p>
-<p>The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time for your users’ time.
-The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes.
-Backward compatible code also tends to be harder to read because of the need to maintain multiple paths to support functionality from previous versions.
-Be concerned about backward compatibility, but don’t let it paralyse you.</p>
-<p>There are good reasons to make backward incompatible changes - if you made a design mistake that makes your package harder to use it’s better to fix it sooner rather than later.
-If you do need to make a backward incompatible change, it’s best to do it gradually.
-Provide interim version(s) between where are you now and where you’d like to be, and provide advice about what’s going to change.
-Depending on what you’re changing, use one of the following techniques to let your users know what’s happening:</p>
+</ul></section><section id="compatibility" class="level2" data-number="23.4"><h2 data-number="23.4" class="anchored" data-anchor-id="compatibility">
+<span class="header-section-number">23.4</span> Backward compatibility</h2>
+<p>The big difference between major and minor versions is whether or not the code is backward compatible. This difference is a bit academic in the R community because the way most people update packages is by running <code><a href="https://rdrr.io/r/utils/update.packages.html">update.packages()</a></code>, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code. While more R users are becoming familiar with tools like <a href="https://rstudio.github.io/packrat/">packrat</a>, which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number.</p>
+<p>The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time for your users’ time. The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes. Backward compatible code also tends to be harder to read because of the need to maintain multiple paths to support functionality from previous versions. Be concerned about backward compatibility, but don’t let it paralyse you.</p>
+<p>There are good reasons to make backward incompatible changes - if you made a design mistake that makes your package harder to use it’s better to fix it sooner rather than later. If you do need to make a backward incompatible change, it’s best to do it gradually. Provide interim version(s) between where are you now and where you’d like to be, and provide advice about what’s going to change. Depending on what you’re changing, use one of the following techniques to let your users know what’s happening:</p>
 <ul>
 <li>
-<p>Don’t immediately remove a function.
-First deprecate it.
-For example, imagine your package is version <code>0.5.0</code> and you want to remove <code>fun()</code>.
-In version, <code>0.6.0</code>, you’d use <code><a href="https://rdrr.io/r/base/Deprecated.html">.Deprecated()</a></code> to display a warning message whenever someone uses the function:</p>
-<div class="sourceCode" id="cb264"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 0.6.0</span></span>
+<p>Don’t immediately remove a function. First deprecate it. For example, imagine your package is version <code>0.5.0</code> and you want to remove <code>fun()</code>. In version, <code>0.6.0</code>, you’d use <code><a href="https://rdrr.io/r/base/Deprecated.html">.Deprecated()</a></code> to display a warning message whenever someone uses the function:</p>
+<div class="cell">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># 0.6.0</span></span>
 <span><span class="va">fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Deprecated.html">.Deprecated</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span></span>
 <span>  <span class="va">x</span> <span class="op">+</span> <span class="va">y</span> <span class="op">+</span> <span class="va">z</span></span>
@@ -237,13 +437,14 @@ In version, <code>0.6.0</code>, you’d use <code><a href="https://rdrr.io/r/bas
 <span><span class="co">#&gt; Warning: 'fun' is deprecated.</span></span>
 <span><span class="co">#&gt; Use 'sum' instead.</span></span>
 <span><span class="co">#&gt; See help("Deprecated")</span></span>
-<span><span class="co">#&gt; [1] 6</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 6</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <p>Then, remove the function once you got to <code>0.7.0</code> (or if you are being very strict, once you got to <code>1.0.0</code> since it’s a backward incompatible change).</p>
 </li>
 <li>
 <p>Similarly, if you’re removing a function argument, first warn about it:</p>
-<div class="sourceCode" id="cb265"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bar</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="cell">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">bar</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/missing.html">missing</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/warning.html">warning</a></span><span class="op">(</span><span class="st">"argument y is deprecated; please use z instead."</span>, </span>
 <span>      call. <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -252,13 +453,13 @@ In version, <code>0.6.0</code>, you’d use <code><a href="https://rdrr.io/r/bas
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu">bar</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: argument y is deprecated; please use z instead.</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning: argument y is deprecated; please use z instead.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </li>
 <li>
-<p>If you’re deprecating a lot of code, it can be useful to add a helper function.
-For example, ggplot2 has <code>gg_dep</code> which automatically displays a message, warning or error, depending on how much the version number has changed.</p>
-<div class="sourceCode" id="cb266"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">gg_dep</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">version</span>, <span class="va">msg</span><span class="op">)</span> <span class="op">{</span></span>
+<p>If you’re deprecating a lot of code, it can be useful to add a helper function. For example, ggplot2 has <code>gg_dep</code> which automatically displays a message, warning or error, depending on how much the version number has changed.</p>
+<div class="cell">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">gg_dep</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">version</span>, <span class="va">msg</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric_version.html">as.package_version</a></span><span class="op">(</span><span class="va">version</span><span class="op">)</span></span>
 <span>  <span class="va">cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"ggplot2"</span><span class="op">)</span></span>
 <span></span>
@@ -280,147 +481,122 @@ For example, ggplot2 has <code>gg_dep</code> which automatically displays a mess
 <span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </li>
-<li><p>Significant changes to an existing function requires planning, including making gradual changes over multiple versions.
-Try and develop a sequence of transformations where each change can be accompanied by an informative error message.</p></li>
+<li><p>Significant changes to an existing function requires planning, including making gradual changes over multiple versions. Try and develop a sequence of transformations where each change can be accompanied by an informative error message.</p></li>
 <li>
-<p>If you want to use functionality in a new version of another package, don’t make it a hard install-time dependency in the <code>DESCRIPTION</code> (forcing your users to upgrade that package might break other code).
-Instead check for the version at run-time:</p>
-<div class="sourceCode" id="cb267"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"ggplot2"</span><span class="op">)</span> <span class="op">&lt;</span> <span class="st">"1.0.0"</span><span class="op">)</span> <span class="op">{</span></span>
+<p>If you want to use functionality in a new version of another package, don’t make it a hard install-time dependency in the <code>DESCRIPTION</code> (forcing your users to upgrade that package might break other code). Instead check for the version at run-time:</p>
+<div class="cell">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"ggplot2"</span><span class="op">)</span> <span class="op">&lt;</span> <span class="st">"1.0.0"</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/stop.html">stop</a></span><span class="op">(</span><span class="st">"ggplot2 &gt;= 1.0.0 needed for this function."</span>, call. <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>This is also useful if you’re responding to changes in one of your dependencies - you’ll want to have a version that will work both before and after the change.
-This will allow you to submit it to CRAN at any time, even before the other package.
-Doing this may generate some <code>R CMD check</code> notes.
-For example:</p>
-<div class="sourceCode" id="cb268"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"foo"</span><span class="op">)</span> <span class="op">&gt;</span> <span class="st">"1.0.0"</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This is also useful if you’re responding to changes in one of your dependencies - you’ll want to have a version that will work both before and after the change. This will allow you to submit it to CRAN at any time, even before the other package. Doing this may generate some <code>R CMD check</code> notes. For example:</p>
+<div class="cell">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion</a></span><span class="op">(</span><span class="st">"foo"</span><span class="op">)</span> <span class="op">&gt;</span> <span class="st">"1.0.0"</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">foo</span><span class="fu">::</span><span class="fu">baz</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>  <span class="fu">foo</span><span class="fu">::</span><span class="fu">bar</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>If <code>baz</code> doesn’t exist in foo version 1.0.0, you’ll get a note that it doesn’t exist in foo’s namespace.
-Just explain that you’re working around a difference between versions in your submission to CRAN.</p>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If <code>baz</code> doesn’t exist in foo version 1.0.0, you’ll get a note that it doesn’t exist in foo’s namespace. Just explain that you’re working around a difference between versions in your submission to CRAN.</p>
 </li>
 </ul>
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-marwick2018-tas" class="csl-entry">
-Marwick, Ben, Carl Boettiger, and Lincoln Mullen. 2018a. <span>“Packaging Data Analytical Work Reproducibly Using r (and Friends).”</span> <em>The American Statistician</em> 72 (1): 80–88. <a href="https://doi.org/10.1080/00031305.2017.1375986">https://doi.org/10.1080/00031305.2017.1375986</a>.
-</div>
-<div id="ref-marwick2018-peerj" class="csl-entry">
-———. 2018b. <span>“Packaging Data Analytical Work Reproducibly Using r (and Friends).”</span> <em>PeerJ Preprints</em> 6 (March): e3192v2. <a href="https://doi.org/10.7287/peerj.preprints.3192v2">https://doi.org/10.7287/peerj.preprints.3192v2</a>.
-</div>
-<div id="ref-styler" class="csl-entry">
-Müller, Kirill, and Lorenz Walthert. 2018. <em>Styler: Non-Invasive Pretty Printing of <span>R</span> Code</em>. <a href="http://styler.r-lib.org">http://styler.r-lib.org</a>.
-</div>
-<div id="ref-silge-nash-graves" class="csl-entry">
-Silge, Julia, John C. Nash, and Spencer Graves. 2018. <span>“<span class="nocase">Navigating the R Package Universe</span>.”</span> <em><span>The R Journal</span></em> 10 (2): 558–63. <a href="https://doi.org/10.32614/RJ-2018-058">https://doi.org/10.32614/RJ-2018-058</a>.
-</div>
-</div>
-</div>
-</div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <div class="chapter-nav">
-<div class="prev"><a href="release.html"><span class="header-section-number">22</span> Releasing to CRAN</a></div>
-<div class="empty"></div>
-</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
-    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
-      <ul class="nav navbar-nav">
-<li><a class="nav-link" href="#lifecycle"><span class="header-section-number">23</span> Lifecycle</a></li>
-<li><a class="nav-link" href="#description-version"><span class="header-section-number">23.1</span> Introduction</a></li>
-<li><a class="nav-link" href="#version"><span class="header-section-number">23.2</span> Version</a></li>
-<li><a class="nav-link" href="#release-version"><span class="header-section-number">23.3</span> Version number</a></li>
-<li><a class="nav-link" href="#compatibility"><span class="header-section-number">23.4</span> Backward compatibility</a></li>
-</ul>
-
-      <div class="book-extra">
-        <ul class="list-unstyled">
-<li><a id="book-source" href="https://github.com/hadley/r-pkgs/blob/main/lifecycle.Rmd">View source <i class="fab fa-github"></i></a></li>
-          <li><a id="book-edit" href="https://github.com/hadley/r-pkgs/edit/main/lifecycle.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
-        </ul>
-</div>
-    </nav>
-</div>
-
-</div>
-</div> <!-- .container -->
-
-<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
-
-  <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>R Packages</strong>" was written by Hadley Wickham, Jennifer Bryan. </p>
+</section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script><nav class="page-navigation"><div class="nav-page nav-page-previous">
+      <a href="./release.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Releasing to CRAN</span></span>
+      </a>          
   </div>
-
-  <div class="col-12 col-md-6 mt-3">
-    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  <div class="nav-page nav-page-next">
   </div>
-
-</div></div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer"><div class="nav-footer">
+    <div class="nav-footer-left">R Packages (2e) was written by Hadley Wickham and Jenny Bryan</div>   
+    <div class="nav-footer-right">This book was built with <a href="https://quarto.org/">Quarto</a>.</div>
+  </div>
 </footer>
-</body>
-</html>
+
+
+</body></html>
