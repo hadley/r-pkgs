@@ -145,14 +145,12 @@ if (!is.null(where)) {
 }
 ```
 
-::: downlit
 ```{r create-package, eval = create, echo = debug}
 withr::with_options(
   list(usethis.description = NULL),
   create_package(pkgpath, open = FALSE, rstudio = TRUE)
 )
 ```
-:::
 
 ```{r set-proj-and-wd, include = debug, eval = create}
 (owd <- getwd())
@@ -177,12 +175,10 @@ RStudio has special handling for packages and you should now see a *Build* tab i
 What's in this new directory that is also an R package and, probably, an RStudio Project?
 Here's a listing (locally, you can consult your *Files* pane):
 
-::: downlit
 ```{r init-show-files, echo = FALSE, eval = create}
 dir_info(all = TRUE) %>% 
   select(path, type)
 ```
-:::
 
 ::: callout-tip
 ## RStudio
@@ -227,12 +223,10 @@ What's new?
 Only the creation of a `.git` directory, which is hidden in most contexts, including the RStudio file browser.
 Its existence is evidence that we have indeed initialized a Git repo here.
 
-::: downlit
 ```{r post-git-file-list, echo = FALSE, eval = create}
 dir_info(all = TRUE, regexp = "^[.]git$") %>% 
   select(path, type)
 ```
-:::
 
 If you're using RStudio, it probably requested permission to relaunch itself in this Project, which you should do.
 You can do so manually by quitting, then relaunching RStudio by double clicking on `regexcite.Rproj`.
@@ -242,12 +236,10 @@ Now, in addition to package development support, you have access to a basic Git 
 
 Click on History (the clock icon in the Git pane) and, if you consented, you will see an initial commit made via `use_git()`:
 
-::: downlit
 ```{r inspect-first-commit, echo = FALSE, eval = create}
 git_log(max = 1) %>% 
   select(commit, author, message)
 ```
-:::
 
 ::: callout-tip
 ## RStudio
@@ -394,7 +386,7 @@ git_commit("Add strsplit1()")
 #sha <- (commits(repo)[[1]])@sha
 ```
 
-```{r add-strsplit1-diff, echo = FALSE, eval = create, asis = TRUE}
+```{r add-strsplit1-diff, echo = FALSE, eval = create, comment = ""}
 cat(git_diff_patch(ref = "HEAD"))
 ```
 
@@ -418,11 +410,9 @@ Your local `check()` output will be different.
 check()
 ```
 
-::: downlit
-```{r first-check, eval = create, warning = TRUE, echo = FALSE}
+```{r first-check, eval = create, warning = TRUE, echo = FALSE, comment = ""}
 shhh_check(error_on = "never")
 ```
-:::
 
 **Read the output of the check!** Deal with problems early and often.
 It's just like incremental development of `.R` and `.Rmd` files.
@@ -504,11 +494,9 @@ use_mit_license()
 This configures the `License` field correctly for the MIT license, which promises to name the copyright holders and year in a `LICENSE` file.
 Open the newly created `LICENSE` file and confirm it looks something like this:
 
-::: sourceCode
-```{r reveal-LICENSE, eval = create, echo = FALSE, class.source = "default", comment = NA}
+```{r reveal-LICENSE, eval = create, echo = TRUE, comment = ""}
 writeLines(readLines("LICENSE"))
 ```
-:::
 
 Like other license helpers, `use_mit_license()` also puts a copy of the full license in `LICENSE.md` and adds this file to `.Rbuildignore`.
 It's considered a best practice to include a full license in your package's source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.
@@ -594,7 +582,7 @@ The contents should be:
 
 <!-- OK to use this approach here because I actively do not want a copy button. NAMESPACE should be managed by roxygen and I don't want to tempt anyone to edit it by hand. -->
 
-```{r asis = TRUE, echo = FALSE, comment = NA, eval = create}
+```{r asis = TRUE, echo = FALSE, comment = "", eval = create}
 cat(readLines("NAMESPACE"), sep = "\n")
 ```
 
@@ -615,11 +603,9 @@ regexcite should pass `R CMD check` cleanly now and forever more: 0 errors, 0 wa
 check()
 ```
 
-::: downlit
-```{r first-clean-check, eval = create, warning = TRUE, echo = FALSE}
+```{r first-clean-check, eval = create, warning = TRUE, echo = FALSE, comment = ""}
 shhh_check(error_on = "never")
 ```
-:::
 
 ## `install()`
 
@@ -629,7 +615,7 @@ Since we have a minimum viable product now, let's install the regexcite package 
 install()
 ```
 
-```{r first-install, eval = create, echo = FALSE, asis = TRUE, comment = NA}
+```{r first-install, eval = create, echo = FALSE, comment = ""}
 cat(pretty_install(), sep = "\n")
 ```
 
@@ -713,6 +699,10 @@ Note you'll have to attach testthat via `library(testthat)` in your R session fi
 Going forward, your tests will mostly run *en masse* and at arm's length via `test()`:
 
 <!-- TODO: I have no idea why I have to disable crayon here, but if I don't, I guess raw ANSI escapes. Other chunks seem to work fine with downlig. It would also be nice to not see evidence of progress reporting, but the previous approach to turning that off keeps this chunk from showing any output at all :( The previous approach was `R.options = list(testthat.default_reporter = testthat::ProgressReporter$new(update_interval = Inf))`. -->
+
+```{r, include = FALSE}
+library(testthat) # suppress package loading messages
+```
 
 ```{r eval = create, R.options = list(crayon.enabled = FALSE)}
 test()
@@ -929,11 +919,9 @@ file_copy(
 )
 ```
 
-::: sourceCode
-```{r reveal-README, eval = create, echo = FALSE, class.source = "default", comment = NA}
+```{r reveal-README, eval = create, echo = FALSE, comment = ""}
 writeLines(readLines("README.Rmd"))
 ```
-:::
 
 Don't forget to render it to make `README.md`!
 The pre-commit hook should remind you if you try to commit `README.Rmd`, but not `README.md`, and also when `README.md` appears to be out-of-date.
@@ -971,11 +959,9 @@ Let's run `check()` again to make sure all is still well.
 check()
 ```
 
-::: downlit
-```{r final-check, eval = create, warning = TRUE, echo = FALSE}
+```{r final-check, eval = create, warning = TRUE, echo = FALSE, comment = ""}
 shhh_check(error_on = "never")
 ```
-:::
 
 regexcite should have no errors, warnings or notes.
 This would be a good time to re-build and install it properly.
@@ -985,7 +971,7 @@ And celebrate!
 install()
 ```
 
-```{r final-install, eval = create, echo = FALSE, asis = TRUE, comment = NA}
+```{r final-install, eval = create, echo = FALSE, comment = ""}
 cat(pretty_install(reload = FALSE, upgrade = FALSE), sep = "\n")
 ```
 
