@@ -95,6 +95,7 @@ status <- function(type) {
 
   knitr::asis_output(paste0(
     "::: ", class, "\n",
+    "## Second edition\n",
     "You are reading the work-in-progress second edition of R Packages. ",
     "This chapter ", status, ". \n",
     ":::\n"
