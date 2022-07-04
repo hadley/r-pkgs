@@ -1,4 +1,4 @@
-# R code {#r}
+# R code {#sec-r}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -10,7 +10,7 @@ The first principle of making a package is that all R code goes in the `R/` dire
 In this chapter, you'll learn about organising your functions into files, maintaining a consistent style, and recognizing the stricter requirements for functions in a package (versus in a script).
 We'll also remind you of the fundamental workflows for test-driving and formally checking an in-development package: `load_all()`, `test()`, and `check()`.
 
-## Organise functions into files {#code-organising}
+## Organise functions into files {#sec-code-organising}
 
 The only hard rule is that your package should store its function definitions in R scripts, i.e. files with extension `.R`, that live in the `R/` directory[^code-1].
 However, a few more conventions can make the source code of your package easier to navigate and relieve you of re-answering "How should I name this?" each time you create a new file.
@@ -87,11 +87,11 @@ The organisation of functions within files is less important in RStudio, which o
 After navigating to a function with one of these methods, return to where you started by clicking the back arrow at the top-left of the editor (![](images/arrows.png){width="33" height="16"}) or by pressing Ctrl + F9 (Windows & Linux) or Cmd + F9 (macOS).
 :::
 
-## Fast feedback via `load_all()` {#code-load-all}
+## Fast feedback via `load_all()` {#sec-code-load-all}
 
 As you add or modify functions defined in files below `R/`, you will naturally want to try them out.
 We want to reiterate our strong recommendation to use `devtools::load_all()` to make them available for interactive exploration instead of, for example, `source()`ing files below `R/`.
-The main coverage of `load_all()` is in the [workflows chapter](#load-all) and `load_all()` also shows up as one of the natural development tasks in [the whole game](#whole-game-load-all).
+The main coverage of `load_all()` is in @sec-load-all and `load_all()` also shows up as one of the natural development tasks in @sec-whole-game-load-all.
 Compared to the alternatives, `load_all()` helps you to iterate more quickly and provides an excellent approximation to the namespace regime of an installed package.
 
 ## Code style
@@ -151,7 +151,7 @@ When you `source()` a script, every line of code is executed and the results are
 Things are different with package code, because it is loaded in two steps.
 When the binary package is built (often, by CRAN) all the code in `R/` is executed and the results are saved.
 When you attach a package with `library()`, these cached results are re-loaded and certain objects (mostly functions) are made available for your use.
-The full details on what it means for a package to be in binary form are given in \@ref(structure-binary).
+The full details on what it means for a package to be in binary form are given in @sec-structure-binary.
 We refer to the creation of the binary package as (binary) "build time" and, specifically, we mean when `R CMD INSTALL --build` is run.
 (You might think that this is what `R CMD build` does, but that actually makes a bundled package, a.k.a. a "source tarball".) For macOS and Windows users of CRAN packages, build time is whenever CRAN built the binary package for their OS.
 For those who install packages from source, build time is essentially when they (built and) installed the package.
@@ -159,7 +159,7 @@ For those who install packages from source, build time is essentially when they 
 Consider the assignment `x <- Sys.time()`.
 If you put this in a script, `x` tells you when the script was `source()`d.
 But if you put that same code in a package, `x` tells you when the package binary was *built*.
-In section \@ref(package-within-build-time-run-time), we show a complete example of this in the context of forming timestamps inside a package.
+In @sec-package-within-build-time-run-time, we show a complete example of this in the context of forming timestamps inside a package.
 
 The main takeaway is this:
 
@@ -280,28 +280,28 @@ Now, when your user calls `foo()`, they are effectively calling `pkgB::blah()`, 
 
 A real example of this affected an older version of knitr, related to how the default "evaluate" hook was being set to `evaluate::evaluate()` (original issue is [yihui/knitr#1441](https://github.com/yihui/knitr/issues/1441), resolved in commit [d6b53e0](https://github.com/yihui/knitr/commit/d6b53e0f15a8afd1de4987a86931ba54f886278d)).
 
-## Respect the R landscape {#code-r-landscape}
+## Respect the R landscape {#sec-code-r-landscape}
 
 Another big difference between a script and a package is that other people are going to use your package, and they're going to use it in situations that you never imagined.
 This means you need to pay attention to the R landscape, which includes not just the available functions and objects, but all the global settings.
 
 You have changed the R landscape if you've loaded a package with `library()`, or changed a global option with `options()`, or modified the working directory with `setwd()`.
 If the behaviour of *other* functions differs before and after running your function, you've modified the landscape.
-The [side effects section of the "package within" chapter](#package-within-side-effects) has a concrete example of this involving time zones and the locale-specific printing of datetimes.
+@sec-package-within-side-effects has a concrete example of this involving time zones and the locale-specific printing of datetimes.
 Changing the landscape is bad because it makes code much harder to understand.
 
 There are some functions that modify global settings that you should never use because there are better alternatives:
 
 -   **Don't use `library()` or `require()`**.
     These modify the search path, affecting what functions are available from the global environment.
-    Instead, you should use the `DESCRIPTION` to specify your package's requirements, as described in chapter \@ref(description).
+    Instead, you should use the `DESCRIPTION` to specify your package's requirements, as described in @sec-description.
     This also makes sure those packages are installed when your package is installed.
 
 -   **Never use `source()`** to load code from a file.
     `source()` modifies the current environment, inserting the results of executing the code.
     There is no reason to use `source()` inside your package, i.e. in a file below `R/`.
-    Sometimes people `source()` files below `R/` during package development, but as we've explained in \@ref(load-all) and \@ref(code-load-all), `load_all()` is a much better way to load your current code for exploration.
-    If you're using `source()` to create a dataset, it is better to use the methods in \@ref(data) for including data in a package.
+    Sometimes people `source()` files below `R/` during package development, but as we've explained in @sec-load-all and @sec-code-load-all, `load_all()` is a much better way to load your current code for exploration.
+    If you're using `source()` to create a dataset, it is better to use the methods in @sec-data for including data in a package.
 
 Here is a non-exhaustive list of other functions that should be used with caution:
 
@@ -378,7 +378,7 @@ Developing code interactively with withr is pleasant, because deferred actions c
 Those cleanup actions can then be executed with `withr::deferred_run()` or cleared without execution with `withr::deferred_clear()`.
 Without this feature, it can be tricky to experiment with code that needs cleanup "on exit", because it behaves so differently when executed in the console versus at arm's length inside a function.
 
-More in-depth coverage is given in the withr vignette [Changing and restoring state](https://withr.r-lib.org/articles/changing-and-restoring-state.html) and withr will also prove useful when we talk about testing in chapter \@ref(tests).
+More in-depth coverage is given in the withr vignette [Changing and restoring state](https://withr.r-lib.org/articles/changing-and-restoring-state.html) and withr will also prove useful when we talk about testing in @sec-testing-basics.
 
 ### Restore state with `base::on.exit()`
 
@@ -422,7 +422,7 @@ Occasionally, packages do need side-effects.
 This is most common if your package talks to an external system --- you might need to do some initial setup when the package loads.
 To do that, you can use two special functions: `.onLoad()` and `.onAttach()`.
 These are called when the package is loaded and attached.
-You'll learn about the distinction between the two in [Namespaces](#namespace).
+You'll learn about the distinction between the two in @sec-dependencies.
 For now, you should always use `.onLoad()` unless explicitly directed otherwise.
 
 Some common uses of `.onLoad()` and `.onAttach()` are:
@@ -508,7 +508,7 @@ But this also applies to running `document()`, `test()`, and `check()`.
 There are defects you just can't detect from using `load_all()` and running a few interactive examples that are immediately revealed by more formal checks.
 Finding and fixing 5 bugs, one at a time, right after you created each one is much easier than troubleshooting all 5 at once (possibly interacting with each other), weeks or months after you last touched the code.
 
-## CRAN notes {#code-cran}
+## CRAN notes {#sec-code-cran}
 
 (Each chapter will finish with some hints for submitting your package to CRAN. If you don't plan on submitting your package to CRAN, feel free to ignore them!)
 
