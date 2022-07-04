@@ -85,9 +85,16 @@ status <- function(type) {
     complete = "is largely complete and just needs final proof reading",
     stop("Invalid `type`", call. = FALSE)
   )
+  
+  class <- switch(type,
+    complete = ,                 
+    polishing = "callout-note",
+    drafting =, 
+    restructuring = "callout-warning",
+  )
 
   knitr::asis_output(paste0(
-    "::: rmdnote\n",
+    "::: ", class, "\n",
     "You are reading the work-in-progress second edition of R Packages. ",
     "This chapter ", status, ". \n",
     ":::\n"
