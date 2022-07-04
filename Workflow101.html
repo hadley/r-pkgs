@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.640">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>R Packages (2e) - 5&nbsp; Fundamental development workflows</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./Package-within.html" rel="next">
+<link href="./Structure.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet"><script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script><script defer="" data-domain="r-pkgs.org" src="https://plausible.io/js/plausible.js"></script>
+</head>
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top"><nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }"><div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fundamental development workflows</span></h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav></header><!-- content --><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto"><div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">R Packages (2e)</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/hadley/r-pkgs/" title="Source Code" class="sidebar-tool px-1"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-reader-toggle sidebar-tool" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Welcome!</a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Preface.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">Getting started</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Introduction.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Whole-game.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The whole game</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Setup.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">System setup</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Structure.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Package structure and state</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Workflow101.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fundamental development workflows</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Package-within.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The package within</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">Package components</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Code.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">R code</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./misc.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Other components</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">Package metadata</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Metadata.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><code>DESCRIPTION</code> and <code>NAMESPACE</code></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./dependencies.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Dependencies: What does your package need?</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./license.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Licensing</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">Testing</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-basics.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Testing basics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-design.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Designing your test suite</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-advanced.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Advanced testing techniques</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-expanded="true">Documentation</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./man.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Function documentation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./vignettes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Vignettes</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./other-markdown.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Other markdown files</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./website.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Website</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-expanded="true">Maintenance and distribution</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./check.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title"><code>R CMD check</code></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./continuous-integration.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Continuous integration</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./release.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Releasing to CRAN</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lifecycle.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Lifecycle</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+    </ul>
+</div>
+</nav><!-- margin-sidebar --><div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc"><h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+<li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"> <span class="header-section-number">5.1</span> Introduction</a></li>
+  <li>
+<a href="#create-a-package" id="toc-create-a-package" class="nav-link" data-scroll-target="#create-a-package"> <span class="header-section-number">5.2</span> Create a package</a>
+  <ul class="collapse">
+<li><a href="#survey-the-existing-landscape" id="toc-survey-the-existing-landscape" class="nav-link" data-scroll-target="#survey-the-existing-landscape"> <span class="header-section-number">5.2.1</span> Survey the existing landscape</a></li>
+  <li><a href="#naming" id="toc-naming" class="nav-link" data-scroll-target="#naming"> <span class="header-section-number">5.2.2</span> Name your package</a></li>
+  <li><a href="#sec-creating" id="toc-sec-creating" class="nav-link" data-scroll-target="#sec-creating"> <span class="header-section-number">5.2.3</span> Package creation</a></li>
+  <li><a href="#sec-where-source-package" id="toc-sec-where-source-package" class="nav-link" data-scroll-target="#sec-where-source-package"> <span class="header-section-number">5.2.4</span> Where should you <code>create_package()</code>?</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#sec-projects" id="toc-sec-projects" class="nav-link" data-scroll-target="#sec-projects"> <span class="header-section-number">5.3</span> RStudio Projects</a>
+  <ul class="collapse">
+<li><a href="#benefits-of-rstudio-projects" id="toc-benefits-of-rstudio-projects" class="nav-link" data-scroll-target="#benefits-of-rstudio-projects"> <span class="header-section-number">5.3.1</span> Benefits of RStudio Projects</a></li>
+  <li><a href="#how-to-get-an-rstudio-project" id="toc-how-to-get-an-rstudio-project" class="nav-link" data-scroll-target="#how-to-get-an-rstudio-project"> <span class="header-section-number">5.3.2</span> How to get an RStudio Project</a></li>
+  <li><a href="#what-makes-an-rstudio-project" id="toc-what-makes-an-rstudio-project" class="nav-link" data-scroll-target="#what-makes-an-rstudio-project"> <span class="header-section-number">5.3.3</span> What makes an RStudio Project?</a></li>
+  <li><a href="#how-to-launch-an-rstudio-project" id="toc-how-to-launch-an-rstudio-project" class="nav-link" data-scroll-target="#how-to-launch-an-rstudio-project"> <span class="header-section-number">5.3.4</span> How to launch an RStudio Project</a></li>
+  <li><a href="#rstudio-project-vs.-active-usethis-project" id="toc-rstudio-project-vs.-active-usethis-project" class="nav-link" data-scroll-target="#rstudio-project-vs.-active-usethis-project"> <span class="header-section-number">5.3.5</span> RStudio Project vs.&nbsp;active usethis project</a></li>
+  </ul>
+</li>
+  <li><a href="#working-directory-and-filepath-discipline" id="toc-working-directory-and-filepath-discipline" class="nav-link" data-scroll-target="#working-directory-and-filepath-discipline"> <span class="header-section-number">5.4</span> Working directory and filepath discipline</a></li>
+  <li>
+<a href="#sec-load-all" id="toc-sec-load-all" class="nav-link" data-scroll-target="#sec-load-all"> <span class="header-section-number">5.5</span> Test drive with <code>load_all()</code></a>
+  <ul class="collapse">
+<li><a href="#benefits-of-load_all" id="toc-benefits-of-load_all" class="nav-link" data-scroll-target="#benefits-of-load_all"> <span class="header-section-number">5.5.1</span> Benefits of <code>load_all()</code></a></li>
+  <li><a href="#other-ways-to-call-load_all" id="toc-other-ways-to-call-load_all" class="nav-link" data-scroll-target="#other-ways-to-call-load_all"> <span class="header-section-number">5.5.2</span> Other ways to call <code>load_all()</code></a></li>
+  </ul>
+</li>
+  </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/Workflow101.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block default"><div class="quarto-title">
+<h1 class="title"><span id="sec-workflows101" class="quarto-section-identifier d-none d-lg-block"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fundamental development workflows</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header><div class="cell">
+
+</div>
+<section id="introduction" class="level2" data-number="5.1"><h2 data-number="5.1" class="anchored" data-anchor-id="introduction">
+<span class="header-section-number">5.1</span> Introduction</h2>
+<p>Having peeked under the hood of R packages and libraries in <a href="Structure.html"><span>Chapter&nbsp;4</span></a>, here we provide the basic workflows for creating a package and moving it through the different states that come up during development.</p>
+</section><section id="create-a-package" class="level2" data-number="5.2"><h2 data-number="5.2" class="anchored" data-anchor-id="create-a-package">
+<span class="header-section-number">5.2</span> Create a package</h2>
+<section id="survey-the-existing-landscape" class="level3" data-number="5.2.1"><h3 data-number="5.2.1" class="anchored" data-anchor-id="survey-the-existing-landscape">
+<span class="header-section-number">5.2.1</span> Survey the existing landscape</h3>
+<!-- TODO: would love to put some version of the "geeks and repetitive tasks" figure here, but it would take more time than I want to spend right now to figure out original source, licensing, etc. Revisit when I do a concentrated push on figures. -->
+<p>Many packages are born out of one person’s frustration at some common task that should be easier. How should you decide whether something is package-worthy? There’s no definitive answer, but it’s helpful to appreciate at least two types of payoff:</p>
+<ul>
+<li>Product: your life will be better when this functionality is implemented formally, in a package.</li>
+<li>Process: greater mastery of R will make you more effective in your work.</li>
+</ul>
+<p>If all you care about is the existence of a product, then your main goal is to navigate the space of existing packages. Silge, Nash, and Graves organized a survey and sessions around this at useR! 2017 and their write up for the R Journal <span class="citation" data-cites="silge-nash-graves">[@silge-nash-graves]</span> provides a comprehensive roundup of resources.</p>
+<p>If you are looking for ways to increase your R mastery, you should still educate yourself about the landscape. But there are plenty of good reasons to make your own package, even if there is relevant prior work. The way experts got that way is by actually building things, often very basic things, and you deserve the same chance to learn by tinkering. If you’re only allowed to work on things that have never been touched, you’re likely looking at problems that are either very obscure or very difficult.</p>
+<p>Finally, it’s also valid to evaluate the suitability of existing tools on the basis of user interface, defaults, and edge case behaviour. If a package can technically do what you need, but it’s very unergonomic for your use case, it’s fair to say it doesn’t meet your needs. In this case, it can still make sense for you to develop your own implementation or to write wrapper functions that hide the sharp edges.</p>
+<p>If your work falls into a well-defined domain, educate yourself about the existing R packages, even if you’ve resolved to create your own package. Do they follow specific design patterns? Are there specific data structures that are common as the primary input and output? For example, there is a very active R community around spatial data analysis (<a href="https://www.r-spatial.org">r-spatial.org</a>) that has successfully self-organised to promote greater consistency across packages with different maintainers. In modeling, the <a href="https://hardhat.tidymodels.org">hardhat package</a> provides scaffolding for creating a modeling package that plays well with the <a href="https://www.tidymodels.org">tidymodels</a> ecosystem. Your package will get more usage and will need less documentation if it fits nicely into the surrounding landscape.</p>
+</section><section id="naming" class="level3" data-number="5.2.2"><h3 data-number="5.2.2" class="anchored" data-anchor-id="naming">
+<span class="header-section-number">5.2.2</span> Name your package</h3>
+<blockquote class="blockquote">
+<p>“There are only two hard things in Computer Science: cache invalidation and naming things.”</p>
+<p>— Phil Karlton</p>
+</blockquote>
+<p>Before you can create your package, you need to come up with a name for it. This can be the hardest part of creating a package! (Not least because no one can automate it for you.)</p>
+<section id="formal-requirements" class="level4" data-number="5.2.2.1"><h4 data-number="5.2.2.1" class="anchored" data-anchor-id="formal-requirements">
+<span class="header-section-number">5.2.2.1</span> Formal requirements</h4>
+<p>There are three formal requirements:</p>
+<ol type="1">
+<li>The name can only consist of letters, numbers, and periods, i.e., <code>.</code>.</li>
+<li>It must start with a letter.</li>
+<li>It cannot end with a period.</li>
+</ol>
+<p>Unfortunately, this means you can’t use either hyphens or underscores, i.e., <code>-</code> or <code>_</code>, in your package name. We recommend against using periods in package names, due to confusing associations with file extensions and S3 methods.</p>
+</section><section id="pragmatic-advice" class="level4" data-number="5.2.2.2"><h4 data-number="5.2.2.2" class="anchored" data-anchor-id="pragmatic-advice">
+<span class="header-section-number">5.2.2.2</span> Pragmatic advice</h4>
+<p>If you plan to share your package with others, it’s worth spending a few minutes to come up with a good name. Here are some things to consider:</p>
+<ul>
+<li><p>Pick a unique name that’s easy to Google. This makes it easy for potential users to find your package (and associated resources) and for you to see who’s using it.</p></li>
+<li>
+<p>Don’t pick a name that’s already in use on CRAN or Bioconductor. You may also want to consider some other types of name collision:</p>
+<ul>
+<li>Is there an in-development package maturing on, say, GitHub that already has some history and seems to be heading towards release?</li>
+<li>Is this name already used for another piece of software or for a library or framework in, e.g., the Python or JavaScript ecosystem?</li>
+</ul>
+</li>
+<li><p>Avoid using both upper and lower case letters: doing so makes the package name hard to type and even harder to remember. For example, it’s hard to remember if it’s Rgtk2 or RGTK2 or RGtk2.</p></li>
+<li><p>Give preference to names that are pronounceable, so people are comfortable talking about your package and have a way to hear it inside their head.</p></li>
+<li>
+<p>Find a word that evokes the problem and modify it so that it’s unique:</p>
+<ul>
+<li>lubridate makes dates and times easier.</li>
+<li>rvest “harvests” the content from web pages.</li>
+<li>r2d3 provides utilities for working with D3 visualisations.</li>
+<li>forcats is an anagram of factors, which we use <strong>for</strong> <b>cat</b>egorical data.</li>
+</ul>
+</li>
+<li>
+<p>Use abbreviations:</p>
+<ul>
+<li>Rcpp = R + C++ (plus plus)</li>
+<li>brms = Bayesian Regression Models using Stan</li>
+</ul>
+</li>
+<li>
+<p>Add an extra R:</p>
+<ul>
+<li>stringr provides string tools.</li>
+<li>beepr plays notification sounds.</li>
+<li>callr calls R, from R.</li>
+</ul>
+</li>
+<li>
+<p>Don’t get sued.</p>
+<ul>
+<li>If you’re creating a package that talks to a commercial service, check the branding guidelines. For example, rDrop isn’t called rDropbox because Dropbox prohibits any applications from using the full trademarked name.</li>
+</ul>
+</li>
+</ul>
+<p>Nick Tierney presents a fun typology of package names in his <a href="https://www.njtierney.com/post/2018/06/20/naming-things/">Naming Things</a> blog post; see that for more inspiring examples. He also has some experience with renaming packages, so the post <a href="https://www.njtierney.com/post/2017/10/27/change-pkg-name/">So, you’ve decided to change your r package name</a> is a good resource if you don’t get this right the first time.</p>
+</section><section id="use-the-available-package" class="level4" data-number="5.2.2.3"><h4 data-number="5.2.2.3" class="anchored" data-anchor-id="use-the-available-package">
+<span class="header-section-number">5.2.2.3</span> Use the available package</h4>
+<p>It is impossible to abide by all of the above suggestions simultaneously, so obviously you will need to make some trade-offs. The <a href="https://cran.r-project.org/package=available">available package</a> has a function called <code>available()</code> that helps you evaluate a potential package name from many angles:</p>
+<div class="cell">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-lib/available">available</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">available</span><span class="op">(</span><span class="st">"doofus"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Urban Dictionary can contain potentially offensive results,</span></span>
+<span><span class="co">#&gt;   should they be included? [Y]es / [N]o:</span></span>
+<span><span class="co">#&gt; 1: 1</span></span>
+<span><span class="co">#&gt; ── doofus ──────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; Name valid: ✔</span></span>
+<span><span class="co">#&gt; Available on CRAN: ✔ </span></span>
+<span><span class="co">#&gt; Available on Bioconductor: ✔</span></span>
+<span><span class="co">#&gt; Available on GitHub:  ✔ </span></span>
+<span><span class="co">#&gt; Abbreviations: http://www.abbreviations.com/doofus</span></span>
+<span><span class="co">#&gt; Wikipedia: https://en.wikipedia.org/wiki/doofus</span></span>
+<span><span class="co">#&gt; Wiktionary: https://en.wiktionary.org/wiki/doofus</span></span>
+<span><span class="co">#&gt; Sentiment:???</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><code>available::available()</code> does the following:</p>
+<ul>
+<li>Checks for validity.</li>
+<li>Checks availability on CRAN, Bioconductor, and beyond.</li>
+<li>Searches various websites to help you discover any unintended meanings. In an interactive session, the URLs you see above are opened in browser tabs.</li>
+<li>Attempts to report whether name has positive or negative sentiment.</li>
+</ul></section></section><section id="sec-creating" class="level3" data-number="5.2.3"><h3 data-number="5.2.3" class="anchored" data-anchor-id="sec-creating">
+<span class="header-section-number">5.2.3</span> Package creation</h3>
+<p>Once you’ve come up with a name, there are two ways to create the package.</p>
+<ul>
+<li>Call <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code>.</li>
+<li>In RStudio, do <em>File &gt; New Project &gt; New Directory &gt; R Package</em>. This ultimately calls <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code>, so really there’s just one way.</li>
+</ul>
+<p><em>TODO: revisit when I tackle usethis + RStudio project templates <a href="https://github.com/r-lib/usethis/issues/770" class="uri">https://github.com/r-lib/usethis/issues/770</a>. In particular, contemplate whether to reinstate any screenshot-y coverage of RStudio workflows here.</em></p>
+<p>This produces the smallest possible <em>working</em> package, with three components:</p>
+<ol type="1">
+<li><p>An <code>R/</code> directory, which you’ll learn about in <a href="Code.html"><span>Chapter&nbsp;7</span></a>.</p></li>
+<li><p>A basic <code>DESCRIPTION</code> file, which you’ll learn about in <span class="citation" data-cites="sec">@sec</span>-#description.</p></li>
+<li><p>A basic <code>NAMESPACE</code> file, which you’ll learn about in <a href="Metadata.html#sec-namespace"><span>Section&nbsp;10.4</span></a>.</p></li>
+</ol>
+<p>It may also include an RStudio project file, <code>pkgname.Rproj</code>, that makes your package easy to use with RStudio, as described below. Basic <code>.Rbuildignore</code> and <code>.gitignore</code> files are also left behind.</p>
+<p>Don’t use <code><a href="https://rdrr.io/r/utils/package.skeleton.html">package.skeleton()</a></code> to create a package. Because this function comes with R, you might be tempted to use it, but it creates a package that immediately throws errors with <code>R CMD build</code>. It anticipates a different development process than we use here, so repairing this broken initial state just makes unnecessary work for people who use devtools (and, especially, roxygen2). Use <code>create_package()</code>.</p>
+</section><section id="sec-where-source-package" class="level3" data-number="5.2.4"><h3 data-number="5.2.4" class="anchored" data-anchor-id="sec-where-source-package">
+<span class="header-section-number">5.2.4</span> Where should you <code>create_package()</code>?</h3>
+<p>The main and only required argument to <code>create_package()</code> is the <code>path</code> where your new package will live:</p>
+<div class="cell">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">create_package</span><span class="op">(</span><span class="st">"path/to/package/pkgname"</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Remember that this is where your package lives in its <strong>source</strong> form (<a href="Structure.html#sec-source-package"><span>Section&nbsp;4.3</span></a>), not in its <strong>installed</strong> form (<a href="Structure.html#sec-installed-package"><span>Section&nbsp;4.6</span></a>). Installed packages live in a <strong>library</strong> and we discussed conventional setups for libraries in <a href="Structure.html#sec-library"><span>Section&nbsp;4.8</span></a>.</p>
+<p>Where should you keep source packages? The main principle is that this location should be distinct from where installed packages live. In the absence of external considerations, a typical user should designate a directory inside their home directory for R (source) packages. We discussed this with colleagues and the source of some of your favorite R packages lives inside directories like <code>~/rrr/</code>, <code>~/documents/tidyverse/</code>, <code>~/r/packages/</code>, or <code>~/pkg/</code>. Some of us use one directory for this, others divide source packages among a few directories based on their development role (contributor vs.&nbsp;not), GitHub organization (tidyverse vs r-lib), development stage (active vs.&nbsp;not), and so on.</p>
+<p>The above probably reflects that we are primarily tool-builders. An academic researcher might organize their files around individual publications, whereas a data scientist might organize around data products and reports. There is no particular technical or traditional reason for one specific approach. As long as you keep a clear distinction between source and installed packages, just pick a strategy that works within your overall system for file organization, and use it consistently.</p>
+</section></section><section id="sec-projects" class="level2" data-number="5.3"><h2 data-number="5.3" class="anchored" data-anchor-id="sec-projects">
+<span class="header-section-number">5.3</span> RStudio Projects</h2>
+<p>devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users. To be clear, you can use devtools without using RStudio and you can develop packages in RStudio without using devtools. But there is a special, two-way relationship that makes it very rewarding to use devtools and RStudio together.</p>
+<div class="callout-note callout callout-style-simple callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+RStudio
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>An RStudio <strong>Project</strong>, with a capital “P”, is a regular directory on your computer that includes some (mostly hidden) RStudio infrastructure to facilitate your work on one or more <strong>projects</strong>, with a lowercase “p”. A project might be an R package, a data analysis, a Shiny app, a book, a blog, etc.</p>
+</div>
+</div>
+<section id="benefits-of-rstudio-projects" class="level3" data-number="5.3.1"><h3 data-number="5.3.1" class="anchored" data-anchor-id="benefits-of-rstudio-projects">
+<span class="header-section-number">5.3.1</span> Benefits of RStudio Projects</h3>
+<p>From <a href="Structure.html#sec-source-package"><span>Section&nbsp;4.3</span></a>, you already know that a source package lives in a directory on your computer. We strongly recommend that each source package is also an RStudio Project. Here are some of the payoffs:</p>
+<ul>
+<li><p>Projects are very “launch-able”. It’s easy to fire up a fresh instance of RStudio in a Project, with the file browser and working directory set exactly the way you need, ready for work.</p></li>
+<li>
+<p>Each Project is isolated; code run in one Project does not affect any other Project.</p>
+<ul>
+<li>You can have several RStudio Projects open at once and code executed in Project A does not have any effect on the R session and workspace of Project B.</li>
+</ul>
+</li>
+<li><p>You get handy code navigation tools like <code>F2</code> to jump to a function definition and <code>Ctrl + .</code> to look up functions or files by name.</p></li>
+<li>
+<p>You get useful keyboard shortcuts and a clickable interface for common package development tasks, like generating documentation, running tests, or checking the entire package.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="images/keyboard-shortcuts.png" class="img-fluid"></p>
+</div>
+</div>
+</li>
+</ul>
+<div class="callout-tip callout callout-style-simple callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+RStudio
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>To see the most useful keyboard shortcuts, press <code>Alt + Shift + K</code> or use <em>Help &gt; Keyboard Shortcuts Help</em>.</p>
+</div>
+</div>
+<div class="callout-tip callout callout-style-simple callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+RStudio
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Follow @<a href="https://twitter.com/rstudiotips">rstudiotips</a> on Twitter for a regular dose of RStudio tips and tricks.</p>
+</div>
+</div>
+</section><section id="how-to-get-an-rstudio-project" class="level3" data-number="5.3.2"><h3 data-number="5.3.2" class="anchored" data-anchor-id="how-to-get-an-rstudio-project">
+<span class="header-section-number">5.3.2</span> How to get an RStudio Project</h3>
+<p>If you follow our recommendation to create new packages with <code>create_package()</code>, this takes care of itself. Each new package will also be an RStudio Project, if you’re working from RStudio.</p>
+<p>There are various ways to designate the directory of a pre-existing source package as an RStudio Project:</p>
+<ul>
+<li>In RStudio, do <em>File &gt; New Project &gt; Existing Directory</em>.</li>
+<li>Call <code>create_package()</code> with the path to the pre-existing R source package.</li>
+<li>Call <code><a href="https://usethis.r-lib.org/reference/use_rstudio.html">usethis::use_rstudio()</a></code>, with the active usethis project set to an existing R package. In practice, this probably means you just need to make sure working directory is inside the pre-existing package.</li>
+</ul></section><section id="what-makes-an-rstudio-project" class="level3" data-number="5.3.3"><h3 data-number="5.3.3" class="anchored" data-anchor-id="what-makes-an-rstudio-project">
+<span class="header-section-number">5.3.3</span> What makes an RStudio Project?</h3>
+<p>A directory that is an RStudio Project will contain an <code>.Rproj</code> file. Typically, if the directory is named “foo”, the Project file is <code>foo.Rproj</code>. And if that directory is also an R package, then the package name is usually also “foo”. The path of least resistance is to make all of these names coincide and to NOT nest your package inside a subdirectory inside the Project. If you settle on a different workflow, just know it may feel like you are fighting with the tools.</p>
+<p>An <code>.Rproj</code> file is just a text file. Here’s the default project file used by usethis:</p>
+<pre><code>Version: 1.0
+
+RestoreWorkspace: No
+SaveWorkspace: No
+AlwaysSaveHistory: Default
+
+EnableCodeIndexing: Yes
+Encoding: UTF-8
+
+AutoAppendNewline: Yes
+StripTrailingWhitespace: Yes
+
+BuildType: Package
+PackageUseDevtools: Yes
+PackageInstallArgs: --no-multiarch --with-keep.source
+PackageRoxygenize: rd,collate,namespace</code></pre>
+<p>You don’t need to modify this file by hand. Instead, use the interface available via <em>Tools &gt; Project Options</em> or <em>Project Options</em> in the Projects menu in the top-right corner.</p>
+<p><em>TODO: update these and deal with layout.</em></p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="images/project-options-1.png" class="img-fluid" style="width:30.0%"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="images/project-options-2.png" class="img-fluid" style="width:70.0%"></p>
+</div>
+</div>
+</section><section id="how-to-launch-an-rstudio-project" class="level3" data-number="5.3.4"><h3 data-number="5.3.4" class="anchored" data-anchor-id="how-to-launch-an-rstudio-project">
+<span class="header-section-number">5.3.4</span> How to launch an RStudio Project</h3>
+<p>Double-click the <code>foo.Rproj</code> file in macOS’s Finder or Windows Explorer to launch the foo Project in RStudio.</p>
+<p>You can also launch Projects from within RStudio via <em>File &gt; Open Project (in New Session)</em> or the Projects menu in the top-right corner.</p>
+<p>If you use a productivity or launcher app, you can probably configure it to do something delightful for <code>.Rproj</code> files. We both use Alfred for this <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, which is macOS only, but similar tools exist for Windows. In fact, this is a very good reason to use a productivity app in the first place.</p>
+<p>(ref:alfred) Specifically, we configure Alfred to favor <code>.Rproj</code> files in its search results when proposing apps or files to open. To register the <code>.Rproj</code> file type with Alfred, go to <em>Preferences &gt; Features &gt; Default Results &gt; Advanced</em>. Drag any <code>.Rproj</code> file onto this space and then close.</p>
+<p>It is very normal – and productive! – to have multiple Projects open at once.</p>
+</section><section id="rstudio-project-vs.-active-usethis-project" class="level3" data-number="5.3.5"><h3 data-number="5.3.5" class="anchored" data-anchor-id="rstudio-project-vs.-active-usethis-project">
+<span class="header-section-number">5.3.5</span> RStudio Project vs.&nbsp;active usethis project</h3>
+<p>You will notice that most usethis functions don’t take a path: they operate on the files in the “active usethis project”. The usethis package assumes that 95% of the time all of these coincide:</p>
+<ul>
+<li>The current RStudio Project, if using RStudio.</li>
+<li>The active usethis project.</li>
+<li>Current working directory for the R process.</li>
+</ul>
+<p>If things seem funky, call <code>proj_sitrep()</code> to get a “situation report”. This will identify peculiar situations and propose ways to get back to a happier state.</p>
+<div class="cell">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># these should usually be the same (or unset)</span></span>
+<span><span class="fu">proj_sitrep</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; *   working_directory: '/Users/jenny/rrr/readxl'</span></span>
+<span><span class="co">#&gt; * active_usethis_proj: '/Users/jenny/rrr/readxl'</span></span>
+<span><span class="co">#&gt; * active_rstudio_proj: '/Users/jenny/rrr/readxl'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section></section><section id="working-directory-and-filepath-discipline" class="level2" data-number="5.4"><h2 data-number="5.4" class="anchored" data-anchor-id="working-directory-and-filepath-discipline">
+<span class="header-section-number">5.4</span> Working directory and filepath discipline</h2>
+<p>As you develop your package, you will be executing R code. This will be a mix of workflow calls (e.g., <code>document()</code> or <code>test()</code>) and <em>ad hoc</em> calls that help you write your functions, examples, and tests. We <em>strongly recommend</em> that you leave the working directory of your R process set to the top-level of the source package.</p>
+<p>If you’re totally new to package development, you don’t have much basis for supporting or resisting this proposal. But those with some experience may find it somewhat upsetting. How are we supposed to express paths when working in subdirectories, like <code>tests/</code>? As it becomes relevant, we’ll show you how to exploit path-building helpers, such as <code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code>, that determine paths at execution time.</p>
+<p>The basic idea is that by leaving working directory alone, you are encouraged to write paths that convey intent explicitly (“read <code>foo.csv</code> from the test directory”) instead of implicitly (“read <code>foo.csv</code> from current working directory, which I <em>think</em> is going to be the test directory”). A sure sign of reliance on implicit paths is incessant fiddling with your working directory, because you’re using <code><a href="https://rdrr.io/r/base/getwd.html">setwd()</a></code> to manually fulfill the assumptions that are implicit in your paths.</p>
+<p>This mentality can design away a whole class of path headaches and makes day-to-day development more pleasant as well. There are two reasons why implicit paths are hard to get right:</p>
+<ul>
+<li>Recall the different forms that a package can take during the development cycle (<a href="Structure.html"><span>Chapter&nbsp;4</span></a>). These states differ from each other in terms of which files and folders exist and their relative positions within the hierarchy. It’s tricky to write relative paths that work across all package states.</li>
+<li>Eventually, your package will be processed with built-in tools like <code>R CMD build</code>, <code>R CMD check</code>, and <code>R CMD INSTALL</code>, by you and potentially CRAN. It’s hard to keep track of what the working directory will be at every stage of these processes.</li>
+</ul>
+<p>Path helpers like <code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code>, <code><a href="https://fs.r-lib.org/reference/path_package.html">fs::path_package()</a></code>, and the <a href="https://rprojroot.r-lib.org">rprojroot package</a> are extremely useful for building resilient paths that hold up across the whole range of situations that come up during development and usage. Another way to eliminate brittle paths is to be rigorous in your use of proper methods for storing data inside your package (<a href="data.html"><span>Chapter&nbsp;8</span></a>) and to target the session temp directory when appropriate, such as for ephemeral testing artefacts (<a href="testing-basics.html"><span>Chapter&nbsp;13</span></a>).</p>
+</section><section id="sec-load-all" class="level2" data-number="5.5"><h2 data-number="5.5" class="anchored" data-anchor-id="sec-load-all">
+<span class="header-section-number">5.5</span> Test drive with <code>load_all()</code>
+</h2>
+<p>The <code>load_all()</code> function is arguably the most important part of the devtools workflow.</p>
+<div class="cell">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># with devtools attached and</span></span>
+<span><span class="co"># working directory set to top-level of your source package ...</span></span>
+<span></span>
+<span><span class="fu">load_all</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># ... now experiment with the functions in your package</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><code>load_all()</code> is the key step in this “lather, rinse, repeat” cycle of package development:</p>
+<ol type="1">
+<li>Tweak a function definition.</li>
+<li><code>load_all()</code></li>
+<li>Try out the change by running a small example or some tests.</li>
+</ol>
+<p>When you’re new to package development or to devtools, it’s easy to overlook the importance of <code>load_all()</code> and fall into some awkward habits from a data analysis workflow.</p>
+<section id="benefits-of-load_all" class="level3" data-number="5.5.1"><h3 data-number="5.5.1" class="anchored" data-anchor-id="benefits-of-load_all">
+<span class="header-section-number">5.5.1</span> Benefits of <code>load_all()</code>
+</h3>
+<p>When you first start to use a development environment, like RStudio or Emacs + ESS, the biggest win is the ability to send lines of code from an <code>.R</code> script for execution in R console. The fluidity of this is what makes it tolerable to follow the best practice of regarding your source code as real <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> (as opposed to objects in the workspace) and saving <code>.R</code> files (as opposed to saving and reloading <code>.Rdata</code>).</p>
+<p>(ref:source-is-real) Quoting the usage philosophy favored by <a href="https://ess.r-project.org/Manual/ess.html#Philosophies-for-using-ESS_0028R_0029">Emacs Speaks Statistics</a> (ESS).</p>
+<p><code>load_all()</code> has the same significance for package development and, ironically, requires that you NOT test drive package code in the same way as script code. <code>load_all()</code> <em>simulates</em> the fullblown process for seeing the effect of a source code change, which is clunky enough <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> that you won’t want to do it very often. The main benefits of <code>load_all()</code>:</p>
+<ul>
+<li>You can iterate quickly, which encourages exploration and incremental progress.
+<ul>
+<li>This iterative speedup is especially noticeable for packages with compiled code.</li>
+</ul>
+</li>
+<li>You get to develop interactively under a namespace regime that accurately mimics how things are when someone uses your installed package:
+<ul>
+<li>You can call your own internal functions directly, without using <code>:::</code> and without being tempted to temporarily define your functions in the global workspace.</li>
+<li>You can also call functions from other packages that you’ve imported into your <code>NAMESPACE</code>, without being tempted to attach these dependencies via <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>.</li>
+</ul>
+</li>
+</ul>
+<p>(ref:load-all-alternatives) The command line approach is to quit R, go to the shell, do <code>R CMD build foo</code> in the package’s parent directory, then <code>R CMD INSTALL foo_x.y.x.tar.gz</code>, restart R, and call <code>library(foo</code>). From R, an approximation is to <code>detach("package:foo", unload = TRUE); install.packages(".", repos = NULL, type = "source"); library(foo)</code>.</p>
+<p><code>load_all()</code> removes friction from the development workflow and eliminates the temptation to use workarounds that often lead to mistakes around namespace and dependency management.</p>
+</section><section id="other-ways-to-call-load_all" class="level3" data-number="5.5.2"><h3 data-number="5.5.2" class="anchored" data-anchor-id="other-ways-to-call-load_all">
+<span class="header-section-number">5.5.2</span> Other ways to call <code>load_all()</code>
+</h3>
+<p>When working in a Project that is a package, RStudio offers several ways to call <code>load_all()</code>:</p>
+<ul>
+<li>Keyboard shortcut: Cmd+Shift+L (macOS), Ctrl+Shift+L (Windows, Linux)</li>
+<li>Build pane’s <em>More …</em> menu</li>
+<li><em>Build &gt; Load All</em></li>
+</ul>
+<p><code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> is a thin wrapper around <code><a href="https://pkgload.r-lib.org/reference/load_all.html">pkgload::load_all()</a></code> that adds a bit of user-friendliness. It is unlikely you will use <code>load_all()</code> programatically or inside another package, but if you do, you should probably use <code><a href="https://pkgload.r-lib.org/reference/load_all.html">pkgload::load_all()</a></code> directly.</p>
+<p><em>TODO: Decide how to update this diagram and then reposition and re-integrate it with the prose. For example, figure out how to frame w.r.t. RStudio Install and Restart vs.&nbsp;Clean and Rebuild.</em></p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="diagrams/loading.png" class="img-fluid"></p>
+</div>
+</div>
+
+
+</section></section><section class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
+<ol>
+<li id="fn1" role="doc-endnote"><p>(ref:alfred)<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>(ref:source-is-real)<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>(ref:load-all-alternatives)<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script><nav class="page-navigation"><div class="nav-page nav-page-previous">
+      <a href="./Structure.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Package structure and state</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./Package-within.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The package within</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer"><div class="nav-footer">
+    <div class="nav-footer-left">R Packages (2e) was written by Hadley Wickham and Jenny Bryan</div>   
+    <div class="nav-footer-right">This book was built with <a href="https://quarto.org/">Quarto</a>.</div>
+  </div>
+</footer>
+
+
+</body></html>

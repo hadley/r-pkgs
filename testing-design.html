@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.640">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>R Packages (2e) - 14&nbsp; Designing your test suite</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./testing-advanced.html" rel="next">
+<link href="./testing-basics.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet"><script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script><script defer="" data-domain="r-pkgs.org" src="https://plausible.io/js/plausible.js"></script>
+</head>
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top"><nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }"><div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Designing your test suite</span></h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav></header><!-- content --><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto"><div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">R Packages (2e)</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/hadley/r-pkgs/" title="Source Code" class="sidebar-tool px-1"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-reader-toggle sidebar-tool" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Welcome!</a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Preface.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">Getting started</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Introduction.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Whole-game.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">The whole game</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Setup.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">System setup</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Structure.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Package structure and state</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Workflow101.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Fundamental development workflows</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Package-within.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The package within</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">Package components</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Code.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">R code</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./misc.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Other components</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">Package metadata</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./Metadata.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><code>DESCRIPTION</code> and <code>NAMESPACE</code></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./dependencies.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Dependencies: What does your package need?</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./license.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Licensing</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">Testing</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-basics.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Testing basics</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-design.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Designing your test suite</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./testing-advanced.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Advanced testing techniques</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-expanded="true">Documentation</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./man.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Function documentation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./vignettes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Vignettes</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./other-markdown.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Other markdown files</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./website.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Website</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+    <div class="sidebar-item-container"> 
+        <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-expanded="true">Maintenance and distribution</a>
+      <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-expanded="true">
+        <i class="bi bi-chevron-right ms-2"></i>
+      </a>
+    </div>
+    <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">
+<li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./check.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title"><code>R CMD check</code></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./continuous-integration.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Continuous integration</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./release.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Releasing to CRAN</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lifecycle.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Lifecycle</span></a>
+  </div>
+</li>
+    </ul>
+</li>
+    </ul>
+</div>
+</nav><!-- margin-sidebar --><div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc"><h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+<li>
+<a href="#what-to-test" id="toc-what-to-test" class="nav-link active" data-scroll-target="#what-to-test"> <span class="header-section-number">14.1</span> What to test</a>
+  <ul class="collapse">
+<li><a href="#test-coverage" id="toc-test-coverage" class="nav-link" data-scroll-target="#test-coverage"> <span class="header-section-number">14.1.1</span> Test coverage</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#high-level-principles-for-testing" id="toc-high-level-principles-for-testing" class="nav-link" data-scroll-target="#high-level-principles-for-testing"> <span class="header-section-number">14.2</span> High-level principles for testing</a>
+  <ul class="collapse">
+<li><a href="#self-sufficient-tests" id="toc-self-sufficient-tests" class="nav-link" data-scroll-target="#self-sufficient-tests"> <span class="header-section-number">14.2.1</span> Self-sufficient tests</a></li>
+  <li><a href="#self-contained-tests" id="toc-self-contained-tests" class="nav-link" data-scroll-target="#self-contained-tests"> <span class="header-section-number">14.2.2</span> Self-contained tests</a></li>
+  <li><a href="#plan-for-test-failure" id="toc-plan-for-test-failure" class="nav-link" data-scroll-target="#plan-for-test-failure"> <span class="header-section-number">14.2.3</span> Plan for test failure</a></li>
+  <li><a href="#repetition-is-ok" id="toc-repetition-is-ok" class="nav-link" data-scroll-target="#repetition-is-ok"> <span class="header-section-number">14.2.4</span> Repetition is OK</a></li>
+  <li><a href="#remove-tension-between-interactive-and-automated-testing" id="toc-remove-tension-between-interactive-and-automated-testing" class="nav-link" data-scroll-target="#remove-tension-between-interactive-and-automated-testing"> <span class="header-section-number">14.2.5</span> Remove tension between interactive and automated testing</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#sec-tests-files-overview" id="toc-sec-tests-files-overview" class="nav-link" data-scroll-target="#sec-tests-files-overview"> <span class="header-section-number">14.3</span> Files relevant to testing</a>
+  <ul class="collapse">
+<li><a href="#hiding-in-plain-sight-files-below-r" id="toc-hiding-in-plain-sight-files-below-r" class="nav-link" data-scroll-target="#hiding-in-plain-sight-files-below-r"> <span class="header-section-number">14.3.1</span> Hiding in plain sight: files below <code>R/</code></a></li>
+  <li><a href="#teststesthat.r" id="toc-teststesthat.r" class="nav-link" data-scroll-target="#teststesthat.r"> <span class="header-section-number">14.3.2</span> <code>tests/testhat.R</code></a></li>
+  <li><a href="#testthat-helper-files" id="toc-testthat-helper-files" class="nav-link" data-scroll-target="#testthat-helper-files"> <span class="header-section-number">14.3.3</span> Testthat helper files</a></li>
+  <li><a href="#testthat-setup-files" id="toc-testthat-setup-files" class="nav-link" data-scroll-target="#testthat-setup-files"> <span class="header-section-number">14.3.4</span> Testthat setup files</a></li>
+  <li><a href="#files-ignored-by-testthat" id="toc-files-ignored-by-testthat" class="nav-link" data-scroll-target="#files-ignored-by-testthat"> <span class="header-section-number">14.3.5</span> Files ignored by testthat</a></li>
+  <li><a href="#storing-test-data" id="toc-storing-test-data" class="nav-link" data-scroll-target="#storing-test-data"> <span class="header-section-number">14.3.6</span> Storing test data</a></li>
+  <li><a href="#sec-tests-files-where-write" id="toc-sec-tests-files-where-write" class="nav-link" data-scroll-target="#sec-tests-files-where-write"> <span class="header-section-number">14.3.7</span> Where to write files during testing</a></li>
+  </ul>
+</li>
+  </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/testing-design.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block default"><div class="quarto-title">
+<h1 class="title"><span id="test-design" class="quarto-section-identifier d-none d-lg-block"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Designing your test suite</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header><div class="cell">
+
+</div>
+<div class="callout-warning callout callout-style-simple">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Your test files should not include these <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.</p>
+<div class="cell">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org">testthat</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/local_edition.html">local_edition</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<section id="what-to-test" class="level2" data-number="14.1"><h2 data-number="14.1" class="anchored" data-anchor-id="what-to-test">
+<span class="header-section-number">14.1</span> What to test</h2>
+<blockquote class="blockquote">
+<p>Whenever you are tempted to type something into a print statement or a debugger expression, write it as a test instead. — Martin Fowler</p>
+</blockquote>
+<p>There is a fine balance to writing tests. Each test that you write makes your code less likely to change inadvertently; but it also can make it harder to change your code on purpose. It’s hard to give good general advice about writing tests, but you might find these points helpful:</p>
+<ul>
+<li><p>Focus on testing the external interface to your functions - if you test the internal interface, then it’s harder to change the implementation in the future because as well as modifying the code, you’ll also need to update all the tests.</p></li>
+<li><p>Strive to test each behaviour in one and only one test. Then if that behaviour later changes you only need to update a single test.</p></li>
+<li><p>Avoid testing simple code that you’re confident will work. Instead focus your time on code that you’re not sure about, is fragile, or has complicated interdependencies. That said, I often find I make the most mistakes when I falsely assume that the problem is simple and doesn’t need any tests.</p></li>
+<li><p>Always write a test when you discover a bug. You may find it helpful to adopt the test-first philosophy. There you always start by writing the tests, and then write the code that makes them pass. This reflects an important problem solving strategy: start by establishing your success criteria, how you know if you’ve solved the problem.</p></li>
+</ul>
+<section id="test-coverage" class="level3" data-number="14.1.1"><h3 data-number="14.1.1" class="anchored" data-anchor-id="test-coverage">
+<span class="header-section-number">14.1.1</span> Test coverage</h3>
+<p>Another concrete way to direct your test writing efforts is to examine your test coverage. The covr package (&lt;<a href="https://covr.r-lib.org" class="uri">https://covr.r-lib.org</a>) can be used to determine which lines of your package’s source code are (or are not!) executed when the test suite is run. This is most often presented as a percentage. Generally speaking, the higher the better.</p>
+<p>In some technical sense, 100% test coverage is the goal, however, this is rarely achieved in practice and that’s often OK. Going from 90% or 99% coverage to 100% is not always the best use of your development time and energy. In many cases, that last 10% or 1% often requires some awkward gymnastics to cover. Sometimes this forces you to introduce mocking or some other new complexity. Don’t sacrifice the maintainability of your test suite in the name of covering some weird edge case that hasn’t yet proven to be a problem. Also remember that not every line of code or every function is equally likely to harbor bugs. Focus your testing energy on code that is tricky, based on your expert opinion and any empirical evidence you’ve accumulated about bug hot spots.</p>
+<p>We use covr regularly, in two different ways:</p>
+<ul>
+<li>Local, interactive use. We mostly use <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_coverage_active_file()</a></code> and <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_coverage()</a></code>, for exploring the coverage of an individual file or the whole package, respectively.</li>
+<li>Automatic, remote use via GitHub Actions (GHA). We cover continuous integration and GHA more thoroughly elsewhere, but we will at least mention here that <code>usethis::use_github_action("test-coverage")</code> configures a GHA workflow that constantly monitors your test coverage. Test coverage can be an especially helpful metric when evaluating a pull request (either your own or from an external contributor). A proposed change that is well-covered by tests is less risky to merge.</li>
+</ul></section></section><section id="high-level-principles-for-testing" class="level2" data-number="14.2"><h2 data-number="14.2" class="anchored" data-anchor-id="high-level-principles-for-testing">
+<span class="header-section-number">14.2</span> High-level principles for testing</h2>
+<p>In later sections, we offer concrete strategies for how to handle common testing dilemmas in R. Here we lay out the high-level principles that underpin these recommendations:</p>
+<ul>
+<li>A test should ideally be self-sufficient and self-contained.</li>
+<li>The interactive workflow is important, because you will mostly interact with your tests when they are failing.</li>
+<li>It’s more important that test code be obvious than, e.g., as DRY as possible.</li>
+<li>However, the interactive workflow shouldn’t “leak” into and undermine the test suite.</li>
+</ul>
+<p>Writing good tests for a code base often feels more challenging than writing the code in the first place. This can come as a bit of a shock when you’re new to package development and you might be concerned that you’re doing it wrong. Don’t worry, you’re not! Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the “main code”, i.e.&nbsp;the stuff below <code>R/</code>. As a result, it requires more deliberate effort to develop your skills and taste around testing.</p>
+<p>Many of the packages maintained by our team violate some of the advice you’ll find here. There are (at least) two reasons for that:</p>
+<ul>
+<li>testthat has been evolving for more than twelve years and this chapter reflects the cumulative lessons learned from that experience. The tests in many packages have been in place for a long time and reflect typical practices from different eras and different maintainers.</li>
+<li>These aren’t hard and fast rules, but are, rather, guidelines. There will always be specific situations where it makes sense to bend the rule.</li>
+</ul>
+<p>This chapter can’t address all possible testing situations, but hopefully these guidelines will help your future decision-making.</p>
+<section id="self-sufficient-tests" class="level3" data-number="14.2.1"><h3 data-number="14.2.1" class="anchored" data-anchor-id="self-sufficient-tests">
+<span class="header-section-number">14.2.1</span> Self-sufficient tests</h3>
+<blockquote class="blockquote">
+<p>All tests should strive to be hermetic: a test should contain all of the information necessary to set up, execute, and tear down its environment. Tests should assume as little as possible about the outside environment ….</p>
+<p>From the book Software Engineering at Google, <a href="https://abseil.io/resources/swe-book/html/ch11.html">Chapter 11</a></p>
+</blockquote>
+<p>Recall this advice found in <a href="Code.html#sec-code-r-landscape"><span>Section&nbsp;7.6</span></a>, which covers your package’s “main code”, i.e.&nbsp;everything below <code>R/</code>:</p>
+<blockquote class="blockquote">
+<p>The <code>.R</code> files below <code>R/</code> should consist almost entirely of function definitions. Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.</p>
+</blockquote>
+<p>We have analogous advice for your test files:</p>
+<blockquote class="blockquote">
+<p>The <code>test-*.R</code> files below <code>tests/testthat/</code> should consist almost entirely of calls to <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>. Any other top-level code is suspicious and should be carefully considered for relocation into calls to <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> or to other files that get special treatment inside an R package or from the testthat.</p>
+</blockquote>
+<p>Eliminating (or at least minimizing) top-level code outside of <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> will have the beneficial effect of making your tests more hermetic. This is basically the testing analogue of the general programming advice that it’s wise to avoid unstructured sharing of state.</p>
+<p>Logic at the top-level of a test file has an awkward scope: Objects or functions defined here have what you might call “test file scope”, if the definitions appear before the first call to <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>. If top-level code is interleaved between <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> calls, you can even create “partial test file scope”.</p>
+<p>While writing tests, it can feel convenient to rely on these file-scoped objects, especially early in the life of a test suite, e.g.&nbsp;when each test file fits on one screen. But we find that implicitly relying on objects in a test’s parent environment tends to make a test suite harder to understand and maintain over time.</p>
+<p>Consider a test file with top-level code sprinkled around it, outside of <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">skip_if</span>(<span class="fu">today_is_a_monday</span>())</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">"foofy() does this"</span>, {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expect_equal</span>(<span class="fu">foofy</span>(dat), ...)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>dat2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>))</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">skip_on_os</span>(<span class="st">"windows"</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">"foofy2() does that"</span>, {</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expect_snapshot</span>(<span class="fu">foofy2</span>(dat, dat2)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="er">}</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We recommend relocating file-scoped logic to either a narrower scope or to a broader scope. Here’s what it would look like to use a narrow scope, i.e.&nbsp;to inline everything inside <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> calls:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">"foofy() does this"</span>, {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">skip_if</span>(<span class="fu">today_is_a_monday</span>())</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expect_equal</span>(<span class="fu">foofy</span>(dat), ...)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">"foofy() does that"</span>, {</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">skip_if</span>(<span class="fu">today_is_a_monday</span>())</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">skip_on_os</span>(<span class="st">"windows"</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  dat2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>), <span class="at">y =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expect_snapshot</span>(<span class="fu">foofy</span>(dat, dat2)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="er">}</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Below we will discuss techniques for moving file-scoped logic to a broader scope.</p>
+</section><section id="self-contained-tests" class="level3" data-number="14.2.2"><h3 data-number="14.2.2" class="anchored" data-anchor-id="self-contained-tests">
+<span class="header-section-number">14.2.2</span> Self-contained tests</h3>
+<p>Each <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> test has its own execution environment, which makes it somewhat self-contained. For example, an R object you create inside a test does not exist after the test exits:</p>
+<div class="cell">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"thingy"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"thingy exists"</span>, <span class="op">{</span></span>
+<span>  <span class="va">thingy</span> <span class="op">&lt;-</span> <span class="st">"thingy"</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/logical-expectations.html">expect_true</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="va">thingy</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 🎊</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/exists.html">exists</a></span><span class="op">(</span><span class="st">"thingy"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The <code>thingy</code> object lives and dies entirely within the confines of <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>. However, testthat doesn’t know how to cleanup after actions that affect other aspects of the R landscape:</p>
+<ul>
+<li>The filesystem: creating and deleting files, changing the working directory, etc.</li>
+<li>The search path: <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, <code><a href="https://rdrr.io/r/base/attach.html">attach()</a></code>.</li>
+<li>Global options, like <code><a href="https://rdrr.io/r/base/options.html">options()</a></code> and <code><a href="https://rdrr.io/r/graphics/par.html">par()</a></code>, and environment variables.</li>
+</ul>
+<p>Watch how calls like <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>, <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>, and <code><a href="https://rdrr.io/r/base/Sys.setenv.html">Sys.setenv()</a></code> have a persistent effect <em>after</em> a test, even when they are executed inside <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"jsonlite"</span>, <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; character(0)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"opt_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; NULL</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"envvar_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] ""</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"landscape changes leak outside the test"</span>, <span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://arxiv.org/abs/1403.2805">jsonlite</a></span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>opt_whatever <span class="op">=</span> <span class="st">"whatever"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html">Sys.setenv</a></span><span class="op">(</span>envvar_whatever <span class="op">=</span> <span class="st">"whatever"</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"jsonlite"</span>, all <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"opt_whatever"</span><span class="op">)</span>, <span class="st">"whatever"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"envvar_whatever"</span><span class="op">)</span>, <span class="st">"whatever"</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 🎉</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"jsonlite"</span>, <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "package:jsonlite"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"opt_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "whatever"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"envvar_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "whatever"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>These changes to the landscape even persist beyond the current test file, i.e.&nbsp;they carry over into all subsequent test files.</p>
+<p>If it’s easy to avoid making such changes in your test code, that is the best strategy! But if it’s unavoidable, then you have to make sure that you clean up after yourself. This mindset is very similar to one we advocated for in <a href="Code.html#sec-code-r-landscape"><span>Section&nbsp;7.6</span></a>, when discussing how to design well-mannered functions.</p>
+<p>We like to use the withr package (<a href="https://withr.r-lib.org" class="uri">https://withr.r-lib.org</a>) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration. You’ve already seen an example of its usage, when we explored snapshot tests:</p>
+<div class="cell">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"side-by-side diffs work"</span>, <span class="op">{</span></span>
+<span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>             <span class="co"># &lt;-- (°_°) look here!</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_snapshot.html">expect_snapshot</a></span><span class="op">(</span></span>
+<span>    <span class="fu">waldo</span><span class="fu">::</span><span class="fu"><a href="https://waldo.r-lib.org/reference/compare.html">compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="va">letters</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">letters</span>, <span class="st">"X"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This test requires the display width to be set at 20 columns, which is considerably less than the default width. <code>withr::local_options(width = 20)</code> sets the <code>width</code> option to 20 and, at the end of the test, restores the option to its original value. withr is also pleasant to use during interactive development: deferred actions are still captured on the global environment and can be executed explicitly via <code><a href="https://withr.r-lib.org/reference/defer.html">withr::deferred_run()</a></code> or implicitly by restarting R.</p>
+<p>We recommend including withr in <code>Suggests</code>, if you’re only going to use it in your tests, or in <code>Imports</code>, if you also use it below <code>R/</code>. Call withr functions as we do above, e.g.&nbsp;like <code>withr::local_whatever()</code>, in either case. See <a href="dependencies.html#sec-suggested-packages-and-tests"><span>Section&nbsp;11.2.1.1</span></a> for a full discussion.</p>
+<div class="callout-tip callout callout-style-simple">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>The easiest way to add a package to DESCRIPTION is with, e.g., <code>usethis::use_package("withr", type = "Suggests")</code>. For tidyverse packages, withr is considered a “free dependency”, i.e.&nbsp;the tidyverse uses withr so extensively that we don’t hesitate to use it whenever it would be useful.</p>
+</div>
+</div>
+</div>
+<p>withr has a large set of pre-implemented <code>local_*()</code> / <code>with_*()</code> functions that should handle most of your testing needs, so check there before you write your own. If nothing exists that meets your need, <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code> is the general way to schedule some action at the end of a test.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>Here’s how we would fix the problems in the previous example using withr: <em>Behind the scenes, we reversed the landscape changes, so we can try this again.</em></p>
+<div class="cell">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"jsonlite"</span>, <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; character(0)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"opt_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; NULL</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"envvar_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] ""</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"withr makes landscape changes local to a test"</span>, <span class="op">{</span></span>
+<span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_package.html">local_package</a></span><span class="op">(</span><span class="st">"jsonlite"</span><span class="op">)</span></span>
+<span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span>opt_whatever <span class="op">=</span> <span class="st">"whatever"</span><span class="op">)</span></span>
+<span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_envvar.html">local_envvar</a></span><span class="op">(</span>envvar_whatever <span class="op">=</span> <span class="st">"whatever"</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/expect_match.html">expect_match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"jsonlite"</span>, all <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"opt_whatever"</span><span class="op">)</span>, <span class="st">"whatever"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"envvar_whatever"</span><span class="op">)</span>, <span class="st">"whatever"</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 🌈</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"jsonlite"</span>, <span class="fu"><a href="https://rdrr.io/r/base/search.html">search</a></span><span class="op">(</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; character(0)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">"opt_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; NULL</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"envvar_whatever"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] ""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>testthat leans heavily on withr to make test execution environments as reproducible and self-contained as possible. In testthat 3e, <code><a href="https://testthat.r-lib.org/reference/local_test_context.html">testthat::local_reproducible_output()</a></code> is implicitly part of each <code><a href="https://testthat.r-lib.org/reference/test_that.html">test_that()</a></code> test.</p>
+<div class="cell">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"something specific happens"</span>, <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/local_test_context.html">local_reproducible_output</a></span><span class="op">(</span><span class="op">)</span>     <span class="co"># &lt;-- this happens implicitly</span></span>
+<span>  </span>
+<span>  <span class="co"># your test code, which might be sensitive to ambient conditions, such as</span></span>
+<span>  <span class="co"># display width or the number of supported colors</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><code><a href="https://testthat.r-lib.org/reference/local_test_context.html">local_reproducible_output()</a></code> temporarily sets various options and environment variables to values favorable for testing, e.g.&nbsp;it suppresses colored output, turns off fancy quotes, sets the console width, and sets <code>LC_COLLATE = "C"</code>. Usually, you can just passively enjoy the benefits of <code><a href="https://testthat.r-lib.org/reference/local_test_context.html">local_reproducible_output()</a></code>. But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.</p>
+</section><section id="plan-for-test-failure" class="level3" data-number="14.2.3"><h3 data-number="14.2.3" class="anchored" data-anchor-id="plan-for-test-failure">
+<span class="header-section-number">14.2.3</span> Plan for test failure</h3>
+<p>We regret to inform you that most of the quality time you spend with your tests will be when they are inexplicably failing.</p>
+<blockquote class="blockquote">
+<p>In its purest form, automating testing consists of three activities: writing tests, running tests, and <strong>reacting to test failures</strong>….</p>
+<p>Remember that tests are often revisited only when something breaks. When you are called to fix a broken test that you have never seen before, you will be thankful someone took the time to make it easy to understand. Code is read far more than it is written, so make sure you write the test you’d like to read!</p>
+<p>From the book Software Engineering at Google, <a href="https://abseil.io/resources/swe-book/html/ch11.html">Chapter 11</a></p>
+</blockquote>
+<p>Most of us don’t work on a code base the size of Google. But even in a team of one, tests that you wrote six months ago might as well have been written by someone else. Especially when they are failing.</p>
+<p>When we do reverse dependency checks, often involving hundreds or thousands of CRAN packages, we have to inspect test failures to determine if changes in our packages are to blame. As a result, we regularly engage with failing tests in other people’s packages, which leaves us with lots of opinions about practices that create unnecessary testing pain.</p>
+<p>Test troubleshooting nirvana looks like this: In a fresh R session, you can do <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> and immediately run an individual test or walk through it line-by-line. There is no need to hunt around for setup code that has to be run manually first, that is found elsewhere in the test file or perhaps in a different file altogether. Test-related code that lives in an unconventional location causes extra self-inflicted pain when you least need it.</p>
+<p>Consider this extreme and abstract example of a test that is difficult to troubleshoot due to implicit dependencies on free-range code:</p>
+<div class="cell">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># dozens or hundreds of lines of top-level code, interspersed with other tests,</span></span>
+<span><span class="co"># which you must read and selectively execute</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"f() works"</span>, <span class="op">{</span></span>
+<span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">function_from_some_dependency</span><span class="op">(</span><span class="va">object_with_unknown_origin</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fl">2.5</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This test is much easier to drop in on if dependencies are invoked in the normal way, i.e.&nbsp;via <code>::</code>, and test objects are created inline:</p>
+<div class="cell">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># dozens or hundreds of lines of self-sufficient, self-contained tests,</span></span>
+<span><span class="co"># all of which you can safely ignore!</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"f() works"</span>, <span class="op">{</span></span>
+<span>  <span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="va">...</span></span>
+<span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">somePkg</span><span class="fu">::</span><span class="fu">someFunction</span><span class="op">(</span><span class="va">useful_thing</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fl">2.5</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This test is self-sufficient. The code inside <code>{ ... }</code> explicitly creates any necessary objects or conditions and makes explicit calls to any helper functions. This test doesn’t rely on objects or dependencies that happen to be be ambiently available.</p>
+<p>Self-sufficient, self-contained tests are a win-win: It is literally safer to design tests this way and it also makes tests much easier for humans to troubleshoot later.</p>
+</section><section id="repetition-is-ok" class="level3" data-number="14.2.4"><h3 data-number="14.2.4" class="anchored" data-anchor-id="repetition-is-ok">
+<span class="header-section-number">14.2.4</span> Repetition is OK</h3>
+<p>One obvious consequence of our suggestion to minimize code with “file scope” is that your tests will probably have some repetition. And that’s OK! We’re going to make the controversial recommendation that you tolerate a fair amount of duplication in test code, i.e.&nbsp;you can relax some of your DRY (“don’t repeat yourself”) tendencies.</p>
+<blockquote class="blockquote">
+<p>Keep the reader in your test function. Good production code is well-factored; good test code is obvious. … think about what will make the problem obvious when a test fails.</p>
+<p>From the blog post <a href="https://mtlynch.io/good-developers-bad-tests/">Why Good Developers Write Bad Unit Tests</a></p>
+</blockquote>
+<p>Here’s a toy example to make things concrete.</p>
+<div class="cell">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"multiplication works"</span>, <span class="op">{</span></span>
+<span>  <span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">useful_thing</span>, <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 🥳</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"subtraction works"</span>, <span class="op">{</span></span>
+<span>  <span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">5</span> <span class="op">-</span> <span class="va">useful_thing</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 😀</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In real life, <code>useful_thing</code> is usually a more complicated object that somehow feels burdensome to instantiate. Notice how <code>useful_thing &lt;- 3</code> appears in more than once place. Conventional wisdom says we should DRY this code out. It’s tempting to just move <code>useful_thing</code>’s definition outside of the tests:</p>
+<div class="cell">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"multiplication works"</span>, <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">useful_thing</span>, <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 🥳</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"subtraction works"</span>, <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fl">5</span> <span class="op">-</span> <span class="va">useful_thing</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Test passed 😀</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>But we really do think the first form, with the repetition, if often the better choice.</p>
+<p>At this point, many readers might be thinking “but the code I might have to repeat is much longer than 1 line!”. Below we describe the use of test fixtures. This can often reduce complicated situations back to something that resembles this simple example.</p>
+</section><section id="remove-tension-between-interactive-and-automated-testing" class="level3" data-number="14.2.5"><h3 data-number="14.2.5" class="anchored" data-anchor-id="remove-tension-between-interactive-and-automated-testing">
+<span class="header-section-number">14.2.5</span> Remove tension between interactive and automated testing</h3>
+<p>Your test code will be executed in two different settings:</p>
+<ul>
+<li>Interactive test development and maintenance, which includes tasks like:
+<ul>
+<li>Initial test creation</li>
+<li>Modifying tests to adapt to change</li>
+<li>Debugging test failure</li>
+</ul>
+</li>
+<li>Automated test runs, which is accomplished with functions such as:
+<ul>
+<li>Single file: <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_active_file()</a></code>, <code><a href="https://testthat.r-lib.org/reference/test_file.html">testthat::test_file()</a></code>
+</li>
+<li>Whole package: <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>
+</li>
+</ul>
+</li>
+</ul>
+<p>Automated testing of your whole package is what takes priority. This is ultimately the whole point of your tests. However, the interactive experience is clearly important for the humans doing this work. Therefore it’s important to find a pleasant workflow, but also to ensure that you don’t rig anything for interactive convenience that actually compromises the health of the test suite.</p>
+<p>These two modes of test-running should not be in conflict with each other. If you perceive tension between these two modes, this can indicate that you’re not taking full advantage of some of testthat’s features and the way it’s designed to work with <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</p>
+<p>When working on your tests, use <code>load_all()</code>, just like you do when working below <code>R/</code>. By default, <code>load_all()</code> does all of these things:</p>
+<ul>
+<li>Simulates re-building, re-installing, and re-loading your package.</li>
+<li>Makes everything in your package’s namespace available, including unexported functions and objects and anything you’ve imported from another package.</li>
+<li>Attaches testthat, i.e.&nbsp;does <code><a href="https://testthat.r-lib.org">library(testthat)</a></code>.</li>
+<li>Runs test helper files, i.e.&nbsp;executes <code>test/testthat/helper.R</code> (more on that below).</li>
+</ul>
+<p>This eliminates the need for any <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> calls below <code>tests/testthat/</code>, for the vast majority of R packages. Any instance of <code><a href="https://testthat.r-lib.org">library(testthat)</a></code> is clearly no longer necessary. Likewise, any instance of attaching one of your dependencies via <code><a href="https://rdrr.io/r/base/library.html">library(somePkg)</a></code> is unnecessary. In your tests, if you need to call functions from somePkg, do it just as you do below <code>R/</code>. If you have imported the function into your namespace, use <code>fun()</code>. If you have not, use <code>somePkg::fun()</code>. It’s fair to say that <code><a href="https://rdrr.io/r/base/library.html">library(somePkg)</a></code> in the tests should be about as rare as taking a dependency via <code>Depends</code>, i.e.&nbsp;there is almost always a better alternative.</p>
+<p>Unnecessary calls to <code><a href="https://rdrr.io/r/base/library.html">library(somePkg)</a></code> in test files have a real downside, because they actually change the R landscape. <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> alters the search path. This means the circumstances under which you are testing may not necessarily reflect the circumstances under which your package will be used. This makes it easier to create subtle test bugs, which you will have to unravel in the future.</p>
+<p>One other function that should almost never appear below <code>tests/testhat/</code> is <code><a href="https://rdrr.io/r/base/source.html">source()</a></code>. There are several special files with an official role in testthat workflows (see below), not to mention the entire R package machinery, that provide better ways to make functions, objects, and other logic available in your tests.</p>
+</section></section><section id="sec-tests-files-overview" class="level2" data-number="14.3"><h2 data-number="14.3" class="anchored" data-anchor-id="sec-tests-files-overview">
+<span class="header-section-number">14.3</span> Files relevant to testing</h2>
+<p>Here we review which package files are especially relevant to testing and, more generally, best practices for interacting with the file system from your tests.</p>
+<section id="hiding-in-plain-sight-files-below-r" class="level3" data-number="14.3.1"><h3 data-number="14.3.1" class="anchored" data-anchor-id="hiding-in-plain-sight-files-below-r">
+<span class="header-section-number">14.3.1</span> Hiding in plain sight: files below <code>R/</code>
+</h3>
+<p>The most important functions you’ll need to access from your tests are clearly those in your package! Here we’re talking about everything that’s defined below <code>R/</code>. The functions and other objects defined by your package are always available when testing, regardless of whether they are exported or not. For interactive work, <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> takes care of this. During automated testing, this is taken care of internally by testthat.</p>
+<p>This implies that test helpers can absolutely be defined below <code>R/</code> and used freely in your tests. It might make sense to gather such helpers in a clearly marked file, such as one of these:</p>
+<pre><code>.                              
+├── ...
+└── R
+    ├── ...
+    ├── test-helpers.R
+    ├── test-utils.R
+    ├── utils-testing.R
+    └── ...</code></pre>
+</section><section id="teststesthat.r" class="level3" data-number="14.3.2"><h3 data-number="14.3.2" class="anchored" data-anchor-id="teststesthat.r">
+<span class="header-section-number">14.3.2</span> <code>tests/testhat.R</code>
+</h3>
+<p>Recall the initial testthat setup described in <a href="testing-basics.html#sec-tests-mechanics-workflow"><span>Section&nbsp;13.4</span></a>: The standard <code>tests/testhat.R</code> file looks like this:</p>
+<div class="cell">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org">testthat</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">abcde</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_package.html">test_check</a></span><span class="op">(</span><span class="st">"abcde"</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We repeat the advice to not edit <code>tests/testthat.R</code>. It is run during <code>R CMD check</code> (and, therefore, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>), but is not used in most other test-running scenarios (such as <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code> or <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test_active_file()</a></code> or during interactive development). Do not attach your dependencies here with <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>. Call them in your tests in the same manner as you do below <code>R/</code>.</p>
+</section><section id="testthat-helper-files" class="level3" data-number="14.3.3"><h3 data-number="14.3.3" class="anchored" data-anchor-id="testthat-helper-files">
+<span class="header-section-number">14.3.3</span> Testthat helper files</h3>
+<p>Another type of file that is always executed by <code>load_all()</code> and at the beginning of automated testing is a helper file, defined as any file below <code>tests/testthat/</code> that begins with <code>helper</code>. Helper files are a mighty weapon in the battle to eliminate code floating around at the top-level of test files. Helper files are a prime example of what we mean when we recommend moving such code into a broader scope. Objects or functions defined in a helper file are available to all of your tests.</p>
+<p>If you have just one such file, you should probably name it <code>helper.R</code>. If you organize your helpers into multiple files, you could include a suffix with additional info. Here are examples of how such files might look:</p>
+<pre><code>.                              
+├── ...
+└── tests
+    ├── testthat
+    │   ├── helper.R
+    │   ├── helper-blah.R
+    │   ├── helper-foo.R    
+    │   ├── test-foofy.R
+    │   └── (more test files)
+    └── testthat.R</code></pre>
+<p>Many developers use helper files to define custom test helper functions, which we describe in detail below. Compared to defining helpers below <code>R/</code>, some people find that <code>tests/testthat/helper.R</code> makes it more clear that these utilities are specifically for testing the package. This location also feels more natural if your helpers rely on testthat functions.</p>
+<p>A helper file is also a good location for setup code that is needed for its side effects. This is a case where <code>tests/testthat/helper.R</code> is clearly more appropriate than a file below <code>R/</code>. For example, in an API-wrapping package, <code>helper.R</code> is a good place to (attempt to) authenticate with the testing credentials.</p>
+</section><section id="testthat-setup-files" class="level3" data-number="14.3.4"><h3 data-number="14.3.4" class="anchored" data-anchor-id="testthat-setup-files">
+<span class="header-section-number">14.3.4</span> Testthat setup files</h3>
+<p>Testthat has one more special file type: setup files, defined as any file below <code>test/testthat/</code> that begins with <code>setup</code>. Here’s an example of how that might look:</p>
+<pre><code>.                              
+├── ...
+└── tests
+    ├── testthat
+    │   ├── helper.R
+    │   ├── setup.R
+    │   ├── test-foofy.R
+    │   └── (more test files)
+    └── testthat.R</code></pre>
+<p>A setup file is handled almost exactly like a helper file, but with two big differences:</p>
+<ul>
+<li>Setup files are not executed by <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</li>
+<li>Setup files often contain the corresponding teardown code.</li>
+</ul>
+<p>Setup files are good for global test setup that is tailored for test execution in non-interactive or remote environments. For example, you might turn off behaviour that’s aimed at an interactive user, such as messaging or writing to the clipboard.</p>
+<p>If any of your setup should be reversed after test execution, you should also include the necessary teardown code in <code>setup.R</code><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. We recommend maintaining teardown code alongside the setup code, in <code>setup.R</code>, because this makes it easier to ensure they stay in sync. The artificial environment <code><a href="https://testthat.r-lib.org/reference/teardown_env.html">teardown_env()</a></code> exists as a magical handle to use in <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code> and <code>withr::local_*()</code> / <code>withr::with_*()</code>.</p>
+<p>Here’s a <code>setup.R</code> example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:</p>
+<div class="cell">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>reprex.clipboard <span class="op">=</span> <span class="cn">FALSE</span>, reprex.html_preview <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/defer.html">defer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span>, <span class="fu"><a href="https://testthat.r-lib.org/reference/teardown_env.html">teardown_env</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Since we are just modifying options here, we can be even more concise and use the pre-built function <code><a href="https://withr.r-lib.org/reference/with_options.html">withr::local_options()</a></code> and pass <code><a href="https://testthat.r-lib.org/reference/teardown_env.html">teardown_env()</a></code> as the <code>.local_envir</code>:</p>
+<div class="cell">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>reprex.clipboard <span class="op">=</span> <span class="cn">FALSE</span>, reprex.html_preview <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
+<span>  .local_envir <span class="op">=</span> <span class="fu"><a href="https://testthat.r-lib.org/reference/teardown_env.html">teardown_env</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section><section id="files-ignored-by-testthat" class="level3" data-number="14.3.5"><h3 data-number="14.3.5" class="anchored" data-anchor-id="files-ignored-by-testthat">
+<span class="header-section-number">14.3.5</span> Files ignored by testthat</h3>
+<p>testthat only automatically executes files where these are both true:</p>
+<ul>
+<li>File is a direct child of <code>tests/testthat/</code>
+</li>
+<li>File name starts with one of the specific strings:
+<ul>
+<li><code>helper</code></li>
+<li><code>setup</code></li>
+<li><code>test</code></li>
+</ul>
+</li>
+</ul>
+<p>It is fine to have other files or directories in <code>tests/testthat/</code>, but testthat won’t automatically do anything with them (other than the <code>_snaps</code> directory, which holds snapshots).</p>
+</section><section id="storing-test-data" class="level3" data-number="14.3.6"><h3 data-number="14.3.6" class="anchored" data-anchor-id="storing-test-data">
+<span class="header-section-number">14.3.6</span> Storing test data</h3>
+<p>Many packages contain files that hold test data. Where should these be stored? The best location is somewhere below <code>tests/testthat/</code>, often in a subdirectory, to keep things neat. Below is an example, where <code>useful_thing1.rds</code> and <code>useful_thing2.rds</code> hold objects used in the test files.</p>
+<pre><code>.
+├── ...
+└── tests
+    ├── testthat
+    │   ├── fixtures
+    │   │   ├── make-useful-things.R
+    │   │   ├── useful_thing1.rds
+    │   │   └── useful_thing2.rds
+    │   ├── helper.R
+    │   ├── setup.R
+    │   └── (all the test files)
+    └── testthat.R</code></pre>
+<p>Then, in your tests, use <code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code> to build a robust filepath to such files.</p>
+<div class="cell">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"foofy() does this"</span>, <span class="op">{</span></span>
+<span>  <span class="va">useful_thing</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_path.html">test_path</a></span><span class="op">(</span><span class="st">"fixtures"</span>, <span class="st">"useful_thing1.rds"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="co"># ...</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><code><a href="https://testthat.r-lib.org/reference/test_path.html">testthat::test_path()</a></code> is extremely handy, because it produces the correct path in the two important modes of test execution:</p>
+<ul>
+<li>Interactive test development and maintenance, where working directory is presumably set to the top-level of the package.</li>
+<li>Automated testing, where working directory is usually set to something below <code>tests/</code>.</li>
+</ul></section><section id="sec-tests-files-where-write" class="level3" data-number="14.3.7"><h3 data-number="14.3.7" class="anchored" data-anchor-id="sec-tests-files-where-write">
+<span class="header-section-number">14.3.7</span> Where to write files during testing</h3>
+<p>If it’s easy to avoid writing files from you tests, that is definitely the best plan. But there are many times when you really must write files.</p>
+<p><strong>You should only write files inside the session temp directory.</strong> Do not write into your package’s <code>tests/</code> directory. Do not write into the current working directory. Do not write into the user’s home directory. Even though you are writing into the session temp directory, you should still clean up after yourself, i.e.&nbsp;delete any files you’ve written.</p>
+<p>Most package developers don’t want to hear this, because it sounds like a hassle. But it’s not that burdensome once you get familiar with a few techniques and build some new habits. A high level of file system discipline also eliminates various testing bugs and will absolutely make your CRAN life run more smoothly.</p>
+<p>This test is from roxygen2 and demonstrates everything we recommend:</p>
+<div class="cell">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"can read from file name with utf-8 path"</span>, <span class="op">{</span></span>
+<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html">local_tempfile</a></span><span class="op">(</span></span>
+<span>    pattern <span class="op">=</span> <span class="st">"Universit\u00e0-"</span>,</span>
+<span>    lines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"#' @include foo.R"</span>, <span class="cn">NULL</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="fu">find_includes</span><span class="op">(</span><span class="va">path</span><span class="op">)</span>, <span class="st">"foo.R"</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><code><a href="https://withr.r-lib.org/reference/with_tempfile.html">withr::local_tempfile()</a></code> creates a file within the session temp directory whose lifetime is tied to the “local” environment – in this case, the execution environment of an individual test. It is a wrapper around <code><a href="https://rdrr.io/r/base/tempfile.html">base::tempfile()</a></code> and passes, e.g., the <code>pattern</code> argument through, so you have some control over the file name. You can optionally provide <code>lines</code> to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps. Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.</p>
+<p>Sometimes you need even more control over the file name. In that case, you can use <code><a href="https://withr.r-lib.org/reference/with_tempfile.html">withr::local_tempdir()</a></code> to create a self-deleting temporary directory and write intentionally-named files inside this directory.</p>
+
+
+</section></section><section class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
+<ol>
+<li id="fn1" role="doc-endnote"><p>Base R’s <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code> is another alternative, but it requires more from you. You need to capture the original state and write the restoration code yourself. Also remember to do <code>on.exit(..., add = TRUE)</code> if there’s <em>any</em> chance a second <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code> call could be added in the test. You probably also want to default to <code>after = FALSE</code>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>A legacy approach (which still works, but is no longer recommended) is to put teardown code in <code>tests/testthat/teardown.R</code>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script><nav class="page-navigation"><div class="nav-page nav-page-previous">
+      <a href="./testing-basics.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Testing basics</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./testing-advanced.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Advanced testing techniques</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer"><div class="nav-footer">
+    <div class="nav-footer-left">R Packages (2e) was written by Hadley Wickham and Jenny Bryan</div>   
+    <div class="nav-footer-right">This book was built with <a href="https://quarto.org/">Quarto</a>.</div>
+  </div>
+</footer>
+
+
+</body></html>
