@@ -38,14 +38,6 @@ if (knitr::is_latex_output()) {
   options(cli.unicode = TRUE)
 }
 
-# knitr::knit_hooks$set(
-#   small_mar = function(before, options, envir) {
-#     if (before) {
-#       par(mar = c(4.1, 4.1, 0.5, 0.5))
-#     }
-#   }
-# )
-
 # Make error messages closer to base R
 registerS3method("wrap", "error", envir = asNamespace("knitr"),
                  function(x, options) {
@@ -67,17 +59,6 @@ error_wrap <- function(x, width = getOption("width")) {
   lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
   paste(strwrap(lines, width = width), collapse = "\n")
 }
-
-knitr::knit_hooks$set(chunk_envvar = function(before, options, envir) {
-  envvar <- options$chunk_envvar
-  if (before && !is.null(envvar)) {
-    old_envvar <<- Sys.getenv(names(envvar), names = TRUE, unset = NA)
-    do.call("Sys.setenv", as.list(envvar))
-    #print(str(options))
-  } else {
-    do.call("Sys.setenv", as.list(old_envvar))
-  }
-})
 
 check_quietly <- purrr::quietly(devtools::check)
 install_quietly <- purrr::quietly(devtools::install)
