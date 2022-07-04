@@ -460,7 +460,7 @@ To illustrate, consider what happens when someone changes the definition of a fu
 nrow
 #> function (x) 
 #> dim(x)[1L]
-#> <bytecode: 0x55a788891d10>
+#> <bytecode: 0x5650ad87fd10>
 #> <environment: namespace:base>
 ```
 
