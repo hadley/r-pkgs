@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 20 R CMD check | R Packages</title>
+<meta name="author" content="Hadley Wickham">
+<meta name="author" content="Jennifer Bryan">
+<meta name="description" content="You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete.  20.1 Introduction An important part of the...">
+<meta name="generator" content="bookdown 0.27 with bs4_book()">
+<meta property="og:title" content="Chapter 20 R CMD check | R Packages">
+<meta property="og:type" content="book">
+<meta property="og:url" content="https://r-pkgs.org/r-cmd-check.html">
+<meta property="og:image" content="https://r-pkgs.org/images/cover.png">
+<meta property="og:description" content="You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete.  20.1 Introduction An important part of the...">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 20 R CMD check | R Packages">
+<meta name="twitter:site" content="@hadley">
+<meta name="twitter:description" content="You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete.  20.1 Introduction An important part of the...">
+<meta name="twitter:image" content="https://r-pkgs.org/images/cover.png">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-141182576-1"></script><script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-141182576-1');
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
+<style type="text/css">
+    /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+        }
+    .hanging div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }
+  </style>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="">R Packages</a>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Welcome!</a></li>
+<li><a class="" href="preface.html">Preface</a></li>
+<li class="book-part">Getting started</li>
+<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
+<li><a class="" href="whole-game.html"><span class="header-section-number">2</span> The whole game</a></li>
+<li><a class="" href="setup.html"><span class="header-section-number">3</span> System setup</a></li>
+<li><a class="" href="package-structure-state.html"><span class="header-section-number">4</span> Package structure and state</a></li>
+<li><a class="" href="workflows101.html"><span class="header-section-number">5</span> Fundamental development workflows</a></li>
+<li><a class="" href="package-within.html"><span class="header-section-number">6</span> The package within</a></li>
+<li class="book-part">Package components</li>
+<li><a class="" href="r.html"><span class="header-section-number">7</span> R code</a></li>
+<li><a class="" href="data.html"><span class="header-section-number">8</span> Data</a></li>
+<li><a class="" href="misc.html"><span class="header-section-number">9</span> Other components</a></li>
+<li class="book-part">Package metadata</li>
+<li><a class="" href="description-and-namespace.html"><span class="header-section-number">10</span> DESCRIPTION and NAMESPACE</a></li>
+<li><a class="" href="description-dependencies.html"><span class="header-section-number">11</span> Dependencies: What does your package need?</a></li>
+<li><a class="" href="license.html"><span class="header-section-number">12</span> Licensing</a></li>
+<li class="book-part">Testing</li>
+<li><a class="" href="tests.html"><span class="header-section-number">13</span> Testing basics</a></li>
+<li><a class="" href="test-design.html"><span class="header-section-number">14</span> Designing your test suite</a></li>
+<li><a class="" href="testing-advanced.html"><span class="header-section-number">15</span> Advanced testing techniques</a></li>
+<li class="book-part">Documentation</li>
+<li><a class="" href="man.html"><span class="header-section-number">16</span> Function documentation</a></li>
+<li><a class="" href="vignettes.html"><span class="header-section-number">17</span> Vignettes</a></li>
+<li><a class="" href="important-files.html"><span class="header-section-number">18</span> Other markdown files</a></li>
+<li><a class="" href="website.html"><span class="header-section-number">19</span> Website</a></li>
+<li class="book-part">Maintenance and distribution</li>
+<li><a class="active" href="r-cmd-check.html"><span class="header-section-number">20</span> R CMD check</a></li>
+<li><a class="" href="continuous-integration.html"><span class="header-section-number">21</span> Continuous integration</a></li>
+<li><a class="" href="release.html"><span class="header-section-number">22</span> Releasing to CRAN</a></li>
+<li><a class="" href="lifecycle.html"><span class="header-section-number">23</span> Lifecycle</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/hadley/r-pkgs">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="r-cmd-check" class="section level1" number="20">
+<h1>
+<span class="header-section-number">20</span> <code>R CMD check</code><a class="anchor" aria-label="anchor" href="#r-cmd-check"><i class="fas fa-link"></i></a>
+</h1>
+<div class="rmdnote">
+<p>You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete.</p>
+</div>
+<div id="introduction-15" class="section level2" number="20.1">
+<h2>
+<span class="header-section-number">20.1</span> Introduction<a class="anchor" aria-label="anchor" href="#introduction-15"><i class="fas fa-link"></i></a>
+</h2>
+<p>An important part of the package development process is <code>R CMD check</code>.
+<code>R CMD check</code> automatically checks your code for common problems.
+It’s essential if you’re planning on submitting to CRAN, but it’s useful even if you’re not because it automatically detects many common problems that you’d otherwise discover the hard way.</p>
+<p><code>R CMD check</code> will be frustrating the first time you run it - you’ll discover many problems that need to be fixed.
+The key to making <code>R CMD check</code> less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix.
+The upper limit of this approach is to run <code>R CMD check</code> every time you make a change.
+If you use GitHub, you’ll learn precisely how to do that with <a href="continuous-integration.html#gha">GitHub Actions</a>.</p>
+</div>
+<div id="check-workflow" class="section level2" number="20.2">
+<h2>
+<span class="header-section-number">20.2</span> Workflow<a class="anchor" aria-label="anchor" href="#check-workflow"><i class="fas fa-link"></i></a>
+</h2>
+<p><code>R CMD check</code> is the name of the command you run from the terminal.
+I don’t recommend calling it directly.
+Instead, run <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>, or press Ctrl/Cmd + Shift + E in RStudio.
+In contrast to <code>R CMD check</code>, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>:</p>
+<ul>
+<li><p>Ensures that the documentation is up-to-date by running <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code>.</p></li>
+<li><p>Bundles the package before checking it.
+This is the best practice for checking packages because it makes sure the check starts with a clean slate: because a package bundle doesn’t contain any of the temporary files that can accumulate in your source package, e.g. artifacts like <code>.so</code> and <code>.o</code> files which accompany compiled code, you can avoid the spurious warnings such files will generate.</p></li>
+<li><p>Sets the <code>NOT_CRAN</code> environment variable to <code>TRUE</code>.
+This allows you to selectively skip tests on CRAN.
+(See <code><a href="https://testthat.r-lib.org/reference/skip.html">?testthat::skip_on_cran</a></code> for details.)</p></li>
+</ul>
+<p>The workflow for checking a package is simple, but tedious:</p>
+<ol style="list-style-type: decimal">
+<li><p>Run <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>, or press Ctrl/Cmd + Shift + E.</p></li>
+<li><p>Fix the first problem.</p></li>
+<li><p>Repeat until there are no more problems.</p></li>
+</ol>
+<p><code>R CMD check</code> returns three types of messages:</p>
+<ul>
+<li><p><code>ERROR</code>s: Severe problems that you should fix regardless of whether or not you’re submitting to CRAN.</p></li>
+<li><p><code>WARNING</code>s: Likely problems that you must fix if you’re planning to submit to CRAN (and a good idea to look into even if you’re not).</p></li>
+<li><p><code>NOTE</code>s: Mild problems.
+If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives.
+If you have no NOTEs, human intervention is not required, and the package submission process will be easier.
+If it’s not possible to eliminate a <code>NOTE</code>, you’ll need describe why it’s OK in your submission comments, as described in <a href="release.html#release-process">release notes</a>.
+If you’re not submitting to CRAN, carefully read each NOTE, but don’t go out of your way to fix things that you don’t think are problems.</p></li>
+</ul>
+</div>
+<div id="check-checks" class="section level2" number="20.3">
+<h2>
+<span class="header-section-number">20.3</span> Checks<a class="anchor" aria-label="anchor" href="#check-checks"><i class="fas fa-link"></i></a>
+</h2>
+<p><code>R CMD check</code> is composed of over 50 individual checks, described in the following sections.
+For each check, I briefly describe what it does, what the most common problems are, and how to fix them.
+When you have a problem with <code>R CMD check</code> and can’t understand how to fix it, use this list to help figure out what you need to do.
+To make it easier to understand how the checks fit together, I’ve organised them into sections roughly corresponding to the chapters in this book.
+This means they will be in a somewhat different order to what you’ll see when you run <code><a href="https://devtools.r-lib.org/reference/check.html">check()</a></code>.</p>
+<p>This list includes every check run in R 3.1.1.
+If you’re using a more recent version, you may want to consult the most recent online version of this chapter: <a href="https://r-pkgs.org/r-cmd-check.html" class="uri">https://r-pkgs.org/r-cmd-check.html</a>.
+Please <a href="mailto:hadley@rstudio.com">let me know</a> if you encounter a problem that this chapter doesn’t help with.</p>
+<div id="check-metadata" class="section level3" number="20.3.1">
+<h3>
+<span class="header-section-number">20.3.1</span> Check metadata<a class="anchor" aria-label="anchor" href="#check-metadata"><i class="fas fa-link"></i></a>
+</h3>
+<p><code>R CMD check</code> always starts by describing your current environment.
+I’m running R 3.1.1 on OS X with a UTF-8 charset:</p>
+<ul>
+<li>
+<strong>Using log directory</strong> ‘/Users/hadley/Documents/web/httr.Rcheck’</li>
+<li>
+<strong>Using R version</strong> 3.1.1 (2014-07-10)</li>
+<li>
+<strong>Using platform</strong>: x86_64-apple-darwin13.1.0 (64-bit)</li>
+<li>
+<strong>Using session charset</strong>: UTF-8</li>
+</ul>
+<p>Next the description is parsed and the package version is printed.
+Here I’m checking httr version 0.5.0.9000 (you’ll learn more about that weird version number in <a href="lifecycle.html#version">versioning</a>).</p>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
+<ul>
+<li>
+<strong>Checking for file</strong> ‘httr/DESCRIPTION’</li>
+<li>
+<strong>This is package</strong> ‘httr’ <strong>version</strong> ‘0.5.0.9000’</li>
+</ul>
+</div>
+<div id="package-structure" class="section level3" number="20.3.2">
+<h3>
+<span class="header-section-number">20.3.2</span> Package structure<a class="anchor" aria-label="anchor" href="#package-structure"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L257 -->
+<ul>
+<li>
+<strong>Checking package directory</strong>. The directory you’re checking must exist - <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code> protects you against this problem.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3720 --><ul>
+<li>
+<strong>Checking if this is a source package</strong>. You must check a source package, not a binary or installed package. This should never fail if you use<br><code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3015 --><ul>
+<li>
+<strong>Checking for executable files</strong>. You must not have executable files in your package: they’re not portable, they’re not open source, and they are a security risk. Delete any executable files from your package. (If you’re not submitting to CRAN, you can silence this warning by listing each executable file in the <code>BinaryFiles</code> field in your <code>DESCRIPTION</code>.)</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3103 --><ul>
+<li>
+<strong>Checking for hidden files and directories</strong>. On Linux and OS X, files with a name starting with <code>.</code> are hidden by default, and you’ve probably included them in your package by mistake. Either delete them, or if they are important, use <code>.Rbuildignore</code> to remove them from the package bundle. R automatically removes some common directories like <code>.git</code> and <code>.svn</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L381 --><ul>
+<li>
+<strong>Checking for portable file names</strong>. R packages must work on Windows, Linux and OS X, so you can only use file names that work on all platforms. The easiest way to do this is to stick to letters, numbers, underscores and dashes. Avoid non-English letters and spaces. Fix this check by renaming the listed files.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L541 --><ul>
+<li>
+<strong>Checking for sufficient/correct file permissions</strong>. If you can’t read a file, you can’t check it. This check detects the unlikely occurence that you have files in the package that you don’t have permission to read. Fix this problem by fixing the file permissions.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3141 --><ul>
+<li>
+<strong>Checking whether package ‘XYZ’ can be installed</strong>. <code>R CMD check</code> runs <code>R CMD install</code> to make sure that it’s possible to install your package. If this fails, you should run <code><a href="https://devtools.r-lib.org/reference/install.html">devtools::install()</a></code> or RStudio’s Build &amp; Reload and debug any problems before continuing.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 --><ul>
+<li>
+<p><strong>Checking installed package size</strong>.
+It’s easy to accidentally include large files that blow up the size of your package.
+This check ensures that the whole package is less than 5 MB and each subdirectory is less than 1 MB.
+If you see this message, check that you haven’t accidentally included a large file.</p>
+<p>If submitting to CRAN, you’ll need to justify the size of your package.
+First, make sure the package is as small as it possibly can be: try recompressing the data, <a href="data.html#data-cran">data CRAN notes</a>; and minimising vignettes, <a href="#vignette-cran">vignette CRAN notes</a>.
+If it’s still too large, consider moving data into its own package.</p>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L746 --><ul>
+<li>
+<p><strong>Checking top-level files</strong>.
+Only specified files and directories are allowed at the top level of the package (e.g. <code>DESCRIPTION</code>, <code>R/</code>, <code>src/</code>).
+To include other files, you have two choices:</p>
+<ul>
+<li><p>If they don’t need to be installed (i.e. they’re only used in the source package): add them to <code>.Rbuildignore</code> with <code><a href="https://usethis.r-lib.org/reference/use_build_ignore.html">usethis::use_build_ignore()</a></code>.</p></li>
+<li><p>If they need to be installed: move them into <code>inst/</code>.
+They’ll be moved back to the top-level package directory when installed.</p></li>
+</ul>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L924 --><ul>
+<li>
+<p><strong>Checking package subdirectories</strong>.</p>
+<ul>
+<li><p>Don’t include any empty directories.
+These are usually removed automatically by <code>R CMD build</code> so you shouldn’t see this error.
+If you do, just delete the directory.</p></li>
+<li><p>The case of files and directories is important.
+All sub-directories should be lower-case, except for <code>R/</code>.
+A citation file, if present, should be in <code>inst/CITATION</code>.
+Rename as needed.</p></li>
+<li><p>The contents of <code>inst/</code> shouldn’t clash with top-level contents of the package (like <code>build/</code>, <code>R/</code> etc).
+If they do, rename your files/directories.</p></li>
+</ul>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L859 --><ul>
+<li>
+<strong>Checking for left-over files</strong>. Remove any files listed here. They’ve been included in your package by accident.</li>
+</ul>
+</div>
+<div id="description-2" class="section level3" number="20.3.3">
+<h3>
+<span class="header-section-number">20.3.3</span> Description<a class="anchor" aria-label="anchor" href="#description-2"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L597 -->
+<ul>
+<li>
+<p><strong>Checking DESCRIPTION meta-information</strong>.</p>
+<ul>
+<li><p>The <code>DESCRIPTION</code> must be valid.
+You are unlikely to see this error, because <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> runs the same check each time you re-load the package.</p></li>
+<li><p>If you use any non-ASCII characters in the DESCRIPTION, you must also specify an encoding.
+There are only three encodings that work on all platforms: latin1, latin2 and UTF-8.
+I strongly recommend UTF-8: <code>Encoding: UTF-8</code>.</p></li>
+<li><p>The <code>License</code> must refer to either a known license (a complete list can be found at <a href="https://svn.r-project.org/R/trunk/share/licenses/license.db" class="uri">https://svn.r-project.org/R/trunk/share/licenses/license.db</a>), or it must use <code>file LICENSE</code> and that file must exist.
+Errors here are most likely to be typos.</p></li>
+<li><p>You should either provide <code>Authors@R</code> or <code>Authors</code> and <code>Maintainer</code>.
+You’ll get an error if you’ve specified both, which you can fix by removing the one you didn’t want.</p></li>
+</ul>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3683
+tools:::.check_package_depends --><ul>
+<li>
+<p><strong>Checking package dependencies</strong>.</p>
+<ul>
+<li><p>All packages listed in <code>Depends</code>, <code>Imports</code> and <code>LinkingTo</code> must be installed, and their version requirements must be met, otherwise your package can’t be checked.
+An easy way to install any missing or outdated dependencies is to run <code>devtools::install_deps(dependencies = TRUE)</code>.</p></li>
+<li><p>Packages listed in <code>Suggests</code> must be installed, unless you’ve set the environment variable <code>_R_CHECK_FORCE_SUGGESTS_</code> to a false value (e.g. with <code>check(force_suggests = FALSE)</code>).
+This is useful if some of the suggested packages are not available on all platforms.</p></li>
+<li><p>R packages can not have a cycle of dependencies: i.e. if package A requires B, then B can not require A (otherwise which one would you load first?).
+If you see this error, you’ll need to rethink the design of your package.
+One easy fix is to move the conflicting package from <code>Imports</code> or <code>Depends</code> to <code>Suggests</code>.</p></li>
+<li><p>Any packages used in the <code>NAMESPACE</code> must be listed in one of <code>Imports</code> (most commonly) or <code>Depends</code> (only in special cases).
+See <a href="description-dependencies.html#search-path">search path</a> for more details.</p></li>
+<li><p>Every package listed in <code>Depends</code> must also be imported in the <code>NAMESPACE</code> or accessed with <code>pkg::foo</code>.
+If you don’t do this, your package will work when attached to the search path (with <code><a href="https://rdrr.io/r/base/library.html">library(mypackage)</a></code>) but will not work when only loaded (e.g. <code>mypackage::foo()</code>)</p></li>
+</ul>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3561 
+tools:::.check_package_CRAN_incoming
+--><ul>
+<li>
+<p><strong>Checking CRAN incoming feasibility</strong>.
+These checks only apply if you’re submitting to CRAN.</p>
+<ul>
+<li><p>If you’re submitting a new package, you can’t use the same name as an existing package.
+You’ll need to come up with a new name.</p></li>
+<li><p>If you’re submitting an update, the version number must be higher than the current CRAN version.
+Update the <code>Version</code> field in <code>DESCRIPTION</code>.</p></li>
+<li><p>If the maintainer of the package has changed (even if it’s just a change in email address), the new maintainer should submit to CRAN, and the old maintainer should send a confirmation email.</p></li>
+<li><p>You must use a standard open source license, as listed in <a href="https://svn.r-project.org/R/trunk/share/licenses/license.db" class="uri">https://svn.r-project.org/R/trunk/share/licenses/license.db</a>.
+You can not use a custom license as CRAN does not have the legal resources to review custom agreements.</p></li>
+<li><p>The <code>Title</code> and <code>Description</code> must be free from spelling mistakes.
+The title of the package must be in title case.
+Neither title nor description should include either the name of your package or the word “package”.
+Reword your title and description as needed.</p></li>
+<li><p>If you’re submitting a new package, you’ll always get a <code>NOTE</code>.
+This reminds the CRAN maintainers to do some extra manual checks.</p></li>
+<li><p>Avoid submitting multiple versions of the same package in a short period of time.
+CRAN prefers at most one submission per month.
+If you need to fix a major bug, be apologetic.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div id="namespace" class="section level3" number="20.3.4">
+<h3>
+<span class="header-section-number">20.3.4</span> Namespace<a class="anchor" aria-label="anchor" href="#namespace"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L4433 -->
+<ul>
+<li>
+<strong>Checking if there is a namespace</strong>. You must have a <code>NAMESPACE</code> file. Roxygen2 will create this for you as described in <a href="description-dependencies.html#namespace">namespaces</a>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3620 --><ul>
+<li>
+<strong>Checking package namespace information</strong>. The <code>NAMESPACE</code> should be parseable by <code><a href="https://rdrr.io/r/base/ns-internal.html">parseNamespaceFile()</a></code> and valid. If this check fails, it’s a bug in roxygen2.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2234 --><ul>
+<li>
+<strong>Checking whether the package can be loaded with stated dependencies</strong>. Runs <code><a href="https://rdrr.io/r/base/library.html">library(pkg)</a></code> with <code>R_DEFAULT_PACKAGES=NULL</code>, so the search path is empty (i.e. stats, graphics, grDevices, utils, datasets and methods are not attached like usual). Failure here typically indicates that you’re missing a dependency on one of those packages.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2264 --><ul>
+<li>
+<strong>Checking whether the namespace can be loaded with stated dependencies</strong>. Runs <code>loadNamespace(pkg)</code> with <code>R_DEFAULT_PACKAGES=NULL</code>. Failure usually indicates a problem with the namespace.</li>
+</ul>
+</div>
+<div id="r-code" class="section level3" number="20.3.5">
+<h3>
+<span class="header-section-number">20.3.5</span> R code<a class="anchor" aria-label="anchor" href="#r-code"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1226 -->
+<ul>
+<li>
+<strong>Checking R files for non-ASCII characters</strong>. For maximum portability (i.e. so people can use your package on Windows) you should avoid using non-ASCII characters in R files. It’s ok to use them in comments, but object names shouldn’t use them, and in strings you should use unicode escapes. See <a href="r.html#code-cran"><code>R/</code> CRAN notes</a> for more details.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1258 --><ul>
+<li>
+<strong>Checking R files for syntax errors</strong>. Obviously your R code must be valid. You’re unlikely to see this error if you’ve been regularly using <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code>.</li>
+</ul>
+<!--- tools:::.check_packages_used ---><ul>
+<li>
+<p><strong>Checking dependencies in R code</strong>.
+Errors here often indicate that you’ve forgotten to declare a needed package in the <code>DESCRIPTION</code>.
+Remember that you should never use <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> inside a package - see <a href="description-dependencies.html#imports">namespace imports</a> for more details on best practices.</p>
+<p>Alternatively, you may have accidentally used <code>:::</code> to access an exported function from a package.
+Switch to <code>::</code> instead.</p>
+</li>
+</ul>
+<!--- tools::checkS3methods ---><ul>
+<li>
+<p><strong>Checking S3 generic/method consistency</strong>.
+S3 methods must have a compatible function signature with their generic.
+This means that the method must have the same arguments as its generic, with one exception: if the generic includes <code>...</code> the method can have additional arguments.</p>
+<p>A common cause of this error is defining print methods, because the <code><a href="https://rdrr.io/r/base/print.html">print()</a></code> generic contains<code>...</code>:</p>
+<div class="sourceCode" id="cb254"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># BAD</span></span>
+<span><span class="va">print.my_class</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Hi"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># GOOD</span></span>
+<span><span class="va">print.my_class</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Hi"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Also ok</span></span>
+<span><span class="va">print.my_class</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, <span class="va">my_arg</span> <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Hi"</span><span class="op">)</span></span></code></pre></div>
+</li>
+</ul>
+<!-- tools::checkReplaceFuns --><ul>
+<li>
+<strong>Checking replacement functions</strong>. Replacement functions (e.g. functions that are called like <code>foo(x) &lt;- y</code>), must have <code>value</code> as the last argument.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1373
+     tools:::.check_package_code_shlib
+     tools:::.check_package_code_startup_functions
+     tools:::.check_package_code_unload_functions
+     tools:::.check_package_code_tampers
+     tools:::.check_code_usage_in_package
+     tools:::.check_dotInternal
+     tools:::.check_package_code_assign_to_globalenv
+     tools:::.check_package_code_attach
+     tools:::.check_package_code_data_into_globalenv
+     tools:::.check_depdef
+     --><ul>
+<li>
+<p><strong>Checking R code for possible problems</strong>.
+This is a compound check for a wide range of problems:</p>
+<ul>
+<li><p>Calls to <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> (and <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam.unload()</a></code>) should look like <code>library.dynam("name")</code>, not <code>library.dynam("name.dll")</code>.
+Remove the extension to fix this error.</p></li>
+<li><p>Put <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> in <code>.onLoad()</code>, not <code>.onAttach()</code>; put <code><a href="https://rdrr.io/r/base/message.html">packageStartupMessage()</a></code> in <code>.onAttach()</code>, not <code>.onLoad()</code>.
+Put <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam.unload()</a></code> in <code>.onUnload()</code>.
+If you use any of these functions, make sure they’re in the right place.</p></li>
+<li><p>Don’t use <code><a href="https://rdrr.io/r/base/bindenv.html">unlockBinding()</a></code> or <code><a href="https://rdrr.io/r/utils/getFromNamespace.html">assignInNamespace()</a></code> to modify objects that don’t belong to you.</p></li>
+<li><p><code><a href="https://rdrr.io/pkg/codetools/man/checkUsage.html">codetools::checkUsagePackage()</a></code> is called to check that your functions don’t use variables that don’t exist.
+This sometimes raises false positives with functions that use non-standard evaluation (NSE), like <code><a href="https://rdrr.io/r/base/subset.html">subset()</a></code> or <code><a href="https://rdrr.io/r/base/with.html">with()</a></code>.
+Generally, I think you should avoid NSE in package functions, and hence avoid this NOTE, but if you can not, see <code><a href="https://rdrr.io/r/utils/globalVariables.html">?globalVariables</a></code> for how to suppress this NOTE.</p></li>
+<li><p>You are not allowed to use <code><a href="https://rdrr.io/r/base/Internal.html">.Internal()</a></code> in a package.
+Either call the R wrapper function, or write your own C function.
+(If you copy and paste the C function from base R, make sure to maintain the copyright notice, use a GPL-2 compatible license, and list R-core in the <code>Author</code> field.)</p></li>
+<li><p>Similarly you are not allowed to use <code>:::</code> to access non-exported functions from other packages.
+Either ask the package maintainer to export the function you need, or write your own version of it using exported functions.
+Alternatively, if the licenses are compatible you can copy and paste the exported function into your own package.
+If you do this, remember to update <code>Authors@R</code>.</p></li>
+<li>
+<p>Don’t use <code><a href="https://rdrr.io/r/base/assign.html">assign()</a></code> to modify objects in the global environment.
+If you need to maintain state across function calls, create your own environment with <code>e &lt;- new.env(parent = emptyenv())</code> and set and get values in it:</p>
+<div class="sourceCode" id="cb255"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">add_up</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">last_x</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">old</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>    <span class="va">old</span> <span class="op">&lt;-</span> <span class="va">e</span><span class="op">$</span><span class="va">last_x</span></span>
+<span>  <span class="op">}</span></span>
+<span></span>
+<span>  <span class="va">new</span> <span class="op">&lt;-</span> <span class="va">old</span> <span class="op">+</span> <span class="va">x</span></span>
+<span>  <span class="va">e</span><span class="op">$</span><span class="va">last_x</span> <span class="op">&lt;-</span> <span class="va">new</span></span>
+<span>  <span class="va">new</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">add_up</span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 10</span></span>
+<span><span class="fu">add_up</span><span class="op">(</span><span class="fl">20</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 30</span></span></code></pre></div>
+</li>
+<li><p>Don’t use <code><a href="https://rdrr.io/r/base/attach.html">attach()</a></code> in your code.
+Instead refer to variables explicitly.</p></li>
+<li><p>Don’t use <code><a href="https://rdrr.io/r/utils/data.html">data()</a></code> without specifying the <code>envir</code> argument.
+Otherwise the data will be loaded in the global environment.</p></li>
+<li><p>Don’t use deprecated or defunct functions.
+Update your code to use the latest versions.</p></li>
+<li><p>You must use <code>TRUE</code> and <code>FALSE</code> in your code (and examples), not <code>T</code> and <code>F</code>.</p></li>
+</ul>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2209 --><ul>
+<li>
+<strong>Checking whether the package can be loaded</strong>. R loads your package with <code><a href="https://rdrr.io/r/base/library.html">library()</a></code>. Failure here typically indicates a problem with <code>.onLoad()</code> or <code>.onAttach()</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2247 --><ul>
+<li>
+<strong>Checking whether the package can be unloaded cleanly</strong>. Loads with <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> and then <code><a href="https://rdrr.io/r/base/detach.html">detach()</a></code>es. If this fails, check <code>.onUnload()</code> and <code>.onDetach()</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2279 --><ul>
+<li>
+<strong>Checking whether the namespace can be unloaded cleanly</strong>. Runs <code>loadNamespace("pkg"); unloadNamespace("pkg")</code>. Check <code>.onUnload()</code> for problems.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2300 --><ul>
+<li>
+<strong>Checking loading without being on the library search path</strong>. Calls <code><a href="https://rdrr.io/r/base/library.html">library(x, lib.loc = ...)</a></code>. Failure here indicates that you are making a false assumption in <code>.onLoad()</code> or <code>.onAttach()</code>.</li>
+</ul>
+</div>
+<div id="data-1" class="section level3" number="20.3.6">
+<h3>
+<span class="header-section-number">20.3.6</span> Data<a class="anchor" aria-label="anchor" href="#data-1"><i class="fas fa-link"></i></a>
+</h3>
+<!-- 
+https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1782 
+tools:::.check_package_datasets
+tools:::.check_package_compact_datasets
+tools:::.check_package_compact_sysdata
+-->
+<ul>
+<li>
+<p><strong>Checking contents of ‘data’ directory</strong>.</p>
+<ul>
+<li><p>The data directory can only contain file types described in <a href="data.html#data-data">exported data</a>.</p></li>
+<li><p>Data files can contain non-ASCII characters only if the encoding is correctly set.
+This usually shouldn’t be a problem if you’re saving <code>.Rdata</code> files.
+If you do see this error, look at the <code><a href="https://rdrr.io/r/base/Encoding.html">Encoding()</a></code> of each column in the data frame, and ensure none are “unknown”.
+(You’ll typically need to fix this somewhere in the import process).</p></li>
+<li><p>If you’ve compressed a data file with <code>bzip2</code> or <code>xz</code> you need to declare at least <code>Depends: R (&gt;= 2.10)</code> in your <code>DESCRIPTION</code>.</p></li>
+<li><p>If you’ve used a sub-optimal compression algorithm for your data, re-compress with the suggested algorithm.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div id="documentation" class="section level3" number="20.3.7">
+<h3>
+<span class="header-section-number">20.3.7</span> Documentation<a class="anchor" aria-label="anchor" href="#documentation"><i class="fas fa-link"></i></a>
+</h3>
+<p>You can run the most common of these outside <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code> with <code><a href="https://devtools.r-lib.org/reference/check_man.html">devtools::check_man()</a></code> (which automatically calls <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code> for you).
+If you have documentation problems, it’s best to iterate quickly with <code><a href="https://devtools.r-lib.org/reference/check_man.html">check_man()</a></code>, rather than running the full check each time.</p>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1527 -->
+<ul>
+<li>
+<strong>Checking Rd files</strong>. This checks that all <code>man/*.Rd</code> files use the correct Rd syntax. If this fails, it indicates a bug in roxygen2.</li>
+</ul>
+<!-- tools:::.check_Rd_metadata --><ul>
+<li>
+<strong>Checking Rd metadata</strong>. Names and aliases must be unique across all documentation files in a package. If you encounter this problem you’ve accidentally used the same <code>@name</code> or <code>@aliases</code> in multiple places; make sure they’re unique.</li>
+</ul>
+<!-- tools:::.check_Rd_line_widths --><ul>
+<li>
+<strong>Checking Rd line widths</strong>. Lines in Rd files must be less than 90 characters wide. This is unlikely to occur if you wrap your R code, and hence roxygen comments, to 80 characters. For very long urls, use a link-shortening service like <a href="http://bit.ly">bit.ly</a>.</li>
+</ul>
+<!-- tools:::.check_Rd_xrefs --><ul>
+<li>
+<strong>Checking Rd cross-references</strong>. Errors here usually represent typos. Recall the syntax for linking to functions in other packages: <code>\link[package_name]{function_name}</code>. Sometimes I accidentally switch the order of <code>\code{}</code> and <code>\link{}</code>: <code>\link{\code{function}}</code> will not work.</li>
+</ul>
+<!-- tools::undoc --><ul>
+<li>
+<strong>Checking for missing documentation entries</strong>. All exported objects must be documented. See <code><a href="https://rdrr.io/r/tools/undoc.html">?tools::undoc</a></code> for more details.</li>
+</ul>
+<!-- tools::codoc, tools::codocData, tools::codocClasses --><ul>
+<li>
+<strong>Checking for code/documentation mismatches</strong>. This check ensures that the documentation matches the code. This should never fail because you’re using roxygen2 which automatically keeps them in sync.</li>
+</ul>
+<!-- tools::checkDocFiles, tools::checkDocStyle --><ul>
+<li>
+<p><strong>Checking Rd <code>\usage</code> sections</strong>.
+All arguments must be documented, and all <code>@params</code> must document an existing argument.
+You may have forgotten to document an argument, forgotten to remove the documentation for an argument that you’ve removed, or misspelled an argument name.</p>
+<p>S3 and S4 methods need to use special <code>\S3method{}</code> and <code>\S4method{}</code> markup in the Rd file.
+Roxygen2 will generate this for you automatically.</p>
+</li>
+</ul>
+<!-- tools:::.check_Rd_contents --><ul>
+<li>
+<strong>Checking Rd contents</strong>. This checks for autogenerated content made by <code><a href="https://rdrr.io/r/utils/package.skeleton.html">package.skeleton()</a></code>. Since you’re not using <code><a href="https://rdrr.io/r/utils/package.skeleton.html">package.skeleton()</a></code> you should never have a problem here.</li>
+</ul>
+<!-- tools:::.check_packages_used_in_examples --><ul>
+<li>
+<p><strong>Checking for unstated dependencies in examples</strong>.
+If you use a package only for an example, make sure it’s listed in the <code>Suggests</code> field.
+Before running example code that depends on it, test to see if it’s available with <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("pkg", quietly = TRUE)</a></code>:</p>
+<div class="sourceCode" id="cb256"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#' @examples</span></span>
+<span><span class="co">#' if (requireNamespace("dplyr", quietly = TRUE)) {</span></span>
+<span><span class="co">#'   ...</span></span>
+<span><span class="co">#' }</span></span></code></pre></div>
+</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2317 --><ul>
+<li>
+<strong>Checking examples</strong>.
+Every documentation example must run without errors, and must not take too long.
+See Section <a href="man.html#sec-examples">16.6</a> for details.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2925 --><ul>
+<li>
+<strong>Checking PDF version of manual</strong>. Occassionally you’ll get an error when building the PDF manual. This is usually because the pdf is built by latex and you’ve forgotten to escape something. Debugging this is painful - your best bet is to look up the latex logs and combined tex file and work back from there to <code>.Rd</code> files then back to a roxygen comment. I consider any such failure to be a bug in roxygen2, so please let me know.</li>
+</ul>
+</div>
+<div id="demos" class="section level3" number="20.3.8">
+<h3>
+<span class="header-section-number">20.3.8</span> Demos<a class="anchor" aria-label="anchor" href="#demos"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L877 -->
+<ul>
+<li>
+<p><strong>Checking index information</strong>.
+If you’ve written demos, each demo must be listed in <code>demo/00Index</code>.
+The file should look like:</p>
+<pre><code>demo-name-without-extension  Demo description
+another-demo-name            Another description</code></pre>
+</li>
+</ul>
+</div>
+<div id="compiled-code" class="section level3" number="20.3.9">
+<h3>
+<span class="header-section-number">20.3.9</span> Compiled code<a class="anchor" aria-label="anchor" href="#compiled-code"><i class="fas fa-link"></i></a>
+</h3>
+<!-- tools::checkFF -->
+<ul>
+<li>
+<strong>Checking foreign function calls</strong>. <code><a href="https://rdrr.io/r/base/CallExternal.html">.Call()</a></code>, <code><a href="https://rdrr.io/r/base/Foreign.html">.C()</a></code>, <code><a href="https://rdrr.io/r/base/Foreign.html">.Fortran()</a></code>, <code><a href="https://rdrr.io/r/base/CallExternal.html">.External()</a></code> must always be called either with a <code>NativeSymbolInfo</code> object (as created with <code>@useDynLib</code>) or use the <code>.package</code> argument. See <code><a href="https://rdrr.io/r/tools/checkFF.html">?tools::checkFF</a></code> for more details.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2065 --><ul>
+<li>
+<strong>Checking line endings in C/C++/Fortran sources/headers</strong>. Always use LF as a line ending.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2084 --><ul>
+<li>
+<strong>Checking line endings in Makefiles</strong>. As above.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2120 --><ul>
+<li>
+<strong>Checking for portable use of <code>$(BLAS_LIBS)</code> and <code>$(LAPACK_LIBS)</code></strong>. Errors here indicate an issue with your use of BLAS and LAPACK.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2159 
+ tools:::check_compiled_code
+ --><ul>
+<li>
+<strong>Checking compiled code</strong>. Checks that you’re not using any C functions that you shouldn’t. See details in <a href="#c-best-practices">C best practices</a>.</li>
+</ul>
+</div>
+<div id="tests" class="section level3" number="20.3.10">
+<h3>
+<span class="header-section-number">20.3.10</span> Tests<a class="anchor" aria-label="anchor" href="#tests"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2514 -->
+<ul>
+<li>
+<strong>Checking for unstated dependencies in tests</strong>. Every package used by tests must be included in the dependencies.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2526 --><ul>
+<li>
+<p><strong>Checking tests</strong>.
+Each file in <code>tests/</code> is run.
+If you’ve followed the instructions in <a href="tests.html#tests">testing</a> you’ll have at least one file: <code>testthat.R</code>.
+The output from <code>R CMD check</code> is not usually that helpful, so you may need to look at the logfile <code>package.Rcheck/tests/testthat.Rout</code>.
+Fix any failing tests by iterating with <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>.</p>
+<p>Occasionally you may have a problem where the tests pass when run interactively with <code><a href="https://devtools.r-lib.org/reference/test.html">devtools::test()</a></code>, but fail when in <code>R CMD check</code>.
+This usually indicates that you’ve made a faulty assumption about the testing environment, and it’s often hard to figure it out.</p>
+</li>
+</ul>
+</div>
+<div id="vignettes" class="section level3" number="20.3.11">
+<h3>
+<span class="header-section-number">20.3.11</span> Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"><i class="fas fa-link"></i></a>
+</h3>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L718 -->
+<ul>
+<li>
+<strong>Checking ‘build’ directory</strong>. <code>build/</code> is used to track vignette builds. I’m not sure how this check could fail unless you’ve accidentally <code>.Rbuildignore</code>d the <code>build/</code> directory.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1846 --><ul>
+<li>
+<strong>Checking installed files from ‘inst/doc’</strong>. Don’t put files in <code>inst/doc</code> - vignettes now live in <code>vignettes/</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1941 --><ul>
+<li>
+<strong>Checking files in ‘vignettes’</strong>. Problems here are usually straightforward - you’ve included files that are already included in R (like <code>jss.cls</code>, <code>jss.bst</code>, or <code>Sweave.sty</code>), or you have leftover latex compilation files. Delete these files.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2008 --><ul>
+<li>
+<strong>Checking for sizes of PDF files under ‘inst/doc’</strong>. If you’re making PDF vignettes, you can make them as small as possible by running <code><a href="https://rdrr.io/r/tools/compactPDF.html">tools::compactPDF()</a></code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2619 --><ul>
+<li>
+<strong>Checking for unstated dependencies in vignettes</strong>. As with tests, every package that you use in a vignette must be listed in the <code>DESCRIPTION</code>. If a package is used only for a vignette, and not elsewhere, make sure it’s listed in <code>Suggests</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2629 --><ul>
+<li>
+<strong>Checking package vignettes in ‘inst/doc’</strong>. This checks that every source vignette (i.e. <code>.Rmd</code>) has a built equivalent (i.e. <code>.html</code>) in <code>inst/doc</code>. This shouldn’t fail if you’ve used the standard process outlined in <a href="vignettes.html#vignettes">vignettes</a>. If there is a problem, start by checking your <code>.Rbuildignore</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2763 --><ul>
+<li>
+<strong>Checking running R code from vignettes</strong>. The R code from each vignette is run. If you want to deliberately execute errors (to show the user what failure looks like), make sure the chunk has <code>error = TRUE, purl = FALSE</code>.</li>
+</ul>
+<!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2856 --><ul>
+<li>
+<strong>Checking re-building of vignette outputs</strong>. Each vignette is re-knit to make sure that the output corresponds to the input. Again, this shouldn’t fail in normal circumstances.</li>
+</ul>
+<p>To run vignettes, the package first must be installed.
+That means <code><a href="https://devtools.r-lib.org/reference/check.html">check()</a></code>:</p>
+<ol style="list-style-type: decimal">
+<li>Builds the package.</li>
+<li>Installs the package without vignettes.</li>
+<li>Builds all the vignettes.</li>
+<li>Re-installs the package with vignettes.</li>
+</ol>
+<p>If you have a lot of compiled code, this can be rather slow.
+You may want to add <code>--no-build-vignettes</code> to the commands list in “Build Source Packages” field in the project options:</p>
+<div class="inline-figure">
+<img src="images/project-options-build.png"><!-- -->
+</div>
+
+</div>
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="website.html"><span class="header-section-number">19</span> Website</a></div>
+<div class="next"><a href="continuous-integration.html"><span class="header-section-number">21</span> Continuous integration</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#r-cmd-check"><span class="header-section-number">20</span> R CMD check</a></li>
+<li><a class="nav-link" href="#introduction-15"><span class="header-section-number">20.1</span> Introduction</a></li>
+<li><a class="nav-link" href="#check-workflow"><span class="header-section-number">20.2</span> Workflow</a></li>
+<li>
+<a class="nav-link" href="#check-checks"><span class="header-section-number">20.3</span> Checks</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#check-metadata"><span class="header-section-number">20.3.1</span> Check metadata</a></li>
+<li><a class="nav-link" href="#package-structure"><span class="header-section-number">20.3.2</span> Package structure</a></li>
+<li><a class="nav-link" href="#description-2"><span class="header-section-number">20.3.3</span> Description</a></li>
+<li><a class="nav-link" href="#namespace"><span class="header-section-number">20.3.4</span> Namespace</a></li>
+<li><a class="nav-link" href="#r-code"><span class="header-section-number">20.3.5</span> R code</a></li>
+<li><a class="nav-link" href="#data-1"><span class="header-section-number">20.3.6</span> Data</a></li>
+<li><a class="nav-link" href="#documentation"><span class="header-section-number">20.3.7</span> Documentation</a></li>
+<li><a class="nav-link" href="#demos"><span class="header-section-number">20.3.8</span> Demos</a></li>
+<li><a class="nav-link" href="#compiled-code"><span class="header-section-number">20.3.9</span> Compiled code</a></li>
+<li><a class="nav-link" href="#tests"><span class="header-section-number">20.3.10</span> Tests</a></li>
+<li><a class="nav-link" href="#vignettes"><span class="header-section-number">20.3.11</span> Vignettes</a></li>
+</ul>
+</li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/hadley/r-pkgs/blob/main/check.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/hadley/r-pkgs/edit/main/check.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>R Packages</strong>" was written by Hadley Wickham, Jennifer Bryan. </p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer>
+</body>
+</html>

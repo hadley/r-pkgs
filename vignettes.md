@@ -1,0 +1,193 @@
+# Vignettes {#vignettes}
+
+```{=html}
+<!--
+Notes re: revision
+
+Maybe can be combined with object documentation? Unifying theme: "Built-in docs". In contrast to "web docs", e.g. pkgdown.
+-->
+```
+::: rmdnote
+You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete. 
+:::
+
+## Introduction
+
+A vignette is a long-form guide to your package.
+Function documentation is great if you know the name of the function you need, but it's useless otherwise.
+A vignette is like a book chapter or an academic paper: it can describe the problem that your package is designed to solve, and then show the reader how to solve it.
+
+Many existing packages have vignettes.
+You can see all the installed vignettes with `browseVignettes()`.
+To see the vignette for a specific package, use the argument, `browseVignettes("packagename")`.
+Each vignette provides three things: the original source file, a readable HTML page or PDF, and a file of R code.
+You can read a specific vignette with `vignette(x)`, and see its code with `edit(vignette(x))`.
+To see vignettes for a package you haven't installed, look at its CRAN page, e.g., <https://cran.r-project.org/web/packages/dplyr>.
+
+In this chapter, we're going to use RMarkdown to write our vignettes.
+If you're not already familiar with RMarkdown you'll need to learn the basics elsewhere; at good place to start is <https://rmarkdown.rstudio.com/>.
+
+Older packages can include vignettes written with Sweave, a precursor to RMarkdown.
+If this describes, your package, I highly recommend switching to RMarkdown.
+
+## Vignette workflow {#vignette-workflow}
+
+To create your first vignette, run:
+
+
+```r
+usethis::use_vignette("my-vignette")
+```
+
+This will:
+
+1.  Create a `vignettes/` directory.
+
+2.  Add the necessary dependencies to `DESCRIPTION` (i.e. it adds knitr to the `Suggests` and `VignetteBuilder` fields).
+
+3.  Draft a vignette, `vignettes/my-vignette.Rmd`.
+
+The draft vignette has been designed to remind you of the important parts of an R Markdown file.
+It serves as a useful reference when you're creating a new vignette.
+Once you have this file, the workflow is straightforward:
+
+1.  Modify the vignette.
+
+2.  Press Ctrl/Cmd + Shift + K (or click ![](images/knit.png)<!-- -->) to knit the vignette and preview the output.
+
+3.  This builds with the installed package --- but you probably want the dev package.
+    Use `devtools::build_rmd()`.
+
+The check workflow, `Cmd + Shift + E`, will run the code in all vignettes.
+This is a good way to verify that you've captured all the needed dependencies.
+
+## Metadata {#vignette-metadata}
+
+The first few lines of the vignette contain important metadata.
+The default template contains the following information:
+
+    ---
+    title: "Vignette Title"
+    output: rmarkdown::html_vignette
+    vignette: >
+      %\VignetteIndexEntry{Vignette Title}
+      %\VignetteEngine{knitr::rmarkdown}
+      %\VignetteEncoding{UTF-8}
+    ---
+
+This metadata is written in [yaml](https://yaml.org/), a format designed to be both human and computer readable.
+The basics of the syntax is much like the `DESCRIPTION` file, where each line consists of a field name, a colon, then the value of the field.
+The one special YAML feature we're using here is `>`.
+It indicates the following lines of text are plain text and shouldn't use any special YAML features.
+
+The fields are:
+
+-   `title` and `description`.
+    If you change the title, you must also change the `VignetteIndexEntry{}` described below.
+
+-   `author`: we don't use this unless the vignette author is different to the package author.
+
+-   `date`: don't recommend this either as it's very easy to forget to update.
+    You could use `Sys.date()`, but this shows when the vignette was built, which might be very different to when it was last updated.
+
+-   Output: this tells rmarkdown which output formatter to use.
+    There are many options that are useful for regular reports (including html, pdf, slideshows, ...) but `rmarkdown::html_vignette` has been specifically designed to work well inside packages.
+    See `?rmarkdown::html_vignette` for more details.
+
+-   Vignette: this contains a special block of metadata needed by R.
+    Here, you can see the legacy of LaTeX vignettes: the metadata looks like LaTeX commands.
+    You'll need to modify the `\VignetteIndexEntry` to provide the title of your vignette as you'd like it to appear in the vignette index.
+    Leave the other two lines as is.
+    They tell R to use `knitr` to process the file, and that the file is encoded in UTF-8 (the only encoding you should ever use to write vignettes).
+
+Also includes block to set up some standard options:
+
+    
+
+`collapse = TRUE` and `comment = "#>"` are my preferred way of displaying code output.
+I usually set these globally by putting the following knitr block at the start of my document.
+
+## Controlling evaluation
+
+Your vignettes will be evaluated in many different places, not just your computer --- CI/CD, CRAN, and users can run on their computers (although not typical).
+Need to make sure they work everywhere which can be challenging if your
+
+Any packages used by your vignette must be listed in `Imports` or `Suggests` fields.
+Generally save to assume that suggest packages will be installed when you vignette is executed.
+But if a package is particularly hard to install you might want to safeguard using one of the tools below.
+
+You're probably already familiar with the chunk option `eval = FALSE`.
+But can also set for all later chunks with `knitr::opts_chunk$set(eval = FALSE)`.
+This is particularly useful for:
+
+-   `eval = requireNamespace("package")`
+-   `eval = !identical(Sys.getenv("foo"), "")`
+-   `eval = file.exists("special-key")`
+
+A final option if you want to don't want to execute at all on CRAN.
+Another option is to create an "article"; an Rmd that appears only on the website that's not embedded in the package.
+This makes it slightly less accessible, but it's fine if you have a pkgdown website.
+
+Many other options are described at <https://yihui.name/knitr/options>.
+
+`error = TRUE` captures any errors in the block and shows them inline.
+This is useful if you want to demonstrate what happens if code throws an error.
+
+## Advice {#vignette-advice}
+
+> If you're thinking without writing, you only think you're thinking.
+> --- Leslie Lamport
+
+When writing a vignette, you're teaching someone how to use your package.
+You need to put yourself in the readers' shoes, and adopt a "beginner's mind".
+This can be difficult because it's hard to forget all of the knowledge that you've already internalised.
+For this reason, we find in-person teaching to be a really useful way to get feedback.
+You're immediately confronted with what you've forgotten that only you know.
+
+A useful side effect of this approach is that it helps you improve your code.
+It forces you to re-see the initial onboarding process and to appreciate the parts that are hard.
+Our experience is that explaining how code works often reveals some problems that need fixing.
+(In fact, a key part of the tidyverse package release process is writing a blog post: we now do that before submitting to CRAN because of the number of times it's revealed some subtle problem that requires a fix).
+
+In the tidyverse, I think we're generally always a little behind on vignettes and we need more than we currently have.
+
+Writing a vignette also makes a nice break from coding.
+Writing seems to use a different part of the brain from programming, so if you're sick of programming, try writing for a bit.
+
+### Writing
+
+-   I strongly recommend literally anything written by Kathy Sierra.
+    Her old blog, [Creating passionate users](https://headrush.typepad.com/) is full of advice about programming, teaching, and how to create valuable tools.
+    I thoroughly recommend reading through all the older content.
+    Her new blog, [Serious Pony](https://seriouspony.com/blog/), doesn't have as much content, but it has some great articles.
+
+-   If you'd like to learn how to write better, I highly recommend [Style: Lessons in Clarity and Grace](https://amzn.com/0321898680) by Joseph M. Williams and Joseph Bizup.
+    It helps you understand the structure of writing so that you'll be better able to recognise and fix bad writing.
+
+### Diagrams
+
+::: cran
+You'll need to watch the file size.
+If you include a lot of graphics, it's easy to create a very large file.
+Be on the look out for a `NOTE` that complains about an overly large directory.
+:::
+
+### Organisation
+
+For simpler packages, one vignette is often sufficient.
+Call it `pkgname.Rmd`; that takes advantage of a pkgdown convention which will automatically link "Getting Started" to your vignette.
+
+But for more complicated packages you may actually need more than one.
+In fact, you can have as many vignettes as you like.
+I tend to think of them like chapters of a book -- they should be self-contained, but still link together into a cohesive whole.
+
+### Scientific publication
+
+Vignettes can also be useful if you want to explain the details of your package.
+For example, if you have implemented a complex statistical algorithm, you might want to describe all the details in a vignette so that users of your package can understand what's going on under the hood, and be confident that you've implemented the algorithm correctly.
+In this case, you might also consider submitting your vignette to the [Journal of Statistical Software](http://jstatsoft.org/) or [The R Journal](http://journal.r-project.org/).
+Both journals are electronic only and peer-reviewed.
+Comments from reviewers can be very helpful for improving your package and vignette.
+
+If you just want to provide something very lightweight so folks have an easy time citing your package you might also consider the [Journal of Open Source Software](https://joss.theoj.org).
+This journal has a particularly speedy submission and review process, and is where we published "[*Welcome to the Tidyverse*](https://joss.theoj.org/papers/10.21105/joss.01686)", a paper we wrote so that folks could have a single paper to cite and all the tidyverse authors would get some academic credit.
