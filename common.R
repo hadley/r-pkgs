@@ -29,7 +29,7 @@ options(
   digits = 3,
   width = 68,
   str = strOptions(strict.width = "cut"),
-  crayon.enabled = TRUE
+  crayon.enabled = FALSE
 )
 knitr::opts_chunk$set(width = 68)
 
@@ -37,14 +37,6 @@ if (knitr::is_latex_output()) {
   options(crayon.enabled = FALSE)
   options(cli.unicode = TRUE)
 }
-
-# knitr::knit_hooks$set(
-#   small_mar = function(before, options, envir) {
-#     if (before) {
-#       par(mar = c(4.1, 4.1, 0.5, 0.5))
-#     }
-#   }
-# )
 
 # Make error messages closer to base R
 registerS3method("wrap", "error", envir = asNamespace("knitr"),
@@ -67,17 +59,6 @@ error_wrap <- function(x, width = getOption("width")) {
   lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
   paste(strwrap(lines, width = width), collapse = "\n")
 }
-
-knitr::knit_hooks$set(chunk_envvar = function(before, options, envir) {
-  envvar <- options$chunk_envvar
-  if (before && !is.null(envvar)) {
-    old_envvar <<- Sys.getenv(names(envvar), names = TRUE, unset = NA)
-    do.call("Sys.setenv", as.list(envvar))
-    #print(str(options))
-  } else {
-    do.call("Sys.setenv", as.list(old_envvar))
-  }
-})
 
 check_quietly <- purrr::quietly(devtools::check)
 install_quietly <- purrr::quietly(devtools::install)
@@ -104,9 +85,17 @@ status <- function(type) {
     complete = "is largely complete and just needs final proof reading",
     stop("Invalid `type`", call. = FALSE)
   )
+  
+  class <- switch(type,
+    complete = ,                 
+    polishing = "callout-note",
+    drafting =, 
+    restructuring = "callout-warning",
+  )
 
   knitr::asis_output(paste0(
-    "::: rmdnote\n",
+    "::: ", class, "\n",
+    "## Second edition\n",
     "You are reading the work-in-progress second edition of R Packages. ",
     "This chapter ", status, ". \n",
     ":::\n"

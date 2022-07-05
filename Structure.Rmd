@@ -1,4 +1,4 @@
-# Package structure and state {#package-structure-state}
+# Package structure and state {#sec-package-structure-state}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -9,7 +9,7 @@ source("common.R")
 This chapter will start you on the road to package development by converting the implicit knowledge you've gained from *using* R packages into the explicit knowledge needed to *create and modify* them.
 You'll learn about the various states a package can be in and the difference between a package and library (and why you should care).
 
-## Package states {#package-states}
+## Package states {#sec-package-states}
 
 When you create or modify a package, you work on its "source code" or "source files".
 You interact with the in-development package in its **source** form.
@@ -26,7 +26,7 @@ You already know some of the functions that put packages into these states.
 For example, `install.packages()` and `devtools::install_github()` move a package from source, bundled, or binary states into the installed state.
 The `library()` function loads an installed package into memory, making it available for immediate and direct use.
 
-## Source package {#source-package}
+## Source package {#sec-source-package}
 
 A **source** package is just a directory of files with a specific structure.
 It includes particular components, such as a `DESCRIPTION` file, an `R/` directory containing `.R` files, and so on.
@@ -84,7 +84,12 @@ This diagram summarises the files present in the top-level directory for source,
 
 *TODO: Remake this figure <https://github.com/hadley/r-pkgs/issues/587>.*
 
-```{r package-files, echo = FALSE, out.width = "100%", fig.cap = "Side-by-side comparison of source, bundled, and binary package."}
+```{r}
+#| label: fig-package-files
+#| echo: false
+#| out-width: ~
+#| fig-cap: >
+#|   Side-by-side comparison of source, bundled, and binary package.
 knitr::include_graphics("diagrams/package-files.png")
 ```
 
@@ -98,7 +103,7 @@ The main differences between a source package and an uncompressed bundle are:
 -   Any files listed in `.Rbuildignore` are not included in the bundle.
     These are typically files that facilitate your development process, but that should be excluded from the distributed product.
 
-### `.Rbuildignore` {#rbuildignore}
+### `.Rbuildignore` {#sec-rbuildignore}
 
 You won't need to contemplate the exact structure of package `.tar.gz` files very often, but you do need to understand the `.Rbuildignore` file.
 It controls which files from the source package make it into the downstream forms.
@@ -144,7 +149,7 @@ Note that the comments above must not appear in an actual `.Rbuildignore` file; 
 We'll mention when you need to add files to `.Rbuildignore` whenever it's important.
 Remember that `usethis::use_build_ignore()` is an attractive way to manage this file.
 
-## Binary package {#structure-binary}
+## Binary package {#sec-structure-binary}
 
 If you want to distribute your package to an R user who doesn't have package development tools, you'll need to provide a **binary** package.
 Like a package bundle, a binary package is a single file.
@@ -168,7 +173,7 @@ Continuing our examples from above, you could download binary packages such as:
 and this is, indeed, part of what's usually going on behind the scenes when you call `install.packages()`.
 
 If you uncompress a binary package, you'll see that the internal structure is rather different from a source or bundled package.
-Figure \@ref(fig:package-files) includes this comparison.
+@fig-package-files includes this comparison.
 Here are some of the most notable differences:
 
 -   There are no `.R` files in the `R/` directory - instead there are three files that store the parsed functions in an efficient file format.
@@ -192,15 +197,19 @@ Here are some of the most notable differences:
 
 -   Some files and folders have been dropped, such as `README`, `build/`, `tests/`, and `vignettes/`.
 
-## Installed package {#installed-package}
+## Installed package {#sec-installed-package}
 
-An **installed** package is a binary package that's been decompressed into a package library (described in \@ref(library)).
+An **installed** package is a binary package that's been decompressed into a package library (described in @sec-library).
 The following diagram illustrates the many ways a package can be installed.
 This diagram is complicated!
 In an ideal world, installing a package would involve stringing together a set of simple steps: source -\> bundle, bundle -\> binary, binary -\> installed.
 In the real world, it's not this simple because there are often (faster) shortcuts available.
 
-```{r installation, echo = FALSE, out.width = "100%", fig.cap = "Many methods for converting between package states."}
+```{r}
+#| label: fig-installation
+#| echo: false
+#| out-width: ~
+#| fig-cap: Many methods for converting between package states.
 knitr::include_graphics("diagrams/installation.png")
 ```
 
@@ -226,7 +235,7 @@ grep("^install_.+", funs, value = TRUE)
 `install_github()` is the flagship example of a sub-family of functions that can download a package from a remote location that is not CRAN and do whatever is necessary to install it.
 The rest of the devtools/remotes `install_*()` functions are aimed at making things that are technically possible with base tooling a bit easier or more explicit, such as `install_version()` which installs a specific version of a CRAN package.
 
-Analogous to `.Rbuildignore`, described in section \@ref(rbuildignore), `.Rinstignore` lets you keep files present in a package bundle out of the installed package.
+Analogous to `.Rbuildignore`, described in section @sec-rbuildignore, `.Rinstignore` lets you keep files present in a package bundle out of the installed package.
 However, in contrast to `.Rbuildignore`, this is rather obscure and rarely needed.
 
 *TODO: Revisit this section later with respect to pak <https://pak.r-lib.org>.*
@@ -247,12 +256,12 @@ create_package("/path/to/my/coolpackage")
 
 The usethis package has been loaded into memory and, in fact, has also been attached to the search path.
 The distinction between loading and attaching packages is not important when you're writing scripts, but it's very important when you're writing packages.
-You'll learn more about the difference and why it's important in [search path](#search-path).
+You'll learn more about the difference and why it's important in @sec-search-path.
 
 `library()` is not a great way to iteratively tweak and test drive a package you're developing, because it only works for an installed package.
-In section \@ref(load-all), you'll learn how `devtools::load_all()` accelerates development by allowing you to load a source package directly into memory.
+In @sec-load-all, you'll learn how `devtools::load_all()` accelerates development by allowing you to load a source package directly into memory.
 
-## Package libraries {#library}
+## Package libraries {#sec-library}
 
 We just discussed the `library()` function, whose name is inspired by what it does.
 When you call `library(foo)`, R looks through the current **libraries** for an installed package named "foo" and, if successful, it makes foo available for use.
@@ -268,9 +277,7 @@ But here's the bottom line:
 
 > We use the `library()` function to load [^structure-2] a **package**.
 
-[^structure-2]: (ref:actually)
-
-(ref:actually) Well, actually, `library()` loads and attaches a package, but that's a topic for another section (\@ref(search-path)).
+[^structure-2]: Well, actually, `library()` loads and attaches a package, but that's a topic for @sec-search-path.
 
 The distinction between the two is important and useful as you get involved in package development.
 
@@ -338,9 +345,7 @@ Above, the macOS system is used as a primary development machine and has many pa
 The core set of base and recommended packages that ship with R live in the system-level library and are the same on macOS and Windows.
 This separation appeals to many developers and makes it easy to, for example, clean out your add-on packages without disturbing your base R installation.
 
-[^structure-3]: (ref:maintaining-R)
-
-(ref:maintaining-R) For more details, see the [Maintaining R section](https://whattheyforgot.org/maintaining-r.html#how-to-transfer-your-library-when-updating-r) in *What They Forgot To Teach You About R*.
+[^structure-3]: For more details, see the [Maintaining R section](https://whattheyforgot.org/maintaining-r.html#how-to-transfer-your-library-when-updating-r) in *What They Forgot To Teach You About R*.
 
 If you're on macOS and only see one library, there is no urgent need to change anything.
 But next time you upgrade R, consider creating a user-level library.
@@ -368,4 +373,4 @@ Here are the main levers that control which libraries are active, in order of sc
 
 Finally, it's important to note that `library()` should NEVER be used *inside a package*.
 Packages and scripts rely on different mechanisms for declaring their dependencies and this is one of the biggest adjustments you need to make in your mental model and habits.
-We explore this topic fully in Chapter \@ref(namespace).
+We explore this topic fully in @sec-namespace.

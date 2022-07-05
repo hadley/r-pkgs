@@ -1,4 +1,4 @@
-# The package within {#package-within}
+# The package within {#sec-package-within}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -22,7 +22,7 @@ fs::dir_create("Package-within-files")
 ## Introduction
 
 This part of the book ends the same way it started, with the development of a small toy package.
-The [whole game chapter](#whole-game) established the basic mechanics, workflow, and tooling of package development, but said practically nothing about the R code inside the package.
+@sec-whole-game established the basic mechanics, workflow, and tooling of package development, but said practically nothing about the R code inside the package.
 Here we have a totally different emphasis.
 In this chapter, we focus primarily on the package's R code and how it differs from R code in a script.
 
@@ -250,7 +250,7 @@ Concretely, we do this:
 -   Copy `cleaning-helpers.R` into the new package, specifically, to `R/cleaning-helpers.R`.
     -   This is morally correct, but mechanically wrong in several ways, as we will soon see.
 -   Copy `beach-lookup-table.csv` into the new package. But where? Let's try the top-level of the source package.
-    -   This is not going to end well. Shipping data in a package is a special topic, which is covered in chapter \@ref(data).
+    -   This is not going to end well. Shipping data in a package is a special topic, which is covered in @sec-data.
 -   Install this package.
     -   Despite all of the problems identified above, this actually works! Which is interesting, because we can (try to) use it and see what happens.
 
@@ -304,7 +304,7 @@ None of our helper functions are actually available for use, even though we call
 In contrast to `source()`ing a file of helper functions, attaching a package does not dump its functions into the global workspace.
 By default, functions in a package are only for internal use.
 We need to export `localize_beach()`, `celsify_temp()`, and `outfile_path()` so our users can call them.
-In this book, we achieve this by putting `@export` in the special roxygen comment above each function (namespace management is covered in chapter \@ref(namespace)).
+In this book, we achieve this by putting `@export` in the special roxygen comment above each function (namespace management is covered in @sec-namespace).
 
 ```{r eval = FALSE}
 #' @export
@@ -337,21 +337,24 @@ write_csv(dat, outfile_path(infile))
 
 The lookup table consulted inside `localize_beach()` cannot be found.
 One does not simply dump CSV files into the source of an R package and expect things to "just work".
-We will fix this in our next iteration of the package (chapter \@ref(data) has full coverage of how to include data in a package).
+We will fix this in our next iteration of the package (@sec-data has full coverage of how to include data in a package).
 
 Before we abandon this initial experiment, let's also marvel at the fact that we were able to install, attach, and, to a certain extent, use a fundamentally broken package.
 `load_all()` works fine, too!
 This is a sobering reminder that you should be running `R CMD check`, probably via `check()`, very often during development.
 This will quickly alert you to many problems that simple installation and usage does not reveal.
 
-Indeed, `R CMD check` fails for this package and we see this[^package-within-2]:
+Indeed, `R CMD check` fails for this package and we see this:
 
-[^package-within-2]: If you have not done so already, you'll also need to configure a license to satisfy `R CMD check`.
-    For a quick experiment like this, `usethis::use_mit_license()` is fine.
-    For real work, see chapter \@ref(license) for guidance.
-
-    -   installing *source* package 'delta' ... \*\* using staged installation \*\* R \*\* byte-compile and prepare package for lazy loading Error in library(tidyverse) : there is no package called 'tidyverse' Error: unable to load R code in package 'delta' Execution halted ERROR: lazy loading failed for package 'delta'
-    -   removing '/Users/jenny/rrr/delta.Rcheck/delta'
+     * installing *source* package ‘delta’ ...
+     ** using staged installation
+     ** R
+     ** byte-compile and prepare package for lazy loading
+     Error in library(tidyverse) : there is no package called ‘tidyverse’
+     Error: unable to load R code in package ‘delta’
+     Execution halted
+     ERROR: lazy loading failed for package ‘delta’
+     * removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
 
 What do you mean "there is no package called 'tidyverse'"?!?
 We're using it, with no problems, in our main script!
@@ -379,10 +382,10 @@ To review, copying `cleaning-helpers.R` to `R/cleaning-helpers.R`, without furth
 
 We're ready to make the most minimal version of this package that actually works.
 
-Here is the new version of `R/cleaning-helpers.R`[^package-within-3]:
+Here is the new version of `R/cleaning-helpers.R`[^package-within-2]:
 
-[^package-within-3]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
-    We discuss organising and naming the files below `R/` in section \@ref(code-organising).
+[^package-within-2]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
+    We discuss organising and naming the files below `R/` in @sec-code-organising.
 
 ```{cat, engine.opts = list(file = "Package-within-files/echo-cleaning-helpers.R"), class.source = "R"}
 lookup_table <- dplyr::tribble(
@@ -415,15 +418,15 @@ outfile_path <- function(infile) {
 ```
 
 We've gone back to defining the `lookup_table` with R code, since our initial attempt to read it from CSV created some sort of filepath snafu.
-This is OK for small, internal, static data, but remember to see chapter \@ref(data) for more general techniques for storing data in a package.
+This is OK for small, internal, static data, but remember to see @sec-data for more general techniques for storing data in a package.
 
 All of our calls to tidyverse functions have now been qualified with the name of the specific package that actually provides the function, e.g. `dplyr::mutate()`.
-There are other ways to access functions in another package, explained in chapter \@ref(namespace), but this is our recommended default.
-It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^package-within-4].
+There are other ways to access functions in another package, explained in @sec-namespace, but this is our recommended default.
+It is also our strong recommendation that no one depend on the tidyverse meta-package in a package[^package-within-3].
 Instead, it is better to identify the specific package(s) you actually use.
 In this case, our package only uses dplyr.
 
-[^package-within-4]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
+[^package-within-3]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
 
 The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
 
@@ -433,7 +436,7 @@ The `library(tidyverse)` call is gone and instead we declare our use of dplyr in
         dplyr
 
 This, together with our use of namespace-qualified calls, like `dplyr::left_join()`, constitutes a valid way to use another package within ours.
-The metadata conveyed via DESCRIPTION is covered in chapter \@ref(description).
+The metadata conveyed via DESCRIPTION is covered in @sec-description.
 
 All of the user-facing functions have an `@export` tag in their roxygen comment, which means that `devtools::document()` adds them correctly to the `NAMESPACE` file.
 Note that `f_to_c()` is currently only used internally, inside `celsify_temp()`, so we have not exported it (likewise for `timestamp()`).
@@ -454,9 +457,9 @@ This version of the package can be installed, used, AND it technically passes `R
     Extensions’ manual.
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
-We could add either of these lines to any file below `R/` to eliminate this note[^package-within-5]:
+We could add either of these lines to any file below `R/` to eliminate this note[^package-within-4]:
 
-[^package-within-5]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
+[^package-within-4]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
 
 ```{r, eval = FALSE}
 # option 1 (then you should also put utils in Imports)
@@ -468,10 +471,10 @@ english <- temp <- NULL
 
 The warning about missing documentation is because we haven't properly documented our exported functions.
 This is a valid concern and something you should absolutely address in a real package.
-You've already seen how to create help files with roxygen comments in [the whole game chapter](whole-game-document) and we cover this topic thoroughly in chapter \@ref(man).
+You've already seen how to create help files with roxygen comments in [the whole game chapter](whole-game-document) and we cover this topic thoroughly in @sec-man.
 Therefore, we won't discuss this further here.
 
-## Foxtrot: build time vs. run time {#package-within-build-time-run-time}
+## Foxtrot: build time vs. run time {#sec-package-within-build-time-run-time}
 
 The package works, which is great, but group members notice something odd about the timestamps:
 
@@ -556,22 +559,22 @@ This illustrates that you need to have a different mindset when defining objects
 The vast majority of those objects should be functions and these functions should generally only use data they create or that is passed via an argument.
 There are some types of sloppiness that are fairly harmless when a function is defined immediately before its use, but that can be more costly for functions distributed as a package.
 
-## Golf: side effects {#package-within-side-effects}
+## Golf: side effects {#sec-package-within-side-effects}
 
 The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.
-The heart of the timestamp strategy is this format string[^package-within-6]:
+The heart of the timestamp strategy is this format string[^package-within-5]:
 
-[^package-within-6]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
+[^package-within-5]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
     Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
 ```{r}
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 
-This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-7].
+This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-6].
 
-[^package-within-7]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
+[^package-within-6]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
 
 Here's such a timestamp produced by a few hypothetical colleagues cleaning some data at exactly the same instant in time.
 
@@ -694,7 +697,7 @@ We show various methods to limit the scope of our changes to LC_TIME and the tim
 A good rule of thumb is to make the scope of such changes as narrow as is possible and practical.
 The `tz` argument of `format()` is the most surgical way to deal with the timezone, but nothing similar exists for LC_TIME.
 We make the temporary locale modification using the withr package, which provides a very flexible toolkit for temporary state changes.
-This (and `base::on.exit()`) are discussed further in section \@ref(code-r-landscape).
+This (and `base::on.exit()`) are discussed further in @sec-code-r-landscape.
 
 This underscores a point from the previous section: you need to adopt a different mindset when defining functions inside a package.
 Try to avoid making any changes to the user's overall state.

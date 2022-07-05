@@ -1,6 +1,4 @@
-# (PART) Maintenance and distribution {.unnumbered}
-
-# `R CMD check` {#r-cmd-check}
+# `R CMD check` {#sec-r-cmd-check}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -16,7 +14,7 @@ It's essential if you're planning on submitting to CRAN, but it's useful even if
 `R CMD check` will be frustrating the first time you run it - you'll discover many problems that need to be fixed.
 The key to making `R CMD check` less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix.
 The upper limit of this approach is to run `R CMD check` every time you make a change.
-If you use GitHub, you'll learn precisely how to do that with [GitHub Actions](#gha).
+If you use GitHub, you'll learn precisely how to do that in @sec-gha.
 
 ## Workflow {#check-workflow}
 
@@ -51,10 +49,10 @@ The workflow for checking a package is simple, but tedious:
 -   `NOTE`s: Mild problems.
     If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives.
     If you have no NOTEs, human intervention is not required, and the package submission process will be easier.
-    If it's not possible to eliminate a `NOTE`, you'll need describe why it's OK in your submission comments, as described in [release notes](#release-process).
+    If it's not possible to eliminate a `NOTE`, you'll need describe why it's OK in your submission comments, as described in @sec-release-process.
     If you're not submitting to CRAN, carefully read each NOTE, but don't go out of your way to fix things that you don't think are problems.
 
-## Checks {#check-checks}
+## Checks {#sec-check-checks}
 
 `R CMD check` is composed of over 50 individual checks, described in the following sections.
 For each check, I briefly describe what it does, what the most common problems are, and how to fix them.
@@ -77,7 +75,7 @@ I'm running R 3.1.1 on OS X with a UTF-8 charset:
 -   **Using session charset**: UTF-8
 
 Next the description is parsed and the package version is printed.
-Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird version number in [versioning](#version)).
+Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird version number in @sec-release-version).
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3459 -->
 
@@ -123,7 +121,7 @@ Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird ve
     If you see this message, check that you haven't accidentally included a large file.
 
     If submitting to CRAN, you'll need to justify the size of your package.
-    First, make sure the package is as small as it possibly can be: try recompressing the data, [data CRAN notes](#data-cran); and minimising vignettes, [vignette CRAN notes](#vignette-cran).
+    First, make sure the package is as small as it possibly can be: try recompressing the data, @sec-data-cran; and minimising vignettes, @sec-vignettes.
     If it's still too large, consider moving data into its own package.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L746 -->
@@ -193,7 +191,7 @@ tools:::.check_package_depends -->
         One easy fix is to move the conflicting package from `Imports` or `Depends` to `Suggests`.
 
     -   Any packages used in the `NAMESPACE` must be listed in one of `Imports` (most commonly) or `Depends` (only in special cases).
-        See [search path](#search-path) for more details.
+        See @sec-search-path for more details.
 
     -   Every package listed in `Depends` must also be imported in the `NAMESPACE` or accessed with `pkg::foo`.
         If you don't do this, your package will work when attached to the search path (with `library(mypackage)`) but will not work when only loaded (e.g. `mypackage::foo()`)
@@ -233,7 +231,7 @@ tools:::.check_package_CRAN_incoming
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L4433 -->
 
--   **Checking if there is a namespace**. You must have a `NAMESPACE` file. Roxygen2 will create this for you as described in [namespaces](#namespace).
+-   **Checking if there is a namespace**. You must have a `NAMESPACE` file. This is handled for your automatically by the devtools workflow.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L3620 -->
 
@@ -251,7 +249,7 @@ tools:::.check_package_CRAN_incoming
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1226 -->
 
--   **Checking R files for non-ASCII characters**. For maximum portability (i.e. so people can use your package on Windows) you should avoid using non-ASCII characters in R files. It's ok to use them in comments, but object names shouldn't use them, and in strings you should use unicode escapes. See [`R/` CRAN notes](#code-cran) for more details.
+-   **Checking R files for non-ASCII characters**. For maximum portability (i.e. so people can use your package on Windows) you should avoid using non-ASCII characters in R files. It's ok to use them in comments, but object names shouldn't use them, and in strings you should use unicode escapes. See @sec-code-cran for more details.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1258 -->
 
@@ -261,7 +259,7 @@ tools:::.check_package_CRAN_incoming
 
 -   **Checking dependencies in R code**.
     Errors here often indicate that you've forgotten to declare a needed package in the `DESCRIPTION`.
-    Remember that you should never use `require()` or `library()` inside a package - see [namespace imports](#imports) for more details on best practices.
+    Remember that you should never use `require()` or `library()` inside a package - see @sec-imports for more details on best practices.
 
     Alternatively, you may have accidentally used `:::` to access an exported function from a package.
     Switch to `::` instead.
@@ -388,7 +386,7 @@ tools:::.check_package_compact_sysdata
 ```
 -   **Checking contents of 'data' directory**.
 
-    -   The data directory can only contain file types described in [exported data](#data-data).
+    -   The data directory can only contain file types described in @sec-data-data.
 
     -   Data files can contain non-ASCII characters only if the encoding is correctly set.
         This usually shouldn't be a problem if you're saving `.Rdata` files.
@@ -456,9 +454,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2317 -->
 
--   **Checking examples**.
-    Every documentation example must run without errors, and must not take too long.
-    See Section \@ref(sec-examples) for details.
+-   **Checking examples**. Every documentation example must run without errors, and must not take too long. See sec-examples for details.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2925 -->
 
@@ -498,9 +494,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
  tools:::check_compiled_code
  -->
 ```
--   **Checking compiled code**. Checks that you're not using any C functions that you shouldn't. See details in [C best practices](#c-best-practices).
-
-### Tests {#tests}
+-   **Checking compiled code**. Checks that you're not using any C functions that you shouldn't. \### Tests {#tests}
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2514 -->
 
@@ -510,7 +504,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
 
 -   **Checking tests**.
     Each file in `tests/` is run.
-    If you've followed the instructions in [testing](#tests) you'll have at least one file: `testthat.R`.
+    If you've followed the instructions in @sec-testing-basics you'll have at least one file: `testthat.R`.
     The output from `R CMD check` is not usually that helpful, so you may need to look at the logfile `package.Rcheck/tests/testthat.Rout`.
     Fix any failing tests by iterating with `devtools::test()`.
 
@@ -541,7 +535,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2629 -->
 
--   **Checking package vignettes in 'inst/doc'**. This checks that every source vignette (i.e. `.Rmd`) has a built equivalent (i.e. `.html`) in `inst/doc`. This shouldn't fail if you've used the standard process outlined in [vignettes](#vignettes). If there is a problem, start by checking your `.Rbuildignore`.
+-   **Checking package vignettes in 'inst/doc'**. This checks that every source vignette (i.e. `.Rmd`) has a built equivalent (i.e. `.html`) in `inst/doc`. This shouldn't fail if you've used the standard process outlined in @sec-vignettes. If there is a problem, start by checking your `.Rbuildignore`.
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L2763 -->
 
@@ -562,6 +556,8 @@ That means `check()`:
 If you have a lot of compiled code, this can be rather slow.
 You may want to add `--no-build-vignettes` to the commands list in "Build Source Packages" field in the project options:
 
-```{r, echo = FALSE}
+```{r}
+#| echo: false
+#| out-width: ~
 knitr::include_graphics("images/project-options-build.png")
 ```
