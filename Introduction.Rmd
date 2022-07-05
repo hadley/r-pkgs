@@ -36,7 +36,7 @@ These conventions are helpful because:
 
 -   Standardised conventions lead to standardised tools --- if you buy into R's package conventions, you get many tools for free.
 
-It's even possible to use packages to structure your data analyses (see, e.g., @marwick2018-tas or @marwick2018-peerj), although we won't delve deeply into that use case here.
+It's even possible to use packages to structure your data analyses (e.g., @marwick2018-tas or @marwick2018-peerj), although we won't delve deeply into that use case here.
 
 ## Philosophy {#intro-phil}
 
@@ -45,17 +45,22 @@ Do as little as possible by hand.
 Do as much as possible with functions.
 The goal is to spend your time thinking about what you want your package to do rather than thinking about the minutiae of package structure.
 
-This philosophy is realised primarily through the devtools package, which is the public face for a suite of R functions that automate common development tasks.
+This philosophy is realized primarily through the devtools package, which is the public face for a suite of R functions that automate common development tasks.
 The release of version 2.0.0 in October 2018 marked its internal restructuring into a set of more focused packages, with devtools becoming more of a meta-package.
 The usethis package is the sub-package you are most likely to interact with directly; we explain the devtools-usethis relationship in @sec-setup-usage.
 
 As always, the goal of devtools is to make package development as painless as possible.
-It encapsulates the best practices developed by first author Hadley Wickham, initially from years as a prolific solo developer.
-More recently, he has assembled a team of \~10 developers at RStudio, who collectively look after \~150 open source R packages, including those known as [the tidyverse](https://www.tidyverse.org).
+It encapsulates the best practices developed by Hadley Wickham, initially from his years as a prolific solo developer.
+More recently, he has assembled a team of developers at RStudio, who collectively look after hundreds of open source R packages, including those known as [the tidyverse](https://www.tidyverse.org).
 The reach of this team allows us to explore the space of all possible mistakes at an extraordinary scale.
 Fortunately, it also affords us the opportunity to reflect on both the successes and failures, in the company of expert and sympathetic colleagues.
 We try to develop practices that make life more enjoyable for both the maintainer and users of a package.
 The devtools meta-package is where these lessons are made concrete.
+
+devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users.
+The main alternative is [Emacs Speaks Statistics](http://ess.r-project.org/) (ESS), which is a rewarding environment if you're willing to put in the time to learn Emacs and customise it to your needs.
+The history of ESS stretches back over 20 years (predating R!), but it's still actively developed and many of the workflows described in this book are also available there.
+For those loyal to vim, we recommend the [Nvim-R plugin](https://github.com/jalvesaq/Nvim-R).
 
 ::: callout-tip
 ## RStudio
@@ -63,70 +68,50 @@ The devtools meta-package is where these lessons are made concrete.
 Throughout the book, we highlight specific ways that RStudio can expedite your package development workflow, in specially formatted sections like this.
 :::
 
-devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users.
-The main alternative is [Emacs Speaks Statistics](http://ess.r-project.org/) (ESS), which is a rewarding environment if you're willing to put in the time to learn Emacs and customise it to your needs.
-The history of ESS stretches back over 20 years (predating R!), but it's still actively developed and many of the workflows described in this book are also available there.
-For those loyal to vim, we recommend the [Nvim-R plugin](https://github.com/jalvesaq/Nvim-R).
-
 Together, devtools and RStudio insulate you from the low-level details of how packages are built.
 As you start to develop more packages, we highly recommend that you learn more about those details.
-The best resource for the official details of package development is always the official [writing R extensions](https://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages) manual.
+The best resource for the official details of package development is always the official [writing R extensions](https://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages) manual[^introduction-1].
 However, this manual can be hard to understand if you're not already familiar with the basics of packages.
 It's also exhaustive, covering every possible package component, rather than focusing on the most common and useful components, as this book does.
 Writing R extensions is a useful resource once you've mastered the basics and want to learn what's going on under the hood.
 
+[^introduction-1]: You might also enjoy the "quarto-ized" version at [https://rstudio.github.io/r-manuals/r-exts/](https://rstudio.github.io/r-manuals/r-exts/Function-and-variable-index.html).
+
 ## In this book {#intro-outline}
 
-@sec-whole-game runs through the development of a small toy package.
+<!-- TODO: proof read this section -->
+
+The first part of the book is all about giving you all the tools you need to start your package development journey and we highly recommend that you read it in order.
+We begin in @sec-whole-game with a run through the complete development of a small package.
 It's meant to paint the big picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package.
+Then in @sec-setup you'll learn how to prepare your system for package development, and in @sec-package-structure-state you'll learn the basic structure of a package and how that varies across different states.
+Next, in @sec-workflows101, we'll cover the core workflows that come up repeatedly for package developers.
+Then the first section of the book in @sec-package-within with another case study, this time focusing on how you might convert a script to a package and discussing the challenges you'll face along the way.
 
-@sec-setup describes how to prepare your system for package development, which has more requirements than simply running R scripts.
-This includes recommendations on some optional setup that can make your workflow more pleasant, which tends to lead to a higher-quality product.
+The remainder of the book is design to be read as needed.
+Pick and choose between the packages as you need them.
 
-The basic structure of a package and how that varies across different states is explained in @sec-package-structure-state.
+First we cover key package components: @sec-r discusses where your code lives and how to organize it, @sec-data shows you how to include data in your package, and @sec-misc covers a few less important files and directories that need to be discussed somewhere.
 
-@sec-workflows101 goes over core workflows that come up repeatedly for package developers.
-This chapter also covers connections between our favored tools, such as devtools (and its underlying packages, such as usethis) and RStudio, and the philosophies that drive the design of these tools.
+Next we'll dive into to the package metadata, starting with `DESCRIPTION` and `NAMESPACE` in @sec-metadata.
+We'll then go deep into dependencies in @sec-dependencies, discussing when and how to depend on another package.
+We'll finish off this part with a look at licensing in @sec-license.
 
-Subsequent chapters of the book go into more details about each package component.
-They're roughly organised in order of importance:
+To ensure your package works as designed (and continues to work as you make changes), it's essential to test your code, so the next three chapters cover the art and science of testing.
+@sec-testing-basics gets you started with the basics of testing with the testthat package.
+@sec-test-design teaches you how to design and organise tests in the most effective way.
+Then we finish off our coverage of testing in @sec-testing-advanced which teaches you advanced skills to tackle the most challenging of cases.
 
--   R code, @sec-r: the most important directory is `R/`, where your R code lives.
-    A package with just this directory is still a useful package.
-    (And indeed, if you stop reading the book after this chapter, you'll have still learned some useful new skills.)
+If you want other people (including future-you!) to understand how to use the functions in your package, you'll need to document them.
+@sec-man gets you started using roxygen to document the functions in your package.
+Function documentation is only helpful if you know what function to look up, so next in @sec-vignettes we'll discuss vignettes, which help you document the package as a whole.
+We'll finish up documentation with a discussion of other important markdown files like `README.md` and `NEWS.md` in @sec-man-markdown, and creating a package website with pkgdown in @sec-website.
 
--   Package metadata, @sec-description: the `DESCRIPTION` lets you describe what your package needs to work.
-    If you're sharing your package, you'll also use the `DESCRIPTION` to describe what it does, who can use it (the license), and who to contact if things go wrong.
-
--   Documentation, @sec-man: if you want other people (including future-you!) to understand how to use the functions in your package, you'll need to document them.
-    We'll show you how to use roxygen2 to document your functions.
-    We recommend roxygen2 because it lets you write code and documentation together while continuing to produce R's standard documentation format.
-
--   Vignettes, @sec-vignettes: function documentation describes the nit-picky details of every function in your package.
-    Vignettes give the big picture.
-    They're long-form documents that show how to combine multiple parts of your package to solve real problems.
-    We'll show you how to use Rmarkdown and knitr to create vignettes with a minimum of fuss.
-
--   Tests, @sec-testing-basics: to ensure your package works as designed (and continues to work as you make changes), it's essential to write unit tests which define correct behaviour, and alert you when functions break.
-    In this chapter, we'll teach you how to use the testthat package to convert the informal interactive tests that you're already doing to formal, automated tests.
-
--   Namespace, @sec-namespace: to play nicely with others, your package needs to define what functions it makes available to other packages and what functions it requires from other packages.
-    This is the job of the `NAMESPACE` file and we'll show you how to use roxygen2 to generate it for you.
-    The `NAMESPACE` is one of the more challenging parts of developing an R package but it's critical to master if you want your package to work reliably.
-
--   External data, @sec-data: the `data/` directory allows you to include data with your package.
-    You might do this to bundle data in a way that's easy for R users to access, or just to provide compelling examples in your documentation.
-
--   Other components, @sec-misc: this chapter documents the handful of other components that are rarely needed: `demo/`, `exec/`, `po/` and `tools/`.
-
-The final chapters describe general best practices not specifically tied to one directory:
-
--   Automated checking, @sec-r-cmd-check: R provides very useful automated quality checks in the form of `R CMD check`.
-    Running them regularly is a great way to avoid many common mistakes.
-    The results can sometimes be a bit cryptic, so we provide a comprehensive cheatsheet to help you convert warnings to actionable insight.
-
--   Release, @sec-release: the life-cycle of a package culminates with release to the public.
-    This chapter compares the two main options (CRAN and GitHub) and offers general advice on managing the process.
+The book concludes with a look at the release of your package to CRAN and the maintenance thereafter.
+@sec-r-cmd-check dives into `R CMD check`, the most important tool for verifying your package is free from major defects.
+You'll then learn how you can run `R CMD check` automatically every time you change your package in @sec-ci.
+If you're planning on submitting your package to CRAN, @sec-release shows you the process and gives you our tips and tricks to maximize the chances of success.
+We conclude with a discussion the post-release lifecycle in @sec-lifecycle.
 
 This is a lot to learn, but don't feel overwhelmed.
 Start with a minimal subset of useful features (e.g. just an `R/` directory!) and build up over time.
@@ -134,7 +119,7 @@ To paraphrase the Zen monk Shunryu Suzuki: "Each package is perfect the way it i
 
 ## What you won't learn {#you-wont-learn}
 
-There are few very important topics that you won't learn about in this book:
+There are a few very important topics that you won't learn about in this book:
 
 <!-- TODO: complete these comments -->
 
@@ -226,7 +211,7 @@ The light bulb image used for workflow tips comes from [www.vecteezy.com](https:
 
 ## Conventions {#intro-conventions}
 
-Throughout this book, we write `foo()` to refer to functions, `bar` to refer to variables and function parameters, and `baz/` for paths.
+Throughout this book, we write `fun()` to refer to functions, `var` to refer to variables and function arguments, and `path/` for paths.
 
 Larger code blocks intermingle input and output.
 Output is commented so that if you have an electronic version of the book, e.g., <https://r-pkgs.org>, you can easily copy and paste examples into R.
@@ -234,7 +219,7 @@ Output comments look like `#>` to distinguish them from regular comments.
 
 ## Colophon {#intro-colophon}
 
-This book was authored using [R Markdown](https://rmarkdown.rstudio.com), using [bookdown](https://bookdown.org), inside [RStudio](https://www.rstudio.com/products/rstudio/).
+This book was authored using [quarto](https://quarto.org) inside [RStudio](https://www.rstudio.com/products/rstudio/).
 The [website](https://r-pkgs.org) is hosted with [Netlify](https://www.netlify.com), and automatically updated after every commit by GitHub actions.
 The complete source is available from [GitHub](https://github.com/hadley/r-pkgs).
 
