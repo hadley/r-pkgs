@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 
-[![bookdown](https://github.com/hadley/r-pkgs/actions/workflows/bookdown.yaml/badge.svg)](https://github.com/hadley/r-pkgs/actions/workflows/bookdown.yaml) [![Netlify Status](https://api.netlify.com/api/v1/badges/a5dbbee9-7396-4e7f-8ce7-6abd362d9752/deploy-status)](https://app.netlify.com/sites/r-pkgs/deploys)
+[![render](https://github.com/hadley/r-pkgs/actions/workflows/render.yaml/badge.svg)](https://github.com/hadley/r-pkgs/actions/workflows/render.yaml) [![Netlify Status](https://api.netlify.com/api/v1/badges/a5dbbee9-7396-4e7f-8ce7-6abd362d9752/deploy-status)](https://app.netlify.com/sites/r-pkgs/deploys)
 
 <!-- badges: end -->
 
