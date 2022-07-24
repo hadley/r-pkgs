@@ -638,7 +638,7 @@ This can be effectively techniques but their are downsides to each:
 ## Re-using documentation
 
 roxygen2 provides a number of features that allow you to reuse documentation across topics.
-They are documented in `vignettes("reuse", package = "roxygen2")` so here we'll focus on the most important:
+They are documented in `vignettes("reuse", package = "roxygen2")` so here we'll focus on the three most important:
 
 -   Documenting multiple functions in one topic.
 -   Inheriting documentation from another topic.
@@ -646,9 +646,7 @@ They are documented in `vignettes("reuse", package = "roxygen2")` so here we'll 
 
 ### Multiple functions in one topic {#sec-multiple-functions}
 
-There's another powerful tool to share not just argument docs but all doc across multiple functions: `@rdname`.
-By default, each function gets its own documentation topic, but you can combine the documentation for `fun2` into `fun1` by using `@rdname fun1`.
-
+By default, each function gets its own documentation topic, but if two functions are very closely connected you can combine the documentation for multiple functions into a single topic.
 For example, take `str_length()` and `str_width()` which provide two different ways of computing the size of a string.
 As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:
 
@@ -669,7 +667,7 @@ str_length <- function(string) {
 }
 ```
 
-This works because `str_width()` uses `@rdname str_length` so that its documentation is included an in existing topic:
+To merge the two topic, `str_width()` uses `@rdname str_length` to add it's documentation to an in existing topic:
 
 ```{r}
 #' @rdname str_length
@@ -682,29 +680,31 @@ This technique is best used for functions that have not just similar arguments, 
 
 ### Inheriting documentation
 
-You can inherit documentation from other topics in a few ways:
+In other cases, functions in a make might share many related behaviors, but aren't closely enough connected that you want to document them together.
+Instead, you can use `@inherits`, which generaliezs `@inheritParams`, to inherit any component of the document from one topic.
 
--   `@inheritParams source_function` inherits just the parameter documentation from `source_function()`.
+There are three useful inherit tags:
 
 -   `@inherit source_function` will inherit all supported components from `source_function`.
 
-    Alternatively, you can use (e.g.) `@inherit source_function return details` to just inherit the return value and details from `source_function()`.
-    Supported components are `r paste0("\x60", roxygen2:::inherit_components, "\x60", collapse = ", ")`.
+    You can choose to only inherit selected components by listing them after the function name, e.g. `@inherit source_function return details`.
+    The complete list of currently supported components are `r paste0("\x60", roxygen2:::inherit_components, "\x60", collapse = ", ")`.
 
--   `@inheritSection source_function Section title` will inherit the single `@section` called "Section title" from `source_function()`.
+-   `@inheritSection source_function Section title` will inherit the single section with title "Section title" from `source_function()`.
 
 -   `@inheritDotParams` automatically generates parameter documentation for `...` for the common case where you pass `...` on to another function.
     Because you often override some arguments, it comes with a flexible specification for argument selection:
 
-    -   `@inheritDotParams foo` takes all parameters from `foo()`
-    -   `@inheritDotParams foo a b e:h` takes parameters `a`, `b`, and all parameters between `e` and `h`
+    -   `@inheritDotParams foo` takes all parameters from `foo()`.
+    -   `@inheritDotParams foo a b e:h` takes parameters `a`, `b`, and all parameters between `e` and `h`.
     -   `@inheritDotParams foo -x -y` takes all parameters except for `x` and `y`.
 
 All of these tags also work to inherit documentation from functions in another package by using `pkg::source_function`.
 
 ### Child documents
 
-You can use the same `.Rmd` or `.md` document in the documentation, `README.Rmd`, and vignettes but using child documents:
+Finally, uou can use the same `.Rmd` or `.md` document in the documentation, `README.Rmd`, and vignettes by using RMarkdown child documents.
+The syntax looks like this:
 
     ```{r child = "common.Rmd"}`r ''`
     ```
