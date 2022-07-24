@@ -882,7 +882,7 @@ Submitting to CRAN
 <li>The code in <code>```{r}</code>blocks is run every time you document the package. This has the nice advantage of including the output in the documentation (unlike examples), but the code can’t take very long to run or your iterative documentation workflow will become quite painful.</li>
 </ul></section></section><section id="re-using-documentation" class="level2" data-number="16.8"><h2 data-number="16.8" class="anchored" data-anchor-id="re-using-documentation">
 <span class="header-section-number">16.8</span> Re-using documentation</h2>
-<p>roxygen2 provides a number of features that allow you to reuse documentation across topics. They are documented in <code>vignettes("reuse", package = "roxygen2")</code> so here we’ll focus on the most important:</p>
+<p>roxygen2 provides a number of features that allow you to reuse documentation across topics. They are documented in <code>vignettes("reuse", package = "roxygen2")</code> so here we’ll focus on the three most important:</p>
 <ul>
 <li>Documenting multiple functions in one topic.</li>
 <li>Inheriting documentation from another topic.</li>
@@ -890,8 +890,7 @@ Submitting to CRAN
 </ul>
 <section id="sec-multiple-functions" class="level3" data-number="16.8.1"><h3 data-number="16.8.1" class="anchored" data-anchor-id="sec-multiple-functions">
 <span class="header-section-number">16.8.1</span> Multiple functions in one topic</h3>
-<p>There’s another powerful tool to share not just argument docs but all doc across multiple functions: <code>@rdname</code>. By default, each function gets its own documentation topic, but you can combine the documentation for <code>fun2</code> into <code>fun1</code> by using <code>@rdname fun1</code>.</p>
-<p>For example, take <code>str_length()</code> and <code>str_width()</code> which provide two different ways of computing the size of a string. As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:</p>
+<p>By default, each function gets its own documentation topic, but if two functions are very closely connected you can combine the documentation for multiple functions into a single topic. For example, take <code>str_length()</code> and <code>str_width()</code> which provide two different ways of computing the size of a string. As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:</p>
 <div class="cell">
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' The length/width of a string</span></span>
 <span><span class="co">#'</span></span>
@@ -908,7 +907,7 @@ Submitting to CRAN
 <span>  <span class="va">...</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>This works because <code>str_width()</code> uses <code>@rdname str_length</code> so that its documentation is included an in existing topic:</p>
+<p>To merge the two topic, <code>str_width()</code> uses <code>@rdname str_length</code> to add it’s documentation to an in existing topic:</p>
 <div class="cell">
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @rdname str_length</span></span>
 <span><span class="va">str_width</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">string</span><span class="op">)</span> <span class="op">{</span></span>
@@ -918,23 +917,21 @@ Submitting to CRAN
 <p>This technique is best used for functions that have not just similar arguments, but also similar return value and related examples, as discussed next.</p>
 </section><section id="inheriting-documentation" class="level3" data-number="16.8.2"><h3 data-number="16.8.2" class="anchored" data-anchor-id="inheriting-documentation">
 <span class="header-section-number">16.8.2</span> Inheriting documentation</h3>
-<p>You can inherit documentation from other topics in a few ways:</p>
+<p>In other cases, functions in a make might share many related behaviors, but aren’t closely enough connected that you want to document them together. Instead, you can use <code>@inherits</code>, which generaliezs <code>@inheritParams</code>, to inherit any component of the document from one topic.</p>
+<p>There are three useful inherit tags:</p>
 <ul>
-<li><p><code>@inheritParams source_function</code> inherits just the parameter documentation from <code>source_function()</code>.</p></li>
 <li>
 <p><code>@inherit source_function</code> will inherit all supported components from <code>source_function</code>.</p>
-<p>Alternatively, you can use (e.g.) <code>@inherit source_function return details</code> to just inherit the return value and details from <code>source_function()</code>. Supported components are <code>params</code>, <code>return</code>, <code>title</code>, <code>description</code>, <code>details</code>, <code>seealso</code>, <code>sections</code>, <code>references</code>, <code>examples</code>, <code>author</code>, <code>source</code>, <code>note</code>.</p>
+<p>You can choose to only inherit selected components by listing them after the function name, e.g.&nbsp;<code>@inherit source_function return details</code>. The complete list of currently supported components are <code>params</code>, <code>return</code>, <code>title</code>, <code>description</code>, <code>details</code>, <code>seealso</code>, <code>sections</code>, <code>references</code>, <code>examples</code>, <code>author</code>, <code>source</code>, <code>note</code>.</p>
 </li>
-<li><p><code>@inheritSection source_function Section title</code> will inherit the single <code>@section</code> called “Section title” from <code>source_function()</code>.</p></li>
+<li><p><code>@inheritSection source_function Section title</code> will inherit the single section with title “Section title” from <code>source_function()</code>.</p></li>
 <li>
 <p><code>@inheritDotParams</code> automatically generates parameter documentation for <code>...</code> for the common case where you pass <code>...</code> on to another function. Because you often override some arguments, it comes with a flexible specification for argument selection:</p>
 <ul>
 <li>
-<code>@inheritDotParams foo</code> takes all parameters from <code>foo()</code>
-</li>
+<code>@inheritDotParams foo</code> takes all parameters from <code>foo()</code>.</li>
 <li>
-<code>@inheritDotParams foo a b e:h</code> takes parameters <code>a</code>, <code>b</code>, and all parameters between <code>e</code> and <code>h</code>
-</li>
+<code>@inheritDotParams foo a b e:h</code> takes parameters <code>a</code>, <code>b</code>, and all parameters between <code>e</code> and <code>h</code>.</li>
 <li>
 <code>@inheritDotParams foo -x -y</code> takes all parameters except for <code>x</code> and <code>y</code>.</li>
 </ul>
@@ -943,7 +940,7 @@ Submitting to CRAN
 <p>All of these tags also work to inherit documentation from functions in another package by using <code>pkg::source_function</code>.</p>
 </section><section id="child-documents" class="level3" data-number="16.8.3"><h3 data-number="16.8.3" class="anchored" data-anchor-id="child-documents">
 <span class="header-section-number">16.8.3</span> Child documents</h3>
-<p>You can use the same <code>.Rmd</code> or <code>.md</code> document in the documentation, <code>README.Rmd</code>, and vignettes but using child documents:</p>
+<p>Finally, uou can use the same <code>.Rmd</code> or <code>.md</code> document in the documentation, <code>README.Rmd</code>, and vignettes by using RMarkdown child documents. The syntax looks like this:</p>
 <pre><code>```{r child = "common.Rmd"}
 ```</code></pre>
 <p>The included Rmd file can have roxygen Markdown-style links to other help topics. E.g. <code>[roxygen2::roxygenize()]</code> will link to the manual page of the <code>roxygenize</code> function in roxygen2. See <code>vignette("rd-formatting")</code> for details.</p>
