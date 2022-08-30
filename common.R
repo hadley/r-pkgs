@@ -42,29 +42,28 @@ if (knitr::is_latex_output()) {
 # The internal function knitr:::wrap() has been removed from this package. If
 # you rely on this function, you will have to use the exported function
 # knitr::sew() instead.
-# 2022-08-30 stopgap solution: stop re-wrapping errors for now
 
 # Make error messages closer to base R
-# registerS3method("wrap", "error", envir = asNamespace("knitr"),
-#                  function(x, options) {
-#                    msg <- conditionMessage(x)
-#                    
-#                    call <- conditionCall(x)
-#                    if (is.null(call)) {
-#                      msg <- paste0("Error: ", msg)
-#                    } else {
-#                      msg <- paste0("Error in ", deparse(call)[[1]], ": ", msg)
-#                    }
-#                    
-#                    msg <- error_wrap(msg)
-#                    knitr:::msg_wrap(msg, "error", options)
-#                  }
-# )
-# 
-# error_wrap <- function(x, width = getOption("width")) {
-#   lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
-#   paste(strwrap(lines, width = width), collapse = "\n")
-# }
+registerS3method("sew", "error", envir = asNamespace("knitr"),
+                 function(x, options) {
+                   msg <- conditionMessage(x)
+
+                   call <- conditionCall(x)
+                   if (is.null(call)) {
+                     msg <- paste0("Error: ", msg)
+                   } else {
+                     msg <- paste0("Error in ", deparse(call)[[1]], ": ", msg)
+                   }
+
+                   msg <- error_wrap(msg)
+                   knitr:::msg_wrap(msg, "error", options)
+                 }
+)
+
+error_wrap <- function(x, width = getOption("width")) {
+  lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
+  paste(strwrap(lines, width = width), collapse = "\n")
+}
 
 check_quietly <- purrr::quietly(devtools::check)
 install_quietly <- purrr::quietly(devtools::install)
