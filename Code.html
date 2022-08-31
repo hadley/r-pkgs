@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.1.165">
+<meta name="generator" content="quarto-1.1.167">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>R Packages (2e) - 7&nbsp; R code</title>
 <style>
@@ -633,21 +633,41 @@ Warning
 <code><a href="https://rdrr.io/r/base/Random.html">set.seed()</a></code> (or anything that changes the state of the random number generator)</li>
 </ul>
 <!-- TODO: maybe tell one or more of the scary stories in <https://github.com/hadley/r-pkgs/issues/447> --><p>If you must use them, make sure to clean up after yourself. Below we show how to do this using functions from the withr package and in base R.</p>
-<p>The flip side of this coin is that you should avoid relying on the user’s landscape, which might be different to yours. For example, functions like <code><a href="https://rdrr.io/r/utils/read.table.html">read.csv()</a></code> are dangerous because the value of <code>stringsAsFactors</code> argument comes from the global option <code>stringsAsFactors</code>. If you expect it to be <code>TRUE</code> (the default), and the user has set it to be <code>FALSE</code>, your code might fail.</p>
-<p><em>TODO: update or replace this example in light of <code>stringsAsFactors</code> changes.</em></p>
+<p>The flip side of this coin is that you should avoid relying on the user’s landscape, which might be different to yours. For example, functions that rely on sorting strings are dangerous, because sort order depends on the system locale. Below we see that locales one might actually encounter in practice (C, English, French, etc.) differ in how they sort non-ASCII strings or uppercase versus lowercase letters.</p>
+<div class="cell">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"bernard"</span>, <span class="st">"bérénice"</span>, <span class="st">"béatrice"</span>, <span class="st">"boris"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_locale.html">with_locale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>LC_COLLATE <span class="op">=</span> <span class="st">"fr_FR"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sort.html">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in (function (category = "LC_ALL", locale = "") : OS reports</span></span>
+<span><span class="co">#&gt; request to set locale to "fr_FR" cannot be honored</span></span>
+<span><span class="co">#&gt; [1] "béatrice" "bérénice" "bernard"  "boris"</span></span>
+<span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_locale.html">with_locale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>LC_COLLATE <span class="op">=</span> <span class="st">"C"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sort.html">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "bernard"  "boris"    "béatrice" "bérénice"</span></span>
+<span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"b"</span>, <span class="st">"A"</span>, <span class="st">"b"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_locale.html">with_locale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>LC_COLLATE <span class="op">=</span> <span class="st">"en_CA"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sort.html">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in (function (category = "LC_ALL", locale = "") : OS reports</span></span>
+<span><span class="co">#&gt; request to set locale to "en_CA" cannot be honored</span></span>
+<span><span class="co">#&gt; [1] "a" "A" "A" "b" "b" "B"</span></span>
+<span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_locale.html">with_locale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>LC_COLLATE <span class="op">=</span> <span class="st">"C"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sort.html">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "A" "A" "B" "a" "b" "b"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If you write your functions as if all users have the same system locale as you, your code might fail.</p>
 <section id="manage-state-with-withr" class="level3" data-number="7.6.1"><h3 data-number="7.6.1" class="anchored" data-anchor-id="manage-state-with-withr">
 <span class="header-section-number">7.6.1</span> Manage state with withr</h3>
-<p>The withr package is inspired by <code><a href="https://rdrr.io/r/base/on.exit.html">base::on.exit()</a></code> and provides a flexible <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code>-like toolkit (<code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code> itself is covered in the next section). <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code> can be used as a drop-in replacement for <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code>, but the real reason to use it is to get its default “stack-like” behaviour and to use its <code>envir</code> argument (in more advanced usage).</p>
+<p>If you need to modify the R landscape inside a function, then it is important to ensure your change is reversed <em>on exit</em> of that function. This is exactly what <code><a href="https://rdrr.io/r/base/on.exit.html">base::on.exit()</a></code> is designed to do. You use <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code> inside a function to register code to run later, that restores the landscape to its original state. It is important to note that proper tools, such as <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code>, work even if we exit the function abnormally, i.e.&nbsp;due to an error. This is why it’s worth using the official methods described here over any do-it-yourself solution.</p>
+<p>We usually manage state using the <a href="https://withr.r-lib.org">withr package</a>, which provides a flexible, <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code>-like toolkit (<code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code> itself is covered in the next section). <code><a href="https://withr.r-lib.org/reference/defer.html">withr::defer()</a></code> can be used as a drop-in replacement for <code><a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a></code>. Why do we like withr so much? First, it offers many pre-built convenience functions for state changes that come up often. We also appreciate withr’s default stack-like behaviour (LIFO = last in, first out), its usability in interactive sessions, and its <code>envir</code> argument (in more advanced usage).</p>
 <p>The general pattern is to capture the original state, schedule its eventual restoration “on exit”, then make the state change. Some setters, such as <code><a href="https://rdrr.io/r/base/options.html">options()</a></code> or <code><a href="https://rdrr.io/r/graphics/par.html">par()</a></code>, return the old value when you provide a new value, leading to usage that looks like this:</p>
 <div class="cell">
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">...</span></span>
-<span>  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pty <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span></span>
+<span>  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
 <span>  <span class="fu">defer</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers. Here a few of the state change helpers in withr that you are most likely to find useful:</p>
+<p>Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers. Here are a few of the state change helpers in withr that you are most likely to find useful:</p>
 <table class="table">
 <thead><tr class="header">
 <th>Do / undo this</th>
@@ -685,7 +705,7 @@ Warning
 <li>
 <p><code>with_*()</code> functions are best for executing small snippets of code with a temporarily modified state. (These functions are inspired by how <code><a href="https://rdrr.io/r/base/with.html">base::with()</a></code> works.)</p>
 <div class="cell">
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># imagine lots of code here</span></span>
 <span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">with_options</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>digits <span class="op">=</span> <span class="va">sig_digits</span><span class="op">)</span>,</span>
@@ -698,7 +718,7 @@ Warning
 <li>
 <p><code>local_*()</code> functions are best for modifying state “from now until the function exits”.</p>
 <div class="cell">
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">sig_digits</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_options.html">local_options</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>digits <span class="op">=</span> <span class="va">sig_digits</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span>  <span class="co"># imagine lots of code here</span></span>
@@ -713,7 +733,7 @@ Warning
 </h3>
 <p>Here is how the general “save, schedule restoration, change” pattern looks when using <code><a href="https://rdrr.io/r/base/on.exit.html">base::on.exit()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">...</span></span>
 <span>  <span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pty <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -722,7 +742,7 @@ Warning
 </div>
 <p>Other state changes aren’t available with that sort of setter and you must implement it yourself.</p>
 <div class="cell">
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span>, <span class="va">c</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span>, <span class="va">c</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">...</span></span>
 <span>  <span class="va">scratch_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/on.exit.html">on.exit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html">unlink</a></span><span class="op">(</span><span class="va">scratch_file</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -742,7 +762,7 @@ Warning
 <li>
 <p>To display an informative message when the package loads. This might make usage conditions clear or display package capabilities based on current system conditions. Startup messages are one place where you should use <code>.onAttach()</code> instead of <code>.onLoad()</code>. To display startup messages, always use <code><a href="https://rdrr.io/r/base/message.html">packageStartupMessage()</a></code>, and not <code><a href="https://rdrr.io/r/base/message.html">message()</a></code>. (This allows <code><a href="https://rdrr.io/r/base/message.html">suppressPackageStartupMessages()</a></code> to selectively suppress package startup messages).</p>
 <div class="cell">
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onAttach</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onAttach</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html">packageStartupMessage</a></span><span class="op">(</span><span class="st">"Welcome to my package"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -751,7 +771,7 @@ Warning
 <p>To set custom options for your package with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>. To avoid conflicts with other packages, ensure that you prefix option names with the name of your package. Also be careful not to override options that the user has already set.</p>
 <p><em>TODO: update this to reflect current usethis options.</em> I use the following code in devtools to set up useful options:</p>
 <div class="cell">
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="op">)</span></span>
 <span>  <span class="va">op.devtools</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
 <span>    devtools.path <span class="op">=</span> <span class="st">"~/R-dev"</span>,</span>
@@ -803,7 +823,7 @@ Warning
 <p>If you’re planning on submitting your package to CRAN, you must use only ASCII characters in your <code>.R</code> files. In practice, this means you are limited to the digits 0 to 9, lowercase letters ‘a’ to ‘z’, uppercase letters ‘A’ to ‘Z’, and common punctuation.</p>
 <p>But sometimes you need to inline a small bit of character data that includes, e.g., a Greek letter (µ), an accented character (ü), or a symbol (30°). You can use any Unicode character as long as you specify it in the special Unicode escape <code>"\u1234"</code> format. The easiest way to find the correct code point is to use <code><a href="https://rdrr.io/pkg/stringi/man/stri_escape_unicode.html">stringi::stri_escape_unicode()</a></code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet •"</span></span>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet •"</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="st">"This is a bullet \u2022"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
@@ -819,7 +839,7 @@ Warning
    Use \uxxxx escapes for other characters.</code></pre>
 <p>The most common offenders are “curly” or “smart” single and double quotes that sneak in through copy/paste. The functions <code><a href="https://rdrr.io/r/tools/showNonASCII.html">tools::showNonASCII()</a></code> and <code>tools::showNonASCIIfile(file)</code> help you find the offending file(s) and line(s).</p>
 <div class="cell">
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/showNonASCII.html">showNonASCIIfile</a></span><span class="op">(</span><span class="st">"R/foo.R"</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/showNonASCII.html">showNonASCIIfile</a></span><span class="op">(</span><span class="st">"R/foo.R"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 666: #' If you&lt;e2&gt;&lt;80&gt;&lt;99&gt;ve copy/pasted quotes, watch out!</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
