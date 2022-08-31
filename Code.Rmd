@@ -148,6 +148,7 @@ There are two main differences between code in scripts and packages:
     This means your functions need to be thoughtful in the way that they interact with the outside world.
 
 We expand on the first point here and the second in the next section.
+These topics are also illustrated concretely in @sec-package-within-build-time-run-time.
 
 When you `source()` a script, every line of code is executed and the results are immediately made available.
 Things are different with package code, because it is loaded in two steps.
@@ -312,21 +313,44 @@ Here is a non-exhaustive list of other functions that should be used with cautio
 -   `setwd()`
 -   `Sys.setenv()`
 -   `Sys.setlocale()`
--   `set.seed()` (or anything that changes the state of the random number generator) *TODO: maybe tell one or more of the scary stories in <https://github.com/hadley/r-pkgs/issues/447>*
+-   `set.seed()` (or anything that changes the state of the random number generator)
+
+<!-- TODO: maybe tell one or more of the scary stories in <https://github.com/hadley/r-pkgs/issues/447> -->
 
 If you must use them, make sure to clean up after yourself.
 Below we show how to do this using functions from the withr package and in base R.
 
 The flip side of this coin is that you should avoid relying on the user's landscape, which might be different to yours.
-For example, functions like `read.csv()` are dangerous because the value of `stringsAsFactors` argument comes from the global option `stringsAsFactors`.
-If you expect it to be `TRUE` (the default), and the user has set it to be `FALSE`, your code might fail.
+For example, functions that rely on sorting strings are dangerous, because sort order depends on the system locale.
+Below we see that locales one might actually encounter in practice (C, English, French, etc.) differ in how they sort non-ASCII strings or uppercase versus lowercase letters.
 
-*TODO: update or replace this example in light of `stringsAsFactors` changes.*
+```{r}
+x <- c("bernard", "bérénice", "béatrice", "boris")
+
+withr::with_locale(c(LC_COLLATE = "fr_FR"), sort(x))
+withr::with_locale(c(LC_COLLATE = "C"), sort(x))
+
+x <- c("a", "A", "B", "b", "A", "b")
+
+withr::with_locale(c(LC_COLLATE = "en_CA"), sort(x))
+withr::with_locale(c(LC_COLLATE = "C"), sort(x))
+```
+
+If you write your functions as if all users have the same system locale as you, your code might fail.
 
 ### Manage state with withr
 
-The withr package is inspired by `base::on.exit()` and provides a flexible `on.exit()`-like toolkit (`on.exit()` itself is covered in the next section).
-`withr::defer()` can be used as a drop-in replacement for `on.exit()`, but the real reason to use it is to get its default "stack-like" behaviour and to use its `envir` argument (in more advanced usage).
+If you need to modify the R landscape inside a function, then it is important to ensure your change is reversed *on exit* of that function.
+This is exactly what `base::on.exit()` is designed to do.
+You use `on.exit()` inside a function to register code to run later, that restores the landscape to its original state.
+It is important to note that proper tools, such as `on.exit()`, work even if we exit the function abnormally, i.e. due to an error.
+This is why it's worth using the official methods described here over any do-it-yourself solution.
+
+We usually manage state using the [withr package](https://withr.r-lib.org), which provides a flexible, `on.exit()`-like toolkit (`on.exit()` itself is covered in the next section).
+`withr::defer()` can be used as a drop-in replacement for `on.exit()`.
+Why do we like withr so much?
+First, it offers many pre-built convenience functions for state changes that come up often.
+We also appreciate withr's default stack-like behaviour (LIFO = last in, first out), its usability in interactive sessions, and its `envir` argument (in more advanced usage).
 
 The general pattern is to capture the original state, schedule its eventual restoration "on exit", then make the state change.
 Some setters, such as `options()` or `par()`, return the old value when you provide a new value, leading to usage that looks like this:
@@ -334,14 +358,14 @@ Some setters, such as `options()` or `par()`, return the old value when you prov
 ```{r, eval = FALSE}
 f <- function(x, y, z) {
   ...
-  old <- options(mfrow = c(2, 2), pty = "s")
+  old <- options(width = 20)
   defer(options(old))
   ...
 }
 ```
 
 Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers.
-Here a few of the state change helpers in withr that you are most likely to find useful:
+Here are a few of the state change helpers in withr that you are most likely to find useful:
 
 | Do / undo this              | withr functions                     |
 |-----------------------------|-------------------------------------|

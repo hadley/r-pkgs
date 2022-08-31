@@ -38,18 +38,23 @@ if (knitr::is_latex_output()) {
   options(cli.unicode = TRUE)
 }
 
+# From NEWS of knitr 1.40 (released 2022-08-24)
+# The internal function knitr:::wrap() has been removed from this package. If
+# you rely on this function, you will have to use the exported function
+# knitr::sew() instead.
+
 # Make error messages closer to base R
-registerS3method("wrap", "error", envir = asNamespace("knitr"),
+registerS3method("sew", "error", envir = asNamespace("knitr"),
                  function(x, options) {
                    msg <- conditionMessage(x)
-                   
+
                    call <- conditionCall(x)
                    if (is.null(call)) {
                      msg <- paste0("Error: ", msg)
                    } else {
                      msg <- paste0("Error in ", deparse(call)[[1]], ": ", msg)
                    }
-                   
+
                    msg <- error_wrap(msg)
                    knitr:::msg_wrap(msg, "error", options)
                  }

@@ -23,7 +23,8 @@ Package development workflows make much more sense if you understand the five st
 -   in-memory
 
 You already know some of the functions that put packages into these states.
-For example, `install.packages()` and `devtools::install_github()` move a package from source, bundled, or binary states into the installed state.
+For example, `install.packages()` can move a package from the source, bundled, or binary states into the installed state.
+`devtools::install_github()` takes a source package on GitHub and moves it into the installed state.
 The `library()` function loads an installed package into memory, making it available for immediate and direct use.
 
 ## Source package {#sec-source-package}
@@ -55,7 +56,7 @@ Examples:
 -   MASS: <https://github.com/cran/MASS>
 -   car: <https://github.com/cran/car>
 
-Note that this is not the same as exploring the package's true development venue, because this source and its evolution is just reverse-engineered from the package's CRAN releases.
+Note that exploring a package's source and history within the `cran` GitHub organisation is not the same as exploring the package's true development venue, because this source and its evolution is just reverse-engineered from the package's CRAN releases.
 This presents a redacted view of the package and its history, but, by definition, it includes everything that is essential.
 
 ## Bundled package
@@ -114,11 +115,11 @@ Note there are some default exclusions implemented by R itself, mostly relating 
 
 [^structure-1]: To see the set of filepaths that should be on your radar, execute `dir(full.names = TRUE, recursive = TRUE, include.dirs = TRUE, all.files = TRUE)` in the package's top-level directory.
 
+We usually modify `.Rbuildignore` with the `usethis::use_build_ignore()` function, which takes care of easy-to-forget details, such as regular expression anchoring and escaping.
 To exclude a specific file or directory (the most common use case), you **MUST** anchor the regular expression.
-For example, to exclude a directory called "notes", use `^notes$`.
-The regular expression `notes` will match any file name containing notes, e.g.
+For example, to exclude a directory called "notes", the `.Rbuildignore` entry must be `^notes$`, whereas the unanchored regular expression `notes` will match any file name containing "notes", e.g.
 `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc.
-The safest way to exclude a specific file or directory is to use `usethis::use_build_ignore("notes")`, which does the escaping for you.
+We find that `use_build_ignore()` helps us get more of our `.Rbuildignore` entries right the first time.
 
 `.Rbuildignore` is a way to resolve some of the tension between the practices that support your development process and CRAN's requirements for submission and distribution.
 Even if you aren't planning to release on CRAN, following these conventions will allow you to make the best use of R's built-in tooling for package checking and installation.
@@ -148,13 +149,15 @@ Note that the comments above must not appear in an actual `.Rbuildignore` file; 
 
 We'll mention when you need to add files to `.Rbuildignore` whenever it's important.
 Remember that `usethis::use_build_ignore()` is an attractive way to manage this file.
+Furthermore, many usethis functions that add a file that should be listed in `.Rbuildignore` take care of this automatically.
+For example, `use_read_rmd()` adds "\^README\\.Rmd\$" to `.Rbuildignore`.
 
 ## Binary package {#sec-structure-binary}
 
 If you want to distribute your package to an R user who doesn't have package development tools, you'll need to provide a **binary** package.
 Like a package bundle, a binary package is a single file.
 Unlike a bundled package, a binary package is platform specific and there are two basic flavors: Windows and macOS.
-(Linux users are generally required to have the tools necessary to install from `.tar.gz` files.)
+(Linux users are generally required to have the tools necessary to install from `.tar.gz` files, although the emergence of resources like [RStudio Public Package Manager](https://packagemanager.rstudio.com) is giving Linux users the same access to binary packages as their colleagues on Windows and macOS.)
 
 Binary packages for macOS are stored as `.tgz`, whereas Windows binary packages end in `.zip`.
 If you need to make a binary package, use `devtools::build(binary = TRUE)` on the relevant operating system.
@@ -205,6 +208,10 @@ This diagram is complicated!
 In an ideal world, installing a package would involve stringing together a set of simple steps: source -\> bundle, bundle -\> binary, binary -\> installed.
 In the real world, it's not this simple because there are often (faster) shortcuts available.
 
+```{=html}
+<!-- TODO: update this figure.
+For example, hopefully we'll be ready to recommend pak over install_github() before publication. -->
+```
 ```{r}
 #| label: fig-installation
 #| echo: false
