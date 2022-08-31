@@ -340,8 +340,17 @@ If you write your functions as if all users have the same system locale as you, 
 
 ### Manage state with withr
 
-The withr package is inspired by `base::on.exit()` and provides a flexible `on.exit()`-like toolkit (`on.exit()` itself is covered in the next section).
-`withr::defer()` can be used as a drop-in replacement for `on.exit()`, but the real reason to use it is to get its default "stack-like" behaviour and to use its `envir` argument (in more advanced usage).
+If you need to modify the R landscape inside a function, then it is important to ensure your change is reversed *on exit* of that function.
+This is exactly what `base::on.exit()` is designed to do.
+You use `on.exit()` inside a function to register code to run later, that restores the landscape to its original state.
+It is important to note that proper tools, such as `on.exit()`, work even if we exit the function abnormally, i.e. due to an error.
+This is why it's worth using the official methods described here over any do-it-yourself solution.
+
+We usually manage state using the [withr package](https://withr.r-lib.org), which provides a flexible, `on.exit()`-like toolkit (`on.exit()` itself is covered in the next section).
+`withr::defer()` can be used as a drop-in replacement for `on.exit()`.
+Why do we like withr so much?
+First, it offers many pre-built convenience functions for state changes that come up often.
+We also appreciate withr's default stack-like behaviour (LIFO = last in, first out), its usability in interactive sessions, and its `envir` argument (in more advanced usage).
 
 The general pattern is to capture the original state, schedule its eventual restoration "on exit", then make the state change.
 Some setters, such as `options()` or `par()`, return the old value when you provide a new value, leading to usage that looks like this:
@@ -349,14 +358,14 @@ Some setters, such as `options()` or `par()`, return the old value when you prov
 ```{r, eval = FALSE}
 f <- function(x, y, z) {
   ...
-  old <- options(mfrow = c(2, 2), pty = "s")
+  old <- options(width = 20)
   defer(options(old))
   ...
 }
 ```
 
 Certain state changes, such as modifying session options, come up so often that withr offers pre-made helpers.
-Here a few of the state change helpers in withr that you are most likely to find useful:
+Here are a few of the state change helpers in withr that you are most likely to find useful:
 
 | Do / undo this              | withr functions                     |
 |-----------------------------|-------------------------------------|
