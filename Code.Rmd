@@ -321,10 +321,22 @@ If you must use them, make sure to clean up after yourself.
 Below we show how to do this using functions from the withr package and in base R.
 
 The flip side of this coin is that you should avoid relying on the user's landscape, which might be different to yours.
-For example, functions like `read.csv()` are dangerous because the value of `stringsAsFactors` argument comes from the global option `stringsAsFactors`.
-If you expect it to be `TRUE` (the default), and the user has set it to be `FALSE`, your code might fail.
+For example, functions that rely on sorting strings are dangerous, because sort order depends on the system locale.
+Below we see that locales one might actually encounter in practice (C, English, French, etc.) differ in how they sort non-ASCII strings or uppercase versus lowercase letters.
 
-*TODO: update or replace this example in light of `stringsAsFactors` changes.*
+```{r}
+x <- c("bernard", "bérénice", "béatrice", "boris")
+
+withr::with_locale(c(LC_COLLATE = "fr_FR"), sort(x))
+withr::with_locale(c(LC_COLLATE = "C"), sort(x))
+
+x <- c("a", "A", "B", "b", "A", "b")
+
+withr::with_locale(c(LC_COLLATE = "en_CA"), sort(x))
+withr::with_locale(c(LC_COLLATE = "C"), sort(x))
+```
+
+If you write your functions as if all users have the same system locale as you, your code might fail.
 
 ### Manage state with withr
 
