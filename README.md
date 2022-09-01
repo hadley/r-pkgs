@@ -18,21 +18,21 @@ The site is built with [Quarto](https://quarto.org).
 
 Screenshots: use `include_graphics()`, chunk should have `output.width = NULL`.
 
-Callouts look like this:
+[Quarto callouts](https://quarto.org/docs/authoring/callouts.html) look like this:
 
     ::: callout-tip
     Here's a super handy nifty thing!
     :::
 
 At the time of writing (2022-08-31), we use `callout-tip`, `callout-warning`, `callout-note`, and `callout-important`.
-The `XXX` of `callout-XXX` determines styling, such as color:
+The `XXX` of `callout-XXX` is its type and controls the icon and color:
 
 -   `-tip` green
 -   `-warning` orange
 -   `-note` blue
 -   `-important` red
 
-Use a `##`-level header to title the callout.
+Use a `##`-level header to caption the callout.
 
 Do this for tips specific to RStudio:
 
