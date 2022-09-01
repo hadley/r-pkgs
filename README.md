@@ -17,3 +17,33 @@ The site is built with [Quarto](https://quarto.org).
 ## Notes on mechanics
 
 Screenshots: use `include_graphics()`, chunk should have `output.width = NULL`.
+
+Callouts look like this:
+
+    ::: callout-tip
+    Here's a super handy nifty thing!
+    :::
+
+At the time of writing (2022-08-31), we use `callout-tip`, `callout-warning`, `callout-note`, and `callout-important`.
+The `XXX` of `callout-XXX` determines styling, such as color:
+
+-   `-tip` green
+-   `-warning` orange
+-   `-note` blue
+-   `-important` red
+
+Use a `##`-level header to title the callout.
+
+Do this for tips specific to RStudio:
+
+    ::: callout-tip
+    ## RStudio
+    Here's a super handy nifty thing about RStudio specifically.
+    :::
+
+The other callout that appears multiple times is:
+
+    ::: callout-warning
+    ## Submitting to CRAN
+    Here's something to super careful about.
+    :::
