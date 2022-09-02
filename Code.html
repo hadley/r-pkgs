@@ -764,31 +764,23 @@ Warning
 </div>
 </li>
 <li>
-<p>To set custom options for your package with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>. To avoid conflicts with other packages, ensure that you prefix option names with the name of your package. Also be careful not to override options that the user has already set.</p>
-<p><em>TODO: update this to reflect current usethis options.</em> I use the following code in devtools to set up useful options:</p>
+<p>To set custom options for your package with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>. To avoid conflicts with other packages, ensure that you prefix option names with the name of your package. Also be careful not to override options that the user has already set. Here’s a (highly redacted) version of dplyr’s <code>.onLoad()</code> function which sets an option that controls progress reporting:</p>
 <div class="cell">
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="op">)</span></span>
-<span>  <span class="va">op.devtools</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
-<span>    devtools.path <span class="op">=</span> <span class="st">"~/R-dev"</span>,</span>
-<span>    devtools.install.args <span class="op">=</span> <span class="st">""</span>,</span>
-<span>    devtools.name <span class="op">=</span> <span class="st">"Your name goes here"</span>,</span>
-<span>    devtools.desc.author <span class="op">=</span> <span class="st">"First Last &lt;first.last@example.com&gt; [aut, cre]"</span>,</span>
-<span>    devtools.desc.license <span class="op">=</span> <span class="st">"What license is it under?"</span>,</span>
-<span>    devtools.desc.suggests <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>    devtools.desc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="va">op.dplyr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
+<span>    dplyr.show_progress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="va">toset</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op.devtools</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/any.html">any</a></span><span class="op">(</span><span class="va">toset</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">op.devtools</span><span class="op">[</span><span class="va">toset</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">toset</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op.dplyr</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/any.html">any</a></span><span class="op">(</span><span class="va">toset</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="va">op.dplyr</span><span class="op">[</span><span class="va">toset</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Then devtools functions can use e.g.&nbsp;<code>getOption("devtools.name")</code> to get the name of the package author, and know that a sensible default value has already been set.</p>
+<p>This allows functions in dplyr to use <code>getOption("dplyr.show_progress")</code> to determine whether to show progress bars, relying on the fact that a sensible default value has already been set.</p>
 </li>
-<li><p>To register vignette engines with <code><a href="https://rdrr.io/r/tools/vignetteEngine.html">tools::vignetteEngine()</a></code>. <em>TODO: update / remove this?</em></p></li>
 </ul>
-<!-- TODO: Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. --><p>As you can see in the examples, <code>.onLoad()</code> and <code>.onAttach()</code> are called with two arguments: <code>libname</code> and <code>pkgname</code>. They’re rarely used (they’re a holdover from the days when you needed to use <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> to load compiled code). They give the path where the package is installed (the “library”), and the name of the package.</p>
+<!-- TODO: I don't think the option setting example is so great anymore. I lean towards replacement. Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. --><p>As you can see in the examples, <code>.onLoad()</code> and <code>.onAttach()</code> are called with two arguments: <code>libname</code> and <code>pkgname</code>. They’re rarely used (they’re a holdover from the days when you needed to use <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> to load compiled code). They give the path where the package is installed (the “library”), and the name of the package.</p>
 <p>If you use <code>.onLoad()</code>, consider using <code>.onUnload()</code> to clean up any side effects. By convention, <code>.onLoad()</code> and friends are usually saved in a file called <code>R/zzz.R</code>. (Note that <code>.First.lib()</code> and <code>.Last.lib()</code> are old versions of <code>.onLoad()</code> and <code>.onUnload()</code> and should no longer be used.)</p>
 </section></section><section id="constant-health-checks" class="level2" data-number="7.7"><h2 data-number="7.7" class="anchored" data-anchor-id="constant-health-checks">
 <span class="header-section-number">7.7</span> Constant health checks</h2>
