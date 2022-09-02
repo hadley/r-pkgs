@@ -468,34 +468,24 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
 -   To set custom options for your package with `options()`.
     To avoid conflicts with other packages, ensure that you prefix option names with the name of your package.
     Also be careful not to override options that the user has already set.
-
-    *TODO: update this to reflect current usethis options.* I use the following code in devtools to set up useful options:
+    Here's a (highly redacted) version of dplyr's `.onLoad()` function which sets an option that controls progress reporting:
 
     ```{r, eval = FALSE}
     .onLoad <- function(libname, pkgname) {
       op <- options()
-      op.devtools <- list(
-        devtools.path = "~/R-dev",
-        devtools.install.args = "",
-        devtools.name = "Your name goes here",
-        devtools.desc.author = "First Last <first.last@example.com> [aut, cre]",
-        devtools.desc.license = "What license is it under?",
-        devtools.desc.suggests = NULL,
-        devtools.desc = list()
+      op.dplyr <- list(
+        dplyr.show_progress = TRUE
       )
-      toset <- !(names(op.devtools) %in% names(op))
-      if(any(toset)) options(op.devtools[toset])
-
+      toset <- !(names(op.dplyr) %in% names(op))
+      if (any(toset)) options(op.dplyr[toset])
+      
       invisible()
     }
     ```
 
-    Then devtools functions can use e.g. `getOption("devtools.name")` to get the name of the package author, and know that a sensible default value has already been set.
+    This allows functions in dplyr to use `getOption("dplyr.show_progress")` to determine whether to show progress bars, relying on the fact that a sensible default value has already been set.
 
--   To register vignette engines with `tools::vignetteEngine()`.
-    *TODO: update / remove this?*
-
-<!-- TODO: Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. -->
+<!-- TODO: I don't think the option setting example is so great anymore. I lean towards replacement. Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. -->
 
 As you can see in the examples, `.onLoad()` and `.onAttach()` are called with two arguments: `libname` and `pkgname`.
 They're rarely used (they're a holdover from the days when you needed to use `library.dynam()` to load compiled code).
