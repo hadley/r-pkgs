@@ -353,9 +353,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li>
 <a href="#understand-when-code-is-executed" id="toc-understand-when-code-is-executed" class="nav-link" data-scroll-target="#understand-when-code-is-executed"><span class="toc-section-number">7.5</span>  Understand when code is executed</a>
   <ul class="collapse">
-<li><a href="#a-path-returned-by-system.file" id="toc-a-path-returned-by-system.file" class="nav-link" data-scroll-target="#a-path-returned-by-system.file"><span class="toc-section-number">7.5.1</span>  A path returned by <code>system.file()</code></a></li>
-  <li><a href="#available-colours" id="toc-available-colours" class="nav-link" data-scroll-target="#available-colours"><span class="toc-section-number">7.5.2</span>  Available colours</a></li>
-  <li><a href="#aliasing-a-function" id="toc-aliasing-a-function" class="nav-link" data-scroll-target="#aliasing-a-function"><span class="toc-section-number">7.5.3</span>  Aliasing a function</a></li>
+<li><a href="#example-a-path-returned-by-system.file" id="toc-example-a-path-returned-by-system.file" class="nav-link" data-scroll-target="#example-a-path-returned-by-system.file"><span class="toc-section-number">7.5.1</span>  Example: A path returned by <code>system.file()</code></a></li>
+  <li><a href="#example-available-colours" id="toc-example-available-colours" class="nav-link" data-scroll-target="#example-available-colours"><span class="toc-section-number">7.5.2</span>  Example: Available colours</a></li>
+  <li><a href="#example-aliasing-a-function" id="toc-example-aliasing-a-function" class="nav-link" data-scroll-target="#example-aliasing-a-function"><span class="toc-section-number">7.5.3</span>  Example: Aliasing a function</a></li>
   </ul>
 </li>
   <li>
@@ -531,8 +531,8 @@ Warning
 <p>Any R code outside of a function is suspicious and should be carefully reviewed.</p>
 </blockquote>
 <p>We explore a few real-world examples below that show how easy it is to get burned by this “build time vs.&nbsp;load time” issue. Luckily, once you diagnose this problem, it is generally not difficult to fix.</p>
-<section id="a-path-returned-by-system.file" class="level3" data-number="7.5.1"><h3 data-number="7.5.1" class="anchored" data-anchor-id="a-path-returned-by-system.file">
-<span class="header-section-number">7.5.1</span> A path returned by <code>system.file()</code>
+<section id="example-a-path-returned-by-system.file" class="level3" data-number="7.5.1"><h3 data-number="7.5.1" class="anchored" data-anchor-id="example-a-path-returned-by-system.file">
+<span class="header-section-number">7.5.1</span> Example: A path returned by <code>system.file()</code>
 </h3>
 <p>The shinybootstrap2 package once had this code below <code>R/</code>:</p>
 <div class="cell">
@@ -550,13 +550,13 @@ Warning
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>So <code>dataTableDependency</code> was an object defined in top-level package code and it depends on some paths obtained via <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>. As described in <a href="https://github.com/rstudio/htmltools/issues/22">a GitHub issue</a>,</p>
+<p>So <code>dataTableDependency</code> was a list object defined in top-level package code and its value was constructed from paths obtained via <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>. As described in <a href="https://github.com/rstudio/htmltools/issues/22">a GitHub issue</a>,</p>
 <blockquote class="blockquote">
 <p>This works fine when the package is built and tested on the same machine. However, if the package is built on one machine and then used on another (as is the case with CRAN binary packages), then this will fail – the dependency will point to the wrong directory on the host.</p>
 </blockquote>
 <p>The heart of the solution is to make sure that <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> is called from a function, at run time. Indeed, this fix was made here (in commit <a href="https://github.com/rstudio/shinybootstrap2/commit/138db47e6bef195f14f6a14f4289ca445e9b2efa#diff-fedcc5cc99f3d44a4caf06f8e6e0ae08">138db47</a>) and in a few other packages that had similar code and a related check was added in <code>htmlDependency()</code> itself. This particular problem would now be caught by <code>R CMD check</code>, due to changes that came with <a href="https://developer.r-project.org/Blog/public/2019/02/14/staged-install/index.html">staged installation</a> as of R 3.6.0.</p>
-</section><section id="available-colours" class="level3" data-number="7.5.2"><h3 data-number="7.5.2" class="anchored" data-anchor-id="available-colours">
-<span class="header-section-number">7.5.2</span> Available colours</h3>
+</section><section id="example-available-colours" class="level3" data-number="7.5.2"><h3 data-number="7.5.2" class="anchored" data-anchor-id="example-available-colours">
+<span class="header-section-number">7.5.2</span> Example: Available colours</h3>
 <p>The crayon package has a function, <code><a href="https://rdrr.io/pkg/crayon/man/show_ansi_colors.html">crayon::show_ansi_colors()</a></code>, that displays an ANSI colour table on your screen, basically to show what sort of styling is possible. In an early version, the function looked something like this:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>show_ansi_colors <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">colors =</span> <span class="fu">num_colors</span>()) {</span>
@@ -601,8 +601,8 @@ Warning
 </div>
 <p>Literally, the same code is used, it is simply pushed down into the body of a function taking no arguments (similar to the shinybootstrap2 example). Each reference to, e.g., the <code>ansi_colors_8</code> object is replaced by a call to the <code>ansi_colors_8()</code> function.</p>
 <p>The main takeaway is that functions that assess or expose the capabilities of your package on a user’s system must fully execute on your user’s system. It’s fairly easy to accidentally rely on results that were cached at build time, quite possibly on a different machine.</p>
-</section><section id="aliasing-a-function" class="level3" data-number="7.5.3"><h3 data-number="7.5.3" class="anchored" data-anchor-id="aliasing-a-function">
-<span class="header-section-number">7.5.3</span> Aliasing a function</h3>
+</section><section id="example-aliasing-a-function" class="level3" data-number="7.5.3"><h3 data-number="7.5.3" class="anchored" data-anchor-id="example-aliasing-a-function">
+<span class="header-section-number">7.5.3</span> Example: Aliasing a function</h3>
 <p>One last example shows that, even if you are careful to only define functions below <code>R/</code>, there are still some subtleties to consider. Imagine that you want the function <code>foo()</code> in your package to basically be an alias for the function <code>blah()</code> from some other package, e.g.&nbsp;pkgB. You might be tempted to do this:</p>
 <div class="cell">
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">foo</span> <span class="op">&lt;-</span> <span class="fu">pkgB</span><span class="fu">::</span><span class="va">blah</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -756,17 +756,9 @@ Warning
 <p>Some common uses of <code>.onLoad()</code> and <code>.onAttach()</code> are:</p>
 <ul>
 <li>
-<p>To display an informative message when the package loads. This might make usage conditions clear or display package capabilities based on current system conditions. Startup messages are one place where you should use <code>.onAttach()</code> instead of <code>.onLoad()</code>. To display startup messages, always use <code><a href="https://rdrr.io/r/base/message.html">packageStartupMessage()</a></code>, and not <code><a href="https://rdrr.io/r/base/message.html">message()</a></code>. (This allows <code><a href="https://rdrr.io/r/base/message.html">suppressPackageStartupMessages()</a></code> to selectively suppress package startup messages).</p>
-<div class="cell">
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onAttach</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html">packageStartupMessage</a></span><span class="op">(</span><span class="st">"Welcome to my package"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</li>
-<li>
 <p>To set custom options for your package with <code><a href="https://rdrr.io/r/base/options.html">options()</a></code>. To avoid conflicts with other packages, ensure that you prefix option names with the name of your package. Also be careful not to override options that the user has already set. Here’s a (highly redacted) version of dplyr’s <code>.onLoad()</code> function which sets an option that controls progress reporting:</p>
 <div class="cell">
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span><span class="op">)</span></span>
 <span>  <span class="va">op.dplyr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
 <span>    dplyr.show_progress <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -780,7 +772,17 @@ Warning
 <p>This allows functions in dplyr to use <code>getOption("dplyr.show_progress")</code> to determine whether to show progress bars, relying on the fact that a sensible default value has already been set.</p>
 </li>
 </ul>
-<!-- TODO: I don't think the option setting example is so great anymore. I lean towards replacement. Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. --><p>As you can see in the examples, <code>.onLoad()</code> and <code>.onAttach()</code> are called with two arguments: <code>libname</code> and <code>pkgname</code>. They’re rarely used (they’re a holdover from the days when you needed to use <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> to load compiled code). They give the path where the package is installed (the “library”), and the name of the package.</p>
+<!-- TODO: I don't think the option setting example is so great anymore. I lean towards replacement. Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. --><ul>
+<li>
+<p>To display an informative message when the package loads. This might make usage conditions clear or display package capabilities based on current system conditions. Startup messages are one place where you should use <code>.onAttach()</code> instead of <code>.onLoad()</code>. To display startup messages, always use <code><a href="https://rdrr.io/r/base/message.html">packageStartupMessage()</a></code>, and not <code><a href="https://rdrr.io/r/base/message.html">message()</a></code>. (This allows <code><a href="https://rdrr.io/r/base/message.html">suppressPackageStartupMessages()</a></code> to selectively suppress package startup messages).</p>
+<div class="cell">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onAttach</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html">packageStartupMessage</a></span><span class="op">(</span><span class="st">"Welcome to my package"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</li>
+</ul>
+<p>As you can see in the examples, <code>.onLoad()</code> and <code>.onAttach()</code> are called with two arguments: <code>libname</code> and <code>pkgname</code>. They’re rarely used (they’re a holdover from the days when you needed to use <code><a href="https://rdrr.io/r/base/library.dynam.html">library.dynam()</a></code> to load compiled code). They give the path where the package is installed (the “library”), and the name of the package.</p>
 <p>If you use <code>.onLoad()</code>, consider using <code>.onUnload()</code> to clean up any side effects. By convention, <code>.onLoad()</code> and friends are usually saved in a file called <code>R/zzz.R</code>. (Note that <code>.First.lib()</code> and <code>.Last.lib()</code> are old versions of <code>.onLoad()</code> and <code>.onUnload()</code> and should no longer be used.)</p>
 </section></section><section id="constant-health-checks" class="level2" data-number="7.7"><h2 data-number="7.7" class="anchored" data-anchor-id="constant-health-checks">
 <span class="header-section-number">7.7</span> Constant health checks</h2>
