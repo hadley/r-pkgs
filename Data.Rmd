@@ -44,18 +44,18 @@ The practical details differ depending on who needs access to the data and what 
 ## Exported data {#sec-data-data}
 
 The most common location for package data is (surprise!) `data/`.
-Each file in this directory should be an `.rda` (or `.RData`) file created by `save()` containing a single object (with the same name as the file).
-The easiest way to adhere to these rules is to use `usethis::use_data()`:
+We recommend that each file in this directory be an `.rda` file created by `save()` containing a single object, with the same name as the file.
+The easiest way to achieve this is to use `usethis::use_data()`.
 
 ```{r, eval = FALSE}
-x <- sample(1000)
-usethis::use_data(x, mtcars)
+my_pkg_data <- sample(1000)
+usethis::use_data(my_pkg_data)
 ```
 
-It's possible to use other types of files, but I don't recommend it because `.rda` files are already fast, small and explicit.
-Other options are described in `data()`.
+It's possible to use other types of files below `data/`, but we don't recommend it because `.rda` files are already fast, small, and explicit.
+The other possibilities are described in `data()` and in the [Data in packages](https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages) section of Writing R Extensions.
 For larger datasets, you may want to experiment with the compression setting.
-The default is `bzip2`, but sometimes `gzip` or `xz` can create smaller files.
+The default is "bzip2", but sometimes "gzip" or "xz" can create smaller files.
 
 If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded.
 This means that they won't occupy any memory until you use them.
@@ -71,7 +71,14 @@ invisible(flights)
 pryr::mem_used()
 ```
 
-~~I recommend that you always include `LazyData: true` in your `DESCRIPTION`. `usethis::create_package()` does this for you.~~ *This text is slated for revision for the 2nd edition. TL;DR do NOT include `LazyData: true` in `DESCRIPTION` unless you actually ship data in your package. usethis v2.1.0 changes the behaviour of `create_package()` and `use_data()` accordingly.*
+We recommend that you include `LazyData: true` in your `DESCRIPTION` if you are shipping `.rda` files below `data/`.
+If you use `use_data()` to create such datasets, it will automatically make this modification to `DESCRIPTION` for you.
+
+Also notice that above, the `flights` dataset was immediately available once the package was attached with `library(nycflights13)`.
+In particular, there is no need to do `data(flights)` before using `flights`.
+This is another nice consequence of including `LazyData: true` in `DESCRIPTION`.
+
+### Preserve the origin story of package data {#sec-data-data-raw}
 
 Often, the data you include in `data/` is a cleaned up version of raw data you've gathered from elsewhere.
 I highly recommend taking the time to include the code used to do this in the source version of your package.
