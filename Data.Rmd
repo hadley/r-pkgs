@@ -17,6 +17,9 @@ Here are some examples of this type of package data:
 
 At the other extreme, some packages exist solely for the purpose of distributing data, along with its documentation.
 These are sometimes called "data packages".
+A data package can be a nice way to share example data across multiple packages.
+It is also a useful technique for getting relatively large, static files out of a more function-oriented package, which might require more frequent updates.
+
 Here are some examples:
 
 -   [nycflights13](https://nycflights13.tidyverse.org)
@@ -27,7 +30,7 @@ Finally, many packages benefit from having internal data that is used for intern
 In this chapter we describe useful mechanisms for including data in your package.
 The practical details differ depending on who needs access to the data and what they will do with it:
 
--   If you want to store binary data and make it available to the user, put it in `data/`.
+-   If you want to store binary data (think: an R object) and make it available to the user, put it in `data/`.
     This is the best place to put example datasets.
     All the concrete examples above for data in a package and data as a package use this mechanism.
 
@@ -44,7 +47,7 @@ The practical details differ depending on who needs access to the data and what 
 ## Exported data {#sec-data-data}
 
 The most common location for package data is (surprise!) `data/`.
-We recommend that each file in this directory be an `.rda` file created by `save()` containing a single object, with the same name as the file.
+We recommend that each file in this directory be an `.rda` file created by `save()` containing a single R object, with the same name as the file.
 The easiest way to achieve this is to use `usethis::use_data()`.
 
 ```{r, eval = FALSE}
@@ -52,15 +55,27 @@ my_pkg_data <- sample(1000)
 usethis::use_data(my_pkg_data)
 ```
 
-It's possible to use other types of files below `data/`, but we don't recommend it because `.rda` files are already fast, small, and explicit.
-The other possibilities are described in `data()` and in the [Data in packages](https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages) section of Writing R Extensions.
-For larger datasets, you may want to experiment with the compression setting.
+Let's imagine we are working on a package named "pkg".
+The snippet above creates `data/my_pkg_data.rda` inside the source of the pkg package and adds `LazyData: true` in your `DESCRIPTION`.
+This makes the `my_pkg_data` R object available to users of pkg via `pkg::my_pkg_data` or, after attaching pkg with `library(pkg)`, as `my_pkg_data`.
+
+The snippet above is something the maintainer executes once (or every time they need to update `my_pkg_data`).
+This code is workflow code and should **not** appear in the `R/` directory of the source package.
+(We'll talk about a suitable place to keep this code below.) For larger datasets, you may want to experiment with the compression setting, which is under the control of the `compress` argument.
 The default is "bzip2", but sometimes "gzip" or "xz" can create smaller files.
+
+It's possible to use other types of files below `data/`, but we don't recommend it because `.rda` files are already fast, small, and explicit.
+The other possibilities are described in the documentation for `utils::data()` and in the [Data in packages](https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages) section of Writing R Extensions.
+In terms of advice to package authors, the help topic for `data()` seems to implicitly make the same recommendations as we do above:
+
+-   Store one R object in each `data/*.rda` file
+-   Use the same name for that object and its `.rda` file
+-   Use lazy-loading, by default
 
 If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded.
 This means that they won't occupy any memory until you use them.
 The following example shows memory usage before and after loading the nycflights13 package.
-You can see that memory usage doesn't change until you inspect the flights dataset stored inside the package.
+You can see that memory usage doesn't change until you inspect the `flights` dataset stored inside the package.
 
 ```{r}
 pryr::mem_used()
@@ -74,33 +89,41 @@ pryr::mem_used()
 We recommend that you include `LazyData: true` in your `DESCRIPTION` if you are shipping `.rda` files below `data/`.
 If you use `use_data()` to create such datasets, it will automatically make this modification to `DESCRIPTION` for you.
 
-Also notice that above, the `flights` dataset was immediately available once the package was attached with `library(nycflights13)`.
-In particular, there is no need to do `data(flights)` before using `flights`.
-This is another nice consequence of including `LazyData: true` in `DESCRIPTION`.
+In terms of advice to package users, note that lazily-loaded datasets do **not** need to be pre-loaded.
+Above, once we did `library(nycflights13)`, we could immediately access `flights`.
+There is no call `data(flights)`, because it is not necessary.
+
+There are specific downsides to `data(something)` calls that support a policy of only using `data()` when it is actually necessary, i.e. for datasets that would not be available otherwise:
+
+-   By default `data()`, creates objects in the user's global workspace. There is the potential to silently overwrite pre-existing objects with new values.
+-   There is also no guarantee that `data(foo)` will create exactly one object named "foo". It could create more than one object and/or objects with totally different names.
 
 ### Preserve the origin story of package data {#sec-data-data-raw}
 
 Often, the data you include in `data/` is a cleaned up version of raw data you've gathered from elsewhere.
-I highly recommend taking the time to include the code used to do this in the source version of your package.
-This will make it easy for you to update or reproduce your version of the data.
-I suggest that you put this code in `data-raw/`.
-You don't need it in the bundled version of your package, so also add it to `.Rbuildignore`.
-Do all this in one step with:
+We highly recommend taking the time to include the code used to do this in the source version of your package.
+This makes it easy for you to update or reproduce your version of the data.
+This data-creating script is also a natural place to leave comments about important properties of the data, i.e. which features are important for downstream usage in package documentation.
+
+We suggest that you keep this code in one or more `.R` files below `data-raw/`.
+You don't want it in the bundled version of your package, so this folder should be listed in `.Rbuildignore`.
+usethis has a convenience function that can be called when you first adopt the `data-raw/` practice or when you want to add an additional `.R` file to the folder:
 
 ```{r, eval = FALSE}
 usethis::use_data_raw()
+
+usethis::use_data_raw("my_pkg_data")
 ```
 
-You can see this approach in practice in some of my recent data packages.
-I've been creating these as packages because the data will rarely change, and because multiple packages can then use them for examples:
+`use_data_raw()` creates the necessary folder and file and makes the modification to `.Rbuildignore`.
+A typical script in `data-raw/` includes code to prepare a dataset and ends with a call to `use_data()`.
+
+These data packages all use the approach recommended here for `data-raw/`:
 
 -   [babynames](https://github.com/hadley/babynames)
 -   [fueleconomy](https://github.com/hadley/fueleconomy)
--   [nasaweather](https://github.com/hadley/nasaweather)
 -   [nycflights13](https://github.com/hadley/nycflights13)
 -   [usdanutrients](https://github.com/hadley/usdanutrients)
-
-PLUNKED HERE FOR NOW A simple alternative to these three options is to include it in the source of your package, either creating by hand, or using `dput()` to serialise an existing data set into R code.
 
 ### Documenting datasets {#documenting-data}
 
@@ -198,3 +221,7 @@ You should also make sure that the data has been optimally compressed:
 
 2.  Re-run `usethis::use_data()` with `compress` set to that optimal value.
     If you've lost the code for recreating the files, you can use `tools::resaveRdaFiles()` to re-save in place.
+
+## Cutting room floor
+
+PLUNKED HERE FOR NOW A simple alternative to these three options is to include it in the source of your package, either creating by hand, or using `dput()` to serialise an existing data set into R code.
