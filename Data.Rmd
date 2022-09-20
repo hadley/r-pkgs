@@ -161,6 +161,39 @@ There are two roxygen tags that are especially important for documenting dataset
 
 Never `@export` a data set.
 
+### Non-ASCII characters in data
+
+The R objects you store in `data/*.rda` often contain strings, with the most common example being character columns in a data frame.
+If you can constrain these strings to only use ASCII characters, it certainly makes things simpler.
+But of course, there are plenty of legitimate reasons why you need to use non-ASCII characters in package data.
+
+In that case, we recommend that you embrace the [UTF-8 Everywhere manifesto](http://utf8everywhere.org) and use the UTF-8 encoding.
+The `DESCRIPTION` file placed by `usethis::create_package()` always includes `Encoding: UTF-8`, so by default a devtools-produced package already advertises that it will use UTF-8.
+
+Making sure that the strings embedded in your package data have the intended encoding is something you accomplish in your data preparation code, i.e. in the R scripts below `data-raw/`.
+You can use `Encoding()` to learn the current encoding of the elements in a character vector and functions such as `enc2utf8()` or `iconv()` to convert between encodings.
+
+If you seem to have non-ASCII strings in your package data and this is unintentional, `tools::checkRdaFiles()` can be helpful for determining which `.rda` file is to blame.
+
+::: callout-warning
+## Submitting to CRAN
+
+If you have UTF-8-encoded strings in your package data, you may see this from `R CMD check`:
+
+    -   checking contents of 'data' directory ... OK
+    -   checking data for non-ASCII characters ... NOTE
+        Note: found 352 marked UTF-8 strings
+
+This `NOTE` is truly informational, i.e. it is a `NOTE` that you do not need to address or attempt to fix.
+As long as you actually intend to have UTF-8 strings in your package data, all is well.
+
+Ironically, this `NOTE` is actually suppressed by `R CMD check --as-cran`, i.e. by including the `--as-cran` flag, despite the fact that this note does appear in the check results once a package is on CRAN.
+By default, `devtools::check()` sets the `--as-cran` flag and therefore does not transmit this `NOTE`.
+But you can surface it with `check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_" = "false"))`.
+:::
+
+<!-- https://github.com/wch/r-source/blob/f6737799b169710006b040f72f9abc5e09180229/src/library/tools/R/QC.R#L4672 -->
+
 ## Internal data {#data-sysdata}
 
 Sometimes functions need pre-computed data tables.
