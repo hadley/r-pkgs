@@ -438,7 +438,7 @@ Second edition
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change until you inspect the <code>flights</code> dataset stored inside the package.</p>
 <div class="cell">
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 56.29 MB</span></span>
+<span><span class="co">#&gt; 56.30 MB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 58.02 MB</span></span>
@@ -448,12 +448,25 @@ Second edition
 <span><span class="co">#&gt; 98.73 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We recommend that you include <code>LazyData: true</code> in your <code>DESCRIPTION</code> if you are shipping <code>.rda</code> files below <code>data/</code>. If you use <code>use_data()</code> to create such datasets, it will automatically make this modification to <code>DESCRIPTION</code> for you.</p>
-<p>In terms of advice to package users, note that lazily-loaded datasets do <strong>not</strong> need to be pre-loaded. Above, once we did <code><a href="https://github.com/hadley/nycflights13">library(nycflights13)</a></code>, we could immediately access <code>flights</code>. There is no call <code>data(flights)</code>, because it is not necessary.</p>
+<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is important to note that lazily-loaded datasets do <strong>not</strong> need to be pre-loaded with <code><a href="https://rdrr.io/r/utils/data.html">utils::data()</a></code> and, in fact, it’s usually best to avoid doing so. Above, once we did <code><a href="https://github.com/hadley/nycflights13">library(nycflights13)</a></code>, we could immediately access <code>flights</code>. There is no call to <code>data(flights)</code>, because it is not necessary.</p>
 <p>There are specific downsides to <code>data(some_pkg_data)</code> calls that support a policy of only using <code><a href="https://rdrr.io/r/utils/data.html">data()</a></code> when it is actually necessary, i.e.&nbsp;for datasets that would not be available otherwise:</p>
 <ul>
-<li>By default <code><a href="https://rdrr.io/r/utils/data.html">data()</a></code>, creates objects in the user’s global workspace. There is the potential to silently overwrite pre-existing objects with new values.</li>
+<li>By default <code>data(some_pkg_data)</code>, creates one or more objects in the user’s global workspace. There is the potential to silently overwrite pre-existing objects with new values.</li>
 <li>There is also no guarantee that <code>data(foo)</code> will create exactly one object named “foo”. It could create more than one object and/or objects with totally different names.</li>
 </ul>
+<p>One argument in favor of calls like <code>data(some_pkg_data, package = "pkg")</code> that are not strictly necessary is that it clarifies which package provides <code>some_pkg_data</code>. We prefer alternatives that don’t modify the global workspace, such as a code comment or access via <code>pkg::some_pkg_data</code>.</p>
+</div>
+</div>
 <section id="sec-data-data-raw" class="level3" data-number="8.2.1"><h3 data-number="8.2.1" class="anchored" data-anchor-id="sec-data-data-raw">
 <span class="header-section-number">8.2.1</span> Preserve the origin story of package data</h3>
 <p>Often, the data you include in <code>data/</code> is a cleaned up version of raw data you’ve gathered from elsewhere. We highly recommend taking the time to include the code used to do this in the source version of your package. This makes it easy for you to update or reproduce your version of the data. This data-creating script is also a natural place to leave comments about important properties of the data, i.e.&nbsp;which features are important for downstream usage in package documentation.</p>
