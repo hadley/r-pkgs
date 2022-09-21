@@ -249,10 +249,39 @@ There are also key distinctions, where the handling of internal and external dat
 -   Objects in `R/sysdata.rda` are not exported (they shouldn't be), so they don't need to be documented.
 -   Usage of `R/sysdata.rda` has no impact on DESCRIPTION, i.e. the need to specify the `LazyData` field is strictly about the exported data below `data/`.
 
-## Raw data {#sec-data-extdata}
+## Raw data file {#sec-data-extdata}
 
-If you want to show examples of loading/parsing raw data, put the original files in `inst/extdata`.
-When the package is installed, all files (and folders) in `inst/` are moved up one level to the top-level directory (so they can't have names like `R/` or `DESCRIPTION`).
+If you want to show examples of loading/parsing raw data, put the original files in `inst/extdata/`.
+When the package is installed, all files (and folders) in `inst/` are moved up one level to the top-level directory, which is why they can't have names that conflict with standard parts of an R package, like `R/` or `DESCRIPTION` .
+The files below `inst/extdata/` in the source package will be located below `extdata/` in the corresponding installed package.
+
+The main reason to do include such files is when a key part of a package's functionality is to do something with data that is in an external file.
+Examples of such packages include:
+
+-   readr, which reads rectangular data out of delimited files
+-   readxl, which reads rectangular data of of Excel spreadsheets
+-   xml2, which can read XML and HTML from file
+-   archive, which can read archive files, such as tar or ZIP
+
+All of these packages have one of more example files below `inst/extdata/`.
+
+It is also common for data packages to provide, e.g., a csv version of the package data that is also provided as an R object.
+Examples of such packages include:
+
+-   palmerpenguins: `penguins` and `penguins_raw` are also represented as `extdata/penguins.csv` and `penguins_raw.csv`
+-   gapminder: `gapminder`, `continent_colors`, and `country_colors` are also represented as `gapminder.tsv`, `extdata/continent-colors.tsv`, and `extdata/country-colors.tsv`
+
+There are two potential payoffs: First, this gives teachers and other expositors more to work with once they decide to use a specific dataset.
+If you've started teaching R with `palmerpenguins::penguins` or `gapminder::gapminder` and you want to introduce data import, it can be helpful to students if their first use of a new command, like `readr::read_csv()` or `read.csv()`, is applied to a familiar dataset.
+They have pre-existing intuition about the expected result.
+Finally, if package data evolves over time, having a csv or other plain text representation in the source package can make it easier to what's changed.
+
+### Filepaths
+
+TO ADD: `fs::path_package()`
+
+TO ADD: more about the devtools shim
+
 To refer to files in `inst/extdata` (whether installed or not), use `system.file()`.
 For example, the [readr](https://readr.tidyverse.org) package uses `inst/extdata` to store delimited files for use in examples:
 
@@ -271,6 +300,10 @@ If you want to have an error message when the file does not exist, add the argum
 ```{r, error = TRUE}
 system.file("extdata", "iris.csv", package = "readr", mustWork = TRUE)
 ```
+
+### `pkg_example()` path helpers
+
+Talks about, e.g., `readr_example()`
 
 ## Internal state
 
