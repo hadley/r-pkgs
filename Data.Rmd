@@ -33,12 +33,12 @@ The practical details differ depending on who needs access to the data and what 
     This is the best place to put example datasets.
     All the concrete examples above for data in a package and data as a package use this mechanism.
 
--   If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `inst/extdata`.
-    For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.
-
 -   If you want to store static binary data, but not make it directly available to the user, put it in `R/sysdata.rda`.
     This is the best place to put internal data that your functions need.
     <!--EXAMPLES TO USE SOMEWHERE: readr + data-raw/date-symbols.R + date_symbols, googledrive/googlesheets + data-raw/discovery-doc-prep + .endpoints & .schemas & .tidy_schemas-->
+
+-   If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `inst/extdata`.
+    For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.
 
 -   If you want to store data that reflects your package's internal state, use an environment.
     This technique is not as common or well-known as those above, but can be very useful in specific situations.
@@ -187,8 +187,6 @@ The `DESCRIPTION` file placed by `usethis::create_package()` always includes `En
 Making sure that the strings embedded in your package data have the intended encoding is something you accomplish in your data preparation code, i.e. in the R scripts below `data-raw/`.
 You can use `Encoding()` to learn the current encoding of the elements in a character vector and functions such as `enc2utf8()` or `iconv()` to convert between encodings.
 
-If you seem to have non-ASCII strings in your package data and this is unintentional, `tools::checkRdaFiles()` can be helpful for determining which `.rda` file is the culprit.
-
 ::: callout-warning
 ## Submitting to CRAN
 
@@ -208,25 +206,46 @@ But you can surface it with `check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_
 
 <!-- https://github.com/wch/r-source/blob/f6737799b169710006b040f72f9abc5e09180229/src/library/tools/R/QC.R#L4672 -->
 
+If you seem to have non-ASCII strings in your package data and this is unintentional, `tools::checkRdaFiles()` can be helpful for determining which `.rda` file is the culprit.
+*NO, WAIT, HOLD ON, THIS IS NOT ACTUALLY TRUE. This is not what the `ASCII` column of the return value actually means. Maybe you really do have to call `tools:::.check_package_datasets()` to figure out which file(s) to blame?*
+
 ## Internal data {#data-sysdata}
 
-Sometimes functions need pre-computed data tables.
-If you put these in `data/` they'll also be available to package users, which is not appropriate.
-Instead, you can save them in `R/sysdata.rda`.
-For example, two colour-related packages, [munsell](https://github.com/cwickham/munsell) and [dichromat](https://cran.r-project.org/web/packages/dichromat/index.html), use `R/sysdata.rda` to store large tables of colour data.
+Sometimes your package functions need access to pre-computed data.
+If you put these objects in `data/`, they'll also be available to package users, which is not appropriate.
+Instead, you can save your package's internal data in `R/sysdata.rda`.
 
-You can use `usethis::use_data()` to create this file with the argument `internal = TRUE`:
+Here are some examples of internal package data:
+
+-   Two colour-related packages, [munsell](https://github.com/cwickham/munsell) and [dichromat](https://cran.r-project.org/web/packages/dichromat/index.html), use `R/sysdata.rda` to store large tables of colour data.
+-   [googledrive](https://github.com/tidyverse/googledrive) and [googlesheets4](https://github.com/tidyverse/googlesheets4) wrap the Google Drive and Google Sheets APIs, respectively. Both use `R/sysdata.rda` to store data derived from a so-called [Discovery Document](https://developers.google.com/discovery/v1/reference/apis) which "describes the surface of the API, how to access the API and how API requests and responses are structured".
+
+The easiest way to create `R/sysdata.rda` is to use `usethis::use_data(internal = TRUE)`:
 
 ```{r, eval = FALSE}
-x <- sample(1000)
-usethis::use_data(x, mtcars, internal = TRUE)
+internal_this <- ...
+internal_that <- ...
+
+usethis::use_data(internal_this, internal_that, internal = TRUE)
 ```
 
-Again, to make this data reproducible it's a good idea to include the code used to generate it.
-Put it in `data-raw/`.
+Unlike `data/`, where we advocate for one `.rda` file per exported data object, you store all of your internal data objects together in the single file `R/sysdata.rda`.
 
-Objects in `R/sysdata.rda` are not exported (they shouldn't be), so they don't need to be documented.
-They're only available inside your package.
+Let's imagine we are working on a package named "pkg".
+The snippet above creates `R/sysdata.rda` inside the source of the pkg package.
+This makes the objects `internal_this` and `internal_that` available for use inside of the functions defined below `R/` and in the tests.
+During interactive development, `internal_this` and `internal_that` are available after a call to `devtools::load_all()`, just like an internal function.
+
+Much of the advice given for external data holds for internal data as well:
+
+-   It's a good idea to store the code that generates your individual internal data objects, as well as the `use_data()` call that writes all of them into `R/sysdata.rda`. This is workflow code that belongs below `data-raw/`, not below `R/`.
+-   `usethis::use_data_raw()` can be used to initiate the use of `data-raw/` or to initiate a new `.R` script there.
+-   If your package is uncomfortably large, experiment with different values of `compress` in `use_data(internal = TRUE)`.
+
+There are also key distinctions, where the handling of internal and external data differs:
+
+-   Objects in `R/sysdata.rda` are not exported (they shouldn't be), so they don't need to be documented.
+-   Usage of `R/sysdata.rda` has no impact on DESCRIPTION, i.e. the need to specify the `LazyData` field is strictly about the exported data below `data/`.
 
 ## Raw data {#sec-data-extdata}
 
