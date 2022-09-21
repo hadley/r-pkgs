@@ -9,7 +9,7 @@ status("restructuring")
 
 It's often useful to include data in a package.
 If the primary purpose of a package is to distribute useful functions, example datasets make it easier to write excellent documentation.
-These datasets can be hand-picked or hand-crafted to provide compelling use cases for the functions in the package.
+These datasets can be hand-crafted to provide compelling use cases for the functions in the package.
 Here are some examples of this type of package data:
 
 -   [tidyr](https://tidyr.tidyverse.org/reference/index.html#data): `billboard` (song rankings), `who` (tuberculosis data from the World Health Organization)
@@ -19,8 +19,7 @@ At the other extreme, some packages exist solely for the purpose of distributing
 These are sometimes called "data packages".
 A data package can be a nice way to share example data across multiple packages.
 It is also a useful technique for getting relatively large, static files out of a more function-oriented package, which might require more frequent updates.
-
-Here are some examples:
+Here are some examples of data packages:
 
 -   [nycflights13](https://nycflights13.tidyverse.org)
 -   [babynames](https://github.com/hadley/babynames)
@@ -34,12 +33,12 @@ The practical details differ depending on who needs access to the data and what 
     This is the best place to put example datasets.
     All the concrete examples above for data in a package and data as a package use this mechanism.
 
--   If you want to store data in some raw form and make it available to the user, put it in `inst/extdata`.
+-   If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `inst/extdata`.
     For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.
 
 -   If you want to store static binary data, but not make it directly available to the user, put it in `R/sysdata.rda`.
     This is the best place to put internal data that your functions need.
-    EXAMPLES TO USE SOMEWHERE: readr + data-raw/date-symbols.R + date_symbols, googledrive/googlesheets + data-raw/discovery-doc-prep + .endpoints & .schemas & .tidy_schemas
+    <!--EXAMPLES TO USE SOMEWHERE: readr + data-raw/date-symbols.R + date_symbols, googledrive/googlesheets + data-raw/discovery-doc-prep + .endpoints & .schemas & .tidy_schemas-->
 
 -   If you want to store data that reflects your package's internal state, use an environment.
     This technique is not as common or well-known as those above, but can be very useful in specific situations.
@@ -60,7 +59,7 @@ The snippet above creates `data/my_pkg_data.rda` inside the source of the pkg pa
 This makes the `my_pkg_data` R object available to users of pkg via `pkg::my_pkg_data` or, after attaching pkg with `library(pkg)`, as `my_pkg_data`.
 
 The snippet above is something the maintainer executes once (or every time they need to update `my_pkg_data`).
-This code is workflow code and should **not** appear in the `R/` directory of the source package.
+This is workflow code and should **not** appear in the `R/` directory of the source package.
 (We'll talk about a suitable place to keep this code below.) For larger datasets, you may want to experiment with the compression setting, which is under the control of the `compress` argument.
 The default is "bzip2", but sometimes "gzip" or "xz" can create smaller files.
 
@@ -93,7 +92,7 @@ In terms of advice to package users, note that lazily-loaded datasets do **not**
 Above, once we did `library(nycflights13)`, we could immediately access `flights`.
 There is no call `data(flights)`, because it is not necessary.
 
-There are specific downsides to `data(something)` calls that support a policy of only using `data()` when it is actually necessary, i.e. for datasets that would not be available otherwise:
+There are specific downsides to `data(some_pkg_data)` calls that support a policy of only using `data()` when it is actually necessary, i.e. for datasets that would not be available otherwise:
 
 -   By default `data()`, creates objects in the user's global workspace. There is the potential to silently overwrite pre-existing objects with new values.
 -   There is also no guarantee that `data(foo)` will create exactly one object named "foo". It could create more than one object and/or objects with totally different names.
@@ -107,7 +106,7 @@ This data-creating script is also a natural place to leave comments about import
 
 We suggest that you keep this code in one or more `.R` files below `data-raw/`.
 You don't want it in the bundled version of your package, so this folder should be listed in `.Rbuildignore`.
-usethis has a convenience function that can be called when you first adopt the `data-raw/` practice or when you want to add an additional `.R` file to the folder:
+usethis has a convenience function that can be called when you first adopt the `data-raw/` practice or when you add an additional `.R` file to the folder:
 
 ```{r, eval = FALSE}
 usethis::use_data_raw()
@@ -115,15 +114,30 @@ usethis::use_data_raw()
 usethis::use_data_raw("my_pkg_data")
 ```
 
-`use_data_raw()` creates the necessary folder and file and makes the modification to `.Rbuildignore`.
+`use_data_raw()` creates the `data-raw/` folder and lists it in `.Rbuildignore`.
 A typical script in `data-raw/` includes code to prepare a dataset and ends with a call to `use_data()`.
 
 These data packages all use the approach recommended here for `data-raw/`:
 
 -   [babynames](https://github.com/hadley/babynames)
--   [fueleconomy](https://github.com/hadley/fueleconomy)
 -   [nycflights13](https://github.com/hadley/nycflights13)
--   [usdanutrients](https://github.com/hadley/usdanutrients)
+-   [gapminder](https://github.com/jennybc/gapminder)
+
+::: callout-warning
+## Submitting to CRAN
+
+Generally, package data should be smaller than a megabyte - if it's larger you'll need to argue for an exemption.
+This is usually easier to do if the data is in its own package and won't be updated frequently, i.e. if you approach this as a dedicated "data package".
+For reference, the babynames and nycflights packages have had a release once every one to two years, since they first appeared on CRAN.
+
+If you are bumping up against size issues, you should be intentional with regards to the method of data compression.
+The default for `usethis::use_data(compress =)` is "bzip2", whereas the default for `save(compress =)` is (effectively) "gzip", and "xz" is yet another valid option.
+
+You'll have to experiment with different compression methods and make this decision empirically.
+`tools::resaveRdaFiles("data/")` automates this process, but doesn't inform you of which compression method was chosen.
+You can learn this after the fact with `tools::checkRdaFiles()`.
+Assuming you are keeping track of the code to generate your data, it would be wise to update the corresponding `use_data(compress =)` call below `data-raw/` and re-generate the `.rda` cleanly.
+:::
 
 ### Documenting datasets {#documenting-data}
 
@@ -165,7 +179,7 @@ Never `@export` a data set.
 
 The R objects you store in `data/*.rda` often contain strings, with the most common example being character columns in a data frame.
 If you can constrain these strings to only use ASCII characters, it certainly makes things simpler.
-But of course, there are plenty of legitimate reasons why you need to use non-ASCII characters in package data.
+But of course, there are plenty of legitimate reasons why package data might include non-ASCII characters.
 
 In that case, we recommend that you embrace the [UTF-8 Everywhere manifesto](http://utf8everywhere.org) and use the UTF-8 encoding.
 The `DESCRIPTION` file placed by `usethis::create_package()` always includes `Encoding: UTF-8`, so by default a devtools-produced package already advertises that it will use UTF-8.
@@ -173,7 +187,7 @@ The `DESCRIPTION` file placed by `usethis::create_package()` always includes `En
 Making sure that the strings embedded in your package data have the intended encoding is something you accomplish in your data preparation code, i.e. in the R scripts below `data-raw/`.
 You can use `Encoding()` to learn the current encoding of the elements in a character vector and functions such as `enc2utf8()` or `iconv()` to convert between encodings.
 
-If you seem to have non-ASCII strings in your package data and this is unintentional, `tools::checkRdaFiles()` can be helpful for determining which `.rda` file is to blame.
+If you seem to have non-ASCII strings in your package data and this is unintentional, `tools::checkRdaFiles()` can be helpful for determining which `.rda` file is the culprit.
 
 ::: callout-warning
 ## Submitting to CRAN
@@ -239,6 +253,10 @@ system.file("extdata", "iris.csv", package = "readr", mustWork = TRUE)
 
 ## Other data {#other-data}
 
+## Cutting room floor
+
+*Stuff pulled from above that I'm not sure we need to re-incorporate.*
+
 -   Data for tests: it's ok to put small files directly in your test directory.
     But remember unit tests are for testing correctness, not performance, so keep the size small.
 
@@ -246,17 +264,4 @@ system.file("extdata", "iris.csv", package = "readr", mustWork = TRUE)
     If you want to show how to work with an already loaded dataset, put that data in `data/`.
     If you want to show how to load raw data, put that data in `inst/extdata.`
 
-## CRAN notes {#sec-data-cran}
-
-Generally, package data should be smaller than a megabyte - if it's larger you'll need to argue for an exemption.
-This is usually easier to do if the data is in its own package and won't be updated frequently.
-You should also make sure that the data has been optimally compressed:
-
-1.  Run `tools::checkRdaFiles()` to determine the best compression for each file.
-
-2.  Re-run `usethis::use_data()` with `compress` set to that optimal value.
-    If you've lost the code for recreating the files, you can use `tools::resaveRdaFiles()` to re-save in place.
-
-## Cutting room floor
-
-PLUNKED HERE FOR NOW A simple alternative to these three options is to include it in the source of your package, either creating by hand, or using `dput()` to serialise an existing data set into R code.
+A simple alternative to these three options is to include it in the source of your package, either creating by hand, or using `dput()` to serialise an existing data set into R code.
