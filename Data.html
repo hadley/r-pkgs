@@ -413,13 +413,13 @@ Second edition
 <li><a href="https://github.com/hadley/babynames">babynames</a></li>
 </ul>
 <p>Finally, many packages benefit from having internal data that is used for internal purposes, but that is not directly exposed to the users of the package.</p>
-<p>In this chapter we describe useful mechanisms for including data in your package. The practical details differ depending on who needs access to the data and what they will do with it:</p>
+<p>In this chapter we describe useful mechanisms for including data in your package. The practical details differ depending on who needs access to the data, how often it changes, and what they will do with it:</p>
 <ul>
 <li><p>If you want to store R objects and make them available to the user, put them in <code>data/</code>. This is the best place to put example datasets. All the concrete examples above for data in a package and data as a package use this mechanism.</p></li>
 <li><p>If you want to store R objects for your own use as a developer, put them in <code>R/sysdata.rda</code>. This is the best place to put internal data that your functions need. <!--EXAMPLES TO USE SOMEWHERE: readr + data-raw/date-symbols.R + date_symbols, googledrive/googlesheets + data-raw/discovery-doc-prep + .endpoints & .schemas & .tidy_schemas--></p></li>
 <li><p>If you want to store data in some raw, non-R-specific form and make it available to the user, put it in <code>inst/extdata</code>. For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.</p></li>
 <li><p>If you want to store dynamic data that reflects the internal state of your package within a single R session, use an environment. This technique is not as common or well-known as those above, but can be very useful in specific situations.</p></li>
-<li><p>If you want to store data persistently across R sessions, such as configuration or user-specific data, there are officially sanctioned locations for this.</p></li>
+<li><p>If you want to store data persistently across R sessions, such as configuration or user-specific data, use one of the officially sanctioned locations.</p></li>
 </ul></section><section id="sec-data-data" class="level2" data-number="8.2"><h2 data-number="8.2" class="anchored" data-anchor-id="sec-data-data">
 <span class="header-section-number">8.2</span> Exported data</h2>
 <p>The most common location for package data is (surprise!) <code>data/</code>. We recommend that each file in this directory be an <code>.rda</code> file created by <code><a href="https://rdrr.io/r/base/save.html">save()</a></code> containing a single R object, with the same name as the file. The easiest way to achieve this is to use <code><a href="https://usethis.r-lib.org/reference/use_data.html">usethis::use_data()</a></code>.</p>
@@ -437,15 +437,15 @@ Second edition
 </ul>
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change until you inspect the <code>flights</code> dataset stored inside the package.</p>
 <div class="cell">
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">pryr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pryr/man/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 56.3 MB</span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 56.29 MB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span></span>
 <span><span class="fu">pryr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pryr/man/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 58 MB</span></span>
+<span><span class="co">#&gt; 58.2 MB</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">flights</span><span class="op">)</span></span>
 <span><span class="fu">pryr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pryr/man/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 98.7 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span><span class="co">#&gt; 98.9 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We recommend that you include <code>LazyData: true</code> in your <code>DESCRIPTION</code> if you are shipping <code>.rda</code> files below <code>data/</code>. If you use <code>use_data()</code> to create such datasets, it will automatically make this modification to <code>DESCRIPTION</code> for you.</p>
 <p>In terms of advice to package users, note that lazily-loaded datasets do <strong>not</strong> need to be pre-loaded. Above, once we did <code><a href="https://github.com/hadley/nycflights13">library(nycflights13)</a></code>, we could immediately access <code>flights</code>. There is no call <code>data(flights)</code>, because it is not necessary.</p>
