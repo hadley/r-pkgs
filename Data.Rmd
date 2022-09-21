@@ -90,14 +90,19 @@ lobstr::mem_used()
 We recommend that you include `LazyData: true` in your `DESCRIPTION` if you are shipping `.rda` files below `data/`.
 If you use `use_data()` to create such datasets, it will automatically make this modification to `DESCRIPTION` for you.
 
-In terms of advice to package users, note that lazily-loaded datasets do **not** need to be pre-loaded.
+::: callout-warning
+It is important to note that lazily-loaded datasets do **not** need to be pre-loaded with `utils::data()` and, in fact, it's usually best to avoid doing so.
 Above, once we did `library(nycflights13)`, we could immediately access `flights`.
-There is no call `data(flights)`, because it is not necessary.
+There is no call to `data(flights)`, because it is not necessary.
 
 There are specific downsides to `data(some_pkg_data)` calls that support a policy of only using `data()` when it is actually necessary, i.e. for datasets that would not be available otherwise:
 
--   By default `data()`, creates objects in the user's global workspace. There is the potential to silently overwrite pre-existing objects with new values.
+-   By default `data(some_pkg_data)`, creates one or more objects in the user's global workspace. There is the potential to silently overwrite pre-existing objects with new values.
 -   There is also no guarantee that `data(foo)` will create exactly one object named "foo". It could create more than one object and/or objects with totally different names.
+
+One argument in favor of calls like `data(some_pkg_data, package = "pkg")` that are not strictly necessary is that it clarifies which package provides `some_pkg_data`.
+We prefer alternatives that don't modify the global workspace, such as a code comment or access via `pkg::some_pkg_data`.
+:::
 
 ### Preserve the origin story of package data {#sec-data-data-raw}
 
