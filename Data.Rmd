@@ -35,9 +35,8 @@ The practical details differ depending on who needs access to the data, how ofte
 
 -   If you want to store R objects for your own use as a developer, put them in `R/sysdata.rda`.
     This is the best place to put internal data that your functions need.
-    <!--EXAMPLES TO USE SOMEWHERE: readr + data-raw/date-symbols.R + date_symbols, googledrive/googlesheets + data-raw/discovery-doc-prep + .endpoints & .schemas & .tidy_schemas-->
 
--   If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `inst/extdata`.
+-   If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `inst/extdata/`.
     For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.
 
 -   If you want to store dynamic data that reflects the internal state of your package within a single R session, use an environment.
@@ -239,6 +238,8 @@ Here are some examples of internal package data:
 -   Two colour-related packages, [munsell](https://github.com/cwickham/munsell) and [dichromat](https://cran.r-project.org/web/packages/dichromat/index.html), use `R/sysdata.rda` to store large tables of colour data.
 -   [googledrive](https://github.com/tidyverse/googledrive) and [googlesheets4](https://github.com/tidyverse/googlesheets4) wrap the Google Drive and Google Sheets APIs, respectively. Both use `R/sysdata.rda` to store data derived from a so-called [Discovery Document](https://developers.google.com/discovery/v1/reference/apis) which "describes the surface of the API, how to access the API and how API requests and responses are structured".
 
+<!-- Another example I noted: readr + data-raw/date-symbols.R + date_symbols -->
+
 The easiest way to create `R/sysdata.rda` is to use `usethis::use_data(internal = TRUE)`:
 
 ```{r, eval = FALSE}
@@ -359,16 +360,96 @@ readxl::readxl_example("clippy.xlsx")
 
 ## Internal state
 
-state that persists within a session
+Sometimes there's information that multiple functions from your package need to access that:
 
-https://github.com/hadley/r-pkgs/issues/818
+-   Must be determined at runtime, not build time. It might even be dynamic.
+-   Doesn't make sense to pass in via a function argument. Often it's some obscure detail that a user shouldn't even know about.
+
+A great way to manage such data is to use an *environment*.[^data-1]
+This environment must be created a build time, but you can populate it with values at runtime and update those values over the course of an R session.
+This works because environments have reference semantics (whereas more pedestrian R objects, such as atomic vectors, lists, or data frames have value semantics).
+
+[^data-1]: If you don't know much about R environments and what makes them special, a great resource is the [Environments chapter](https://adv-r.hadley.nz/environments.html) of Advanced R.
+
+Consider a package that can store the user's favorite letters or numbers.
+You might start out with code like this in a file below `R/`:
+
+```{r eval = FALSE}
+favorite_letters <- letters[1:3]
+
+#' Report my favorite letters
+#' @export
+mfl <- function() {
+  favorite_letters
+}
+
+#' Change my favorite letters
+#' @export
+set_mfl <- function(l = letters[24:26]) {
+  favorite_letters <<- l
+  favorite_letters
+}
+```
+
+`favorite_letters` is initialized to ("a", "b", "c") when the package is built.
+The user can then inspect `favorite_letters` with `mfl()`, at which point they'll probably want to register *their* favorite letters with `set_mfl()`.
+Note that we've used the super assignment operator `<<-` in `set_mfl()` in the hope that this will reach up into the package environment and modify the internal data object `favorite_letters`.
+But a call to `set_mfl()` fails like so:
+
+```{r, eval = FALSE}
+set_mfl(c("j", "f", "b"))
+#> Error in set_mfl(c("j", "f", "b")): cannot change value of locked binding for
+#> 'favorite_letters'
+```
+
+Because `favorite_letters` is a regular character vector, modification requires making a copy and rebinding the name `favorite_letters` to this new value.
+And that is what's disallowed: you can't change the binding for objects in the package namespace (well, at least not without trying harder than this).
+
+However, if we maintain our internal state within an internal package environment, we can modify objects contained in the environment and even add completely new objects.
+Here's an alternative implementation that uses an internal environment named `the`.
 
 ```{r, eval = FALSE}
 the <- new.env(parent = emptyenv())
+the$favorite_letters <- letters[1:3]
+
+#' Report my favorite letters
+#' @export
+mfl2 <- function() {
+  the$favorite_letters
+}
+
+#' Change my favorite letters
+#' @export
+set_mfl2 <- function(l = letters[24:26]) {
+  the$favorite_letters <- l
+  the$favorite_letters
+}
 ```
 
-blog post that made me "get" the internal environment technique:\
-<https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/>
+Now a user *can* record their favorite letters:
+
+```{r, eval = FALSE}
+mfl2()
+#> [1] "a" "b" "c"
+
+set_mfl2(c("j", "f", "b"))
+#> [1] "j" "f" "b"
+
+mfl2()
+#> [1] "j" "f" "b"
+```
+
+We often like to use the name "the" for an internal package environment, because it allows you to refer to the objects inside in a very natural way, such as `the$token`, meaning "the token".
+It is also important to specify `parent = emptyenv()` for such an internal environment, as you generally don't want the environment to inherit from any other (nonempty) environment.
+
+Here are some examples of how packages use this technique:
+
+-   Various functions in the googledrive package need to know the file ID for the current user's home directory on Google Drive. This is an eye-watering string of 40 seemingly random characters that means nothing to a human. It would be inhumane to expect a user to know this or to pass it into every function. Instead, googledrive determines this ID upon first need, then caches it for later use.
+-   TODO: Need 1-2 more examples.
+
+The blog post [Package-Wide Variables/Cache in R Packages](https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/) gives a more detailed development of this technique.
+
+<!-- I've always felt like Hermione's beaded bag / Bag of Holding is a great analogy for this environment technique. As long as you've got this bag, you can keep whatever you like in it. Should I try to develop this? -->
 
 ## Persistent user data
 
