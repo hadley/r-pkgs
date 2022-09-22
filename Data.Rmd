@@ -272,7 +272,7 @@ If you want to show examples of loading/parsing raw data, put the original files
 When the package is installed, all files (and folders) in `inst/` are moved up one level to the top-level directory, which is why they can't have names that conflict with standard parts of an R package, like `R/` or `DESCRIPTION` .
 The files below `inst/extdata/` in the source package will be located below `extdata/` in the corresponding installed package.
 
-The main reason to do include such files is when a key part of a package's functionality is to do something with data that is in an external file.
+The main reason to include such files is when a key part of a package's functionality is to act on an external file.
 Examples of such packages include:
 
 -   readr, which reads rectangular data out of delimited files
@@ -280,47 +280,82 @@ Examples of such packages include:
 -   xml2, which can read XML and HTML from file
 -   archive, which can read archive files, such as tar or ZIP
 
-All of these packages have one of more example files below `inst/extdata/`.
+All of these packages have one of more example files below `inst/extdata/`, which are useful for writing documentation and tests.
 
 It is also common for data packages to provide, e.g., a csv version of the package data that is also provided as an R object.
 Examples of such packages include:
 
--   palmerpenguins: `penguins` and `penguins_raw` are also represented as `extdata/penguins.csv` and `penguins_raw.csv`
--   gapminder: `gapminder`, `continent_colors`, and `country_colors` are also represented as `gapminder.tsv`, `extdata/continent-colors.tsv`, and `extdata/country-colors.tsv`
+-   palmerpenguins: `penguins` and `penguins_raw` are also represented as `extdata/penguins.csv` and `extdata/penguins_raw.csv`
+-   gapminder: `gapminder`, `continent_colors`, and `country_colors` are also represented as `extdata/gapminder.tsv`, `extdata/continent-colors.tsv`, and `extdata/country-colors.tsv`
 
-There are two potential payoffs: First, this gives teachers and other expositors more to work with once they decide to use a specific dataset.
+There has two payoffs: First, it gives teachers and other expositors more to work with once they decide to use a specific dataset.
 If you've started teaching R with `palmerpenguins::penguins` or `gapminder::gapminder` and you want to introduce data import, it can be helpful to students if their first use of a new command, like `readr::read_csv()` or `read.csv()`, is applied to a familiar dataset.
 They have pre-existing intuition about the expected result.
 Finally, if package data evolves over time, having a csv or other plain text representation in the source package can make it easier to what's changed.
 
 ### Filepaths
 
-TO ADD: `fs::path_package()`
-
-TO ADD: more about the devtools shim
-
-To refer to files in `inst/extdata` (whether installed or not), use `system.file()`.
-For example, the [readr](https://readr.tidyverse.org) package uses `inst/extdata` to store delimited files for use in examples:
+The path to a package file found below `extdata/` clearly depends on the local environment, i.e. it depends on where installed packages live on that machine.
+The base function `system.file()` can report the full path to files distributed with an R package.
+It can also be useful to *list* the files distributed with an R package.
 
 ```{r}
-system.file("extdata", "mtcars.csv", package = "readr")
+system.file("extdata", package = "readxl") |> list.files()
+
+system.file("extdata", "clippy.xlsx", package = "readxl")
 ```
 
-Beware: by default, if the file does not exist, `system.file()` does not return an error - it just returns the empty string:
+These filepaths present yet another workflow dilemma: When you're developing your package, you engage with it in its source form, but your users engage with it as an installed package.
+Happily, devtools provides a shim for `base::system.file()` that is activated by `load_all()`.
+This makes interactive calls to `system.file()` from the global environment and calls from within the package namespace "just work".
+
+Be aware that, by default, `system.file()` returns the empty string, not an error, for a file that does not exist.
 
 ```{r}
-system.file("extdata", "iris.csv", package = "readr")
+system.file("extdata", "I_do_not_exist.csv", package = "readr")
 ```
 
-If you want to have an error message when the file does not exist, add the argument `mustWork = TRUE`:
+If you want to force a failure in this case, specify `mustWork = TRUE`:
 
-```{r, error = TRUE}
-system.file("extdata", "iris.csv", package = "readr", mustWork = TRUE)
+```{r error = TRUE}
+system.file("extdata", "I_do_not_exist.csv", package = "readr", mustWork = TRUE)
+```
+
+The [fs package](https://fs.r-lib.org) offers the `path_package()` function, which has several nice features, and which we recommend where the fs dependency makes sense:
+
+-   It errors if the filepath does not exist.
+-   It throws distinct errors when the package does not exist vs. when the file does not exist within the package.
+-   During development, it works for interactive calls, calls from within the loaded package's namespace, and even for calls originating in dependencies.
+
+```{r error = TRUE}
+fs::path_package("extdata", package = "idonotexist")
+
+fs::path_package("extdata", "I_do_not_exist.csv", package = "readr")
+
+fs::path_package("extdata", "chickens.csv", package = "readr")
 ```
 
 ### `pkg_example()` path helpers
 
-Talks about, e.g., `readr_example()`
+We like to offer convenience functions that make example files easy to access.
+These are just user-friendly wrappers around `system.file()` or `fs::path_package()`, but can have added features, such as the ability to list the example files.
+Here's the definition and some usage of `readxl::read_example()`:
+
+```{r, eval = FALSE}
+readxl_example <- function(path = NULL) {
+  if (is.null(path)) {
+    dir(system.file("extdata", package = "readxl"))
+  } else {
+    system.file("extdata", path, package = "readxl", mustWork = TRUE)
+  }
+}
+```
+
+```{r}
+readxl::readxl_example()
+
+readxl::readxl_example("clippy.xlsx")
+```
 
 ## Internal state
 
