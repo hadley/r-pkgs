@@ -75,7 +75,7 @@ In terms of advice to package authors, the help topic for `data()` seems to impl
 If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded.
 This means that they won't occupy any memory until you use them.
 The following example shows memory usage before and after loading the nycflights13 package.
-You can see that memory usage doesn't change until you inspect the `flights` dataset stored inside the package.
+You can see that memory usage doesn't change significantly until you inspect the `flights` dataset stored inside the package.
 
 ```{r}
 lobstr::mem_used()
@@ -414,7 +414,7 @@ And that is what's disallowed: you can't change the binding for objects in the p
 Defining `favorite_letters` this way only works if you will never need to modify it.
 
 However, if we maintain state within an internal package environment, we **can** modify objects contained in the environment (and even add completely new objects).
-Here's an alternative implementation that uses an internal environment named `the`.
+Here's an alternative implementation that uses an internal environment named "the".
 
 ```{r, eval = FALSE}
 the <- new.env(parent = emptyenv())
@@ -465,7 +465,7 @@ As seen in the example above, the definition of the environment should happen as
     If other top-level calls refer to the environment, the definition must come first when the package code is being executed at build time.
     This is why `R/aaa.R` is a common and safe choice.
 
--   Make it easy for yourself to find it later when you're working on related functionality.
+-   Make it easy to find later when you're working on related functionality.
     If an environment is only used by one family of functions, define it there.
     If environment usage is sprinkled around the package, define it in a file with package-wide connotations.
 
@@ -473,8 +473,8 @@ As seen in the example above, the definition of the environment should happen as
 
 Here are some examples of how packages use an internal environment:
 
--   googledrive: Various functions need to know the file ID for the current user's home directory on Google Drive. This is an eye-watering string of \~40 seemingly random characters that means nothing to a human. It would be inhumane to expect a user to know this or to pass it into every function. Instead, googledrive determines this ID upon first need, then caches it for later use.
--   usethis: Most function needs to know the *active project*, i.e. which directory to target for file modification. This is often the current working directory, but that is not an invariant usethis can rely upon. One potential design is to make it possible to specify the target project as an argument of every function in usethis. But this would create significant clutter in the user interface, as well as internal fussiness. Instead, we determine the active project upon first need, cache it, and provide methods for (re)setting it.
+-   googledrive: Various functions need to know the file ID for the current user's home directory on Google Drive. This requires an API call (a relatively expensive and error-prone operation) which yields an eye-watering string of \~40 seemingly random characters that only a computer can love. It would be inhumane to expect a user to know this or to pass it into every function. It would also be inefficient to rediscover the ID repeatedly. Instead, googledrive determines the ID upon first need, then caches it for later use.
+-   usethis: Most functions need to know the active project, i.e. which directory to target for file modification. This is often the current working directory, but that is not an invariant usethis can rely upon. One potential design is to make it possible to specify the target project as an argument of every function in usethis. But this would create significant clutter in the user interface, as well as internal fussiness. Instead, we determine the active project upon first need, cache it, and provide methods for (re)setting it.
 
 The blog post [Package-Wide Variables/Cache in R Packages](https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/) gives a more detailed development of this technique.
 
