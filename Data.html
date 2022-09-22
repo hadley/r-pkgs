@@ -416,8 +416,8 @@ Second edition
 <p>In this chapter we describe useful mechanisms for including data in your package. The practical details differ depending on who needs access to the data, how often it changes, and what they will do with it:</p>
 <ul>
 <li><p>If you want to store R objects and make them available to the user, put them in <code>data/</code>. This is the best place to put example datasets. All the concrete examples above for data in a package and data as a package use this mechanism.</p></li>
-<li><p>If you want to store R objects for your own use as a developer, put them in <code>R/sysdata.rda</code>. This is the best place to put internal data that your functions need. <!--EXAMPLES TO USE SOMEWHERE: readr + data-raw/date-symbols.R + date_symbols, googledrive/googlesheets + data-raw/discovery-doc-prep + .endpoints & .schemas & .tidy_schemas--></p></li>
-<li><p>If you want to store data in some raw, non-R-specific form and make it available to the user, put it in <code>inst/extdata</code>. For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.</p></li>
+<li><p>If you want to store R objects for your own use as a developer, put them in <code>R/sysdata.rda</code>. This is the best place to put internal data that your functions need.</p></li>
+<li><p>If you want to store data in some raw, non-R-specific form and make it available to the user, put it in <code>inst/extdata/</code>. For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively.</p></li>
 <li><p>If you want to store dynamic data that reflects the internal state of your package within a single R session, use an environment. This technique is not as common or well-known as those above, but can be very useful in specific situations.</p></li>
 <li><p>If you want to store data persistently across R sessions, such as configuration or user-specific data, use one of the officially sanctioned locations.</p></li>
 </ul></section><section id="sec-data-data" class="level2" data-number="8.2"><h2 data-number="8.2" class="anchored" data-anchor-id="sec-data-data">
@@ -438,14 +438,14 @@ Second edition
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change until you inspect the <code>flights</code> dataset stored inside the package.</p>
 <div class="cell">
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 56.32 MB</span></span>
+<span><span class="co">#&gt; 56.34 MB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 58.04 MB</span></span>
+<span><span class="co">#&gt; 58.07 MB</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">flights</span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 98.75 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span><span class="co">#&gt; 98.78 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We recommend that you include <code>LazyData: true</code> in your <code>DESCRIPTION</code> if you are shipping <code>.rda</code> files below <code>data/</code>. If you use <code>use_data()</code> to create such datasets, it will automatically make this modification to <code>DESCRIPTION</code> for you.</p>
 <div class="callout-warning callout callout-style-default callout-captioned">
@@ -574,7 +574,7 @@ Submitting to CRAN
 <li>
 <a href="https://github.com/tidyverse/googledrive">googledrive</a> and <a href="https://github.com/tidyverse/googlesheets4">googlesheets4</a> wrap the Google Drive and Google Sheets APIs, respectively. Both use <code>R/sysdata.rda</code> to store data derived from a so-called <a href="https://developers.google.com/discovery/v1/reference/apis">Discovery Document</a> which “describes the surface of the API, how to access the API and how API requests and responses are structured”.</li>
 </ul>
-<p>The easiest way to create <code>R/sysdata.rda</code> is to use <code>usethis::use_data(internal = TRUE)</code>:</p>
+<!-- Another example I noted: readr + data-raw/date-symbols.R + date_symbols --><p>The easiest way to create <code>R/sysdata.rda</code> is to use <code>usethis::use_data(internal = TRUE)</code>:</p>
 <div class="cell">
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">internal_this</span> <span class="op">&lt;-</span> <span class="va">...</span></span>
 <span><span class="va">internal_that</span> <span class="op">&lt;-</span> <span class="va">...</span></span>
@@ -677,12 +677,73 @@ Submitting to CRAN
 </div>
 </section></section><section id="internal-state" class="level2" data-number="8.5"><h2 data-number="8.5" class="anchored" data-anchor-id="internal-state">
 <span class="header-section-number">8.5</span> Internal state</h2>
-<p>state that persists within a session</p>
-<p>https://github.com/hadley/r-pkgs/issues/818</p>
+<p>Sometimes there’s information that multiple functions from your package need to access that:</p>
+<ul>
+<li>Must be determined at runtime, not build time. It might even be dynamic.</li>
+<li>Doesn’t make sense to pass in via a function argument. Often it’s some obscure detail that a user shouldn’t even know about.</li>
+</ul>
+<p>A great way to manage such data is to use an <em>environment</em>.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> This environment must be created a build time, but you can populate it with values at runtime and update those values over the course of an R session. This works because environments have reference semantics (whereas more pedestrian R objects, such as atomic vectors, lists, or data frames have value semantics).</p>
+<p>Consider a package that can store the user’s favorite letters or numbers. You might start out with code like this in a file below <code>R/</code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">the</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">favorite_letters</span> <span class="op">&lt;-</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co">#' Report my favorite letters</span></span>
+<span><span class="co">#' @export</span></span>
+<span><span class="va">mfl</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">favorite_letters</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co">#' Change my favorite letters</span></span>
+<span><span class="co">#' @export</span></span>
+<span><span class="va">set_mfl</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">l</span> <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">24</span><span class="op">:</span><span class="fl">26</span><span class="op">]</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">favorite_letters</span> <span class="op">&lt;&lt;-</span> <span class="va">l</span></span>
+<span>  <span class="va">favorite_letters</span></span>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>blog post that made me “get” the internal environment technique:<br><a href="https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/" class="uri">https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/</a></p>
+<p><code>favorite_letters</code> is initialized to (“a”, “b”, “c”) when the package is built. The user can then inspect <code>favorite_letters</code> with <code>mfl()</code>, at which point they’ll probably want to register <em>their</em> favorite letters with <code>set_mfl()</code>. Note that we’ve used the super assignment operator <code>&lt;&lt;-</code> in <code>set_mfl()</code> in the hope that this will reach up into the package environment and modify the internal data object <code>favorite_letters</code>. But a call to <code>set_mfl()</code> fails like so:</p>
+<div class="cell">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">set_mfl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"j"</span>, <span class="st">"f"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in set_mfl(c("j", "f", "b")): cannot change value of locked binding for</span></span>
+<span><span class="co">#&gt; 'favorite_letters'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Because <code>favorite_letters</code> is a regular character vector, modification requires making a copy and rebinding the name <code>favorite_letters</code> to this new value. And that is what’s disallowed: you can’t change the binding for objects in the package namespace (well, at least not without trying harder than this).</p>
+<p>However, if we maintain our internal state within an internal package environment, we can modify objects contained in the environment and even add completely new objects. Here’s an alternative implementation that uses an internal environment named <code>the</code>.</p>
+<div class="cell">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">the</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">the</span><span class="op">$</span><span class="va">favorite_letters</span> <span class="op">&lt;-</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co">#' Report my favorite letters</span></span>
+<span><span class="co">#' @export</span></span>
+<span><span class="va">mfl2</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">the</span><span class="op">$</span><span class="va">favorite_letters</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co">#' Change my favorite letters</span></span>
+<span><span class="co">#' @export</span></span>
+<span><span class="va">set_mfl2</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">l</span> <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">24</span><span class="op">:</span><span class="fl">26</span><span class="op">]</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">the</span><span class="op">$</span><span class="va">favorite_letters</span> <span class="op">&lt;-</span> <span class="va">l</span></span>
+<span>  <span class="va">the</span><span class="op">$</span><span class="va">favorite_letters</span></span>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now a user <em>can</em> record their favorite letters:</p>
+<div class="cell">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">mfl2</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "a" "b" "c"</span></span>
+<span></span>
+<span><span class="fu">set_mfl2</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"j"</span>, <span class="st">"f"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "j" "f" "b"</span></span>
+<span></span>
+<span><span class="fu">mfl2</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "j" "f" "b"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We often like to use the name “the” for an internal package environment, because it allows you to refer to the objects inside in a very natural way, such as <code>the$token</code>, meaning “the token”. It is also important to specify <code>parent = emptyenv()</code> for such an internal environment, as you generally don’t want the environment to inherit from any other (nonempty) environment.</p>
+<p>Here are some examples of how packages use this technique:</p>
+<ul>
+<li>Various functions in the googledrive package need to know the file ID for the current user’s home directory on Google Drive. This is an eye-watering string of 40 seemingly random characters that means nothing to a human. It would be inhumane to expect a user to know this or to pass it into every function. Instead, googledrive determines this ID upon first need, then caches it for later use.</li>
+<li>TODO: Need 1-2 more examples.</li>
+</ul>
+<p>The blog post <a href="https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/">Package-Wide Variables/Cache in R Packages</a> gives a more detailed development of this technique.</p>
+<!-- I've always felt like Hermione's beaded bag / Bag of Holding is a great analogy for this environment technique. As long as you've got this bag, you can keep whatever you like in it. Should I try to develop this? -->
 </section><section id="persistent-user-data" class="level2" data-number="8.6"><h2 data-number="8.6" class="anchored" data-anchor-id="persistent-user-data">
 <span class="header-section-number">8.6</span> Persistent user data</h2>
 <p>state that persists within a user</p>
@@ -691,7 +752,10 @@ Submitting to CRAN
 <p><a href="https://rappdirs.r-lib.org">rappdirs</a></p>
 
 
-</section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+</section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
+<ol>
+<li id="fn1"><p>If you don’t know much about R environments and what makes them special, a great resource is the <a href="https://adv-r.hadley.nz/environments.html">Environments chapter</a> of Advanced R.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
     const mode = bsSheetEl.getAttribute("data-mode");
