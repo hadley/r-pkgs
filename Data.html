@@ -438,14 +438,14 @@ Second edition
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change until you inspect the <code>flights</code> dataset stored inside the package.</p>
 <div class="cell">
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 56.30 MB</span></span>
+<span><span class="co">#&gt; 56.31 MB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 58.03 MB</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">flights</span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 98.73 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span><span class="co">#&gt; 98.74 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We recommend that you include <code>LazyData: true</code> in your <code>DESCRIPTION</code> if you are shipping <code>.rda</code> files below <code>data/</code>. If you use <code>use_data()</code> to create such datasets, it will automatically make this modification to <code>DESCRIPTION</code> for you.</p>
 <div class="callout-warning callout callout-style-default callout-captioned">
@@ -597,40 +597,62 @@ Submitting to CRAN
 </ul></section><section id="sec-data-extdata" class="level2" data-number="8.4"><h2 data-number="8.4" class="anchored" data-anchor-id="sec-data-extdata">
 <span class="header-section-number">8.4</span> Raw data file</h2>
 <p>If you want to show examples of loading/parsing raw data, put the original files in <code>inst/extdata/</code>. When the package is installed, all files (and folders) in <code>inst/</code> are moved up one level to the top-level directory, which is why they can’t have names that conflict with standard parts of an R package, like <code>R/</code> or <code>DESCRIPTION</code> . The files below <code>inst/extdata/</code> in the source package will be located below <code>extdata/</code> in the corresponding installed package.</p>
-<p>The main reason to do include such files is when a key part of a package’s functionality is to do something with data that is in an external file. Examples of such packages include:</p>
+<p>The main reason to include such files is when a key part of a package’s functionality is to act on an external file. Examples of such packages include:</p>
 <ul>
 <li>readr, which reads rectangular data out of delimited files</li>
 <li>readxl, which reads rectangular data of of Excel spreadsheets</li>
 <li>xml2, which can read XML and HTML from file</li>
 <li>archive, which can read archive files, such as tar or ZIP</li>
 </ul>
-<p>All of these packages have one of more example files below <code>inst/extdata/</code>.</p>
+<p>All of these packages have one of more example files below <code>inst/extdata/</code>, which are useful for writing documentation and tests.</p>
 <p>It is also common for data packages to provide, e.g., a csv version of the package data that is also provided as an R object. Examples of such packages include:</p>
 <ul>
-<li>palmerpenguins: <code>penguins</code> and <code>penguins_raw</code> are also represented as <code>extdata/penguins.csv</code> and <code>penguins_raw.csv</code>
+<li>palmerpenguins: <code>penguins</code> and <code>penguins_raw</code> are also represented as <code>extdata/penguins.csv</code> and <code>extdata/penguins_raw.csv</code>
 </li>
-<li>gapminder: <code>gapminder</code>, <code>continent_colors</code>, and <code>country_colors</code> are also represented as <code>gapminder.tsv</code>, <code>extdata/continent-colors.tsv</code>, and <code>extdata/country-colors.tsv</code>
+<li>gapminder: <code>gapminder</code>, <code>continent_colors</code>, and <code>country_colors</code> are also represented as <code>extdata/gapminder.tsv</code>, <code>extdata/continent-colors.tsv</code>, and <code>extdata/country-colors.tsv</code>
 </li>
 </ul>
-<p>There are two potential payoffs: First, this gives teachers and other expositors more to work with once they decide to use a specific dataset. If you’ve started teaching R with <code>palmerpenguins::penguins</code> or <code>gapminder::gapminder</code> and you want to introduce data import, it can be helpful to students if their first use of a new command, like <code><a href="https://readr.tidyverse.org/reference/read_delim.html">readr::read_csv()</a></code> or <code><a href="https://rdrr.io/r/utils/read.table.html">read.csv()</a></code>, is applied to a familiar dataset. They have pre-existing intuition about the expected result. Finally, if package data evolves over time, having a csv or other plain text representation in the source package can make it easier to what’s changed.</p>
+<p>There has two payoffs: First, it gives teachers and other expositors more to work with once they decide to use a specific dataset. If you’ve started teaching R with <code>palmerpenguins::penguins</code> or <code>gapminder::gapminder</code> and you want to introduce data import, it can be helpful to students if their first use of a new command, like <code><a href="https://readr.tidyverse.org/reference/read_delim.html">readr::read_csv()</a></code> or <code><a href="https://rdrr.io/r/utils/read.table.html">read.csv()</a></code>, is applied to a familiar dataset. They have pre-existing intuition about the expected result. Finally, if package data evolves over time, having a csv or other plain text representation in the source package can make it easier to what’s changed.</p>
 <section id="filepaths" class="level3" data-number="8.4.1"><h3 data-number="8.4.1" class="anchored" data-anchor-id="filepaths">
 <span class="header-section-number">8.4.1</span> Filepaths</h3>
-<p>TO ADD: <code><a href="https://fs.r-lib.org/reference/path_package.html">fs::path_package()</a></code></p>
-<p>TO ADD: more about the devtools shim</p>
-<p>To refer to files in <code>inst/extdata</code> (whether installed or not), use <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>. For example, the <a href="https://readr.tidyverse.org">readr</a> package uses <code>inst/extdata</code> to store delimited files for use in examples:</p>
+<p>The path to a package file found below <code>extdata/</code> clearly depends on the local environment, i.e.&nbsp;it depends on where installed packages live on that machine. The base function <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> can report the full path to files distributed with an R package. It can also be useful to <em>list</em> the files distributed with an R package.</p>
 <div class="cell">
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"mtcars.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/readr/extdata/mtcars.csv"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"readxl"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "clippy.xls"    "clippy.xlsx"   "datasets.xls"  "datasets.xlsx"</span></span>
+<span><span class="co">#&gt;  [5] "deaths.xls"    "deaths.xlsx"   "geometry.xls"  "geometry.xlsx"</span></span>
+<span><span class="co">#&gt;  [9] "type-me.xls"   "type-me.xlsx"</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"clippy.xlsx"</span>, package <span class="op">=</span> <span class="st">"readxl"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/readxl/extdata/clippy.xlsx"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Beware: by default, if the file does not exist, <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> does not return an error - it just returns the empty string:</p>
+<p>These filepaths present yet another workflow dilemma: When you’re developing your package, you engage with it in its source form, but your users engage with it as an installed package. Happily, devtools provides a shim for <code><a href="https://rdrr.io/r/base/system.file.html">base::system.file()</a></code> that is activated by <code>load_all()</code>. This makes interactive calls to <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> from the global environment and calls from within the package namespace “just work”.</p>
+<p>Be aware that, by default, <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> returns the empty string, not an error, for a file that does not exist.</p>
 <div class="cell">
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"iris.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"I_do_not_exist.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] ""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>If you want to have an error message when the file does not exist, add the argument <code>mustWork = TRUE</code>:</p>
+<p>If you want to force a failure in this case, specify <code>mustWork = TRUE</code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"iris.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span>, mustWork <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in system.file("extdata", "iris.csv", package = "readr", mustWork = TRUE): no file found</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"I_do_not_exist.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span>, mustWork <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in system.file("extdata", "I_do_not_exist.csv", package = "readr", : no file found</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The <a href="https://fs.r-lib.org">fs package</a> offers the <code>path_package()</code> function, which has several nice features, and which we recommend where the fs dependency makes sense:</p>
+<ul>
+<li>It errors if the filepath does not exist.</li>
+<li>It throws distinct errors when the package does not exist vs.&nbsp;when the file does not exist within the package.</li>
+<li>During development, it works for interactive calls, calls from within the loaded package’s namespace, and even for calls originating in dependencies.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path_package.html">path_package</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"idonotexist"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error: Can't find package `idonotexist` in library locations:</span></span>
+<span><span class="co">#&gt;   - '/home/runner/work/_temp/Library'</span></span>
+<span><span class="co">#&gt;   - '/opt/R/4.2.1/lib/R/library'</span></span>
+<span></span>
+<span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path_package.html">path_package</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"I_do_not_exist.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error: File(s) '/home/runner/work/_temp/Library/readr/extdata/I_do_not_exist.csv' do not exist</span></span>
+<span></span>
+<span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path_package.html">path_package</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"chickens.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; /home/runner/work/_temp/Library/readr/extdata/chickens.csv</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section><section id="pkg_example-path-helpers" class="level3" data-number="8.4.2"><h3 data-number="8.4.2" class="anchored" data-anchor-id="pkg_example-path-helpers">
 <span class="header-section-number">8.4.2</span> <code>pkg_example()</code> path helpers</h3>
@@ -640,7 +662,7 @@ Submitting to CRAN
 <p>state that persists within a session</p>
 <p>https://github.com/hadley/r-pkgs/issues/818</p>
 <div class="cell">
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">the</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">the</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>blog post that made me “get” the internal environment technique:<br><a href="https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/" class="uri">https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/</a></p>
 </section><section id="persistent-user-data" class="level2" data-number="8.6"><h2 data-number="8.6" class="anchored" data-anchor-id="persistent-user-data">
