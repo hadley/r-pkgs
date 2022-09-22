@@ -362,11 +362,11 @@ readxl::readxl_example("clippy.xlsx")
 
 Sometimes there's information that multiple functions from your package need to access that:
 
--   Must be determined at runtime, not build time. It might even be dynamic.
+-   Must be determined at load time (or even later), not at build time. It might even be dynamic.
 -   Doesn't make sense to pass in via a function argument. Often it's some obscure detail that a user shouldn't even know about.
 
 A great way to manage such data is to use an *environment*.[^data-1]
-This environment must be created a build time, but you can populate it with values at runtime and update those values over the course of an R session.
+This environment must be created a build time, but you can populate it with values after the package has been loaded and update those values over the course of an R session.
 This works because environments have reference semantics (whereas more pedestrian R objects, such as atomic vectors, lists, or data frames have value semantics).
 
 [^data-1]: If you don't know much about R environments and what makes them special, a great resource is the [Environments chapter](https://adv-r.hadley.nz/environments.html) of Advanced R.
@@ -386,26 +386,34 @@ mfl <- function() {
 #' Change my favorite letters
 #' @export
 set_mfl <- function(l = letters[24:26]) {
+  old <- favorite_letters
   favorite_letters <<- l
-  favorite_letters
+  invisible(old)
 }
 ```
 
 `favorite_letters` is initialized to ("a", "b", "c") when the package is built.
 The user can then inspect `favorite_letters` with `mfl()`, at which point they'll probably want to register *their* favorite letters with `set_mfl()`.
 Note that we've used the super assignment operator `<<-` in `set_mfl()` in the hope that this will reach up into the package environment and modify the internal data object `favorite_letters`.
-But a call to `set_mfl()` fails like so:
+But a call to `set_mfl()` fails like so:[^data-2]
+
+[^data-2]: This example will execute without error if you define `favorite_letters`, `mfl()`, and `set_mfl()` in the global workspace and call `set_mfl()` in the console.
+    But this code will fail once `favorite_letters`, `mfl()`, and `set_mfl()` are defined *inside a package*.
 
 ```{r, eval = FALSE}
+mfl()
+#> [1] "a" "b" "c"
+
 set_mfl(c("j", "f", "b"))
-#> Error in set_mfl(c("j", "f", "b")): cannot change value of locked binding for
-#> 'favorite_letters'
+#> Error in set_mfl() : 
+#>   cannot change value of locked binding for 'favorite_letters'
 ```
 
 Because `favorite_letters` is a regular character vector, modification requires making a copy and rebinding the name `favorite_letters` to this new value.
 And that is what's disallowed: you can't change the binding for objects in the package namespace (well, at least not without trying harder than this).
+Defining `favorite_letters` this way only works if you will never need to modify it.
 
-However, if we maintain our internal state within an internal package environment, we can modify objects contained in the environment and even add completely new objects.
+However, if we maintain state within an internal package environment, we **can** modify objects contained in the environment (and even add completely new objects).
 Here's an alternative implementation that uses an internal environment named `the`.
 
 ```{r, eval = FALSE}
@@ -421,12 +429,13 @@ mfl2 <- function() {
 #' Change my favorite letters
 #' @export
 set_mfl2 <- function(l = letters[24:26]) {
+  old <- the$favorite_letters
   the$favorite_letters <- l
-  the$favorite_letters
+  invisible(old)
 }
 ```
 
-Now a user *can* record their favorite letters:
+Now a user *can* register their favorite letters:
 
 ```{r, eval = FALSE}
 mfl2()
@@ -439,13 +448,33 @@ mfl2()
 #> [1] "j" "f" "b"
 ```
 
-We often like to use the name "the" for an internal package environment, because it allows you to refer to the objects inside in a very natural way, such as `the$token`, meaning "the token".
-It is also important to specify `parent = emptyenv()` for such an internal environment, as you generally don't want the environment to inherit from any other (nonempty) environment.
+Note that this new value for `the$favorite_letters` persists only for the remainder of the current R session (or until the user calls `set_mfl2()` again).
+More precisely, the altered state persists only until the next time the package is loaded (including via `load_all()`).
+At load time, the environment `the` is reset to an environment containing exactly one object, named `favorite_letters`, with value ("a", "b", "c").
+It's like the movie Groundhog Day.
+(We'll discuss more persistent package- and user-specific data in the next section.)
 
-Here are some examples of how packages use this technique:
+Jim Hester introduced our group to the nifty idea of using "the" as the name of an internal package environment.
+This lets you to refer to the objects inside in a very natural way, such as `the$token`, meaning "the token".
+It is also important to specify `parent = emptyenv()` when defining an internal environment, as you generally don't want the environment to inherit from any other (nonempty) environment.
 
--   Various functions in the googledrive package need to know the file ID for the current user's home directory on Google Drive. This is an eye-watering string of 40 seemingly random characters that means nothing to a human. It would be inhumane to expect a user to know this or to pass it into every function. Instead, googledrive determines this ID upon first need, then caches it for later use.
--   TODO: Need 1-2 more examples.
+As seen in the example above, the definition of the environment should happen as a top-level assignment in a file below `R/`.
+(In particular, this is a legitimate reason to define a non-function at the top-level of a package; see section @sec-code-when-executed for why this should be rare.) As for where to place this definition, there are two considerations:
+
+-   Define it before you use it.
+    If other top-level calls refer to the environment, the definition must come first when the package code is being executed at build time.
+    This is why `R/aaa.R` is a common and safe choice.
+
+-   Make it easy for yourself to find it later when you're working on related functionality.
+    If an environment is only used by one family of functions, define it there.
+    If environment usage is sprinkled around the package, define it in a file with package-wide connotations.
+
+<!-- Examples where we name such an environment "the": rcmdcheck, itdepends, cpp11, gmailr, rlang, covr -->
+
+Here are some examples of how packages use an internal environment:
+
+-   googledrive: Various functions need to know the file ID for the current user's home directory on Google Drive. This is an eye-watering string of \~40 seemingly random characters that means nothing to a human. It would be inhumane to expect a user to know this or to pass it into every function. Instead, googledrive determines this ID upon first need, then caches it for later use.
+-   usethis: Most function needs to know the *active project*, i.e. which directory to target for file modification. This is often the current working directory, but that is not an invariant usethis can rely upon. One potential design is to make it possible to specify the target project as an argument of every function in usethis. But this would create significant clutter in the user interface, as well as internal fussiness. Instead, we determine the active project upon first need, cache it, and provide methods for (re)setting it.
 
 The blog post [Package-Wide Variables/Cache in R Packages](https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/) gives a more detailed development of this technique.
 
