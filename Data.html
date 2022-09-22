@@ -557,15 +557,14 @@ Submitting to CRAN
 </div>
 <div class="callout-body-container callout-body">
 <p>If you have UTF-8-encoded strings in your package data, you may see this from <code>R CMD check</code>:</p>
-<pre><code>-   checking contents of 'data' directory ... OK
--   checking data for non-ASCII characters ... NOTE
+<pre><code>-   checking data for non-ASCII characters ... NOTE
     Note: found 352 marked UTF-8 strings</code></pre>
-<p>This <code>NOTE</code> is truly informational, i.e.&nbsp;it is a <code>NOTE</code> that you do not need to address or attempt to fix. As long as you actually intend to have UTF-8 strings in your package data, all is well.</p>
-<p>Ironically, this <code>NOTE</code> is actually suppressed by <code>R CMD check --as-cran</code>, i.e.&nbsp;by including the <code>--as-cran</code> flag, despite the fact that this note does appear in the check results once a package is on CRAN. By default, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code> sets the <code>--as-cran</code> flag and therefore does not transmit this <code>NOTE</code>. But you can surface it with <code>check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_" = "false"))</code>.</p>
+<p>This <code>NOTE</code> is truly informational. It requires no action from you. As long as you actually intend to have UTF-8 strings in your package data, all is well.</p>
+<p>Ironically, this <code>NOTE</code> is actually suppressed by <code>R CMD check --as-cran</code>, despite the fact that this note does appear in the check results once a package is on CRAN (which implies that CRAN does not necessarily check with <code>--as-cran</code>). By default, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code> sets the <code>--as-cran</code> flag and therefore does not transmit this <code>NOTE</code>. But you can surface it with <code>check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_" = "false"))</code>.</p>
 </div>
 </div>
+<!-- TODO: Offer some advice for those who have non-ASCII strings in their package and it is a surprise (so, it's not intentional). The best resource I have found so far for this is `tools:::.check_package_datasets()`. Perhaps devtools should get a function that does a ground-up implementation of such a search for non-ASCII strings. -->
 <!-- https://github.com/wch/r-source/blob/f6737799b169710006b040f72f9abc5e09180229/src/library/tools/R/QC.R#L4672 -->
-<p>If you seem to have non-ASCII strings in your package data and this is unintentional, <code><a href="https://rdrr.io/r/tools/checkRdaFiles.html">tools::checkRdaFiles()</a></code> can be helpful for determining which <code>.rda</code> file is the culprit. <em>NO, WAIT, HOLD ON, THIS IS NOT ACTUALLY TRUE. This is not what the <code>ASCII</code> column of the return value actually means. Maybe you really do have to call <code>tools:::.check_package_datasets()</code> to figure out which file(s) to blame?</em></p>
 </section></section><section id="data-sysdata" class="level2" data-number="8.3"><h2 data-number="8.3" class="anchored" data-anchor-id="data-sysdata">
 <span class="header-section-number">8.3</span> Internal data</h2>
 <p>Sometimes your package functions need access to pre-computed data. If you put these objects in <code>data/</code>, they’ll also be available to package users, which is not appropriate. Instead, you can save your package’s internal data in <code>R/sysdata.rda</code>.</p>
