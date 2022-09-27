@@ -555,25 +555,52 @@ All examples must run in under 10 minutes.
 What can you do if you want to include code that causes an error for the purposes of teaching.
 There are two basic options:
 
--   You can wrap the code in `try()` so that the error is shown, but doesn't stop execution of the error.
--   You can wrap the code `\dontrun{}`[^man-7] so it is never run by `example()`.
+-   You can wrap the code in `try()` so that the error is shown, but doesn't stop execution of the error. For example, `dplyr::bind_cols()` uses `try()` to show you what happens if you attempt to column-bind to data frames with different numbers of rows:
+
+    ```{r}
+    #' @examples
+    #' ...
+    #' # Row sizes must be compatible when column-binding
+    #' try(bind_cols(tibble(x = 1:3), tibble(y = 1:2)))
+    ```
+
+-   You can wrap the code `\dontrun{}`[^man-7] so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
+
+    ```{r}
+    #' # Row sizes must be compatible when column-binding
+    #' \donrun{
+    #' bind_cols(tibble(x = 1:3), tibble(y = 1:2)))
+    #' }
+    ```
 
 [^man-7]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommended it because CRAN sets a special flag that causes it to be executed.
 
+We generally recommend using `try()` so that the reader can see an example of the error in action.
+
 ### Dependencies and conditional execution
 
-You can only use packages in examples that your package depends on (i.e. that appear in `Imports` or `Suggests`).
-Example code is run in the user's environment, not the package environment, so you'll have to either explicitly attach the package with `library()` or refer to each function with `::`.
+An additional source of errors in examples are external dependencies: you can only use packages in examples that your package depends on (i.e. that appear in `Imports` or `Suggests`).
+Furthermore, example code is run in the user's environment, not the package environment, so you'll have to either explicitly attach the package with `library()` or refer to each function with `::`.
+For example, dbplyr is a dplyr extension package so all of its examples start with `library(dplyr)`:
+
+```{r}
+#' @examples
+#' library(dplyr)
+#' df <- data.frame(x = 1, y = 2)
+#'
+#' df_sqlite <- tbl_lazy(df, con = simulate_sqlite())
+#' df_sqlite %>% summarise(x = sd(x, na.rm = TRUE)) %>% show_query()
+```
 
 In the past, we recommended only using code from suggested packages inside an if block that used `if (requireNamespace("suggested_package", quietly = TRUE))`.
-Today, we no longer recommend that technique because:
+Today, we believe that you no longer need that layer of protection because:
 
 -   We expect that suggested packages are installed when running `R CMD check`[^man-8].
 -   The cost of wrapping code in `{}` is high: you can no longer see intermediate results. The cost of a package not being installed is low: users can usually recognize the package not loaded error and can resolve it themselves.
 
 [^man-8]: This is certainly true for CRAN and is true in most other automated checking scenarios.
 
-In other cases, your example code may depend on something other than a package being installed.
+In other cases, your example code may depend on something other than a package.
 For example, if your examples talk to a web API, you probably only want to run them if the user is authenticated, and want to avoid such code being run on CRAN.
 In this case you can use `@examplesIf` instead of `@examples`.
 The code in an `@examplesIf` block will only be executed if some condition is `TRUE`:
@@ -584,7 +611,7 @@ The code in an `@examplesIf` block will only be executed if some condition is `T
 #' some_more_functions()
 ```
 
-googledrive uses `@examplesIf` in almost every function because the examples can only work if you have an authenticated and active connection to Google Drive as judged by `googledrive::drive_has_token()`.
+For example, googledrive uses `@examplesIf` in almost every function because the examples can only work if you have an authenticated and active connection to Google Drive as judged by `googledrive::drive_has_token()`.
 For example, here's `googledrive::drive_publish()`:
 
 ```{r}
@@ -609,7 +636,7 @@ For initial CRAN submission of your package, all functions must contain some run
 An alternative to examples is to use RMarkdown's code blocks, either ```` ```R ```` if you just want to show some code or ```` ```{r} ```` if you want the code to be run.
 These can be effective techniques but there are downsides to each:
 
--   The code in ```` ```R ```` blocks is never run; this means it's easy to accidentally introduce syntax errors or to forget to update it when your package changes.
+-   The code in ```` ```R ```` blocks is never run; this means it's easy to accidentally introduce syntax errors or forget to update it when your package changes.
 -   The code in ```` ```{r} ```` blocks is run every time you document the package. This has the nice advantage of including the output in the documentation (unlike examples), but the code can't take very long to run or your iterative documentation workflow will become quite painful.
 
 ## Re-using documentation
