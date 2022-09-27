@@ -555,7 +555,8 @@ All examples must run in under 10 minutes.
 What can you do if you want to include code that causes an error for the purposes of teaching.
 There are two basic options:
 
--   You can wrap the code in `try()` so that the error is shown, but doesn't stop execution of the error. For example, `dplyr::bind_cols()` uses `try()` to show you what happens if you attempt to column-bind to data frames with different numbers of rows:
+-   You can wrap the code in `try()` so that the error is shown, but doesn't stop execution of the error.
+    For example, `dplyr::bind_cols()` uses `try()` to show you what happens if you attempt to column-bind to data frames with different numbers of rows:
 
     ```{r}
     #' @examples
@@ -685,48 +686,49 @@ This technique is best used for functions that have not just similar arguments, 
 ### Inheriting documentation
 
 In other cases, functions in a make might share many related behaviors, but aren't closely enough connected that you want to document them together.
-Instead, you can use `@inherits`, which generalizes `@inheritParams`, to inherit any component of the document from one topic.
-
-There are three useful inherit tags:
+We've discussed `@inheritParams` above, but there are three variations that allow you to inherit other things:
 
 -   `@inherit source_function` will inherit all supported components from `source_function`.
-
-    You can choose to only inherit selected components by listing them after the function name, e.g. `@inherit source_function return details`.
-    The complete list of currently supported components are `r paste0("\x60", roxygen2:::inherit_components, "\x60", collapse = ", ")`.
 
 -   `@inheritSection source_function Section title` will inherit the single section with title "Section title" from `source_function()`.
 
 -   `@inheritDotParams` automatically generates parameter documentation for `...` for the common case where you pass `...` on to another function.
-    Because you often override some arguments, it comes with a flexible specification for argument selection:
 
-    -   `@inheritDotParams foo` takes all parameters from `foo()`.
-    -   `@inheritDotParams foo a b e:h` takes parameters `a`, `b`, and all parameters between `e` and `h`.
-    -   `@inheritDotParams foo -x -y` takes all parameters except for `x` and `y`.
-
-All of these tags also work to inherit documentation from functions in another package by using `pkg::source_function`.
+See <https://roxygen2.r-lib.org/articles/reuse.html#inheriting-documentation> for more details.
 
 ### Child documents
 
 Finally, you can use the same `.Rmd` or `.md` document in the documentation, `README.Rmd`, and vignettes by using RMarkdown child documents.
 The syntax looks like this:
 
-    ```{r child = "common.Rmd"}`r ''`
-    ```
+```{r}
+#' ```{r child = "man/rmd/filename.Rmd"}
+#' ```
+```
 
-The included Rmd file can have roxygen Markdown-style links to other help topics.
-E.g. `[roxygen2::roxygenize()]` will link to the manual page of the `roxygenize` function in roxygen2.
-See `vignette("rd-formatting")` for details.
+This is not a feature we use terribly commonly in the tidyverse, but once place we do use it is in dplyr, because a number of functions use the same syntax as `select()` and we want to provide all the info in one place:
 
-If the Rmd file contains roxygen (Markdown-style) links to other help topics, then some care is needed, as those links will not work in Rmd files by default.
-A workaround is to specify external HTML links for them.
-These external locations will *not* be used for the manual which instead always links to the help topics in the manual.
-Example:
+```{r}
+#' # Overview of selection features
+#'
+#' ```{r, child = "man/rmd/overview.Rmd"}
+#' ```
+```
 
-    See also the [roxygen2::roxygenize()] function.
+Then `man/rmd/overview.Rmd` contains the repeated markdown:
 
-    [roxygen2::roxygenize()]: https://roxygen2.r-lib.org/reference/roxygenize.html
+``` md
+Tidyverse selections implement a dialect of R where operators make}
+it easy to select variables:
 
-This example will link to the supplied URLs in HTML / Markdown files and it will link to the `roxygenize` help topic in the manual.
+- `:` for selecting a range of consecutive variables.
+- `!` for taking the complement of a set of variables.
+- `&` and `|` for selecting the intersection or the union of two
+  sets of variables.
+- `c()` for combining selections.
 
-Note that if you add external link targets like these, then roxygen will emit a warning about these link references being defined multiple times (once externally, and once to the help topic).
-This warning originates in Pandoc, and it is harmless.
+...
+```
+
+If the Rmd file contains roxygen (Markdown-style) links to other help topics, then some care is needed.
+See <https://roxygen2.r-lib.org/dev/articles/reuse.html#child-documents> for details.
