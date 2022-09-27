@@ -822,25 +822,51 @@ Submitting to CRAN
 <span class="header-section-number">16.6.3</span> Errors</h3>
 <p>What can you do if you want to include code that causes an error for the purposes of teaching. There are two basic options:</p>
 <ul>
-<li>You can wrap the code in <code><a href="https://rdrr.io/r/base/try.html">try()</a></code> so that the error is shown, but doesn’t stop execution of the error.</li>
-<li>You can wrap the code <code>\dontrun{}</code><a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> so it is never run by <code><a href="https://rdrr.io/r/utils/example.html">example()</a></code>.</li>
-</ul></section><section id="dependencies-and-conditional-execution" class="level3" data-number="16.6.4"><h3 data-number="16.6.4" class="anchored" data-anchor-id="dependencies-and-conditional-execution">
+<li>
+<p>You can wrap the code in <code><a href="https://rdrr.io/r/base/try.html">try()</a></code> so that the error is shown, but doesn’t stop execution of the error. For example, <code><a href="https://dplyr.tidyverse.org/reference/bind.html">dplyr::bind_cols()</a></code> uses <code><a href="https://rdrr.io/r/base/try.html">try()</a></code> to show you what happens if you attempt to column-bind to data frames with different numbers of rows:</p>
+<div class="cell">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examples</span></span>
+<span><span class="co">#' ...</span></span>
+<span><span class="co">#' # Row sizes must be compatible when column-binding</span></span>
+<span><span class="co">#' try(bind_cols(tibble(x = 1:3), tibble(y = 1:2)))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</li>
+<li>
+<p>You can wrap the code <code>\dontrun{}</code><a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> so it is never run by <code><a href="https://rdrr.io/r/utils/example.html">example()</a></code>. The example above would look like this if you used <code>\dontrun{}</code> instead of <code><a href="https://rdrr.io/r/base/try.html">try()</a></code>.</p>
+<div class="cell">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' # Row sizes must be compatible when column-binding</span></span>
+<span><span class="co">#' \donrun{</span></span>
+<span><span class="co">#' bind_cols(tibble(x = 1:3), tibble(y = 1:2)))</span></span>
+<span><span class="co">#' }</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</li>
+</ul>
+<p>We generally recommend using <code><a href="https://rdrr.io/r/base/try.html">try()</a></code> so that the reader can see an example of the error in action.</p>
+</section><section id="dependencies-and-conditional-execution" class="level3" data-number="16.6.4"><h3 data-number="16.6.4" class="anchored" data-anchor-id="dependencies-and-conditional-execution">
 <span class="header-section-number">16.6.4</span> Dependencies and conditional execution</h3>
-<p>You can only use packages in examples that your package depends on (i.e.&nbsp;that appear in <code>Imports</code> or <code>Suggests</code>). Example code is run in the user’s environment, not the package environment, so you’ll have to either explicitly attach the package with <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> or refer to each function with <code>::</code>.</p>
-<p>In the past, we recommended only using code from suggested packages inside an if block that used <code>if (requireNamespace("suggested_package", quietly = TRUE))</code>. Today, we no longer recommend that technique because:</p>
+<p>An additional source of errors in examples are external dependencies: you can only use packages in examples that your package depends on (i.e.&nbsp;that appear in <code>Imports</code> or <code>Suggests</code>). Furthermore, example code is run in the user’s environment, not the package environment, so you’ll have to either explicitly attach the package with <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> or refer to each function with <code>::</code>. For example, dbplyr is a dplyr extension package so all of its examples start with <code><a href="https://dplyr.tidyverse.org">library(dplyr)</a></code>:</p>
+<div class="cell">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examples</span></span>
+<span><span class="co">#' library(dplyr)</span></span>
+<span><span class="co">#' df &lt;- data.frame(x = 1, y = 2)</span></span>
+<span><span class="co">#'</span></span>
+<span><span class="co">#' df_sqlite &lt;- tbl_lazy(df, con = simulate_sqlite())</span></span>
+<span><span class="co">#' df_sqlite %&gt;% summarise(x = sd(x, na.rm = TRUE)) %&gt;% show_query()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In the past, we recommended only using code from suggested packages inside an if block that used <code>if (requireNamespace("suggested_package", quietly = TRUE))</code>. Today, we believe that you no longer need that layer of protection because:</p>
 <ul>
 <li>We expect that suggested packages are installed when running <code>R CMD check</code><a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>.</li>
 <li>The cost of wrapping code in <code><a href="https://rdrr.io/r/base/Paren.html">{}</a></code> is high: you can no longer see intermediate results. The cost of a package not being installed is low: users can usually recognize the package not loaded error and can resolve it themselves.</li>
 </ul>
-<p>In other cases, your example code may depend on something other than a package being installed. For example, if your examples talk to a web API, you probably only want to run them if the user is authenticated, and want to avoid such code being run on CRAN. In this case you can use <code>@examplesIf</code> instead of <code>@examples</code>. The code in an <code>@examplesIf</code> block will only be executed if some condition is <code>TRUE</code>:</p>
+<p>In other cases, your example code may depend on something other than a package. For example, if your examples talk to a web API, you probably only want to run them if the user is authenticated, and want to avoid such code being run on CRAN. In this case you can use <code>@examplesIf</code> instead of <code>@examples</code>. The code in an <code>@examplesIf</code> block will only be executed if some condition is <code>TRUE</code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examplesIf some_condition()</span></span>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examplesIf some_condition()</span></span>
 <span><span class="co">#' some_other_function()</span></span>
 <span><span class="co">#' some_more_functions()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>googledrive uses <code>@examplesIf</code> in almost every function because the examples can only work if you have an authenticated and active connection to Google Drive as judged by <code><a href="https://googledrive.tidyverse.org/reference/drive_has_token.html">googledrive::drive_has_token()</a></code>. For example, here’s <code><a href="https://googledrive.tidyverse.org/reference/drive_publish.html">googledrive::drive_publish()</a></code>:</p>
+<p>For example, googledrive uses <code>@examplesIf</code> in almost every function because the examples can only work if you have an authenticated and active connection to Google Drive as judged by <code><a href="https://googledrive.tidyverse.org/reference/drive_has_token.html">googledrive::drive_has_token()</a></code>. For example, here’s <code><a href="https://googledrive.tidyverse.org/reference/drive_publish.html">googledrive::drive_publish()</a></code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examplesIf drive_has_token()</span></span>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examplesIf drive_has_token()</span></span>
 <span><span class="co">#' # Create a file to publish</span></span>
 <span><span class="co">#' file &lt;- drive_example_remote("chicken_sheet") %&gt;%</span></span>
 <span><span class="co">#'   drive_cp()</span></span>
@@ -866,7 +892,7 @@ Submitting to CRAN
 <span class="header-section-number">16.6.5</span> Intermixing examples and text</h3>
 <p>An alternative to examples is to use RMarkdown’s code blocks, either <code>```R</code> if you just want to show some code or <code>```{r}</code> if you want the code to be run. These can be effective techniques but there are downsides to each:</p>
 <ul>
-<li>The code in <code>```R</code> blocks is never run; this means it’s easy to accidentally introduce syntax errors or to forget to update it when your package changes.</li>
+<li>The code in <code>```R</code> blocks is never run; this means it’s easy to accidentally introduce syntax errors or forget to update it when your package changes.</li>
 <li>The code in <code>```{r}</code> blocks is run every time you document the package. This has the nice advantage of including the output in the documentation (unlike examples), but the code can’t take very long to run or your iterative documentation workflow will become quite painful.</li>
 </ul></section></section><section id="re-using-documentation" class="level2" data-number="16.7"><h2 data-number="16.7" class="anchored" data-anchor-id="re-using-documentation">
 <span class="header-section-number">16.7</span> Re-using documentation</h2>
@@ -880,7 +906,7 @@ Submitting to CRAN
 <span class="header-section-number">16.7.1</span> Multiple functions in one topic</h3>
 <p>By default, each function gets its own documentation topic, but if two functions are very closely connected you can combine the documentation for multiple functions into a single topic. For example, take <code>str_length()</code> and <code>str_width()</code> which provide two different ways of computing the size of a string. As you can see from the description, both functions are documented together, because this makes it easy to see how they differ:</p>
 <div class="cell">
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' The length/width of a string</span></span>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' The length/width of a string</span></span>
 <span><span class="co">#'</span></span>
 <span><span class="co">#' @description</span></span>
 <span><span class="co">#' `str_length()` returns the number of codepoints in a string. These are</span></span>
@@ -897,7 +923,7 @@ Submitting to CRAN
 </div>
 <p>To merge the two topics, <code>str_width()</code> uses <code>@rdname str_length</code> to add its documentation to an existing topic:</p>
 <div class="cell">
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @rdname str_length</span></span>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @rdname str_length</span></span>
 <span><span class="va">str_width</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">string</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -905,39 +931,39 @@ Submitting to CRAN
 <p>This technique is best used for functions that have not just similar arguments, but also similar return value and related examples, as discussed next.</p>
 </section><section id="inheriting-documentation" class="level3" data-number="16.7.2"><h3 data-number="16.7.2" class="anchored" data-anchor-id="inheriting-documentation">
 <span class="header-section-number">16.7.2</span> Inheriting documentation</h3>
-<p>In other cases, functions in a make might share many related behaviors, but aren’t closely enough connected that you want to document them together. Instead, you can use <code>@inherits</code>, which generalizes <code>@inheritParams</code>, to inherit any component of the document from one topic.</p>
-<p>There are three useful inherit tags:</p>
+<p>In other cases, functions in a make might share many related behaviors, but aren’t closely enough connected that you want to document them together. We’ve discussed <code>@inheritParams</code> above, but there are three variations that allow you to inherit other things:</p>
 <ul>
-<li>
-<p><code>@inherit source_function</code> will inherit all supported components from <code>source_function</code>.</p>
-<p>You can choose to only inherit selected components by listing them after the function name, e.g.&nbsp;<code>@inherit source_function return details</code>. The complete list of currently supported components are <code>params</code>, <code>return</code>, <code>title</code>, <code>description</code>, <code>details</code>, <code>seealso</code>, <code>sections</code>, <code>references</code>, <code>examples</code>, <code>author</code>, <code>source</code>, <code>note</code>.</p>
-</li>
+<li><p><code>@inherit source_function</code> will inherit all supported components from <code>source_function</code>.</p></li>
 <li><p><code>@inheritSection source_function Section title</code> will inherit the single section with title “Section title” from <code>source_function()</code>.</p></li>
-<li>
-<p><code>@inheritDotParams</code> automatically generates parameter documentation for <code>...</code> for the common case where you pass <code>...</code> on to another function. Because you often override some arguments, it comes with a flexible specification for argument selection:</p>
-<ul>
-<li>
-<code>@inheritDotParams foo</code> takes all parameters from <code>foo()</code>.</li>
-<li>
-<code>@inheritDotParams foo a b e:h</code> takes parameters <code>a</code>, <code>b</code>, and all parameters between <code>e</code> and <code>h</code>.</li>
-<li>
-<code>@inheritDotParams foo -x -y</code> takes all parameters except for <code>x</code> and <code>y</code>.</li>
+<li><p><code>@inheritDotParams</code> automatically generates parameter documentation for <code>...</code> for the common case where you pass <code>...</code> on to another function.</p></li>
 </ul>
-</li>
-</ul>
-<p>All of these tags also work to inherit documentation from functions in another package by using <code>pkg::source_function</code>.</p>
+<p>See <a href="https://roxygen2.r-lib.org/articles/reuse.html#inheriting-documentation" class="uri">https://roxygen2.r-lib.org/articles/reuse.html#inheriting-documentation</a> for more details.</p>
 </section><section id="child-documents" class="level3" data-number="16.7.3"><h3 data-number="16.7.3" class="anchored" data-anchor-id="child-documents">
 <span class="header-section-number">16.7.3</span> Child documents</h3>
 <p>Finally, you can use the same <code>.Rmd</code> or <code>.md</code> document in the documentation, <code>README.Rmd</code>, and vignettes by using RMarkdown child documents. The syntax looks like this:</p>
-<pre><code>```{r child = "common.Rmd"}
-```</code></pre>
-<p>The included Rmd file can have roxygen Markdown-style links to other help topics. E.g. <code>[roxygen2::roxygenize()]</code> will link to the manual page of the <code>roxygenize</code> function in roxygen2. See <code>vignette("rd-formatting")</code> for details.</p>
-<p>If the Rmd file contains roxygen (Markdown-style) links to other help topics, then some care is needed, as those links will not work in Rmd files by default. A workaround is to specify external HTML links for them. These external locations will <em>not</em> be used for the manual which instead always links to the help topics in the manual. Example:</p>
-<pre><code>See also the [roxygen2::roxygenize()] function.
-
-[roxygen2::roxygenize()]: https://roxygen2.r-lib.org/reference/roxygenize.html</code></pre>
-<p>This example will link to the supplied URLs in HTML / Markdown files and it will link to the <code>roxygenize</code> help topic in the manual.</p>
-<p>Note that if you add external link targets like these, then roxygen will emit a warning about these link references being defined multiple times (once externally, and once to the help topic). This warning originates in Pandoc, and it is harmless.</p>
+<div class="cell">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' ```{r child = "man/rmd/filename.Rmd"}</span></span>
+<span><span class="co">#' ```</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This is not a feature we use terribly commonly in the tidyverse, but once place we do use it is in dplyr, because a number of functions use the same syntax as <code>select()</code> and we want to provide all the info in one place:</p>
+<div class="cell">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' # Overview of selection features</span></span>
+<span><span class="co">#'</span></span>
+<span><span class="co">#' ```{r, child = "man/rmd/overview.Rmd"}</span></span>
+<span><span class="co">#' ```</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then <code>man/rmd/overview.Rmd</code> contains the repeated markdown:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode md code-with-copy"><code class="sourceCode markdown"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>Tidyverse selections implement a dialect of R where operators make}</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>it easy to select variables:</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`:`</span> for selecting a range of consecutive variables.</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`!`</span> for taking the complement of a set of variables.</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`&amp;`</span> and <span class="in">`|`</span> for selecting the intersection or the union of two</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  sets of variables.</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`c()`</span> for combining selections.</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If the Rmd file contains roxygen (Markdown-style) links to other help topics, then some care is needed. See <a href="https://roxygen2.r-lib.org/dev/articles/reuse.html#child-documents" class="uri">https://roxygen2.r-lib.org/dev/articles/reuse.html#child-documents</a> for details.</p>
 
 
 </section></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
