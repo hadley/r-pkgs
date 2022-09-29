@@ -438,14 +438,14 @@ Second edition
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change significantly until you inspect the <code>flights</code> dataset stored inside the package.</p>
 <div class="cell">
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 56.76 MB</span></span>
+<span><span class="co">#&gt; 56.68 MB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 58.50 MB</span></span>
+<span><span class="co">#&gt; 58.42 MB</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">flights</span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 99.21 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span><span class="co">#&gt; 99.12 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We recommend that you include <code>LazyData: true</code> in your <code>DESCRIPTION</code> if you are shipping <code>.rda</code> files below <code>data/</code>. If you use <code>use_data()</code> to create such datasets, it will automatically make this modification to <code>DESCRIPTION</code> for you.</p>
 <div class="callout-warning callout callout-style-default callout-captioned">
@@ -757,68 +757,40 @@ Submitting to CRAN
 </section><section id="sec-data-persistent" class="level2" data-number="8.6"><h2 data-number="8.6" class="anchored" data-anchor-id="sec-data-persistent">
 <span class="header-section-number">8.6</span> Persistent user data</h2>
 <p>Sometimes there is data that your package obtains, on behalf of itself or the user, that should persist <em>even across R sessions</em>. This is our last and probably least common form of storing package data. For the data to persist this way, it has to be stored on disk and the big question is where to write such a file.</p>
-<p>This problem is hardly unique to R. Many applications need to leave notes to themselves. It is best to comply with external conventions, which in this case means the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a>. You need to use the official locations for persistent file storage, because it’s the responsible and courteous thing to do and also to comply with CRAN policies. In particular, you can’t just write into the user’s home directory. Here’s a relevant excerpt from the CRAN policy at the time of writing:</p>
+<p>This problem is hardly unique to R. Many applications need to leave notes to themselves. It is best to comply with external conventions, which in this case means the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a>. You need to use the official locations for persistent file storage, because it’s the responsible and courteous thing to do and also to comply with CRAN policies.</p>
+<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Submitting to CRAN
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>You can’t just write persistent data into the user’s home directory. Here’s a relevant excerpt from the CRAN policy at the time of writing:</p>
 <blockquote class="blockquote">
 <p>Packages should not write in the user’s home filespace (including clipboards), nor anywhere else on the file system apart from the R session’s temporary directory ….</p>
 <p>For R version 4.0 or later (hence a version dependency is required or only conditional use is possible), packages may store user-specific data, configuration and cache files in their respective user directories obtained from <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code>, provided that by [sic] default sizes are kept as small as possible and the contents are actively managed (including removing outdated material).</p>
 </blockquote>
-<p>In R, there are two tools you can use to derive acceptable locations for user data:</p>
-<ul>
-<li>The <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code> function, available in R &gt;= 4.0.</li>
-<li>The <a href="https://rappdirs.r-lib.org">rappdirs package</a>, which is a port of the Python appdirs module, compatible with R &gt;= 3.5<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</li>
-</ul>
-<p>These two tools produce filepaths consistent with the XDG spec, but implement different opinions beyond what the spec dictates. This is easiest to see by comparing actual return values. Note that these results were generated on macOS.</p>
+</div>
+</div>
+<p>The primary function you should use to derive acceptable locations for user data is <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code><a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>. Here are some examples of the generated filepaths:</p>
 <div class="cell">
-<div class="cell-output-display">
-<div id="tbl-appdirs" class="anchored">
-<table class="table table-sm table-striped">
-<caption>Table&nbsp;8.1: Acceptable locations for persistent user data</caption>
-<colgroup>
-<col style="width: 10%">
-<col style="width: 90%">
-</colgroup>
-<thead><tr class="header">
-<th style="text-align: left;">code</th>
-<th style="text-align: left;">result</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">rappdirs::user_data_dir(“pkg”)</td>
-<td style="text-align: left;">~/Library/Application Support/pkg</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">tools::R_user_dir(“pkg”, which = “data”)</td>
-<td style="text-align: left;">~/Library/Application Support/org.R-project.R/R/pkg</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">rappdirs::user_config_dir(“pkg”)</td>
-<td style="text-align: left;">~/Library/Application Support/pkg</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">tools::R_user_dir(“pkg”, which = “config”)</td>
-<td style="text-align: left;">~/Library/Preferences/org.R-project.R/R/pkg</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">rappdirs::user_cache_dir(“pkg”)</td>
-<td style="text-align: left;">~/Library/Caches/pkg</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">tools::R_user_dir(“pkg”, which = “cache”)</td>
-<td style="text-align: left;">~/Library/Caches/org.R-project.R/R/pkg</td>
-</tr>
-</tbody>
-</table>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/userdir.html">R_user_dir</a></span><span class="op">(</span><span class="st">"pkg"</span>, which <span class="op">=</span> <span class="st">"data"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/.local/share/R/pkg"</span></span>
+<span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/userdir.html">R_user_dir</a></span><span class="op">(</span><span class="st">"pkg"</span>, which <span class="op">=</span> <span class="st">"config"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/.config/R/pkg"</span></span>
+<span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/userdir.html">R_user_dir</a></span><span class="op">(</span><span class="st">"pkg"</span>, which <span class="op">=</span> <span class="st">"cache"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/.cache/R/pkg"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-</div>
-<p>If your package needs to write files where the filepath is not explicitly specified by the user, use one of the functions above to generate the base for the path.</p>
 
 
 </section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
 <ol>
 <li id="fn1"><p>If you don’t know much about R environments and what makes them special, a great resource is the <a href="https://adv-r.hadley.nz/environments.html">Environments chapter</a> of Advanced R.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>This example will execute without error if you define <code>favorite_letters</code>, <code>mfl()</code>, and <code>set_mfl()</code> in the global workspace and call <code>set_mfl()</code> in the console. But this code will fail once <code>favorite_letters</code>, <code>mfl()</code>, and <code>set_mfl()</code> are defined <em>inside a package</em>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>Note that this is a sliding minimum, determined by the <a href="https://www.tidyverse.org/blog/2019/04/r-version-support/">tidyverse policy regarding R version support</a>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Note that <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code> first appeared in R 4.0. If you need to support older versions of R, then you should use the <a href="https://rappdirs.r-lib.org">rappdirs package</a>, which is a port of the Python appdirs module, and which follows the <a href="https://www.tidyverse.org/blog/2019/04/r-version-support/">tidyverse policy regarding R version support</a>, meaning the minimum supported R version is advancing and will eventually slide past R 4.0. rappdirs produces different filepaths than <code><a href="https://rdrr.io/r/tools/userdir.html">tools::R_user_dir()</a></code>. However, both tools implement something that is consistent with the XDG spec, just with different opinions about how to create filepaths beyond what the spec dictates.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
