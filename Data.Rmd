@@ -494,78 +494,28 @@ This problem is hardly unique to R.
 Many applications need to leave notes to themselves.
 It is best to comply with external conventions, which in this case means the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html).
 You need to use the official locations for persistent file storage, because it's the responsible and courteous thing to do and also to comply with CRAN policies.
-In particular, you can't just write into the user's home directory.
+
+::: callout-warning
+## Submitting to CRAN
+
+You can't just write persistent data into the user's home directory.
 Here's a relevant excerpt from the CRAN policy at the time of writing:
 
 > Packages should not write in the user's home filespace (including clipboards), nor anywhere else on the file system apart from the R session's temporary directory ....
 >
 > For R version 4.0 or later (hence a version dependency is required or only conditional use is possible), packages may store user-specific data, configuration and cache files in their respective user directories obtained from `tools::R_user_dir()`, provided that by \[sic\] default sizes are kept as small as possible and the contents are actively managed (including removing outdated material).
+:::
 
-In R, there are two tools you can use to derive acceptable locations for user data:
+The primary function you should use to derive acceptable locations for user data is `tools::R_user_dir()`[^data-3].
+Here are some examples of the generated filepaths:
 
--   The `tools::R_user_dir()` function, available in R \>= 4.0.
--   The [rappdirs package](https://rappdirs.r-lib.org), which is a port of the Python appdirs module, compatible with R \>= 3.5[^data-3].
+[^data-3]: Note that `tools::R_user_dir()` first appeared in R 4.0.
+    If you need to support older versions of R, then you should use the [rappdirs package](https://rappdirs.r-lib.org), which is a port of the Python appdirs module, and which follows the [tidyverse policy regarding R version support](https://www.tidyverse.org/blog/2019/04/r-version-support/), meaning the minimum supported R version is advancing and will eventually slide past R 4.0.
+    rappdirs produces different filepaths than `tools::R_user_dir()`.
+    However, both tools implement something that is consistent with the XDG spec, just with different opinions about how to create filepaths beyond what the spec dictates.
 
-[^data-3]: Note that this is a sliding minimum, determined by the [tidyverse policy regarding R version support](https://www.tidyverse.org/blog/2019/04/r-version-support/).
-
-These two tools produce filepaths consistent with the XDG spec, but implement different opinions beyond what the spec dictates.
-This is easiest to see by comparing actual return values.
-Note that these results were generated on macOS.
-
-```{r eval = FALSE, include = FALSE}
-# I ran this locally on macOS and inlined static results
-
-library(tidyverse)
-# to execute this chunk you also need:
-# rappdirs
-# datapasta
-
-appname <- "pkg"
-
-dat <- tibble(
-  code = c(
-    'rappdirs::user_data_dir("{appname}")',
-    'tools::R_user_dir("{appname}", which = "data")',
-    'rappdirs::user_config_dir("{appname}")',
-    'tools::R_user_dir("{appname}", which = "config")',
-    'rappdirs::user_cache_dir("{appname}")',
-    'tools::R_user_dir("{appname}", which = "cache")'
-  )
-) |> 
-  rowwise() |> 
-  mutate(code = str_glue(code)) |> 
-  mutate(result = eval(parse(text = code))) |> 
-  mutate(result = ifelse(
-    str_detect(result, "^~", negate = TRUE),
-    str_glue("~/", fs::path_rel(result, start = "~/")),
-    result
-  ))
-
-# produced the tribble call below
-# datapasta::tribble_paste(dat)
-# this seemed to surround data with " even though there are embedded ", so
-# I hand-edited the result
+```{r}
+tools::R_user_dir("pkg", which = "data")
+tools::R_user_dir("pkg", which = "config")
+tools::R_user_dir("pkg", which = "cache")
 ```
-
-```{r include = FALSE}
-dat <- tibble::tribble(
-                                         ~code,                                               ~result,
-              'rappdirs::user_data_dir("pkg")',                   '~/Library/Application Support/pkg',
-    'tools::R_user_dir("pkg", which = "data")', '~/Library/Application Support/org.R-project.R/R/pkg',
-            'rappdirs::user_config_dir("pkg")',                   '~/Library/Application Support/pkg',
-  'tools::R_user_dir("pkg", which = "config")',         '~/Library/Preferences/org.R-project.R/R/pkg',
-             'rappdirs::user_cache_dir("pkg")',                                '~/Library/Caches/pkg',
-   'tools::R_user_dir("pkg", which = "cache")',              '~/Library/Caches/org.R-project.R/R/pkg'
-)
-```
-
-```{r echo = FALSE}
-#| label: tbl-appdirs
-#| tbl-cap: "Acceptable locations for persistent user data"
-#| tbl-colwidths: [10,90]
-
-library(knitr)
-kable(head(dat))
-```
-
-If your package needs to write files where the filepath is not explicitly specified by the user, use one of the functions above to generate the base for the path.
