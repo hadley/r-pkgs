@@ -8,34 +8,61 @@ library(stringr) # for links
 
 ## Introduction
 
-In this chapter, you'll learn about function documentation, accessed with `?fcn` or `help("fcn")`.
+In this chapter, you'll learn about function documentation, which users access with `?somefunction` or `help("somefunction")`.
 Base R provides a standard way of documenting a package where each function is documented in a **topic,** an `.Rd` file ("R documentation") in the `man/` directory.
 `.Rd` files use a custom syntax, loosely based on LaTeX, and can be rendered to HTML, plain text, or pdf, as needed, for viewing in different contexts.
 
 In the devtools ecosystem, we don't edit `.Rd` files directly with our bare hands.
-Instead, we include specially formatted comments *above* the source code for each function.
-Then we use the roxygen2 package to generate the `.Rd` files from these special "roxygen comments".
-There are a few advantages to using roxygen2:
+Instead, we include specially formatted "roxygen comments" above the source code for each function[^man-1].
+Then we use the roxygen2 package to generate the `.Rd` files from these special comments[^man-2]
+. There are a few advantages to using roxygen2
+:
+
+[^man-1]: The name "roxygen" is a nod to the Doxygen documentation generator, which inspired the development of an R package named roxygen.
+    Then that original concept was rebooted as roxygen2, similar to ggplot2.
+
+[^man-2]: The NAMESPACE file is also generated from these roxygen comments (or, rather, it *can* be and that is the preferred devtools workflow).
+    The NAMESPACE file is covered in sections @sec-metadata-namespace and @sec-dependencies-namespace.
 
 -   Code and documentation are co-located, so that when you modify your code, it's easy to remember to also update your documentation.
 
--   You can use markdown, rather than having to learn a new text formatting syntax.
+-   You can use markdown, rather than having to learn a one-off markup language that only applies to `.Rd` files.
+    In addition to formatting, the automatic linking functionality gives you lots of cross-references "for free".
 
 -   There's a lot of `.Rd` boilerplate that's automated away.
 
 -   roxygen2 provides a number of tools for sharing content across documentation topics and even between topics and vignettes.
 
-In this chapter we'll focus on documenting functions, but the same ideas apply to documenting datasets, classes and generics, and packages.
-You can learn more about those important topics in `vignette("rd-other", package = "roxygen2")`.
+In this chapter we'll focus on documenting functions, but the same ideas apply to documenting datasets (@sec-documenting-data), classes and generics, and packages.
+You can learn more about those important topics in `vignette("rd-other", package = "roxygen2")`[^man-3].
+
+[^man-3]: The text `vignette("rd-other", package = "roxygen2")` is actually a great example of autolinking in the devtools ecosystem.
+    This is literally the R code you would execute in the console to navigate to a specific vignette within the roxygen2 package.
+    But in many rendered contexts, it automatically becomes a hyperlink to that same vignette in roxygen2's pkgdown website.
 
 ## roxygen2 basics
 
 To get started, we'll work through the basic roxygen2 workflow and discuss the overall structure of roxygen2 comments which are organised into blocks and tags.
 
-### The documentation workflow {#man-workflow}
+### The documentation workflow {#sec-man-workflow}
 
-You begin the documentation workflow by adding roxygen comments above your function.
-roxygen comment lines always start with `#'` , the usual `#` for a comment, followed immediately by a single quote `'`:
+Unlike with testthat, there's no obvious opening move to declare that you're going to use roxygen2 for documentation.
+That's because the use of roxygen2 is purely a matter of your development workflow.
+It has no effect on, e.g., the package checking or building machinery.
+We think the roxygen approach is the best way to generate your `.Rd` files, but officially R only cares about the files themselves, not how they came to be.
+
+This is also a good time to explain something you may have noticed in your `DESCRIPTION` file:
+
+    Roxygen: list(markdown = TRUE)
+
+devtools/usethis includes this by default when initiating a `DESCRIPTION` file and it gives roxygen2 a heads-up that your package uses markdown syntax in its roxygen comments.[^man-4]
+
+[^man-4]: This is part of the explanation promised in section @sec-metadata-custom-fields, where we also clarify that, with our current conventions, this field should really be called `Config/Needs/roxygen`, instead of `Roxygen`.
+    We highly recommend that you use markdown in all new packages and that you migrate older-but-actively maintained packages to markdown syntax.
+    In this case, you can call `usethis::use_roxygen_md()` to update DESCRIPTION and get a reminder about the roxygen2md package, which can help with conversion.
+
+Your documentation workflow truly begins when you start to add roxygen comments above your functions.
+Roxygen comment lines always start with `#'` , the usual `#` for a comment, followed immediately by a single quote `'`:
 
 ```{r}
 #' Add together two numbers
@@ -51,9 +78,21 @@ add <- function(x, y) {
 }
 ```
 
-You then run `devtools::document()` or, in RStudio, press Ctrl/Cmd + Shift + D, to generate (or update) your package's `.Rd` files.
-Under the hood, this ultimately calls `roxygen2::roxygenise()`.
-The example above generates a `man/add.Rd` file that looks like this:
+::: callout-tip
+## RStudio
+
+Usually you write your function first, then its documentation.
+Once the function definition exists, put your cursor somewhere in it and do *Code \> Insert Roxygen Skeleton* to get a great head start on the roxygen comment.
+:::
+
+Once you have at least one roxygen comment, run `devtools::document()` or, in RStudio, press Ctrl/Cmd + Shift + D, to generate (or update) your package's `.Rd` files[^man-5].
+Under the hood, this ultimately calls `roxygen2::roxygenise()`. The example above generates a `man/add.Rd` file that looks like this:
+
+[^man-5]: Running `devtools::document()` also affects another field in `DESCRIPTION`, which looks like this:
+
+        RoxygenNote: 7.2.1
+
+    This records which version of roxygen2 was last used in a package, which makes it easier for devtools (and its underlying packages) to make an intelligent guess about when to re-`document()` a package and when to leave well enough alone.
 
     % Generated by roxygen2: do not edit by hand
     % Please edit documentation in R/add.R
@@ -92,9 +131,9 @@ Here's what the result looks like in RStudio:
 knitr::include_graphics("images/man-add.png", dpi = 220)
 ```
 
-The default help-seeking process looks inside **installed** packages, so to see the documentation during development, devtools overrides the usual help functions with modified versions that know to consult the **source** package.
-To activate these overrides, you need to run `devtools::load_all()` once.
-So if the development documentation doesn't appear, you may need to load your package first.
+The default help-seeking process looks inside **installed** packages, so to see your package's documentation during development, devtools overrides the usual help functions with modified versions that know to consult the **source** package.
+To activate these overrides, you'll need to run `devtools::load_all()` at least once.
+If it feels like your edits to the roxygen comments aren't having an effect, double check that you have actually regenerated the `.Rd` files with and that you've loaded your package.
 
 To summarize, there are four steps in the basic roxygen2 workflow:
 
@@ -106,20 +145,23 @@ To summarize, there are four steps in the basic roxygen2 workflow:
 
 4.  Rinse and repeat until the documentation looks the way you want.
 
-### roxygen2 comments, blocks, and tags {#roxygen-comments}
+### roxygen2 comments, blocks, and tags {#sec-man-roxygen-comments}
 
 Now that you understand the basic workflow, we'll go into more detail about the syntax.
 roxygen2 comments start with `#'` and all the roxygen2 comments preceding a function are collectively called a **block**.
-Blocks are broken up by **tags**, which look like `@tagName tagValue`, and the content of a tag extends from the end of the tag name to the start of the next tag[^man-1].
-A block can contain text before the first tag which is called the **introduction**. By default, each block generates a single documentation **topic**, i.e. a single `.Rd` file[^man-2] in the `man/` directory
+Blocks are broken up by **tags**, which look like `@tagName tagValue`, and the content of a tag extends from the end of the tag name to the start of the next tag[^man-6].
+A block can contain text before the first tag which is called the **introduction**. By default, each block generates a single documentation **topic**, i.e. a single `.Rd` file[^man-7] in the `man/` directory
 .
 
-[^man-1]: Or the end of the block, if it's the last tag.
+[^man-6]: Or the end of the block, if it's the last tag.
 
-[^man-2]: The name of the file is automatically derived from the object you're documenting.
+[^man-7]: The name of the file is automatically derived from the object you're documenting.
 
 Throughout this chapter we'll show you roxygen2 comments from real tidyverse packages, focusing on stringr, since the functions there tend to be fairly straightforward, leading to documentation that's understandable with relatively little context.
-Here's a simple first example: the documentation for `stringr::str_unique()`.
+Here's a simple first example: the documentation for `stringr::str_unique()`[^man-8].
+
+[^man-8]: This may not perfectly reflect the current documentation for `str_unique()`.
+    Among other reasons, we're suppressing the use of roxygen features that are introduced later in this chapter.
 
 ```{r}
 #' Remove duplicated strings
@@ -127,10 +169,11 @@ Here's a simple first example: the documentation for `stringr::str_unique()`.
 #' `str_unique()` removes duplicated values, with optional control over
 #' how duplication is measured.
 #'
-#' @param string A character vector to return unique entries.
-#' @param ... Other options used to control matching behavior between
-#'   duplicate strings. Passed on to [stringi::stri_opts_collator()].
-#' @returns A character vector.
+#' @param string Input vector. Either a character vector, or something
+#'  coercible to one.
+#' @param ... Other options used to control matching behavior between duplicate
+#'   strings. Passed on to [stringi::stri_opts_collator()].
+#' @returns A character vector, usually shorter than `string`.
 #' @seealso [unique()], [stringi::stri_unique()] which this function wraps.
 #' @examples
 #' str_unique(c("a", "b", "c", "b", "a"))
@@ -147,27 +190,49 @@ str_unique <- function(string, ...) {
 Here the introduction includes the title ("Remove duplicated strings") and a basic description of what the function does.
 The introduction is followed by five tags: two `@params`, one `@returns`, one `@seealso`, one `@examples`, and one `@export`.
 
-Note that each line of the block is 80 characters wide (matching the line length of the surrounding R code) and the second and subsequent lines of the long `@param` tag are indented, which makes the entire block easier to scan.
+Note that the block has an intentional line length (typically the same as that used for the surrounding R code) and the second and subsequent lines of the long `@param` tag are indented, which makes the entire block easier to scan.
 You can get more roxygen2 style advice in the [tidyverse style guide](https://style.tidyverse.org/documentation.html).
+
+::: callout-tip
+## RStudio
+
+It can be aggravating to manually manage the line length of roxygen comments, so be sure to try out *Code \> Reflow Comment* (Ctrl/Cmd+Shift+/).
+:::
 
 The following sections go into more depth for the most important tags.
 We start with the introduction, which provides the title, description, and details.
 Then we cover the inputs (the function arguments), outputs (the return value), and examples.
 Next we discuss links and cross-references, then finish off with techniques for sharing documentation between topics.
 
+### Key markdown features
+
+TODO: call out some useful markdown+roxygen features here.
+What gets a mention?
+Either something unique to how roxygen2 works or something that comes up so much you can't ignore it.
+
+-   backticks
+
+-   square brackets for auto-linking functions
+
+-   maybe: the `vignette()` thing
+
+-   maybe: bullet lists
+
 ## Title, description, details
 
-The introduction provides a title, description, and, optionally, details, for the function:
+The introduction provides a title, description, and, optionally, details, for the function.
+While it's possible to use explicit tags in the introduction, we usually rely on implicit tags when possible:
 
 -   The **title** is taken from the first sentence.
     It should be written in sentence case, not end in a full stop, and be followed by a blank line.
-    The title is shown in various function indexes and is what the user will usually see when browsing multiple functions.
+    The title is shown in various function indexes (e.g. `help(package = "somepackage")`) and is what the user will usually see when browsing multiple functions.
 
 -   The **description** is taken from the next paragraph.
     It's shown at the top of documentation and should briefly describe the most important features of the function.
 
 -   Additional **details** are anything after the description.
     Details are optional, but can be any length so are useful if you want to dig deep into some important aspect of the function.
+    Note that, even though the details come right after the description in the introduction, they appear much later in rendered documentation.
 
 The following sections describe each component in more detail, and then discuss a few useful related tags.
 
@@ -177,21 +242,7 @@ When writing the title, it's useful to think about how it will appear in the ref
 When a user skims the index, how will they know which functions will solve their current problem?
 This requires thinking about what your functions have in common (which doesn't need to be repeated in every title) and what is unique to that function (which should be highlighted in the title).
 
-As an example, take the titles of some of the key functions in dplyr[^man-3]:
-
-[^man-3]: Like all the examples, these might have changed a bit since we wrote this book, because we're constantly striving to do better.
-    You might compare what's in the book to what we now use, and consider if you think if it's an improvement.
-
--   `mutate()`: Create, modify, and delete columns
--   `summarise()`: Summarize each group to fewer rows
--   `filter()`: Subset rows using column values
--   `select()`: Subset columns using their names and types
--   `arrange()`: Arrange rows by column values
-
-Here we've tried to succinctly describe what the function does, making sure to describe whether it affects rows, columns, or groups.
-We do our best to use synonyms, instead of repeating the function name, to hopefully give folks another chance to understand the intent of the function.
-
-At the time we wrote this chapter, we found the function titles for stringr to be somewhat disappointing.
+When we wrote this chapter, we found the function titles for stringr to be somewhat disappointing.
 But they provide a useful negative case study:
 
 -   `str_detect()`: Detect the presence or absence of a pattern in a string
@@ -200,14 +251,30 @@ But they provide a useful negative case study:
 -   `str_match()`: Extract matched groups from a string
 
 There's a lot of repetition ("pattern", "from a string") and the verb used for the function name is repeated in the title, so if you don't understand the function already, the title seems unlikely to help much.
-Hopefully we'll have improved those titles by the time you read this.
+Hopefully we'll have improved those titles by the time you read this!
+
+In contrast, these titles from dplyr are much better[^man-9]:
+
+[^man-9]: Like all the examples, these might have changed a bit since we wrote this book, because we're constantly striving to do better.
+    You might compare what's in the book to what we now use, and consider if you think if it's an improvement.
+
+-   `mutate()`: Create, modify, and delete columns
+-   `summarise()`: Summarize each group to fewer rows
+-   `filter()`: Subset rows using column values
+-   `select()`: Subset columns using their names and types
+-   `arrange()`: Arrange rows by column values
+
+Here we try to succinctly describe what the function does, making sure to describe whether it affects rows, columns, or groups.
+We do our best to use synonyms, instead of repeating the function name, to hopefully give folks another chance to understand the intent of the function.
 
 ### Description
 
 The purpose of the description is to summarize the goal of the function, usually in a single paragraph.
-This can be challenging for simple functions, because it might feel like you're repeating the title of the function.
-But it's okay for the description to be a little repetitive; it's often useful for the reader to see the same thing expressed in two different ways.
-It's a little extra work keeping it all up to date, but the extra effort is often worth it.
+This can be challenging for simple functions, because it can feel like you're just repeating the title of the function.
+Try to find a slightly different wording, if you can.
+It's okay if this feels a little repetitive; it's often useful for users to see the same thing expressed in two different ways.
+It's a little extra work, but the extra effort is often worth it.
+Here's the description for `stringr::str_detect()`:
 
 ```{r}
 #' Detect the presence/absence of a match
@@ -217,10 +284,24 @@ It's a little extra work keeping it all up to date, but the extra effort is ofte
 #' `grepl(pattern, string)`.
 ```
 
-If you want to use multiple paragraphs or a bulleted list, you can use the explicit `@description` tag[^man-4].
-Here's an example from `stringr::str_like()`, which mimics the `LIKE` operator from SQL:
+If you want more than one paragraph, you must use an explicit `@description` tag to prevent the second (and subsequent) paragraphs from being turned into the `@details`.
+Here's a two-paragraph `@description` from `stringr::str_view()`:
 
-[^man-4]: You can also use explicit `@title` and `@details` tags if needed, but we don't generally recommend them because they add extra noise to the docs without enabling any extra functionality.
+```{r}
+#' View strings and matches
+#'
+#' @description
+#' `str_view()` is used to print the underlying representation of a string and
+#' to see how a `pattern` matches.
+#'
+#' Matches are surrounded by `<>` and unusual whitespace (i.e. all whitespace
+#' apart from `" "` and `"\n"`) are surrounded by `{}` and escaped. Where
+#' possible, matches and unusual whitespace are coloured blue and `NA`s red.
+```
+
+Here's another example from `stringr::str_like()`, which has a bullet list in `@description`:[^man-10]
+
+[^man-10]: The markdown parser used by roxygen2 does not actually require an empty line before lists, but it's allowed and some people prefer that style.
 
 ```{r}
 #' Detect a pattern in the same way as `SQL`'s `LIKE` operator
@@ -235,16 +316,21 @@ Here's an example from `stringr::str_like()`, which mimics the `LIKE` operator f
 #' * The match is case insensitive by default.
 ```
 
-Finally, it's often particularly hard to write a good description if you've just written the function because the purpose often seems very obvious.
-Do your best, and then come back in a couple of months when you've forgotten exactly what the function does, and re-write the description to jog your memory.
+Basically, if you're going to include an empty line in your description, you'll need to use an explicit `@description` tag.
+
+Finally, it's often particularly hard to write a good description if you've just written the function, because the purpose often seems very obvious.
+Do your best, and then come back later, when you've forgotten exactly what the function does.
+Once you've re-derived what the function does, you'll be able to write a better description.
 
 ### Details
 
-The "details" are just any additional details or explanation that you think your function needs.
+The `@details` are just any additional details or explanation that you think your function needs.
 Most functions don't need details, but some functions need a lot.
-If you have a lot of information to convey, I recommend using markdown headings to break the documentation up into sections.
-Here's an example from `dplyr::mutate()`.
-We've elided some of the details to keep this example short, but you should still get a sense of how we used headings to break up the content in to skimmable chunks:
+If you have a lot of information to convey, it's a good idea to use informative markdown headings to break the details up into manageable sections[^man-11].
+Here's an example from `dplyr::mutate()`. We've elided some of the details to keep this example short, but you should still get a sense of how we used headings to break up the content in to skimmable chunks:
+
+[^man-11]: In older code, you might see the use of `@section title:` which was used to create sections before roxygen2 had full markdown support.
+    If you've used these in the past, you can now turn them into markdown headings.
 
 ```{r}
 #' Create, modify, and delete columns
@@ -273,19 +359,16 @@ We've elided some of the details to keep this example short, but you should stil
 Note the use of `[log()]` etc --- the use of square brackets is special roxygen2 markdown syntax that generates a link to the documentation for the `log()` function.
 You can link to a topic in another package with `[pkg::function()]`, and to non-function documentation with `[topic]` and `[pkg::topic]`.
 
-Also note that, even though that a heading like `# Grouped tibbles` in the example above comes immediately after the description in the roxygen block, the content appears much later in the rendered documentation.
-The details (whether they use section headings or not) appear after the function arguments and return value.
-
-In older code, you might also see the use of `@section title:` which was used to create sections before roxygen2 fully supported RMarkdown.
-If you've used these in the past, you can now turn them into markdown headings.
+Also note that, even though a heading like `# Useful mutate functions` in the example above comes immediately after the description in the roxygen block, the content appears much later in the rendered documentation.
+The details (whether they use section headings or not) appear after the function usage, arguments, and return value.
 
 ## Arguments
 
 For most functions, the bulk of your work will go towards documenting how each argument affects the output of the function.
 For this purpose, you'll use `@param` (short for parameter, a synonym of argument) followed by the argument name and a description of its action.
 
-The most important job of the description is to provide a succinct summary of the allowed inputs and what the parameter does.
-For example, here's `str_detect()`:
+The highest priority is to provide a succinct summary of the allowed inputs and what the parameter does.
+For example, here's how `str_detect()` documents `string`:
 
 ```{r}
 #' @param string Input vector. Either a character vector, or something
@@ -302,8 +385,9 @@ And here are three of the arguments to `str_flatten()`:
 ```
 
 Note that `@param collapse` and `@param na.rm` describe their default arguments.
-This is good practice because the function usage (which shows the default values) and the argument description are often quite far apart.
-The primary downside is that introducing this duplication means that you'll need to update the docs if you change the default value; we believe this small amount of extra work is worth it to make the life of the user easier.
+This is often a good practice because the function usage (which shows the default values) and the argument description are often quite far apart in the rendered documentation.
+But there are downsides.
+The main one is that this duplication means you'll need to make updates in two places if you change the default value; we believe this small amount of extra work is worth it to make the life of the user easier.
 
 If an argument has a fixed set of possible parameters, you should list them.
 If they're simple, you can just list them in a sentence, like in `str_trim()`:
@@ -327,13 +411,13 @@ But you should take as much space as you need, and you'll see some examples of m
 ### Multiple arguments
 
 If the behavior of multiple arguments is tightly coupled, you can document them together by separating the names with commas (with no spaces).
-For example, `x` and `y` are interchangeable in `str_equal()`, so they're documented together:
+For example, `x` and `y` are interchangeable in `stringr::str_equal()`, so they're documented together:
 
 ```{r}
 #' @param x,y A pair of character vectors.
 ```
 
-In `str_sub()`, `start` and `end` define the range of characters to replace.
+In `stringr::str_sub()`, `start` and `end` define the range of characters to replace.
 But instead of supplying both, you can use just `start` if you pass in a two-column matrix.
 So it makes sense to document them together:
 
@@ -341,12 +425,12 @@ So it makes sense to document them together:
 #' @param start,end A pair of integer vectors defining the range of characters
 #'   to extract (inclusive).
 #'
-#'   Alternatively, instead a pair of vectors, you can pass a matrix to
+#'   Alternatively, instead of a pair of vectors, you can pass a matrix to
 #'   `start`. The matrix should have two columns, either labelled `start`
 #'   and `end`, or `start` and `length`.
 ```
 
-In `str_wrap()`, `indent` and `exdent` define the indentation for the first line and all subsequent lines, respectively:
+In `stringr::str_wrap()`, `indent` and `exdent` define the indentation for the first line and all subsequent lines, respectively:
 
 ```{r}
 #' @param indent,exdent A non-negative integer giving the indent for the
@@ -359,7 +443,7 @@ If your package contains many closely related functions, it's common for them to
 It would be both annoying and error prone to copy and paste the same `@param` documentation to every function, so roxygen2 provides `@inheritParams` which allows you to inherit argument documentation from another function, possibly even in another package.
 
 stringr uses `@inheritParams` extensively because most functions have `string` and `pattern` arguments.
-The detailed and definitive documentation belongs to `str_detect()`:
+The detailed and definitive documentation belongs to `stringr::str_detect()`:
 
 ```{r}
 #' @param string Input vector. Either a character vector, or something
@@ -382,8 +466,8 @@ The detailed and definitive documentation belongs to `str_detect()`:
 
 Then the other stringr functions use `@inheritParams str_detect` to get this detailed documentation for `string` and `pattern` without having to duplicate that text.
 
-`@inheritParams` only inherits docs for arguments that aren't already documented, so you can document some arguments locally and inherit others.
-`str_match()` uses this to inherit `str_detect()`'s standard documentation for `string` argument, while providing its own specialized documentation for `pattern`:
+`@inheritParams` only inherits docs for arguments that the function actually uses and that aren't already documented, so you can document some arguments locally and inherit others.
+`stringr::str_match()` uses this to inherit `str_detect()`'s standard documentation for the `string` argument, while providing its own specialized documentation for `pattern`:
 
 ```{r}
 #' @inheritParams str_detect
@@ -392,30 +476,34 @@ Then the other stringr functions use `@inheritParams str_detect` to get this det
 #'   The pattern should contain at least one capturing group.
 ```
 
+Now that we've discussed default values and inheritance we can bring up one more dilemma.
+Sometimes there's tension between giving detailed information on an argument (acceptable values, default value, how the argument is used, etc.) and making the documentation amenable to reuse in other functions (which might differ in some specifics).
+This can motivate you to assess whether it's truly worth it for related functions to handle the same input in different ways or if standardization would be beneficial.
+
 You can inherit documentation from a function in another package by using the standard `::` notation, i.e. `@inheritParams anotherpackage::function`.
 This does introduce one small annoyance: now the documentation for your package is no longer self-contained and the version of `anotherpackage` can affect the generated docs.
-Beware of spurious diffs caused by contributors with different installed versions.
+Beware of spurious diffs introduced by contributors who run `devtools::document()` with a different installed version of the inherited-from package.
 
 ## Return value
 
-As important as a function's inputs is its output.
-Documenting the output is the job of the `@returns`[^man-5] tag.
-Here the goal of the docs is not to describe exactly how the values are computed (which is the job of the description and details), but to roughly describe the overall "shape" of the output, i.e. what sort of object it is, and its dimensions (if that makes sense).
+A function's output is as important as its inputs.
+Documenting the output is the job of the `@returns`[^man-12] tag.
+Here the priority is to describe the overall "shape" of the output, i.e. what sort of object it is, and its dimensions (if that makes sense).
 For example, if your function returns a vector you might describe its type and length, or if your function returns a data frame you might describe the names and types of the columns and the expected number of rows.
 
-[^man-5]: For historical reasons, you can also use `@return`, but we now favor `@returns` because it reads more naturally.
+[^man-12]: For historical reasons, you can also use `@return`, but we now favor `@returns` because it reads more naturally.
 
-The return documentation for functions in stringr are straightforward because almost all functions return some type of vector with the same length as one of the inputs.
-For example, here's `str_like()`:
+The `@returns` documentation for functions in stringr is straightforward because almost all functions return some type of vector with the same length as one of the inputs.
+For example, here's how `stringr::str_like()` describes its output:
 
 ```{r}
 #' @returns A logical vector the same length as `string`.
 ```
 
-A more complicated case is the joint documentation for `str_locate()` and `str_locate_all()`[^man-6].
+A more complicated case is the joint documentation for `stringr::str_locate()` and `str_locate_all()`[^man-13].
 `str_locate()` returns an integer matrix, and `str_locate_all()` returns a list of matrices, so the text needs to describe what determines the rows and columns.
 
-[^man-6]: We'll come back how to document multiple functions in one topic in @sec-multiple-functions.
+[^man-13]: We'll come back how to document multiple functions in one topic in @sec-man-multiple-functions.
 
 ```{r}
 #' @returns
@@ -432,11 +520,11 @@ A more complicated case is the joint documentation for `str_locate()` and `str_l
 #'   [stringi::stri_locate()] for the underlying implementation.
 ```
 
-In other cases it can be easier to figure out what to describe by thinking about the set of functions and how they differ.
-For example, most dplyr functions return data frames, so just saying `@returns A data frame` is not very useful.
-Instead, we sat down and thought about exactly what makes each function different.
+In other cases it can be easier to figure out what to highlight by thinking about the set of functions and how they differ.
+For example, most dplyr functions return a data frame, so just saying `@returns A data frame` is not very useful.
+Instead, we tried to identify exactly what makes each function different.
 We decided it makes sense to describe each function in terms of how it affects the rows, the columns, the groups, and the attributes.
-For example, here's `dplyr::filter()`:
+For example, this describes the return value of `dplyr::filter()`:
 
 ```{r}
 #' @returns
@@ -448,7 +536,7 @@ For example, here's `dplyr::filter()`:
 #' * Data frame attributes are preserved.
 ```
 
-`@returns` is also a good place to describe any important warnings or errors that the user might see here.
+`@returns` is also a good place to describe any important warnings or errors that the user might see.
 For example `readr::read_csv()` mentions what happens if there are any parsing problems:
 
 ```{r}
@@ -460,28 +548,39 @@ For example `readr::read_csv()` mentions what happens if there are any parsing p
 ## Submitting to CRAN
 
 For your initial CRAN submission, all functions must document their return value.
-This is not required for subsequent submissions, but it's still a good practice.
+While this may not be scrutinized in subsequent submissions, it's still a good practice.
 There's currently no way to check that you've documented the return value of every function (we're [working on it](https://github.com/r-lib/roxygen2/issues/1334)) which is why you'll notice some tidyverse functions lack output documentation.
+But we certainly aspire to provide this information across the board.
 :::
 
-## Examples {#sec-examples}
+## Examples {#sec-man-examples}
 
 Describing what a function does is great, but *showing* how it works is even better.
 That's the role of the `@examples` tag, which uses executable R code to demonstrate what a function can do.
 Unlike other parts of the documentation where we've focused mainly on what you should write, here we'll briefly give some content advice and then focus mainly on the mechanics.
-The mechanics of examples are complex because they must never error and they're run in four different situations:
+
+The main dilemma with examples is that you must jointly satisfy two requirements:
+
+-   Your example code should be readable and realistic.
+    Examples are documentation that you provide for the benefit of the user, i.e. an actual human, working interactively, trying to learn how to accomplish real tasks with your package.
+
+-   Your example code must run without error and with no side effects in many non-interactive contexts over which you have limited or no control, such as when CRAN runs `R CMD check` or when your package website is built via GitHub Actions.
+
+It turns out that there is often tension between these goals and you'll need to find a way to make your examples as useful as you can for users, while also satisfying the requirements of CRAN (if that's your goal) or other automated infrastructure.
+
+The mechanics of examples are complex because they must never error and they're executed in four different situations:
 
 -   Interactively using the `example()` function.
 -   During `R CMD check` on your computer, or another computer you control (e.g. in GitHub Actions).
 -   During `R CMD check` run by CRAN.
--   When your pkgdown website is being built.
+-   When your pkgdown website is being built, often via GitHub Actions or similar.
 
 After discussing what to put in your examples, we'll talk about keeping your examples self-contained, how to display errors if needed, handling dependencies, running examples conditionally, and alternatives to the `@examples` tag for including example code.
 
 ### Contents
 
 Use examples to first show the basic operation of the function, then to highlight any particularly important properties.
-For example, `str_detect()` starts by showing a few simple variations and then highlights a property you might easily miss from reading the docs: as well as passing a vector of strings and one pattern, you can also pass one string and vector of patterns.
+For example, `str_detect()` starts by showing a few simple variations and then highlights a feature that's easy to miss: as well as passing a vector of strings and one pattern, you can also pass one string and vector of patterns.
 
 ```{r}
 #' @examples
@@ -526,22 +625,25 @@ Also, remember that examples are not tests.
 Examples should be focused on the authentic and typical usage you've designed for and that you want to encourage.
 The test suite is the more appropriate place to exhaustively exercise all of the arguments and to explore weird, pathological edge cases.
 
-### Pack it in; pack it out
+### Leave the world as you found it
 
-As much as possible, keep your examples self-contained.
+Your examples should be self-contained.
 For example, this means:
 
 -   If you modify `options()`, reset them at the end of the example.
 -   If you create a file, create it somewhere in `tempdir()`, and make sure to delete it at the end of the example.
 -   Don't change the working directory.
--   Don't write to the clipboard.
--   Avoid accessing websites in examples. If the website is down, your example will fail and hence `R CMD check` will error.
+-   Don't write to the clipboard (unless a user is present to provide some form of consent).
 
-Due to the way that examples are run during `R CMD check` there's unfortunately no way to use familiar tools like withr or even `on.exit()` to enforce these constraints.
+This has a lot of overlap with our recommendations for tests (see section @sec-test-design-self-contained) and even for the R functions in your package (see section @sec-code-r-landscape).
+However, due to the way that examples are run during `R CMD check` the tools available for making examples self-contained are much more limited.
+Unfortunately, you can't use the withr package or even `on.exit()` to schedule clean up, like restoring options or deleting a file.
 Instead, you'll need to do it by hand.
+If you can avoid doing something that must then be undone, that is the best way to go and this is especially true for examples.
 
 These constraints are often in tension with good documentation, if you're trying to document a function that somehow changes the state of the world.
-So if you're finding it really hard to follow these rules, this might be another sign to switch to a vignette.
+For example, you have to "show your work", i.e. all of your code, which means that your users will see all of the setup and teardown, even it is not typical for authentic usage.
+If you're finding it hard to follow the rules, this might be another sign to switch to a vignette (section @sec-vignettes).
 
 ::: callout-warning
 ## Submitting to CRAN
@@ -561,6 +663,9 @@ All examples must run in under 10 minutes.
 
 ### Errors
 
+Your examples cannot throw any errors, so don't include flaky code that can fail for reasons beyond your control.
+In particular, it's best to avoid accessing websites, because `R CMD check` will fail whenever the website is down.
+
 What can you do if you want to include code that causes an error for the purposes of teaching?
 There are two basic options:
 
@@ -574,7 +679,7 @@ There are two basic options:
     #' try(bind_cols(tibble(x = 1:3), tibble(y = 1:2)))
     ```
 
--   You can wrap the code in `\dontrun{}`[^man-7], so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
+-   You can wrap the code in `\dontrun{}`[^man-14], so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
 
     ```{r}
     #' # Row sizes must be compatible when column-binding
@@ -583,15 +688,22 @@ There are two basic options:
     #' }
     ```
 
-[^man-7]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommend it because CRAN sets a special flag that causes the code to be executed anyway.
+[^man-14]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommend it because CRAN sets a special flag that causes the code to be executed anyway.
 
 We generally recommend using `try()` so that the reader can see an example of the error in action.
+
+::: callout-warning
+## Submitting to CRAN
+
+For the initial CRAN submission of your package, all functions must have at least one example and the example code can't all be wrapped inside `\dontrun{}`.
+If the code can only be run under specific conditions, use the techniques below to express those pre-conditions.
+:::
 
 ### Dependencies and conditional execution
 
 An additional source of errors in examples is the use of external dependencies: you can only use packages in your examples that your package formally depends on (i.e. that appear in `Imports` or `Suggests`).
 Furthermore, example code is run in the user's environment, not the package environment, so you'll have to either explicitly attach the dependency with `library()` or refer to each function with `::`.
-For example, dbplyr is a dplyr extension package so all of its examples start with `library(dplyr)`:
+For example, dbplyr is a dplyr extension package, so all of its examples start with `library(dplyr)`:
 
 ```{r}
 #' @examples
@@ -602,18 +714,38 @@ For example, dbplyr is a dplyr extension package so all of its examples start wi
 #' df_sqlite %>% summarise(x = sd(x, na.rm = TRUE)) %>% show_query()
 ```
 
-In the past, we recommended only using code from suggested packages inside a block like `if (requireNamespace("suggested_package", quietly = TRUE)) { ... }`.
-Today, we believe that approach isn't worth it because:
+In the past, we recommended only using code from suggested packages inside a block like this:
 
--   We expect that suggested packages are installed when running `R CMD check`[^man-8].
+```{r}
+#' @examples
+#' if (requireNamespace("suggestedpackage", quietly = TRUE)) { 
+#'   # some example code
+#' }
+```
+
+We no longer believe that approach is a good idea, because:
+
+-   Our policy is to expect that suggested packages are installed when running `R CMD check`[^man-15] and this informs what we do in examples, tests, and vignettes.
 -   The cost of putting example code inside `{ ... }` is high: you can no longer see intermediate results, such as when the examples are rendered in the package's website. The cost of a package not being installed is low: users can usually recognize the associated error and resolve it themselves, i.e. by installing the missing package.
 
-[^man-8]: This is certainly true for CRAN and is true in most other automated checking scenarios.
+[^man-15]: This is certainly true for CRAN and is true in most other automated checking scenarios, such as our GitHub Actions workflows.
 
 In other cases, your example code may depend on something other than a package.
-For example, if your examples talk to a web API, you probably only want to run them if the user is authenticated, and want to avoid such code being run on CRAN.
-In this case you can use `@examplesIf` instead of `@examples`.
-The code in an `@examplesIf` block will only be executed if some condition is `TRUE`:
+For example, if your examples talk to a web API, you probably only want to run them for an authenticated user, and never want such code to run on CRAN.
+In this case, you really do need conditional execution.
+The entry-level solution is to express this explicitly:
+
+```{r}
+#' @examples
+#' if (some_condition()) {
+#'   # some example code
+#' }
+```
+
+The condition could be quite general, such as `interactive()`, or very specific, such as a custom predicate function provided by your package.
+But this use of `if()` still suffers from the downside highlighted above, where the rendered examples don't clearly show what's going on inside the `{ … }` block.
+
+The `@examplesIf` tag is a great alternative to `@examples` in this case:
 
 ```{r}
 #' @examplesIf some_condition()
@@ -621,8 +753,19 @@ The code in an `@examplesIf` block will only be executed if some condition is `T
 #' some_more_functions()
 ```
 
-For example, googledrive uses `@examplesIf` in almost every function because the examples can only work if you have an authenticated and active connection to Google Drive as judged by `googledrive::drive_has_token()`.
-For example, here's `googledrive::drive_publish()`:
+This looks almost like the snippet just above, but has several advantages:
+
+-   Users won't actually see the `if() { … }` machinery when they are reading your documentation from within R or on a pkgdown website.
+    Users only see realistic code.
+
+-   The example code renders fully in pkgdown.
+
+-   The example code runs when it should and does not run when it should not.
+
+-   This doesn't run afoul of CRAN's prohibition of putting all your example code inside `\dontrun{}`.
+
+For example, googledrive uses `@examplesIf` in almost every function, guarded by `googledrive::drive_has_token()`.
+Here's how the examples for `googledrive::drive_publish()` begin:
 
 ```{r}
 #' @examplesIf drive_has_token()
@@ -632,14 +775,12 @@ For example, here's `googledrive::drive_publish()`:
 #'
 #' # Publish file
 #' file <- drive_publish(file)
-#' file$published
+#' ...
 ```
 
-::: callout-warning
-## Submitting to CRAN
-
-For initial CRAN submission of your package, all functions must contain some runnable examples (i.e. there must be examples and they must not all be wrapped in `\dontrun{}`).
-:::
+The example code doesn't run on CRAN, because there's no token.
+It does run when the pkgdown site is built, because we can set up a token securely.
+And, if a normal user executes this code, they'll be prompted to sign in to Google, if they haven't already.
 
 ### Intermixing examples and text
 
@@ -658,7 +799,7 @@ They are documented in `vignette("reuse", package = "roxygen2")`, so here we'll 
 -   Inheriting documentation from another topic.
 -   Using child documents to share prose between topics, or to share between documentation topics and vignettes.
 
-### Multiple functions in one topic {#sec-multiple-functions}
+### Multiple functions in one topic {#sec-man-multiple-functions}
 
 By default, each function gets its own documentation topic, but if two functions are very closely connected, you can combine the documentation for multiple functions into a single topic.
 For example, take `str_length()` and `str_width()`, which provide two different ways of computing the size of a string.
