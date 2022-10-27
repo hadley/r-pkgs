@@ -27,37 +27,34 @@ Then we use the roxygen2 package to generate the `.Rd` files from these special 
 -   Code and documentation are co-located, so that when you modify your code, it's easy to remember to also update your documentation.
 
 -   You can use markdown, rather than having to learn a one-off markup language that only applies to `.Rd` files.
-    In addition to formatting, the automatic linking functionality gives you lots of cross-references "for free".
+    In addition to formatting, there is automatic hyperlinking functionality that makes it much, much easier to create richly linked documentation.
 
 -   There's a lot of `.Rd` boilerplate that's automated away.
 
 -   roxygen2 provides a number of tools for sharing content across documentation topics and even between topics and vignettes.
 
 In this chapter we'll focus on documenting functions, but the same ideas apply to documenting datasets (@sec-documenting-data), classes and generics, and packages.
-You can learn more about those important topics in `vignette("rd-other", package = "roxygen2")`[^man-3].
-
-[^man-3]: The text `vignette("rd-other", package = "roxygen2")` is actually a great example of autolinking in the devtools ecosystem.
-    This is literally the R code you would execute in the console to navigate to a specific vignette within the roxygen2 package.
-    But in many rendered contexts, it automatically becomes a hyperlink to that same vignette in roxygen2's pkgdown website.
+You can learn more about those important topics in `vignette("rd-other", package = "roxygen2")`.
 
 ## roxygen2 basics
 
-To get started, we'll work through the basic roxygen2 workflow and discuss the overall structure of roxygen2 comments which are organised into blocks and tags.
+To get started, we'll work through the basic roxygen2 workflow and discuss the overall structure of roxygen2 comments, which are organised into blocks and tags.
+We also highlight the "greatest hits" of using markdown with roxygen2.
 
 ### The documentation workflow {#sec-man-workflow}
 
 Unlike with testthat, there's no obvious opening move to declare that you're going to use roxygen2 for documentation.
 That's because the use of roxygen2 is purely a matter of your development workflow.
-It has no effect on, e.g., the package checking or building machinery.
+It has no effect on, e.g., how a package gets checked or built.
 We think the roxygen approach is the best way to generate your `.Rd` files, but officially R only cares about the files themselves, not how they came to be.
 
 This is also a good time to explain something you may have noticed in your `DESCRIPTION` file:
 
     Roxygen: list(markdown = TRUE)
 
-devtools/usethis includes this by default when initiating a `DESCRIPTION` file and it gives roxygen2 a heads-up that your package uses markdown syntax in its roxygen comments.[^man-4]
+devtools/usethis includes this by default when initiating a `DESCRIPTION` file and it gives roxygen2 a heads-up that your package uses markdown syntax in its roxygen comments.[^man-3]
 
-[^man-4]: This is part of the explanation promised in section @sec-metadata-custom-fields, where we also clarify that, with our current conventions, this field should really be called `Config/Needs/roxygen`, instead of `Roxygen`.
+[^man-3]: This is part of the explanation promised in section @sec-metadata-custom-fields, where we also clarify that, with our current conventions, this field should really be called `Config/Needs/roxygen`, instead of `Roxygen`.
     We highly recommend that you use markdown in all new packages and that you migrate older-but-actively maintained packages to markdown syntax.
     In this case, you can call `usethis::use_roxygen_md()` to update DESCRIPTION and get a reminder about the roxygen2md package, which can help with conversion.
 
@@ -85,19 +82,18 @@ Usually you write your function first, then its documentation.
 Once the function definition exists, put your cursor somewhere in it and do *Code \> Insert Roxygen Skeleton* to get a great head start on the roxygen comment.
 :::
 
-Once you have at least one roxygen comment, run `devtools::document()` or, in RStudio, press Ctrl/Cmd + Shift + D, to generate (or update) your package's `.Rd` files[^man-5].
+Once you have at least one roxygen comment, run `devtools::document()` or, in RStudio, press Ctrl/Cmd + Shift + D, to generate (or update) your package's `.Rd` files[^man-4].
 Under the hood, this ultimately calls `roxygen2::roxygenise()`. The example above generates a `man/add.Rd` file that looks like this:
 
-[^man-5]: Running `devtools::document()` also affects another field in `DESCRIPTION`, which looks like this:
+[^man-4]: Running `devtools::document()` also affects another field in `DESCRIPTION`, which looks like this:
 
         RoxygenNote: 7.2.1
 
     This records which version of roxygen2 was last used in a package, which makes it easier for devtools (and its underlying packages) to make an intelligent guess about when to re-`document()` a package and when to leave well enough alone.
 
-    % Generated by roxygen2: do not edit by hand
-    % Please edit documentation in R/add.R
-    \name{add}
-    \alias{add}
+    \% Generated by roxygen2: do not edit by hand % Please edit documentation in R/add.R \name{add} \alias{add}
+
+    ```{=tex}
     \title{Add together two numbers}
     \usage{
     add(x, y)
@@ -117,6 +113,7 @@ Under the hood, this ultimately calls `roxygen2::roxygenise()`. The example abov
     add(1, 1)
     add(10, 1)
     }
+    ```
 
 If you've used LaTeX before, this should look vaguely familiar since the `.Rd` format is loosely based on LaTeX.
 If you are interested in the `.Rd` format, you can read more in [Writing R Extensions](https://cran.r-project.org/doc/manuals/R-exts.html#Rd-format).
@@ -133,7 +130,7 @@ knitr::include_graphics("images/man-add.png", dpi = 220)
 
 The default help-seeking process looks inside **installed** packages, so to see your package's documentation during development, devtools overrides the usual help functions with modified versions that know to consult the **source** package.
 To activate these overrides, you'll need to run `devtools::load_all()` at least once.
-If it feels like your edits to the roxygen comments aren't having an effect, double check that you have actually regenerated the `.Rd` files with and that you've loaded your package.
+If it feels like your edits to the roxygen comments aren't having an effect, double check that you have actually regenerated the `.Rd` files with `devtools::document()` and that you've loaded your package.
 
 To summarize, there are four steps in the basic roxygen2 workflow:
 
@@ -149,18 +146,18 @@ To summarize, there are four steps in the basic roxygen2 workflow:
 
 Now that you understand the basic workflow, we'll go into more detail about the syntax.
 roxygen2 comments start with `#'` and all the roxygen2 comments preceding a function are collectively called a **block**.
-Blocks are broken up by **tags**, which look like `@tagName tagValue`, and the content of a tag extends from the end of the tag name to the start of the next tag[^man-6].
-A block can contain text before the first tag which is called the **introduction**. By default, each block generates a single documentation **topic**, i.e. a single `.Rd` file[^man-7] in the `man/` directory
+Blocks are broken up by **tags**, which look like `@tagName tagValue`, and the content of a tag extends from the end of the tag name to the start of the next tag[^man-5].
+A block can contain text before the first tag which is called the **introduction**. By default, each block generates a single documentation **topic**, i.e. a single `.Rd` file[^man-6] in the `man/` directory
 .
 
-[^man-6]: Or the end of the block, if it's the last tag.
+[^man-5]: Or the end of the block, if it's the last tag.
 
-[^man-7]: The name of the file is automatically derived from the object you're documenting.
+[^man-6]: The name of the file is automatically derived from the object you're documenting.
 
 Throughout this chapter we'll show you roxygen2 comments from real tidyverse packages, focusing on stringr, since the functions there tend to be fairly straightforward, leading to documentation that's understandable with relatively little context.
-Here's a simple first example: the documentation for `stringr::str_unique()`[^man-8].
+Here's a simple first example: the documentation for `stringr::str_unique()`[^man-7].
 
-[^man-8]: This may not perfectly reflect the current documentation for `str_unique()`.
+[^man-7]: This may not perfectly reflect the current documentation for `str_unique()`.
     Among other reasons, we're suppressing the use of roxygen features that are introduced later in this chapter.
 
 ```{r}
@@ -199,6 +196,9 @@ You can get more roxygen2 style advice in the [tidyverse style guide](https://st
 It can be aggravating to manually manage the line length of roxygen comments, so be sure to try out *Code \> Reflow Comment* (Ctrl/Cmd+Shift+/).
 :::
 
+Note also that the order in which tags appear in your roxygen comments (or even in handwritten `.Rd` files) does not dictate the order in rendered documentation.
+The order of presentation is determined by tooling within base R.
+
 The following sections go into more depth for the most important tags.
 We start with the introduction, which provides the title, description, and details.
 Then we cover the inputs (the function arguments), outputs (the return value), and examples.
@@ -214,7 +214,9 @@ Either something unique to how roxygen2 works or something that comes up so much
 
 -   square brackets for auto-linking functions
 
--   maybe: the `vignette()` thing
+-   The text `vignette("rd-other", package = "roxygen2")` is actually a great example of autolinking in the devtools ecosystem.
+    This is literally the R code you would execute in the console to navigate to a specific vignette within the roxygen2 package.
+    But in many rendered contexts, it automatically becomes a hyperlink to that same vignette in roxygen2's pkgdown website.
 
 -   maybe: bullet lists
 
@@ -253,9 +255,9 @@ But they provide a useful negative case study:
 There's a lot of repetition ("pattern", "from a string") and the verb used for the function name is repeated in the title, so if you don't understand the function already, the title seems unlikely to help much.
 Hopefully we'll have improved those titles by the time you read this!
 
-In contrast, these titles from dplyr are much better[^man-9]:
+In contrast, these titles from dplyr are much better[^man-8]:
 
-[^man-9]: Like all the examples, these might have changed a bit since we wrote this book, because we're constantly striving to do better.
+[^man-8]: Like all the examples, these might have changed a bit since we wrote this book, because we're constantly striving to do better.
     You might compare what's in the book to what we now use, and consider if you think if it's an improvement.
 
 -   `mutate()`: Create, modify, and delete columns
@@ -299,9 +301,9 @@ Here's a two-paragraph `@description` from `stringr::str_view()`:
 #' possible, matches and unusual whitespace are coloured blue and `NA`s red.
 ```
 
-Here's another example from `stringr::str_like()`, which has a bullet list in `@description`:[^man-10]
+Here's another example from `stringr::str_like()`, which has a bullet list in `@description`:[^man-9]
 
-[^man-10]: The markdown parser used by roxygen2 does not actually require an empty line before lists, but it's allowed and some people prefer that style.
+[^man-9]: The markdown parser used by roxygen2 does not actually require an empty line before lists, but it's allowed and some people prefer that style.
 
 ```{r}
 #' Detect a pattern in the same way as `SQL`'s `LIKE` operator
@@ -326,10 +328,10 @@ Once you've re-derived what the function does, you'll be able to write a better 
 
 The `@details` are just any additional details or explanation that you think your function needs.
 Most functions don't need details, but some functions need a lot.
-If you have a lot of information to convey, it's a good idea to use informative markdown headings to break the details up into manageable sections[^man-11].
+If you have a lot of information to convey, it's a good idea to use informative markdown headings to break the details up into manageable sections[^man-10].
 Here's an example from `dplyr::mutate()`. We've elided some of the details to keep this example short, but you should still get a sense of how we used headings to break up the content in to skimmable chunks:
 
-[^man-11]: In older code, you might see the use of `@section title:` which was used to create sections before roxygen2 had full markdown support.
+[^man-10]: In older code, you might see the use of `@section title:` which was used to create sections before roxygen2 had full markdown support.
     If you've used these in the past, you can now turn them into markdown headings.
 
 ```{r}
@@ -487,11 +489,11 @@ Beware of spurious diffs introduced by contributors who run `devtools::document(
 ## Return value
 
 A function's output is as important as its inputs.
-Documenting the output is the job of the `@returns`[^man-12] tag.
+Documenting the output is the job of the `@returns`[^man-11] tag.
 Here the priority is to describe the overall "shape" of the output, i.e. what sort of object it is, and its dimensions (if that makes sense).
 For example, if your function returns a vector you might describe its type and length, or if your function returns a data frame you might describe the names and types of the columns and the expected number of rows.
 
-[^man-12]: For historical reasons, you can also use `@return`, but we now favor `@returns` because it reads more naturally.
+[^man-11]: For historical reasons, you can also use `@return`, but we now favor `@returns` because it reads more naturally.
 
 The `@returns` documentation for functions in stringr is straightforward because almost all functions return some type of vector with the same length as one of the inputs.
 For example, here's how `stringr::str_like()` describes its output:
@@ -500,10 +502,10 @@ For example, here's how `stringr::str_like()` describes its output:
 #' @returns A logical vector the same length as `string`.
 ```
 
-A more complicated case is the joint documentation for `stringr::str_locate()` and `str_locate_all()`[^man-13].
+A more complicated case is the joint documentation for `stringr::str_locate()` and `str_locate_all()`[^man-12].
 `str_locate()` returns an integer matrix, and `str_locate_all()` returns a list of matrices, so the text needs to describe what determines the rows and columns.
 
-[^man-13]: We'll come back how to document multiple functions in one topic in @sec-man-multiple-functions.
+[^man-12]: We'll come back how to document multiple functions in one topic in @sec-man-multiple-functions.
 
 ```{r}
 #' @returns
@@ -679,7 +681,7 @@ There are two basic options:
     #' try(bind_cols(tibble(x = 1:3), tibble(y = 1:2)))
     ```
 
--   You can wrap the code in `\dontrun{}`[^man-14], so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
+-   You can wrap the code in `\dontrun{}`[^man-13], so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
 
     ```{r}
     #' # Row sizes must be compatible when column-binding
@@ -688,7 +690,7 @@ There are two basic options:
     #' }
     ```
 
-[^man-14]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommend it because CRAN sets a special flag that causes the code to be executed anyway.
+[^man-13]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommend it because CRAN sets a special flag that causes the code to be executed anyway.
 
 We generally recommend using `try()` so that the reader can see an example of the error in action.
 
@@ -725,10 +727,10 @@ In the past, we recommended only using code from suggested packages inside a blo
 
 We no longer believe that approach is a good idea, because:
 
--   Our policy is to expect that suggested packages are installed when running `R CMD check`[^man-15] and this informs what we do in examples, tests, and vignettes.
+-   Our policy is to expect that suggested packages are installed when running `R CMD check`[^man-14] and this informs what we do in examples, tests, and vignettes.
 -   The cost of putting example code inside `{ ... }` is high: you can no longer see intermediate results, such as when the examples are rendered in the package's website. The cost of a package not being installed is low: users can usually recognize the associated error and resolve it themselves, i.e. by installing the missing package.
 
-[^man-15]: This is certainly true for CRAN and is true in most other automated checking scenarios, such as our GitHub Actions workflows.
+[^man-14]: This is certainly true for CRAN and is true in most other automated checking scenarios, such as our GitHub Actions workflows.
 
 In other cases, your example code may depend on something other than a package.
 For example, if your examples talk to a web API, you probably only want to run them for an authenticated user, and never want such code to run on CRAN.
