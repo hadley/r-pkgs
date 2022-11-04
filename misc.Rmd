@@ -27,11 +27,11 @@ Here are some top-level directories you might encounter in an R source package, 
     This includes a few special files, like the `CITATION`, described below.
 
 -   `tools/`: auxiliary files needed during configuration, usually found in the company of a `configure` script.
-    We discuss this more below.
+    We discuss this more below in @sec-misc-tools.
 
 -   `demo/`: for package demos.
     We regard demos as a legacy phenomenon, whose goals are now better met by vignettes (@sec-vignettes).
-    For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that's more visible, e.g. in `README.Rmd` or in vignettes.
+    For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that's more visible, e.g. in `README.Rmd`  (@sec-readme) or in vignettes (@sec-vignettes).
     These other locations offer other advantages, such as making sure that the code is exercised regularly.
     This is not true of actual demos, leaving them vulnerable to rot.
 
@@ -41,7 +41,7 @@ Here are some top-level directories you might encounter in an R source package, 
 
 -   `po/`: translations for messages.
     This is useful, but beyond the scope of this book.
-    See the [Internationalization](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization) chapter of "Writing R extensions" for more details.
+    See the [Internationalization](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization) chapter of "Writing R extensions" and the [potools package](https://michaelchirico.github.io/potools/index.html) for more details.
 
 ## Installed files {#inst}
 
@@ -54,8 +54,6 @@ In most cases, this prevents you from having a malformed package.
 And even though some of the above directories are technically allowed, they can be an unnecessary source of confusion.
 
 Here are some of the most common files and folders found in `inst/`:
-
--   `inst/AUTHORS` and `inst/COPYRIGHTS`: If the authorship or copyright of a package is particularly complex, you can use these plain text files to provide more information.
 
 -   `inst/CITATION`: how to cite the package, see below for details.
 
@@ -93,32 +91,31 @@ cat(citation, sep = "\n")
 You can call `usethis::use_citation()` to initiate this file and fill in your details.
 Read the `?bibentry` help topic for more details.
 
-## Configuration tools
+## Configuration tools {#sec-misc-tools}
 
-If a package has a configuration script (`configure` on Unix-alikes, `configure.win` on Windows), it is executed as the first step by `R CMD  INSTALL`. And if the configuration script needs auxiliary files, those should be located in the `tools/` directory.
+If a package has a configuration script (`configure` on Unix-alikes, `configure.win` on Windows), it is executed as the first step by `R CMD  INSTALL`. This is typically associated with a package that has a `src/` subdirectory containing C/C++ code and the `configure` script is needed at compile time.
+If that script needs auxiliary files, those should be located in the `tools/` directory.
 The scripts below `tools/` can have an effect on the installed package, but the contents of `tools/` will not ultimately be present in the installed package.
-In any case, this is mostly (but not solely) relevant to packages containing compiled code, which is beyond the scope of this book.
+In any case, this is mostly (but not solely) relevant to packages with compiled code, which is beyond the scope of this book.
 
 We bring this up because, in practice, some packages use the `tools/` directory for a different but related purpose.
 Some packages have periodic maintenance tasks for which it is helpful to record detailed instructions.
 For example, many packages embed some sort of external resource, e.g. code or data:
 
--   Source code and headers for an embedded third party C/C++ library
+-   Source code and headers for an embedded third party C/C++ library.
 
--   Web toolkits
+-   Web toolkits.
 
--   R code that's inlined (as opposed to imported)
+-   R code that's inlined (as opposed to imported).
 
--   Specification for a web API
+-   Specification for a web API.
 
--   Colour palettes, styles, and themes
-
--   Database of time zones
+-   Colour palettes, styles, and themes.
 
 These external assets are also usually evolving over time, so they need to be re-ingested on a regular basis.
 This makes it particularly rewarding to implement such housekeeping programmatically.
 
-So this is a second, unofficial use of the `tools/` directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a `configure` script and they list `tools/` in `.Rbuildignore`, meaning that these scripts are not included in the package bundle.
+This is the second, unofficial use of the `tools/` directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a `configure` script and they list `tools/` in `.Rbuildignore`, meaning that these scripts are not included in the package bundle.
 These scripts are maintained in the source package for developer convenience, but are never shipped with the package.
 
 This practice is closely related to our recommendation to store the instructions for the creation of package data in `data-raw/` (section @sec-data-data-raw) and to record the method of construction for any test fixtures (section @sec-testing-advanced-concrete-fixture).
