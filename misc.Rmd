@@ -2,56 +2,69 @@
 
 ```{r, echo = FALSE}
 source("common.R")
-status("restructuring")
+status("polishing")
 ```
 
 ## Introduction
 
-There are five other directories that are valid top-level directories.
-They are rarely used:
+The first two chapters in this part cover the two most obvious things that people distribute via an R package: functions (@sec-r) and data (\@sec-data).
+But that's not all it takes to make an R package.
+There are other package components that are either required, such as a `DESCRIPTION` file, or highly recommended, such as tests and documentation.
+
+The next few parts of the book are organized around important concepts: dependencies, testing, and documentation.
+But before we dig in to those topics, this chapter demystifies some package parts that are not needed in every package, but that are nice to be aware of.
+
+## Other directories
+
+Here are some top-level directories you might encounter in an R source package, in rough order of importance and frequency of use:
+
+-   `src/`: source and header files for compiled code, most often C and C++.
+    This is an important technique that is used to make R packages more performant and to unlock the power of external libraries for R users.
+    As of the second edition, the book no longer covers this topic, since a truly useful treatment of compiled code requires more space than we can give it here.
+    The tidyverse generally uses the [cpp11 package](https://cpp11.r-lib.org) to connect C++ to R; most other packages use [Rcpp](https://www.rcpp.org), the most well-established package for integrating R and C++.
 
 -   `inst/`: for arbitrary additional files that you want include in your package.
     This includes a few special files, like the `CITATION`, described below.
 
+-   `tools/`: auxiliary files needed during configuration, usually found in the company of a `configure` script.
+    We discuss this more below in @sec-misc-tools.
+
 -   `demo/`: for package demos.
-    These were useful prior to the introduction of vignettes, but are no longer recommended.
-    See below.
+    We regard demos as a legacy phenomenon, whose goals are now better met by vignettes (@sec-vignettes).
+    For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that's more visible, e.g. in `README.Rmd`  (@sec-readme) or in vignettes (@sec-vignettes).
+    These other locations offer other advantages, such as making sure that the code is exercised regularly.
+    This is not true of actual demos, leaving them vulnerable to rot.
 
 -   `exec/`: for executable scripts.
     Unlike files placed in other directories, files in `exec/` are automatically flagged as executable.
+    Empirically, to the extent that R package are shipping scripts for external interpreters, the `inst/` directory seems to be preferred location these days.
 
 -   `po/`: translations for messages.
-    This is useful but beyond the scope of this book.
-    See the [Internationalization](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization) chapter of "R extensions" for more details.
-
--   `tools/`: auxiliary files needed during configuration, or for sources that need to generate scripts.
+    This is useful, but beyond the scope of this book.
+    See the [Internationalization](https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization) chapter of "Writing R extensions" and the [potools package](https://michaelchirico.github.io/potools/index.html) for more details.
 
 ## Installed files {#inst}
 
-When a package is installed, everything in `inst/` is copied into the top-level package directory.
-In some sense `inst/` is the opposite of `.Rbuildignore` - where `.Rbuildignore` lets you remove arbitrary files and directories from the top level, `inst/` lets you add them.
-You are free to put anything you like in `inst/` with one caution: because `inst/` is copied into the top-level directory, you should never use a subdirectory with the same name as an existing directory.
-This means that you should avoid `inst/build`, `inst/data`, `inst/demo`, `inst/exec`, `inst/help`, `inst/html`, `inst/inst`, `inst/libs`, `inst/Meta`, `inst/man`, `inst/po`, `inst/R`, `inst/src`, `inst/tests`, `inst/tools` and `inst/vignettes`.
+When a package is installed, everything in `inst/` is copied into the top-level directory of the installed package.
+In some sense `inst/` is the opposite of `.Rbuildignore` - where `.Rbuildignore` lets you remove arbitrary files and directories from the built package, `inst/` lets you add them.
 
-This chapter discusses the most common files found in `inst/`:
+You are free to put anything you like in `inst/` with one caution: because `inst/` is copied into the top-level directory, don't create a subdirectory that collides with any of the directories that make up the official structure of an R package.
+We recommend avoiding directories with special significance in either the source or installed form of a package, such as: `inst/data`, `inst/help`, `inst/html`, `inst/libs`, `inst/man`, `inst/Meta`, `inst/R`, `inst/src`, `inst/tests`, `inst/tools`, and `inst/vignettes`.
+In most cases, this prevents you from having a malformed package.
+And even though some of the above directories are technically allowed, they can be an unnecessary source of confusion.
 
--   `inst/AUTHOR` and `inst/COPYRIGHT`.
-    If the copyright and authorship of a package is particularly complex, you can use plain text files, `inst/COPYRIGHTS` and `inst/AUTHORS`, to provide more information.
+Here are some of the most common files and folders found in `inst/`:
 
 -   `inst/CITATION`: how to cite the package, see below for details.
 
--   `inst/docs`: This is an older convention for vignettes, and should be avoided in modern packages.
-
 -   `inst/extdata`: additional external data for examples and vignettes.
-    See @sec-data-extdata for more detail.
+    See section @sec-data-extdata for more detail.
 
--   `inst/java`, `inst/python` etc.
-    See below.
-
-To find a file in `inst/` from code use `system.file()`.
-For example, to find `inst/extdata/mydata.csv`, you'd call `system.file("extdata", "mydata.csv", package = "mypackage")`.
-Note that you omit the `inst/` directory from the path.
-This will work if the package is installed, or if it's been loaded with `devtools::load_all()`.
+What if you need a path to the file at `inst/foo` to use in, e.g., the code below `R/` or in your documentation?
+The default solution is to use `system.file("foo", package = "yourpackage")`.
+But this presents a workflow dilemma: When you're developing your package, you engage with it in its source form (`inst/foo`), but your users engage with its installed form (`/foo`).
+Happily, devtools provides a shim for `system.file()` that is activated by `load_all()`.
+Section @sec-data-system-file covers this in more depth and includes an interesting alternative, `fs::path_package()` .
 
 ### Package citation {#inst-citation}
 
@@ -65,69 +78,44 @@ citation()
 Calling it with a package name tells you how to cite that package:
 
 ```{r}
-citation("lubridate")
+citation("tidyverse")
 ```
 
-To customise the citation for your package, add a `inst/CITATION` that looks like this:
+The associated `inst/CITATION` file looks like this:
 
 ```{r, echo = FALSE, comment = ""}
-citation <- readLines(system.file("CITATION", package = "lubridate"))
+citation <- readLines(system.file("CITATION", package = "tidyverse"))
 cat(citation, sep = "\n")
 ```
 
-You need to create `inst/CITATION`.
-As you can see, it's pretty simple: you only need to learn one new function, `citEntry()`.
-The most important arguments are:
+You can call `usethis::use_citation()` to initiate this file and fill in your details.
+Read the `?bibentry` help topic for more details.
 
--   `entry`: the type of citation, "Article", "Book", "PhDThesis" etc.
+## Configuration tools {#sec-misc-tools}
 
--   The standard bibliographic information like `title`, `author` (which should be a `personList()`), `year`, `journal`, `volume`, `issue`, `pages`, ...
+If a package has a configuration script (`configure` on Unix-alikes, `configure.win` on Windows), it is executed as the first step by `R CMD  INSTALL`. This is typically associated with a package that has a `src/` subdirectory containing C/C++ code and the `configure` script is needed at compile time.
+If that script needs auxiliary files, those should be located in the `tools/` directory.
+The scripts below `tools/` can have an effect on the installed package, but the contents of `tools/` will not ultimately be present in the installed package.
+In any case, this is mostly (but not solely) relevant to packages with compiled code, which is beyond the scope of this book.
 
-A complete list of arguments can be found in `?bibentry`.
+We bring this up because, in practice, some packages use the `tools/` directory for a different but related purpose.
+Some packages have periodic maintenance tasks for which it is helpful to record detailed instructions.
+For example, many packages embed some sort of external resource, e.g. code or data:
 
-Use `citHeader()` and `citFooter()` to add additional exhortations.
+-   Source code and headers for an embedded third party C/C++ library.
 
-### Other languages {#sec-inst-other-langs}
+-   Web toolkits.
 
-Sometimes a package contains useful supplementary scripts in other programming languages.
-Generally, you should avoid these, because it adds an additional extra dependency, but it may be useful when wrapping substantial amounts of code from another language.
-For example, [gdata](https://cran.r-project.org/web/packages/gdata/index.html) wraps the Perl module [Spreadsheet::ParseExcel](https://search.cpan.org/~dougw/Spreadsheet-ParseExcel-0.65/) to read excel files into R.
+-   R code that's inlined (as opposed to imported).
 
-The convention is to put scripts of this nature into a subdirectory of `inst/`, `inst/python`, `inst/perl`, `inst/ruby` etc.
-If these scripts are essential to your package, make sure you also add the appropriate programming language to the `SystemRequirements` field in the `DESCRIPTION`.
-(This field is for human reading so don't worry about exactly how you specify it.)
+-   Specification for a web API.
 
-Java is a special case and the best place to learn more is the documentation of the rJava package (<http://www.rforge.net/rJava/>).
+-   Colour palettes, styles, and themes.
 
-## Demos {#demo}
+These external assets are also usually evolving over time, so they need to be re-ingested on a regular basis.
+This makes it particularly rewarding to implement such housekeeping programmatically.
 
-A demo is an `.R` file that lives in `demo/`.
-Demos are like examples but tend to be longer.
-Instead of focussing on a single function, they show how to weave together multiple functions to solve a problem.
+This is the second, unofficial use of the `tools/` directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a `configure` script and they list `tools/` in `.Rbuildignore`, meaning that these scripts are not included in the package bundle.
+These scripts are maintained in the source package for developer convenience, but are never shipped with the package.
 
-You list and access demos with `demo()`:
-
--   Show all available demos: `demo()`.
--   Show all demos in a package: `demo(package = "httr")`.
--   Run a specific demo: `demo("oauth1-twitter", package = "httr")`.
--   Find a demo: `system.file("demo", "oauth1-twitter.R", package = "httr")`.
-
-Each demo must be listed in `demo/00Index` in the following form: `demo-name   Demo description`.
-The demo name is the name of the file without the extension, e.g. `demo/my-demo.R` becomes `my-demo`.
-
-By default the demo asks for human input for each plot: "Hit <Return> to see next plot:".
-This behaviour can be overridden by adding `devAskNewPage(ask = FALSE)` to the demo file.
-You can add pauses by adding: `readline("press any key to continue")`.
-
-Generally, I do not recommend using demos.
-Instead, consider writing a vignette:
-
--   Demos are not automatically tested by `R CMD check`.
-    This means that they can easily break without your knowledge.
-
--   Vignettes have both input and output, so readers can see the results without having to run the code themselves.
-
--   Longer demos need to mingle code with explanation, and RMarkdown is better suited to that task than R comments.
-
--   Vignettes are listed on the CRAN package page.
-    This makes it easier for new users to discover them.
+This practice is closely related to our recommendation to store the instructions for the creation of package data in `data-raw/` (section @sec-data-data-raw) and to record the method of construction for any test fixtures (section @sec-testing-advanced-concrete-fixture).
