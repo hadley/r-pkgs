@@ -354,7 +354,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><a href="#inst-citation" id="toc-inst-citation" class="nav-link" data-scroll-target="#inst-citation"><span class="toc-section-number">9.3.1</span>  Package citation</a></li>
   </ul>
 </li>
-  <li><a href="#configuration-tools" id="toc-configuration-tools" class="nav-link" data-scroll-target="#configuration-tools"><span class="toc-section-number">9.4</span>  Configuration tools</a></li>
+  <li><a href="#sec-misc-tools" id="toc-sec-misc-tools" class="nav-link" data-scroll-target="#sec-misc-tools"><span class="toc-section-number">9.4</span>  Configuration tools</a></li>
   </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/misc.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
@@ -398,17 +398,16 @@ Second edition
 <ul>
 <li><p><code>src/</code>: source and header files for compiled code, most often C and C++. This is an important technique that is used to make R packages more performant and to unlock the power of external libraries for R users. As of the second edition, the book no longer covers this topic, since a truly useful treatment of compiled code requires more space than we can give it here. The tidyverse generally uses the <a href="https://cpp11.r-lib.org">cpp11 package</a> to connect C++ to R; most other packages use <a href="https://www.rcpp.org">Rcpp</a>, the most well-established package for integrating R and C++.</p></li>
 <li><p><code>inst/</code>: for arbitrary additional files that you want include in your package. This includes a few special files, like the <code>CITATION</code>, described below.</p></li>
-<li><p><code>tools/</code>: auxiliary files needed during configuration, usually found in the company of a <code>configure</code> script. We discuss this more below.</p></li>
-<li><p><code>demo/</code>: for package demos. We regard demos as a legacy phenomenon, whose goals are now better met by vignettes (<a href="vignettes.html"><span>Chapter&nbsp;17</span></a>). For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that’s more visible, e.g.&nbsp;in <code>README.Rmd</code> or in vignettes. These other locations offer other advantages, such as making sure that the code is exercised regularly. This is not true of actual demos, leaving them vulnerable to rot.</p></li>
+<li><p><code>tools/</code>: auxiliary files needed during configuration, usually found in the company of a <code>configure</code> script. We discuss this more below in <a href="#sec-misc-tools"><span>Section&nbsp;9.4</span></a>.</p></li>
+<li><p><code>demo/</code>: for package demos. We regard demos as a legacy phenomenon, whose goals are now better met by vignettes (<a href="vignettes.html"><span>Chapter&nbsp;17</span></a>). For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that’s more visible, e.g.&nbsp;in <code>README.Rmd</code> (<a href="other-markdown.html#sec-readme"><span>Section&nbsp;18.2</span></a>) or in vignettes (<a href="vignettes.html"><span>Chapter&nbsp;17</span></a>). These other locations offer other advantages, such as making sure that the code is exercised regularly. This is not true of actual demos, leaving them vulnerable to rot.</p></li>
 <li><p><code>exec/</code>: for executable scripts. Unlike files placed in other directories, files in <code>exec/</code> are automatically flagged as executable. Empirically, to the extent that R package are shipping scripts for external interpreters, the <code>inst/</code> directory seems to be preferred location these days.</p></li>
-<li><p><code>po/</code>: translations for messages. This is useful, but beyond the scope of this book. See the <a href="https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization">Internationalization</a> chapter of “Writing R extensions” for more details.</p></li>
+<li><p><code>po/</code>: translations for messages. This is useful, but beyond the scope of this book. See the <a href="https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization">Internationalization</a> chapter of “Writing R extensions” and the <a href="https://michaelchirico.github.io/potools/index.html">potools package</a> for more details.</p></li>
 </ul></section><section id="inst" class="level2" data-number="9.3"><h2 data-number="9.3" class="anchored" data-anchor-id="inst">
 <span class="header-section-number">9.3</span> Installed files</h2>
 <p>When a package is installed, everything in <code>inst/</code> is copied into the top-level directory of the installed package. In some sense <code>inst/</code> is the opposite of <code>.Rbuildignore</code> - where <code>.Rbuildignore</code> lets you remove arbitrary files and directories from the built package, <code>inst/</code> lets you add them.</p>
 <p>You are free to put anything you like in <code>inst/</code> with one caution: because <code>inst/</code> is copied into the top-level directory, don’t create a subdirectory that collides with any of the directories that make up the official structure of an R package. We recommend avoiding directories with special significance in either the source or installed form of a package, such as: <code>inst/data</code>, <code>inst/help</code>, <code>inst/html</code>, <code>inst/libs</code>, <code>inst/man</code>, <code>inst/Meta</code>, <code>inst/R</code>, <code>inst/src</code>, <code>inst/tests</code>, <code>inst/tools</code>, and <code>inst/vignettes</code>. In most cases, this prevents you from having a malformed package. And even though some of the above directories are technically allowed, they can be an unnecessary source of confusion.</p>
 <p>Here are some of the most common files and folders found in <code>inst/</code>:</p>
 <ul>
-<li><p><code>inst/AUTHORS</code> and <code>inst/COPYRIGHTS</code>: If the authorship or copyright of a package is particularly complex, you can use these plain text files to provide more information.</p></li>
 <li><p><code>inst/CITATION</code>: how to cite the package, see below for details.</p></li>
 <li><p><code>inst/extdata</code>: additional external data for examples and vignettes. See section <a href="data.html#sec-data-extdata"><span>Section&nbsp;8.4</span></a> for more detail.</p></li>
 </ul>
@@ -484,21 +483,20 @@ Second edition
 )</code></pre>
 </div>
 <p>You can call <code><a href="https://usethis.r-lib.org/reference/use_citation.html">usethis::use_citation()</a></code> to initiate this file and fill in your details. Read the <code><a href="https://rdrr.io/r/utils/bibentry.html">?bibentry</a></code> help topic for more details.</p>
-</section></section><section id="configuration-tools" class="level2" data-number="9.4"><h2 data-number="9.4" class="anchored" data-anchor-id="configuration-tools">
+</section></section><section id="sec-misc-tools" class="level2" data-number="9.4"><h2 data-number="9.4" class="anchored" data-anchor-id="sec-misc-tools">
 <span class="header-section-number">9.4</span> Configuration tools</h2>
-<p>If a package has a configuration script (<code>configure</code> on Unix-alikes, <code>configure.win</code> on Windows), it is executed as the first step by <code>R CMD  INSTALL</code>. And if the configuration script needs auxiliary files, those should be located in the <code>tools/</code> directory. The scripts below <code>tools/</code> can have an effect on the installed package, but the contents of <code>tools/</code> will not ultimately be present in the installed package. In any case, this is mostly (but not solely) relevant to packages containing compiled code, which is beyond the scope of this book.</p>
+<p>If a package has a configuration script (<code>configure</code> on Unix-alikes, <code>configure.win</code> on Windows), it is executed as the first step by <code>R CMD  INSTALL</code>. This is typically associated with a package that has a <code>src/</code> subdirectory containing C/C++ code and the <code>configure</code> script is needed at compile time. If that script needs auxiliary files, those should be located in the <code>tools/</code> directory. The scripts below <code>tools/</code> can have an effect on the installed package, but the contents of <code>tools/</code> will not ultimately be present in the installed package. In any case, this is mostly (but not solely) relevant to packages with compiled code, which is beyond the scope of this book.</p>
 <p>We bring this up because, in practice, some packages use the <code>tools/</code> directory for a different but related purpose. Some packages have periodic maintenance tasks for which it is helpful to record detailed instructions. For example, many packages embed some sort of external resource, e.g.&nbsp;code or data:</p>
 <ul>
-<li><p>Source code and headers for an embedded third party C/C++ library</p></li>
-<li><p>Web toolkits</p></li>
-<li><p>R code that’s inlined (as opposed to imported)</p></li>
-<li><p>Specification for a web API</p></li>
-<li><p>Colour palettes, styles, and themes</p></li>
-<li><p>Database of time zones</p></li>
+<li><p>Source code and headers for an embedded third party C/C++ library.</p></li>
+<li><p>Web toolkits.</p></li>
+<li><p>R code that’s inlined (as opposed to imported).</p></li>
+<li><p>Specification for a web API.</p></li>
+<li><p>Colour palettes, styles, and themes.</p></li>
 </ul>
 <p>These external assets are also usually evolving over time, so they need to be re-ingested on a regular basis. This makes it particularly rewarding to implement such housekeeping programmatically.</p>
-<p>So this is a second, unofficial use of the <code>tools/</code> directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a <code>configure</code> script and they list <code>tools/</code> in <code>.Rbuildignore</code>, meaning that these scripts are not included in the package bundle. These scripts are maintained in the source package for developer convenience, but are never shipped with the package.</p>
-<p>This practice is closely related to our recommendation to of store the instructions for the creation of package data in <code>data-raw/</code> (section <a href="data.html#sec-data-data-raw"><span>Section&nbsp;8.2.1</span></a>) and to record the method of construction for any test fixtures (section <a href="testing-advanced.html#sec-testing-advanced-concrete-fixture"><span>Section&nbsp;15.1.3</span></a>).</p>
+<p>This is the second, unofficial use of the <code>tools/</code> directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a <code>configure</code> script and they list <code>tools/</code> in <code>.Rbuildignore</code>, meaning that these scripts are not included in the package bundle. These scripts are maintained in the source package for developer convenience, but are never shipped with the package.</p>
+<p>This practice is closely related to our recommendation to store the instructions for the creation of package data in <code>data-raw/</code> (section <a href="data.html#sec-data-data-raw"><span>Section&nbsp;8.2.1</span></a>) and to record the method of construction for any test fixtures (section <a href="testing-advanced.html#sec-testing-advanced-concrete-fixture"><span>Section&nbsp;15.1.3</span></a>).</p>
 
 
 </section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
