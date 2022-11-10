@@ -96,39 +96,55 @@ The default template contains the following information:
       %\VignetteEncoding{UTF-8}
     ---
 
-This metadata is written in [yaml](https://yaml.org/), a format designed to be both human and computer readable.
-The basics of the syntax is much like the `DESCRIPTION` file, where each line consists of a field name, a colon, then the value of the field.
+This metadata is written in [YAML](https://yaml.org/), a format designed to be both human and computer readable.
+YAML frontmatter is a common feature of RMarkdown files.
+The syntax is much like that of the `DESCRIPTION` file, where each line consists of a field name, a colon, then the value of the field.
 The one special YAML feature we're using here is `>`.
 It indicates the following lines of text are plain text and shouldn't use any special YAML features.
 
-The fields are:
+The default vignette template uses these fields:
 
--   `title` and `description`.
-    If you change the title, you must also change the `VignetteIndexEntry{}` described below.
+-   `title`: this is the title that appears in the vignette.
+    If you change it, make sure to make the same change to `VignetteIndexEntry{}`; they should be the same.
 
--   `author`: we don't use this unless the vignette author is different to the package author.
-
--   `date`: don't recommend this either as it's very easy to forget to update.
-    You could use `Sys.date()`, but this shows when the vignette was built, which might be very different to when it was last updated.
-
--   Output: this tells rmarkdown which output formatter to use.
-    There are many options that are useful for regular reports (including html, pdf, slideshows, ...) but `rmarkdown::html_vignette` has been specifically designed to work well inside packages.
+-   `output`: this specifies the output format.
+    There are many options that are useful for regular reports (including html, pdf, slideshows, etc.), but `rmarkdown::html_vignette` has been specifically designed to work well inside packages.
     See `?rmarkdown::html_vignette` for more details.
 
--   Vignette: this contains a special block of metadata needed by R.
-    Here, you can see the legacy of LaTeX vignettes: the metadata looks like LaTeX commands.
-    You'll need to modify the `\VignetteIndexEntry` to provide the title of your vignette as you'd like it to appear in the vignette index.
+-   `vignette`: this is a block of special metadata needed by R.
+    Here, you can see the legacy of LaTeX vignettes: the metadata looks like LaTeX comments.
+    The only entry you might need to modify is the `\VignetteIndexEntry`.
+    This is how the vignette appears in the vignette index and it should match the `title`.
     Leave the other two lines as is.
-    They tell R to use `knitr` to process the file, and that the file is encoded in UTF-8 (the only encoding you should ever use to write vignettes).
+    They tell R to use `knitr` to process the file, and that the file is encoded in UTF-8 (the only encoding you should ever use for a vignette).
 
-Also includes block to set up some standard options:
+We generally don't use these fields, but you will see them in other packages:
 
-    ``` {r, echo = FALSE}
-    knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-    ```
+-   `author`: we don't use this unless the vignette is written by someone not already credited as a package author.
 
-`collapse = TRUE` and `comment = "#>"` are my preferred way of displaying code output.
-I usually set these globally by putting the following knitr block at the start of my document.
+-   `date`: we think this usually does more harm than good, since it's very easy to forget to update it.
+    It's tempting to use `Sys.date()`, but that has the opposite problem.
+    In that case, the date will reflect when the vignette was built (i.e. when the package bundle was created) and that can be very different (i.e. much more recent) than when the package and vignette were truly updated.
+
+The draft vignette also includes two R chunks.
+The first one configures our preferred way of displaying code output and looks like this:
+
+````{verbatim}
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+````
+
+The second chunk attaches the package the vignette belongs to.
+
+````{verbatim}
+```{r setup}
+library(yourpackage)
+```
+````
 
 ## Controlling evaluation
 
