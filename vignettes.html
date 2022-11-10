@@ -375,13 +375,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   </div>
   
 
-</header><!--
-Notes re: revision
-
-Maybe can be combined with object documentation? Unifying theme: "Built-in docs". In contrast to "web docs", e.g. pkgdown.
---><div class="cell">
+</header><div class="cell">
 <div class="cell-output-display">
-<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-note callout callout-style-default callout-captioned">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
@@ -391,36 +387,44 @@ Second edition
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete.</p>
+<p>You are reading the work-in-progress second edition of R Packages. This chapter should be readable but is currently undergoing final polishing.</p>
 </div>
 </div>
 </div>
 </div>
 <section id="introduction" class="level2" data-number="17.1"><h2 data-number="17.1" class="anchored" data-anchor-id="introduction">
 <span class="header-section-number">17.1</span> Introduction</h2>
-<p>A vignette is a long-form guide to your package. Function documentation is great if you know the name of the function you need, but it’s useless otherwise. A vignette is like a book chapter or an academic paper: it can describe the problem that your package is designed to solve, and then show the reader how to solve it.</p>
-<p>Many existing packages have vignettes. You can see all the installed vignettes with <code><a href="https://rdrr.io/r/utils/browseVignettes.html">browseVignettes()</a></code>. To see the vignette for a specific package, use the argument, <code>browseVignettes("packagename")</code>. Each vignette provides three things: the original source file, a readable HTML page or PDF, and a file of R code. You can read a specific vignette with <code>vignette(x)</code>, and see its code with <code>edit(vignette(x))</code>. To see vignettes for a package you haven’t installed, look at its CRAN page, e.g., <a href="https://cran.r-project.org/web/packages/dplyr" class="uri">https://cran.r-project.org/web/packages/dplyr</a>.</p>
-<p>In this chapter, we’re going to use RMarkdown to write our vignettes. If you’re not already familiar with RMarkdown you’ll need to learn the basics elsewhere; at good place to start is <a href="https://rmarkdown.rstudio.com/" class="uri">https://rmarkdown.rstudio.com/</a>.</p>
-<p>Older packages can include vignettes written with Sweave, a precursor to RMarkdown. If this describes, your package, I highly recommend switching to RMarkdown.</p>
+<p>A vignette is a long-form guide to your package. Function documentation is great if you know the name of the function you need, but it’s useless otherwise. In contrast, a vignette can be framed around a target problem that your package is designed to solve. The vignette format is perfect for showing a workflow that solves that particular problem, start to finish. Vignettes afford you different opportunities than help topics: you have much more control over the integration of code and prose and it’s a better setting for showing how multiple functions work together.</p>
+<p>Many existing packages have vignettes and you can see all the vignettes associated with your installed packages with <code><a href="https://rdrr.io/r/utils/browseVignettes.html">browseVignettes()</a></code>. To limit that to a particular package, you can specify the package’s name like so: <code>browseVignettes("tidyr")</code>. You can read a specific vignette with the <code><a href="https://rdrr.io/r/utils/vignette.html">vignette()</a></code> function, e.g.&nbsp;<code><a href="https://tidyr.tidyverse.org/articles/rectangle.html">vignette("rectangle", package = "tidyr")</a></code>. To see vignettes for a package that you haven’t installed, look at the “Vignettes” listing on its CRAN page, e.g.&nbsp;<a href="https://cran.r-project.org/web/packages/tidyr/index.html" class="uri">https://cran.r-project.org/web/packages/tidyr/index.html</a>.</p>
+<p>However, we much prefer to discover and read vignettes from a package’s website, which is the topic of <a href="website.html"><span>Chapter&nbsp;19</span></a><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Compare the above to what it feels like to access tidyr’s vignettes from its website: <a href="https://tidyr.tidyverse.org/articles/index.html" class="uri">https://tidyr.tidyverse.org/articles/index.html</a>. A pkgdown website presents all of the documentation of a package in a cohesive, interlinked way that makes it more navigable and useful. This chapter is ostensibly about vignettes, but the way we do things is heavily influenced by how those vignettes fit into in a pkgdown website.</p>
+<p>In this book, we’re going to use RMarkdown to write our vignettes, just as we did for function documentation in <a href="man.html#sec-man-key-md-features"><span>Section&nbsp;16.2.3</span></a>.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> If you’re not already familiar with RMarkdown you’ll need to learn the basics elsewhere; a good place to start is <a href="https://rmarkdown.rstudio.com/" class="uri">https://rmarkdown.rstudio.com/</a>.</p>
+<p>In general, we embrace a somewhat circumscribed vignette workflow, i.e.&nbsp;there are many things that base R allows for, that we simply don’t engage in. For example, we treat <code>inst/doc</code><a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> in the same way as <code>man/</code> and <code>NAMESPACE</code>, i.e.&nbsp;as something semi-opaque that is managed by automated tooling and that we don’t modify by hand. Base R’s vignette system allows for various complicated maneuvers that we just try to avoid. In vignettes, more than anywhere else, the answer to “But how do I do X?” is often “Don’t do X”.</p>
 </section><section id="vignette-workflow" class="level2" data-number="17.2"><h2 data-number="17.2" class="anchored" data-anchor-id="vignette-workflow">
 <span class="header-section-number">17.2</span> Vignette workflow</h2>
 <p>To create your first vignette, run:</p>
 <div class="cell">
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/use_vignette.html">use_vignette</a></span><span class="op">(</span><span class="st">"my-vignette"</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>This will:</p>
+<p>This does the following:</p>
 <ol type="1">
-<li><p>Create a <code>vignettes/</code> directory.</p></li>
-<li><p>Add the necessary dependencies to <code>DESCRIPTION</code> (i.e.&nbsp;it adds knitr to the <code>Suggests</code> and <code>VignetteBuilder</code> fields).</p></li>
-<li><p>Draft a vignette, <code>vignettes/my-vignette.Rmd</code>.</p></li>
+<li><p>Creates a <code>vignettes/</code> directory.</p></li>
+<li><p>Adds the necessary dependencies to <code>DESCRIPTION</code>, i.e.&nbsp;adds knitr to the <code>VignetteBuilder</code> field and adds both knitr and rmarkdown to <code>Suggests</code>.</p></li>
+<li><p>Drafts a vignette, <code>vignettes/my-vignette.Rmd</code>.</p></li>
+<li><p>Adds some patterns to <code>.gitignore</code> to ensure that files created as a side effect of previewing your vignettes are kept out of source control (we’ll say more about this later).</p></li>
 </ol>
-<p>The draft vignette has been designed to remind you of the important parts of an R Markdown file. It serves as a useful reference when you’re creating a new vignette. Once you have this file, the workflow is straightforward:</p>
+<p>This draft document has been designed to remind you of the important parts of an R Markdown vignette. It serves as a useful reference when you’re creating a new vignette. You also call <code>use_vignette()</code> to create your second and all subsequent vignettes; it will just skip any setup that’s already been done.</p>
+<p>Once you have the draft vignette, the workflow is straightforward:</p>
 <ol type="1">
-<li><p>Modify the vignette.</p></li>
-<li><p>Press Ctrl/Cmd + Shift + K (or click <img src="images/knit.png" class="img-fluid" width="45">) to knit the vignette and preview the output.</p></li>
-<li><p>This builds with the installed package — but you probably want the dev package. Use <code><a href="https://devtools.r-lib.org/reference/build_rmd.html">devtools::build_rmd()</a></code>.</p></li>
+<li><p>Start adding prose and code chunks to the vignette.</p></li>
+<li>
+<p>Preview the rendered vignette.</p>
+<p>If you’re documenting parts of your package that are under active development, it is important to build the vignette with the <em>current</em> source package. You need to ensure that <code><a href="https://rdrr.io/r/base/library.html">library(yourpackage)</a></code> loads a bleeding edge version of your package. Use <code><a href="https://devtools.r-lib.org/reference/build_rmd.html">devtools::build_rmd()</a></code> in this case. It builds your vignette against a (temporarily installed) development version of your package.</p>
+<p>If it’s OK to build the vignette using the most-recently-installed version of your package, it’s fine to use your usual workflow for rendering <code>.Rmd</code> files. For example, press Ctrl/Cmd + Shift + K (or click <img src="images/knit.png" class="img-fluid" width="45">).</p>
+</li>
+<li><p>Rinse and repeat until the vignette looks the way you want.</p></li>
 </ol>
-<p>The check workflow, <code>Cmd + Shift + E</code>, will run the code in all vignettes. This is a good way to verify that you’ve captured all the needed dependencies.</p>
+<p>If you’re regularly checking your entire package (@sec-r-cmd-check), which we strongly recommend, this will also help to keep your vignettes in good working order. In particular, this will alert you if a vignette makes use of a package that’s not a formal dependency.</p>
+<p>We’re deliberately leaving one workflow issue to discuss below in SOME LATER SECTION. That’s where we’ll clarify the official mechanism for creating the rendered vignettes that appear in your package’s bundled and installed form.</p>
 </section><section id="vignette-metadata" class="level2" data-number="17.3"><h2 data-number="17.3" class="anchored" data-anchor-id="vignette-metadata">
 <span class="header-section-number">17.3</span> Metadata</h2>
 <p>The first few lines of the vignette contain important metadata. The default template contains the following information:</p>
@@ -498,7 +502,12 @@ Submitting to CRAN
 <p>If you just want to provide something very lightweight so folks have an easy time citing your package you might also consider the <a href="https://joss.theoj.org">Journal of Open Source Software</a>. This journal has a particularly speedy submission and review process, and is where we published “<a href="https://joss.theoj.org/papers/10.21105/joss.01686"><em>Welcome to the Tidyverse</em></a>”, a paper we wrote so that folks could have a single paper to cite and all the tidyverse authors would get some academic credit.</p>
 
 
-</section></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+</section></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
+<ol>
+<li id="fn1"><p>This obviously depends on the quality of one’s internet connection, so we make an effort to recommend behaviours that are compatible with base R’s tooling around installed vignettes.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Sweave is the original system used for authoring vignettes (Sweave files usually have extension <code>.Rnw</code>). Similar to our advice about how to author function documentation (@sec-man), we think it makes more sense to use a markdown-based syntax for vignettes than a one-off, LaTeX-associated format. We recommend converting Sweave vignettes to RMarkdown.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The <code>inst/doc</code> folder is where vignettes go once they’re built, when <code>R CMD</code> build makes the package bundle.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
     const mode = bsSheetEl.getAttribute("data-mode");
