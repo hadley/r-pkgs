@@ -37,7 +37,7 @@ For example, we treat `inst/doc`[^vignettes-3] in the same way as `man/` and `NA
 Base R's vignette system allows for various complicated maneuvers that we just try to avoid.
 In vignettes, more than anywhere else, the answer to "But how do I do X?" is often "Don't do X".
 
-[^vignettes-3]: The `inst/doc` folder is where vignettes go once they're built, when `R CMD` build makes the package bundle.
+[^vignettes-3]: The `inst/doc` folder is where vignettes go once they're built, when `R CMD build` makes the package bundle.
 
 ## Vignette workflow {#vignette-workflow}
 
@@ -232,3 +232,43 @@ Comments from reviewers can be very helpful for improving your package and vigne
 
 If you just want to provide something very lightweight so folks have an easy time citing your package you might also consider the [Journal of Open Source Software](https://joss.theoj.org).
 This journal has a particularly speedy submission and review process, and is where we published "[*Welcome to the Tidyverse*](https://joss.theoj.org/papers/10.21105/joss.01686)", a paper we wrote so that folks could have a single paper to cite and all the tidyverse authors would get some academic credit.
+
+## Filesystem matters
+
+`.Rmd` source located below `vignettes/`
+
+> Package vignettes are tested by `R CMD check` by executing all R code chunks they contain (except those marked for non-evaluation, e.g., with option `eval=FALSE` for Sweave).
+> The R working directory for all vignette tests in `R CMD check` is a *copy* of the vignette source directory.
+> Make sure all files needed to run the R code in the vignette (data sets, ...) are accessible by either placing them in the `inst/doc` hierarchy of the source package or by using calls to `system.file()`.
+> All other files needed to re-make the vignettes (such as LaTeX style files, BibTeX input files and files for any figures not created by running the code in the vignette) must be in the vignette source directory.
+> `R CMD check` will check that vignette production has succeeded by comparing modification times of output files in `inst/doc` with the source in `vignettes`.
+
+Previewing vignettes
+
+Let go of the idea that you're going to have a semi-persistent rendered version of your vignettes in your source package.
+
+Get comfortable with the idea that, to the extent you need to preview the built product, you'll mostly be looking at something ephemeral and local.
+And once things mature enough to push to GitHub, you will be able to see the rendered result in your pkgdown website.
+
+1.  For Git/GitHub users: commit and push the vignette source, i.e. `vignettes/my-vignette.Rmd`. (If you initiate your vignette use with `use_vignette()`, it will do some very helpful `.gitignore` setup for you.)
+
+### Difference with function documentation workflow
+
+It can be helpful to appreciate one big difference between the workflow for function documentation and vignettes:
+
+The source of your help topics is stored in roxygen comments in `.R` files below `R/`.
+We use `devtools::document()` to generate `.Rd` files below `man/`.
+These `man/*.Rd` files are part of the source package.
+
+The source of your vignettes lives below `vignettes/`.
+We use various interactive techniques to preview rendered vignettes, usually as `.html`, but these ephemeral preview files are typically *not* considered part of the source package.
+
+Vignettes are converted into their "consumable" form by `R CMD build`, i.e. when the package bundle is made.
+
+`R CMD build` will put rendered artefacts below `inst/doc`
+
+> Package vignettes have their sources in subdirectory `vignettes` of the package sources.
+> Note that the location of the vignette sources only affects `R CMD build` and `R CMD check`: the tarball built by `R CMD build` includes in `inst/doc` the components intended to be installed.
+
+> `R CMD build` will automatically create the (PDF or HTML versions of the) vignettes in inst/doc for distribution with the package sources.
+> By including the vignette outputs in the package sources it is not necessary that these can be re-built at install time, i.e., the package author can use private R packages, screen snapshots and LaTeX extensions which are only available on their machine.
