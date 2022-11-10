@@ -64,11 +64,12 @@ You also call `use_vignette()` to create your second and all subsequent vignette
 Once you have the draft vignette, the workflow is straightforward:
 
 1.  Start adding prose and code chunks to the vignette.
+    Use `devtools::load_all()` as needed and use your usual interactive workflow for developing the code chunks.
 
-2.  Preview the rendered vignette.
+2.  Preview the rendered vignette periodically.
 
     If you're documenting parts of your package that are under active development, it is important to build the vignette with the *current* source package.
-    You need to ensure that `library(yourpackage)` loads a bleeding edge version of your package.
+    You need to ensure that the `library(yourpackage)` call in the setup chunk loads a bleeding edge version of your package.
     Use `devtools::build_rmd()` in this case.
     It builds your vignette against a (temporarily installed) development version of your package.
 
@@ -77,7 +78,7 @@ Once you have the draft vignette, the workflow is straightforward:
 
 3.  Rinse and repeat until the vignette looks the way you want.
 
-If you're regularly checking your entire package (@sec-r-cmd-check), which we strongly recommend, this will also help to keep your vignettes in good working order.
+If you're regularly checking your entire package (@sec-r-cmd-check), which we strongly recommend, this will help to keep your vignettes in good working order.
 In particular, this will alert you if a vignette makes use of a package that's not a formal dependency.
 
 We're deliberately leaving one workflow issue to revisit below in SOME LATER SECTION. That's where we'll clarify the official mechanism for creating the rendered vignettes that appear in your package's bundled and installed form.
@@ -100,12 +101,13 @@ This metadata is written in [YAML](https://yaml.org/), a format designed to be b
 YAML frontmatter is a common feature of RMarkdown files.
 The syntax is much like that of the `DESCRIPTION` file, where each line consists of a field name, a colon, then the value of the field.
 The one special YAML feature we're using here is `>`.
-It indicates the following lines of text are plain text and shouldn't use any special YAML features.
+It indicates that the following lines of text are plain text and shouldn't use any special YAML features.
 
 The default vignette template uses these fields:
 
 -   `title`: this is the title that appears in the vignette.
-    If you change it, make sure to make the same change to `VignetteIndexEntry{}`; they should be the same.
+    If you change it, make sure to make the same change to `VignetteIndexEntry{}`.
+    They should be the same, but unfortunately that's not automatic.
 
 -   `output`: this specifies the output format.
     There are many options that are useful for regular reports (including html, pdf, slideshows, etc.), but `rmarkdown::html_vignette` has been specifically designed to work well inside packages.
@@ -113,18 +115,19 @@ The default vignette template uses these fields:
 
 -   `vignette`: this is a block of special metadata needed by R.
     Here, you can see the legacy of LaTeX vignettes: the metadata looks like LaTeX comments.
-    The only entry you might need to modify is the `\VignetteIndexEntry`.
+    The only entry you might need to modify is the `\VignetteIndexEntry{}`.
     This is how the vignette appears in the vignette index and it should match the `title`.
-    Leave the other two lines as is.
+    Leave the other two lines alone.
     They tell R to use `knitr` to process the file, and that the file is encoded in UTF-8 (the only encoding you should ever use for a vignette).
 
 We generally don't use these fields, but you will see them in other packages:
 
 -   `author`: we don't use this unless the vignette is written by someone not already credited as a package author.
 
--   `date`: we think this usually does more harm than good, since it's very easy to forget to update it.
-    It's tempting to use `Sys.date()`, but that has the opposite problem.
-    In that case, the date will reflect when the vignette was built (i.e. when the package bundle was created) and that can be very different (i.e. much more recent) than when the package and vignette were truly updated.
+-   `date`: we think this usually does more harm than good, since it's not clear what information is actually conveys.
+    If you manage `date` manually, it's easy to forget to update it.
+    If you manage `date` programmatically with `Sys.date()`, the date reflects when the vignette was built, i.e. when the package bundle was created, which can be wildly different from when the vignette or package was last modified.
+    We've decided it's best to omit the `date`.
 
 The draft vignette also includes two R chunks.
 The first one configures our preferred way of displaying code output and looks like this:
@@ -138,7 +141,7 @@ knitr::opts_chunk$set(
 ```
 ````
 
-The second chunk attaches the package the vignette belongs to.
+The second chunk just attaches the package the vignette belongs to.
 
 ````{verbatim}
 ```{r setup}
