@@ -223,7 +223,7 @@ And, as with tests, if a package is particularly hard to install, we might make 
 There are many other reasons why it might not be possible to evaluate all of the code in a vignette in certain contexts, such as on CRAN's machines or in CI/CD.
 These include all the usual suspects: lack of authentication credentials, long-running code, or code that is vulnerable to intermittent failure.
 
-The main method for controlling evaluation in an `.Rmd` document is the `eval` code chunk option, which can `TRUE` (the default) or `FALSE`.
+The main method for controlling evaluation in an `.Rmd` document is the `eval` code chunk option, which can be `TRUE` (the default) or `FALSE`.
 Importantly, the value of `eval` can be the result of evaluating an expression.
 Here are some relevant examples:
 
@@ -231,11 +231,11 @@ Here are some relevant examples:
 -   `eval = !identical(Sys.getenv("SOME_THING_YOU_NEED"), "")`
 -   `eval = file.exists("credentials-you-need")`
 
-The `eval` option can be set for an individual chunk, but in a vignette it's more likely that you'll want to evaluate most or all of the chunks or practically none of them.
-In the latter case, you'll want to use `knitr::opts_chunk$set(eval = FALSE)` to customize the default value of `eval` option for the whole vignette.
+The `eval` option can be set for an individual chunk, but in a vignette it's likely that you'll want to evaluate most or all of the chunks or practically none of them.
+In the latter case, you'll want to use `knitr::opts_chunk$set(eval = FALSE)` in an early, hidden chunk to make `eval = FALSE` the default for the remainder of the vignette.
 You can still override with `eval = TRUE` in individual chunks.
 
-Here are the first few chunks in a vignette from googlesheets4, which wraps the Google Sheets API. The vignette code can only be run if we are able to decrypt a token.
+Here are the first few chunks in a vignette from googlesheets4, which wraps the Google Sheets API. The vignette code can only be run if we are able to decrypt a token that allows us to authenticate with the API.
 That fact is recorded in `can_decrypt`, which is then set as the vignette-wide default for `eval`.
 
 ````{verbatim}
@@ -268,16 +268,17 @@ The example above shows a few more handy chunk options.
 Use `include = FALSE` for chunks that should be evaluated but not seen in the rendered vignette.
 The `echo` option controls whether code is printed, in addition to output.
 Finally, `error = TRUE` is what allows you to purposefully execute code that could throw an error.
-The error will appear in the vignette, just as it would for your user, but it doesn't prevent the executtion of the rest of your vignette's code.
+The error will appear in the vignette, just as it would for your user, but it won't prevent the execution of the rest of your vignette's code, nor will it cause `R CMD check` to fail.
 This is something that works much better in a vignette than in an example.
 
 Many other options are described at <https://yihui.name/knitr/options>.
 
 There is one last technique, if you don't want any of your code to execute on CRAN.
-Instead of a vignette, you can create a so-called "article", which is a term used by pkgdown for an `.Rmd` document that is not embedded in the package, but that appears in the website.
+Instead of a vignette, you can create an article, which is a term used by pkgdown for an `.Rmd` document that is not embedded in the package, but that appears in the website.
 An article will be less accessible than a vignette, for certain users, such as those with limited internet access.
 But that might be an acceptable compromise, for example, for a package that wraps a web API.
 You can draft a new article with `usethis::use_article()`, which ensures the article will be `.Rbuildignore`d.
+A great reason to use an article instead of a vignette is to show your package working in concert with other packages that you don't want to depend on formally.
 
 ## Filesystem matters
 
