@@ -360,7 +360,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   </ul>
 </li>
   <li><a href="#special-considerations-for-vignette-code" id="toc-special-considerations-for-vignette-code" class="nav-link" data-scroll-target="#special-considerations-for-vignette-code"><span class="toc-section-number">17.5</span>  Special considerations for vignette code</a></li>
-  <li><a href="#sec-vignettes-how-built-checked" id="toc-sec-vignettes-how-built-checked" class="nav-link" data-scroll-target="#sec-vignettes-how-built-checked"><span class="toc-section-number">17.6</span>  How vignettes are built and checked</a></li>
+  <li>
+<a href="#sec-vignettes-how-built-checked" id="toc-sec-vignettes-how-built-checked" class="nav-link" data-scroll-target="#sec-vignettes-how-built-checked"><span class="toc-section-number">17.6</span>  How vignettes are built and checked</a>
+  <ul class="collapse">
+<li><a href="#sec-vignettes-how-built" id="toc-sec-vignettes-how-built" class="nav-link" data-scroll-target="#sec-vignettes-how-built"><span class="toc-section-number">17.6.1</span>  <code>R CMD build</code> and vignettes</a></li>
+  <li><a href="#sec-vignettes-how-checked" id="toc-sec-vignettes-how-checked" class="nav-link" data-scroll-target="#sec-vignettes-how-checked"><span class="toc-section-number">17.6.2</span>  <code>R CMD check</code> and vignettes</a></li>
+  </ul>
+</li>
   </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/vignettes.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
@@ -548,7 +554,9 @@ Submitting to CRAN
 </section><section id="sec-vignettes-how-built-checked" class="level2" data-number="17.6"><h2 data-number="17.6" class="anchored" data-anchor-id="sec-vignettes-how-built-checked">
 <span class="header-section-number">17.6</span> How vignettes are built and checked</h2>
 <p>We close this chapter by returning to a few workflow issues we didn’t cover in <a href="#sec-vignettes-workflow-writing"><span>Section&nbsp;17.2</span></a>: How do the <code>.Rmd</code> files get turned into the vignettes consumed by users of an installed package? What does <code>R CMD check</code> do with vignettes? What are the implications for maintaining your vignettes?</p>
-<p>First, it’s important to realize that the <code>vignettes/*.Rmd</code> source files exist only in a source package (<a href="structure.html#sec-source-package"><span>Section&nbsp;4.3</span></a>). Vignettes are rendered when a source package is converted to a bundle (<a href="structure.html#sec-bundled-package"><span>Section&nbsp;4.4</span></a>) via <code>R CMD build</code> or convenience wrappers such as <code><a href="https://devtools.r-lib.org/reference/build.html">devtools::build()</a></code> or <code><a href="https://rdrr.io/pkg/pkgbuild/man/build.html">pkgbuild::build()</a></code>. The rendered products (and more) are placed in <code>inst/doc/</code><a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> and the <code>vignettes/</code> directory disappears. Finally, when a package binary (<a href="structure.html#sec-structure-binary"><span>Section&nbsp;4.5</span></a>) is made, the <code>inst/doc/</code> directory is promoted to a top-level <code>doc/</code> directory, as happens with everything below <code>inst/</code>.</p>
+<section id="sec-vignettes-how-built" class="level3" data-number="17.6.1"><h3 data-number="17.6.1" class="anchored" data-anchor-id="sec-vignettes-how-built">
+<span class="header-section-number">17.6.1</span> <code>R CMD build</code> and vignettes</h3>
+<p>First, it’s important to realize that the <code>vignettes/*.Rmd</code> source files exist only when a package is in source (<a href="structure.html#sec-source-package"><span>Section&nbsp;4.3</span></a>) or bundled form (<a href="structure.html#sec-bundled-package"><span>Section&nbsp;4.4</span></a>). Vignettes are rendered when a source package is converted to a bundle via <code>R CMD build</code> or a convenience wrapper such as <code><a href="https://devtools.r-lib.org/reference/build.html">devtools::build()</a></code>. The rendered products (<code>.html</code>) are placed in <code>inst/doc/</code>, along with their source (<code>.Rmd</code>) and extracted R code (<code>.R</code>; discussed in <a href="#sec-vignettes-how-checked"><span>Section&nbsp;17.6.2</span></a>). Finally, when a package binary is made (<a href="structure.html#sec-structure-binary"><span>Section&nbsp;4.5</span></a>), the <code>inst/doc/</code> directory is promoted to a top-level <code>doc/</code> directory, as happens with everything below <code>inst/</code>.</p>
 <!--
 The issue of keeping pre-built vignettes around in inst/doc/ is a long-running discussion.
 
@@ -558,7 +566,7 @@ https://github.com/r-lib/pkgbuild/issues/58
 
 The one motivation that I feel isn't covered below is for a vignette that takes a very long time or very special conditions to build. Caching is one option, though likely to be fussy. Otherwise, this is really the "pre-built" vignette topic, which I think is not common enough to cover here.
 -->
-<p>The key takeaway from the above is that it’s not very natural to keep rendered vignettes in a source package and this has implications for the vignette development workflow. It is tempting to fight this (and many have tried), but based on years of experience and discussion, the devtools philosophy is to accept this reality.</p>
+<p>The key takeaway from the above is that it is awkward to keep rendered vignettes in a source package and this has implications for the vignette development workflow. It is tempting to fight this (and many have tried), but based on years of experience and discussion, the devtools philosophy is to accept this reality.</p>
 <p>Assuming that you don’t try to keep built vignettes around persistently in your source package, here are our recommendations for various scenarios:</p>
 <ul>
 <li><p>Active, iterative work on your vignettes: Use your usual interactive <code>.Rmd</code> workflow (such as the <img src="images/knit.png" class="img-fluid" width="45"> button) or <code>devtools::build_rmd("vignettes/my-vignette.Rmd")</code> to render a vignette to <code>.html</code> in the <code>vignettes/</code> directory. Regard the <code>.html</code> as a disposable preview. (If you initiate vignettes with <code>use_vignette()</code>, this <code>.html</code> will already be gitignored.)</p></li>
@@ -577,7 +585,28 @@ The one motivation that I feel isn't covered below is for a vignette that takes 
 </li>
 <li><p>Prepare built vignettes for a CRAN submission: Don’t try to do this by hand or in advance. Allow vignette (re-)building to happen as part of <code><a href="https://devtools.r-lib.org/reference/submit_cran.html">devtools::submit_cran()</a></code> or <code><a href="https://devtools.r-lib.org/reference/release.html">devtools::release()</a></code>, both of which build the package.</p></li>
 </ul>
-<p>If you really do want to build vignettes in the official manner on an <em>ad hoc</em> basis, <code><a href="https://devtools.r-lib.org/reference/build_vignettes.html">devtools::build_vignettes()</a></code> will do this. But we’ve seen this lead to developer frustration, because it leaves the package in an peculiar form that is a mishmash of a source package and an unpacked package bundle. This nonstandard situation can then lead to even more confusion. Alternatively, it’s possible to use <code>devtools::build(vignettes = TRUE)</code> to create a package bundle and then look inside for the vignettes.</p>
+<p>If you really do want to build vignettes in the official manner on an <em>ad hoc</em> basis, <code><a href="https://devtools.r-lib.org/reference/build_vignettes.html">devtools::build_vignettes()</a></code> will do this. But we’ve seen this lead to developer frustration, because it leaves the package in an peculiar form that is a mishmash of a source package and an unpacked package bundle. This nonstandard situation can then lead to even more confusion. A better alternative for vignette inspection is use <code>devtools::build(vignettes = TRUE)</code> to create a package bundle and then look inside for the vignettes.</p>
+<div class="callout-tip callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Pre-built vignettes (or other documentation)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We highly recommend treating <code>inst/doc/</code> as a strictly machine-writable directory for vignettes. We recommend that you do not take advantage of the fact that you can place arbitrary pre-built documentation in <code>inst/doc/</code>. This opinion permeates the devtools ecosystem which, by default, cleans out <code>inst/doc/</code> during various development tasks, to combat the problem of stale documentation.</p>
+<p>However, we acknowledge that there are exceptions to every rule. In some domains, it might be impractical to rebuild vignettes as often our recommended workflow implies. Here are a few tips:</p>
+<ul>
+<li><p>You can prevent the cleaning of <code>inst/doc/</code> with <code>pkgbuild::build(clean_doc =)</code>. You can put <code>Config/build/clean-inst-doc: FALSE</code> in <code>DESCRIPTION</code> to prevent rcmdcheck from cleaning <code>inst/doc/</code> and something similar may be implemented for pkgbuild (https://github.com/r-lib/pkgbuild/issues/128).</p></li>
+<li><p>The rOpenSci tech note <a href="https://ropensci.org/blog/2019/12/08/precompute-vignettes/">How to precompute package vignettes or pkgdown articles</a> describes a clever, lightweight technique for keeping a manually-updated vignette in <code>vignettes/</code>.</p></li>
+<li><p>The <a href="https://henrikbengtsson.github.io/R.rsp/index.html">R.rsp</a> package offers explicit support for static vignettes.</p></li>
+</ul>
+</div>
+</div>
+</section><section id="sec-vignettes-how-checked" class="level3" data-number="17.6.2"><h3 data-number="17.6.2" class="anchored" data-anchor-id="sec-vignettes-how-checked">
+<span class="header-section-number">17.6.2</span> <code>R CMD check</code> and vignettes</h3>
 <p>We conclude with a discussion of how vignettes are treated by <code>R CMD check</code>. This official checker expects a package bundle created by <code>R CMD build</code>, as described above. In the devtools workflow, we usually rely on <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>, which automatically does this build step for us, before checking the package. <code>R CMD check</code> has various command line options and also consults many environment variables. We’re taking a maximalist approach here, i.e.&nbsp;we describe all the checks that <em>could</em> happen.</p>
 <p><code>R CMD check</code> does some static analysis of vignette code and scrutinizes the existence, size, and modification times of various vignette-related files. If your vignettes use packages that don’t appear in <code>DESCRIPTION</code>, that is caught here. If files that should exist don’t exist or <em>vice versa</em>, that is caught here. This should not happen if you use the standard vignette workflow outlined in this chapter and is usually the result of some experiment that you’ve done, intentionally or not.</p>
 <p>The vignette code is then extracted into a <code>.R</code> file, using the “tangle” feature of the relevant vignette engine (knitr, in our case), and run. The code originating from chunks marked as <code>eval = FALSE</code> will be commented out (so: not actually executed). Then the vignettes are rebuilt from source, using the “weave” feature of the vignette engine (knitr, for us). This executes all the vignette code yet again, except for chunks marked <code>eval = FALSE</code>.</p>
@@ -610,16 +639,12 @@ Vignettes are converted into their "consumable" form by `R CMD build`, i.e. when
 -->
 
 
-</section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
+</section></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
 <ol>
 <li id="fn1"><p>This obviously depends on the quality of one’s internet connection, so we make an effort to recommend behaviours that are compatible with base R’s tooling around installed vignettes.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>Sweave is the original system used for authoring vignettes (Sweave files usually have extension <code>.Rnw</code>). Similar to our advice about how to author function documentation (<a href="man.html"><span>Chapter&nbsp;16</span></a>), we think it makes more sense to use a markdown-based syntax for vignettes than a one-off, LaTeX-associated format. We recommend converting Sweave vignettes to RMarkdown.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3"><p>The <code>inst/doc/</code> folder is where vignettes go once they’re built, when <code>R CMD build</code> makes the package bundle.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>And, for anyone else, executing this code in the R console will open the vignette, if the host package is installed.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5">
-<p>We highly recommend treating <code>inst/doc/</code> as a strictly machine-writable directory for vignettes. We recommend that you do not take advantage of the fact that you can place arbitrary pre-built documentation in <code>inst/doc/</code>. This opinion permeates the devtools ecosystem which, by default, cleans out <code>inst/doc/</code> during various development tasks, to combat the very real problem of having stale documentation.</p>
-<p>Note that you can put <code>Config/build/clean-inst-doc: FALSE</code> in <code>DESCRIPTION</code> to prevent rcmdcheck from cleaning <code>inst/doc/</code> and something similar may be implemented for pkgbuild (https://github.com/r-lib/pkgbuild/issues/128). <code>pkgbuild::build(clean_doc =)</code> also affords control over this.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p>
-</li>
 </ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
