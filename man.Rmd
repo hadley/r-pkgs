@@ -247,11 +247,13 @@ Example:
 #' or even our own [olderfunction()].
 ```
 
-**Vignettes**: If you refer to a vignette with an inline call to `vignette()`, it serves a dual purpose.
+**Vignettes**: If you refer to a vignette with an inline call to `vignette("some-topic")`, it serves a dual purpose.
 First, this is literally the R code you would execute to view a vignette locally.
 But wait there's more!
 In many rendered contexts, this automatically becomes a hyperlink to that same vignette in roxygen2's pkgdown website.
-Here we use that to link to some very relevant vignettes:
+Here we use that to link to some very relevant vignettes[^man-7]:
+
+[^man-7]: These calls include an explicit specification of `package = "somepackage"`, since it can't be inferred from context, i.e. the context is a Quarto book, not package documentation.
 
 -   `vignette("rd-formatting", package = "roxygen2")`
 
@@ -304,9 +306,9 @@ But they provide a useful negative case study:
 There's a lot of repetition ("pattern", "from a string") and the verb used for the function name is repeated in the title, so if you don't understand the function already, the title seems unlikely to help much.
 Hopefully we'll have improved those titles by the time you read this!
 
-In contrast, these titles from dplyr are much better[^man-7]:
+In contrast, these titles from dplyr are much better[^man-8]:
 
-[^man-7]: Like all the examples, these might have changed a bit since we wrote this book, because we're constantly striving to do better.
+[^man-8]: Like all the examples, these might have changed a bit since we wrote this book, because we're constantly striving to do better.
     You might compare what's in the book to what we now use, and consider if you think if it's an improvement.
 
 -   `mutate()`: Create, modify, and delete columns
@@ -375,10 +377,10 @@ Once you've re-derived what the function does, you'll be able to write a better 
 
 The `@details` are just any additional details or explanation that you think your function needs.
 Most functions don't need details, but some functions need a lot.
-If you have a lot of information to convey, it's a good idea to use informative markdown headings to break the details up into manageable sections[^man-8].
+If you have a lot of information to convey, it's a good idea to use informative markdown headings to break the details up into manageable sections[^man-9].
 Here's an example from `dplyr::mutate()`. We've elided some of the details to keep this example short, but you should still get a sense of how we used headings to break up the content in to skimmable chunks:
 
-[^man-8]: In older code, you might see the use of `@section title:` which was used to create sections before roxygen2 had full markdown support.
+[^man-9]: In older code, you might see the use of `@section title:` which was used to create sections before roxygen2 had full markdown support.
     If you've used these in the past, you can now turn them into markdown headings.
 
 ```{r}
@@ -533,11 +535,11 @@ Beware of spurious diffs introduced by contributors who run `devtools::document(
 ## Return value
 
 A function's output is as important as its inputs.
-Documenting the output is the job of the `@returns`[^man-9] tag.
+Documenting the output is the job of the `@returns`[^man-10] tag.
 Here the priority is to describe the overall "shape" of the output, i.e. what sort of object it is, and its dimensions (if that makes sense).
 For example, if your function returns a vector you might describe its type and length, or if your function returns a data frame you might describe the names and types of the columns and the expected number of rows.
 
-[^man-9]: For historical reasons, you can also use `@return`, but we now favor `@returns` because it reads more naturally.
+[^man-10]: For historical reasons, you can also use `@return`, but we now favor `@returns` because it reads more naturally.
 
 The `@returns` documentation for functions in stringr is straightforward because almost all functions return some type of vector with the same length as one of the inputs.
 For example, here's how `str_like()` describes its output:
@@ -546,10 +548,10 @@ For example, here's how `str_like()` describes its output:
 #' @returns A logical vector the same length as `string`.
 ```
 
-A more complicated case is the joint documentation for `str_locate()` and `str_locate_all()`[^man-10].
+A more complicated case is the joint documentation for `str_locate()` and `str_locate_all()`[^man-11].
 `str_locate()` returns an integer matrix, and `str_locate_all()` returns a list of matrices, so the text needs to describe what determines the rows and columns.
 
-[^man-10]: We'll come back how to document multiple functions in one topic in @sec-man-multiple-functions.
+[^man-11]: We'll come back how to document multiple functions in one topic in @sec-man-multiple-functions.
 
 ```{r}
 #' @returns
@@ -733,7 +735,7 @@ There are two basic options:
     #' try(bind_cols(tibble(x = 1:3), tibble(y = 1:2)))
     ```
 
--   You can wrap the code in `\dontrun{}`[^man-11], so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
+-   You can wrap the code in `\dontrun{}`[^man-12], so it is never run by `example()`. The example above would look like this if you used `\dontrun{}` instead of `try()`.
 
     ```{r}
     #' # Row sizes must be compatible when column-binding
@@ -742,7 +744,7 @@ There are two basic options:
     #' }
     ```
 
-[^man-11]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommend it because CRAN sets a special flag that causes the code to be executed anyway.
+[^man-12]: You used to be able to use `\donttest{}` for a similar purpose, but we no longer recommend it because CRAN sets a special flag that causes the code to be executed anyway.
 
 We generally recommend using `try()` so that the reader can see an example of the error in action.
 
@@ -779,10 +781,10 @@ In the past, we recommended only using code from suggested packages inside a blo
 
 We no longer believe that approach is a good idea, because:
 
--   Our policy is to expect that suggested packages are installed when running `R CMD check`[^man-12] and this informs what we do in examples, tests, and vignettes.
+-   Our policy is to expect that suggested packages are installed when running `R CMD check`[^man-13] and this informs what we do in examples, tests, and vignettes.
 -   The cost of putting example code inside `{ ... }` is high: you can no longer see intermediate results, such as when the examples are rendered in the package's website. The cost of a package not being installed is low: users can usually recognize the associated error and resolve it themselves, i.e. by installing the missing package.
 
-[^man-12]: This is certainly true for CRAN and is true in most other automated checking scenarios, such as our GitHub Actions workflows.
+[^man-13]: This is certainly true for CRAN and is true in most other automated checking scenarios, such as our GitHub Actions workflows.
 
 In other cases, your example code may depend on something other than a package.
 For example, if your examples talk to a web API, you probably only want to run them for an authenticated user, and never want such code to run on CRAN.
