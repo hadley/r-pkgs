@@ -309,17 +309,11 @@ We close this chapter by returning to a few workflow issues we didn't cover in @
 What does `R CMD check` do with vignettes?
 What are the implications for maintaining your vignettes?
 
-First, it's important to realize that the `vignettes/*.Rmd` source files exist only in a source package (@sec-source-package).
-Vignettes are rendered when a source package is converted to a bundle (@sec-bundled-package) via `R CMD build` or convenience wrappers such as `devtools::build()` or `pkgbuild::build()`.
-The rendered products (and more) are placed in `inst/doc/`[^vignettes-5] and the `vignettes/` directory disappears.
-Finally, when a package binary (@sec-structure-binary) is made, the `inst/doc/` directory is promoted to a top-level `doc/` directory, as happens with everything below `inst/`.
+### `R CMD build` and vignettes {#sec-vignettes-how-built}
 
-[^vignettes-5]: We highly recommend treating `inst/doc/` as a strictly machine-writable directory for vignettes.
-    We recommend that you do not take advantage of the fact that you can place arbitrary pre-built documentation in `inst/doc/`.
-    This opinion permeates the devtools ecosystem which, by default, cleans out `inst/doc/` during various development tasks, to combat the very real problem of having stale documentation.
-
-    Note that you can put `Config/build/clean-inst-doc: FALSE` in `DESCRIPTION` to prevent rcmdcheck from cleaning `inst/doc/` and something similar may be implemented for pkgbuild (https://github.com/r-lib/pkgbuild/issues/128).
-    `pkgbuild::build(clean_doc =)` also affords control over this.
+First, it's important to realize that the `vignettes/*.Rmd` source files exist only when a package is in source (@sec-source-package) or bundled form (@sec-bundled-package).
+Vignettes are rendered when a source package is converted to a bundle via `R CMD build` or a convenience wrapper such as `devtools::build()`.
+The rendered products (`.html`) are placed in `inst/doc/`, along with their source (`.Rmd`) and extracted R code (`.R`; discussed in @sec-vignettes-how-checked). Finally, when a package binary is made (@sec-structure-binary), the `inst/doc/` directory is promoted to a top-level `doc/` directory, as happens with everything below `inst/`.
 
 ```{=html}
 <!--
@@ -332,7 +326,7 @@ https://github.com/r-lib/pkgbuild/issues/58
 The one motivation that I feel isn't covered below is for a vignette that takes a very long time or very special conditions to build. Caching is one option, though likely to be fussy. Otherwise, this is really the "pre-built" vignette topic, which I think is not common enough to cover here.
 -->
 ```
-The key takeaway from the above is that it's not very natural to keep rendered vignettes in a source package and this has implications for the vignette development workflow.
+The key takeaway from the above is that it is awkward to keep rendered vignettes in a source package and this has implications for the vignette development workflow.
 It is tempting to fight this (and many have tried), but based on years of experience and discussion, the devtools philosophy is to accept this reality.
 
 Assuming that you don't try to keep built vignettes around persistently in your source package, here are our recommendations for various scenarios:
@@ -358,7 +352,28 @@ Assuming that you don't try to keep built vignettes around persistently in your 
 If you really do want to build vignettes in the official manner on an *ad hoc* basis, `devtools::build_vignettes()` will do this.
 But we've seen this lead to developer frustration, because it leaves the package in an peculiar form that is a mishmash of a source package and an unpacked package bundle.
 This nonstandard situation can then lead to even more confusion.
-Alternatively, it's possible to use `devtools::build(vignettes = TRUE)` to create a package bundle and then look inside for the vignettes.
+A better alternative for vignette inspection is use `devtools::build(vignettes = TRUE)` to create a package bundle and then look inside for the vignettes.
+
+::: callout-tip
+## Pre-built vignettes (or other documentation)
+
+We highly recommend treating `inst/doc/` as a strictly machine-writable directory for vignettes.
+We recommend that you do not take advantage of the fact that you can place arbitrary pre-built documentation in `inst/doc/`.
+This opinion permeates the devtools ecosystem which, by default, cleans out `inst/doc/` during various development tasks, to combat the problem of stale documentation.
+
+However, we acknowledge that there are exceptions to every rule.
+In some domains, it might be impractical to rebuild vignettes as often our recommended workflow implies.
+Here are a few tips:
+
+-   You can prevent the cleaning of `inst/doc/` with `pkgbuild::build(clean_doc =)`.
+    You can put `Config/build/clean-inst-doc: FALSE` in `DESCRIPTION` to prevent rcmdcheck from cleaning `inst/doc/` and something similar may be implemented for pkgbuild (https://github.com/r-lib/pkgbuild/issues/128).
+
+-   The rOpenSci tech note [How to precompute package vignettes or pkgdown articles](https://ropensci.org/blog/2019/12/08/precompute-vignettes/) describes a clever, lightweight technique for keeping a manually-updated vignette in `vignettes/`.
+
+-   The [R.rsp](https://henrikbengtsson.github.io/R.rsp/index.html) package offers explicit support for static vignettes.
+:::
+
+### `R CMD check` and vignettes {#sec-vignettes-how-checked}
 
 We conclude with a discussion of how vignettes are treated by `R CMD check`.
 This official checker expects a package bundle created by `R CMD build`, as described above.
