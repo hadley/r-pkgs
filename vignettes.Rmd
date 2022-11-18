@@ -21,14 +21,13 @@ To see vignettes for a package that you haven't installed, look at the "Vignette
 However, we much prefer to discover and read vignettes from a package's website, which is the topic of @sec-website[^vignettes-1].
 Compare the above to what it feels like to access tidyr's vignettes from its website: <https://tidyr.tidyverse.org/articles/index.html>.
 Note that pkgdown uses the term "article", which feels like the right vocabulary for package users.
-The technical distinction between a vignette (which ships with a package) and an article (which is only available on the website; see BLAH) is something the package developer needs to think about.
+The technical distinction between a vignette (which ships with a package) and an article (which is only available on the website; see @sec-vignettes-article) is something the package developer needs to think about.
 A pkgdown website presents all of the documentation of a package in a cohesive, interlinked way that makes it more navigable and useful.
 This chapter is ostensibly about vignettes, but the way we do things is heavily influenced by how those vignettes fit into in a pkgdown website.
 
 [^vignettes-1]: This obviously depends on the quality of one's internet connection, so we make an effort to recommend behaviours that are compatible with base R's tooling around installed vignettes.
 
-In this book, we're going to use RMarkdown to write our vignettes, just as we did for function documentation in @sec-man-key-md-features.[^vignettes-2]
-If you're not already familiar with RMarkdown you'll need to learn the basics elsewhere; a good place to start is <https://rmarkdown.rstudio.com/>.
+In this book, we're going to use RMarkdown to write our vignettes[^vignettes-2], just as we did for function documentation in @sec-man-key-md-features. If you're not already familiar with RMarkdown you'll need to learn the basics elsewhere; a good place to start is <https://rmarkdown.rstudio.com/>.
 
 [^vignettes-2]: Sweave is the original system used for authoring vignettes (Sweave files usually have extension `.Rnw`).
     Similar to our advice about how to author function documentation (@sec-man), we think it makes more sense to use a markdown-based syntax for vignettes than a one-off, LaTeX-associated format.
@@ -70,7 +69,7 @@ Once you have the draft vignette, the workflow is straightforward:
 
 2.  Render the entire vignette periodically.
 
-    This requires some intention, because unlike tests, by default, your vignette is rendered using the currently installed version of your package, not with the current source package.
+    This requires some intention, because unlike tests, by default, a vignette is rendered using the currently installed version of your package, not with the current source package, thanks to the initial call to `library(yourpackage)`.
 
     One option is to properly install your current source package with `devtools::install()` or, in RStudio, Ctrl/Cmd + Shift + B.
     Then use your usual workflow for rendering an `.Rmd` file.
@@ -243,7 +242,7 @@ The best way to do this depends on the application:
 
 -   An external file whose utility is limited to your vignettes: put it alongside the vignette source files in `vignettes/` and refer to it with a filepath that is relative to `vignettes/`.
 
-    -   Example: The source of `vignette("tidy-data", package = "tidyr")` is found at `vignettes/tidy-data.Rmd` and it includes a chunk that reads a file located at `vignettes/weather.csv` like so:
+    Example: The source of `vignette("tidy-data", package = "tidyr")` is found at `vignettes/tidy-data.Rmd` and it includes a chunk that reads a file located at `vignettes/weather.csv` like so:
 
     ````{verbatim}
     ```{r}
@@ -351,14 +350,14 @@ Many other options are described at <https://yihui.name/knitr/options>.
 ### Article instead of vignette {#sec-vignettes-article}
 
 There is one last technique, if you don't want any of your code to execute on CRAN.
-Instead of a vignette, you can create an article, which is a term used by pkgdown for a vignette-like `.Rmd` document that is not shipped with the package, but that appears in the website.
+Instead of a vignette, you can create an article, which is a term used by pkgdown for a vignette-like `.Rmd` document that is not shipped with the package, but that appears only in the website.
 An article will be less accessible than a vignette, for certain users, such as those with limited internet access, because it is not present in the local installation.
 But that might be an acceptable compromise, for example, for a package that wraps a web API.
 
 You can draft a new article with `usethis::use_article()`, which ensures the article will be `.Rbuildignore`d.
 A great reason to use an article instead of a vignette is to show your package working in concert with other packages that you don't want to depend on formally.
 Another compelling use case is when an article really demands lots of graphics.
-This is problematic for a vignette, because the large size of the package causes problems with `R CMD check` (and CRAN) and is also burdensome for everyone who installs it, especially those with limited internet.
+This is problematic for a vignette, because the large size of the package causes problems with `R CMD check` (and, therefore, CRAN) and is also burdensome for everyone who installs it, especially those with limited internet.
 
 ## How vignettes are built and checked {#sec-vignettes-how-built-checked}
 
@@ -437,7 +436,7 @@ In some domains, it might be impractical to rebuild vignettes as often our recom
 Here are a few tips:
 
 -   You can prevent the cleaning of `inst/doc/` with `pkgbuild::build(clean_doc =)`.
-    You can put `Config/build/clean-inst-doc: FALSE` in `DESCRIPTION` to prevent rcmdcheck from cleaning `inst/doc/` and something similar may be implemented for pkgbuild (https://github.com/r-lib/pkgbuild/issues/128).
+    You can put `Config/build/clean-inst-doc: FALSE` in `DESCRIPTION` to prevent rcmdcheck from cleaning `inst/doc/` and something similar may be implemented for pkgbuild (<https://github.com/r-lib/pkgbuild/issues/128>).
 
 -   The rOpenSci tech note [How to precompute package vignettes or pkgdown articles](https://ropensci.org/blog/2019/12/08/precompute-vignettes/) describes a clever, lightweight technique for keeping a manually-updated vignette in `vignettes/`.
 
