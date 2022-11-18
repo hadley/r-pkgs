@@ -219,6 +219,46 @@ Here are the two most important examples of automatically linked text:
 -   `` `vignette("fascinating-topic")` ``: Autolinked to the "fascinating-topic" article within the pkgdown site of its host package.
     Note the use of backticks.
 
+### Filepaths
+
+Sometimes it is necessary to refer to another file from a vignette.
+The best way to do this depends on the application:
+
+-   A figure created by code evaluated in the vignette: By default, in the `.Rmd` workflow that we recommend, this takes care of itself.
+    Such figures are automatically embedded into the `.html` using data URIs.
+    You don't need to do anything.
+
+    -   Example: `vignette("extending-ggplot2", package = "ggplot2")` generates a few figures in evaluated code chunks.
+
+-   An external file that is (or could be) useful to users or elsewhere in the package (not just in vignettes): Put such a file in `inst/` (@sec-misc-inst), perhaps in `inst/extdata/` (@sec-data-extdata), and refer to it with `system.file()`.
+    Example:
+
+    ````{verbatim}
+    ```{r}
+    # example TBD
+    ```
+    ````
+
+-   An external file whose utility is limited to your vignettes: put it in `vignettes/` and refer to it with a filepath that is relative to `vignettes/`.
+
+    -   Example: The source of `vignette("tidy-data", package = "tidyr")` is found at `vignettes/tidy-data.Rmd` and it includes a chunk that reads a file located at `vignettes/weather.csv` like so:
+
+    ````{verbatim}
+    ```{r}
+    weather <- as_tibble(read.csv("weather.csv", stringsAsFactors = FALSE))
+    weather
+    ```
+    ````
+
+-   An external graphics file: put it in `vignettes/`, refer to it with a filepath that is relative to `vignettes/` and use `knitr::include_graphics()` inside a code chunk.
+    Example from `vignette("sheet-geometry", package = "readxl")`:
+
+    ````{verbatim}
+    ```{r out.width = '70%', echo = FALSE}
+    knitr::include_graphics("img/geometry.png")
+    ```
+    ````
+
 ### How many vignettes?
 
 For simpler packages, one vignette is often sufficient.
