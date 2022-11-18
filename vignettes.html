@@ -602,6 +602,8 @@ Submitting to CRAN
 </section></section><section id="sec-vignettes-how-built-checked" class="level2" data-number="17.6"><h2 data-number="17.6" class="anchored" data-anchor-id="sec-vignettes-how-built-checked">
 <span class="header-section-number">17.6</span> How vignettes are built and checked</h2>
 <p>We close this chapter by returning to a few workflow issues we didn’t cover in <a href="#sec-vignettes-workflow-writing"><span>Section&nbsp;17.2</span></a>: How do the <code>.Rmd</code> files get turned into the vignettes consumed by users of an installed package? What does <code>R CMD check</code> do with vignettes? What are the implications for maintaining your vignettes?</p>
+<p>It can be helpful to appreciate the big difference between the workflow for function documentation and vignettes. The source of function documentation is stored in roxygen comments in <code>.R</code> files below <code>R/</code>. We use <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code> to generate <code>.Rd</code> files below <code>man/</code>. These <code>man/*.Rd</code> files are part of the source package. The official R machinery cares <em>only</em> about the <code>.Rd</code> files.</p>
+<p>Vignettes are very different because the <code>.Rmd</code> source is considered part of the source package and the official machinery (<code>R CMD build</code> and <code>check</code>) interacts with vignette source and built vignettes in many ways. The result is that the vignette workflow feels more constrained, since the official tooling basically treats vignettes somewhat like tests, instead of documentation.</p>
 <section id="sec-vignettes-how-built" class="level3" data-number="17.6.1"><h3 data-number="17.6.1" class="anchored" data-anchor-id="sec-vignettes-how-built">
 <span class="header-section-number">17.6.1</span> <code>R CMD build</code> and vignettes</h3>
 <p>First, it’s important to realize that the <code>vignettes/*.Rmd</code> source files exist only when a package is in source (<a href="structure.html#sec-source-package"><span>Section&nbsp;4.3</span></a>) or bundled form (<a href="structure.html#sec-bundled-package"><span>Section&nbsp;4.4</span></a>). Vignettes are rendered when a source package is converted to a bundle via <code>R CMD build</code> or a convenience wrapper such as <code><a href="https://devtools.r-lib.org/reference/build.html">devtools::build()</a></code>. The rendered products (<code>.html</code>) are placed in <code>inst/doc/</code>, along with their source (<code>.Rmd</code>) and extracted R code (<code>.R</code>; discussed in <a href="#sec-vignettes-how-checked"><span>Section&nbsp;17.6.2</span></a>). Finally, when a package binary is made (<a href="structure.html#sec-structure-binary"><span>Section&nbsp;4.5</span></a>), the <code>inst/doc/</code> directory is promoted to a top-level <code>doc/</code> directory, as happens with everything below <code>inst/</code>.</p>
@@ -672,19 +674,6 @@ Submitting to CRAN
 <p>However, it’s important to note that the package bundle and binaries distributed by CRAN actually use the built vignettes included in your submission. Yes, CRAN will attempt to rebuild your vignettes regularly, but this is for quality control purposes. CRAN distributes the vignettes you built.</p>
 </div>
 </div>
-<!--
-## Difference with function documentation workflow
-
-It can be helpful to appreciate one big difference between the workflow for function documentation and vignettes:
-
-The source of your help topics is stored in roxygen comments in `.R` files below `R/`.
-We use `devtools::document()` to generate `.Rd` files below `man/`.
-These `man/*.Rd` files are part of the source package.
-
-The source of your vignettes lives below `vignettes/`.
-We use various interactive techniques to preview rendered vignettes, usually as `.html`, but these ephemeral preview files are typically *not* considered part of the source package.
-Vignettes are converted into their "consumable" form by `R CMD build`, i.e. when the package bundle is made.
--->
 
 
 </section></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
