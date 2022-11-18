@@ -227,19 +227,21 @@ The best way to do this depends on the application:
 -   A figure created by code evaluated in the vignette: By default, in the `.Rmd` workflow that we recommend, this takes care of itself.
     Such figures are automatically embedded into the `.html` using data URIs.
     You don't need to do anything.
+    Example: `vignette("extending-ggplot2", package = "ggplot2")` generates a few figures in evaluated code chunks.
 
-    -   Example: `vignette("extending-ggplot2", package = "ggplot2")` generates a few figures in evaluated code chunks.
+-   An external file that could be useful to users or elsewhere in the package (not just in vignettes): Put such a file in `inst/` (@sec-misc-inst), perhaps in `inst/extdata/` (@sec-data-extdata), and refer to it with `system.file()` or `fs::path_package()`.
+    Example from `vignettes("sf2", package = "sf")`:
 
--   An external file that is (or could be) useful to users or elsewhere in the package (not just in vignettes): Put such a file in `inst/` (@sec-misc-inst), perhaps in `inst/extdata/` (@sec-data-extdata), and refer to it with `system.file()`.
-    Example:
-
-    ````{verbatim}
-    ```{r}
-    # example TBD
+    `````{verbatim}
+    ````{r}
+    library(sf)
+    fname <- system.file("shape/nc.shp", package="sf")
+    fname
+    nc <- st_read(fname)
     ```
-    ````
+    `````
 
--   An external file whose utility is limited to your vignettes: put it in `vignettes/` and refer to it with a filepath that is relative to `vignettes/`.
+-   An external file whose utility is limited to your vignettes: put it alongside the vignette source files in `vignettes/` and refer to it with a filepath that is relative to `vignettes/`.
 
     -   Example: The source of `vignette("tidy-data", package = "tidyr")` is found at `vignettes/tidy-data.Rmd` and it includes a chunk that reads a file located at `vignettes/weather.csv` like so:
 
@@ -378,8 +380,6 @@ The issue of keeping pre-built vignettes around in inst/doc/ is a long-running d
 https://github.com/r-lib/devtools/issues/2394
 
 https://github.com/r-lib/pkgbuild/issues/58
-
-The one motivation that I feel isn't covered below is for a vignette that takes a very long time or very special conditions to build. Caching is one option, though likely to be fussy. Otherwise, this is really the "pre-built" vignette topic, which I think is not common enough to cover here.
 -->
 ```
 The key takeaway from the above is that it is awkward to keep rendered vignettes in a source package and this has implications for the vignette development workflow.
@@ -405,11 +405,16 @@ Assuming that you don't try to keep built vignettes around persistently in your 
 -   Prepare built vignettes for a CRAN submission: Don't try to do this by hand or in advance.
     Allow vignette (re-)building to happen as part of `devtools::submit_cran()` or `devtools::release()`, both of which build the package.
 
+```{=html}
+<!--
+https://github.com/r-lib/devtools/issues/2485
+-->
+```
 If you really do want to build vignettes in the official manner on an *ad hoc* basis, `devtools::build_vignettes()` will do this.
 But we've seen this lead to developer frustration, because it leaves the package in a peculiar form that is a mishmash of a source package and an unpacked package bundle.
 This nonstandard situation can then lead to even more confusion.
-A better alternative for vignette inspection is use `devtools::build(vignettes = TRUE)` to create a package bundle and then look inside for the vignettes.
-Or just build and install the package, with `devtools::install(build_vignettes = TRUE)`, and browse the vignettes.
+For example, it's not clear how these not-actually-installed vignettes are meant to be accessed.
+Most developers should avoid using `build_vignettes()` and, instead, pick one of the approaches outlined above.
 
 ::: callout-tip
 ## Pre-built vignettes (or other documentation)
