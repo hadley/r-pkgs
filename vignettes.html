@@ -517,22 +517,20 @@ Submitting to CRAN
 <span class="header-section-number">17.4.3</span> Filepaths</h3>
 <p>Sometimes it is necessary to refer to another file from a vignette. The best way to do this depends on the application:</p>
 <ul>
+<li><p>A figure created by code evaluated in the vignette: By default, in the <code>.Rmd</code> workflow that we recommend, this takes care of itself. Such figures are automatically embedded into the <code>.html</code> using data URIs. You don’t need to do anything. Example: <code><a href="https://ggplot2.tidyverse.org/articles/extending-ggplot2.html">vignette("extending-ggplot2", package = "ggplot2")</a></code> generates a few figures in evaluated code chunks.</p></li>
 <li>
-<p>A figure created by code evaluated in the vignette: By default, in the <code>.Rmd</code> workflow that we recommend, this takes care of itself. Such figures are automatically embedded into the <code>.html</code> using data URIs. You don’t need to do anything.</p>
-<ul>
-<li>Example: <code><a href="https://ggplot2.tidyverse.org/articles/extending-ggplot2.html">vignette("extending-ggplot2", package = "ggplot2")</a></code> generates a few figures in evaluated code chunks.</li>
-</ul>
-</li>
-<li>
-<p>An external file that is (or could be) useful to users or elsewhere in the package (not just in vignettes): Put such a file in <code>inst/</code> (<a href="misc.html#sec-misc-inst"><span>Section&nbsp;9.3</span></a>), perhaps in <code>inst/extdata/</code> (<a href="data.html#sec-data-extdata"><span>Section&nbsp;8.4</span></a>), and refer to it with <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code>. Example:</p>
+<p>An external file that could be useful to users or elsewhere in the package (not just in vignettes): Put such a file in <code>inst/</code> (<a href="misc.html#sec-misc-inst"><span>Section&nbsp;9.3</span></a>), perhaps in <code>inst/extdata/</code> (<a href="data.html#sec-data-extdata"><span>Section&nbsp;8.4</span></a>), and refer to it with <code><a href="https://rdrr.io/r/base/system.file.html">system.file()</a></code> or <code><a href="https://fs.r-lib.org/reference/path_package.html">fs::path_package()</a></code>. Example from <code>vignettes("sf2", package = "sf")</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>```{r}</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a># example TBD</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>```</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>````{r}</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>library(sf)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>fname &lt;- system.file("shape/nc.shp", package="sf")</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>fname</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>nc &lt;- st_read(fname)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>```</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </li>
 <li>
-<p>An external file whose utility is limited to your vignettes: put it in <code>vignettes/</code> and refer to it with a filepath that is relative to <code>vignettes/</code>.</p>
+<p>An external file whose utility is limited to your vignettes: put it alongside the vignette source files in <code>vignettes/</code> and refer to it with a filepath that is relative to <code>vignettes/</code>.</p>
 <ul>
 <li>Example: The source of <code><a href="https://tidyr.tidyverse.org/articles/tidy-data.html">vignette("tidy-data", package = "tidyr")</a></code> is found at <code>vignettes/tidy-data.Rmd</code> and it includes a chunk that reads a file located at <code>vignettes/weather.csv</code> like so:</li>
 </ul>
@@ -613,8 +611,6 @@ The issue of keeping pre-built vignettes around in inst/doc/ is a long-running d
 https://github.com/r-lib/devtools/issues/2394
 
 https://github.com/r-lib/pkgbuild/issues/58
-
-The one motivation that I feel isn't covered below is for a vignette that takes a very long time or very special conditions to build. Caching is one option, though likely to be fussy. Otherwise, this is really the "pre-built" vignette topic, which I think is not common enough to cover here.
 -->
 <p>The key takeaway from the above is that it is awkward to keep rendered vignettes in a source package and this has implications for the vignette development workflow. It is tempting to fight this (and many have tried), but based on years of experience and discussion, the devtools philosophy is to accept this reality.</p>
 <p>Assuming that you don’t try to keep built vignettes around persistently in your source package, here are our recommendations for various scenarios:</p>
@@ -635,7 +631,9 @@ The one motivation that I feel isn't covered below is for a vignette that takes 
 </li>
 <li><p>Prepare built vignettes for a CRAN submission: Don’t try to do this by hand or in advance. Allow vignette (re-)building to happen as part of <code><a href="https://devtools.r-lib.org/reference/submit_cran.html">devtools::submit_cran()</a></code> or <code><a href="https://devtools.r-lib.org/reference/release.html">devtools::release()</a></code>, both of which build the package.</p></li>
 </ul>
-<p>If you really do want to build vignettes in the official manner on an <em>ad hoc</em> basis, <code><a href="https://devtools.r-lib.org/reference/build_vignettes.html">devtools::build_vignettes()</a></code> will do this. But we’ve seen this lead to developer frustration, because it leaves the package in a peculiar form that is a mishmash of a source package and an unpacked package bundle. This nonstandard situation can then lead to even more confusion. A better alternative for vignette inspection is use <code>devtools::build(vignettes = TRUE)</code> to create a package bundle and then look inside for the vignettes. Or just build and install the package, with <code>devtools::install(build_vignettes = TRUE)</code>, and browse the vignettes.</p>
+<!--
+https://github.com/r-lib/devtools/issues/2485
+--><p>If you really do want to build vignettes in the official manner on an <em>ad hoc</em> basis, <code><a href="https://devtools.r-lib.org/reference/build_vignettes.html">devtools::build_vignettes()</a></code> will do this. But we’ve seen this lead to developer frustration, because it leaves the package in a peculiar form that is a mishmash of a source package and an unpacked package bundle. This nonstandard situation can then lead to even more confusion. For example, it’s not clear how these not-actually-installed vignettes are meant to be accessed. Most developers should avoid using <code>build_vignettes()</code> and, instead, pick one of the approaches outlined above.</p>
 <div class="callout-tip callout callout-style-default callout-captioned">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
