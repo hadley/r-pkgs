@@ -245,6 +245,60 @@ There's also SystemRequirements
 
 stuff below here just transplanted!
 
+These are the two most common ways to depend on something
+
+Packages listed in `Imports` are needed by your users at runtime.
+The following lines indicate that your package absolutely needs both dplyr and tidyr to work.
+
+``` yaml
+Imports:
+    dplyr,
+    tidyr
+```
+
+Packages listed in `Suggests` are either needed for development tasks or *might* unlock optional functionality for your users.
+The lines below indicate that, while your package can take advantage of ggplot2 and testthat, they're not absolutely required:
+
+``` yaml
+Suggests:
+    ggplot2,
+    testthat
+```
+
+Both `Imports` and `Suggests` take a comma-separated list of package names.
+We recommend putting one package on each line, and keeping them in alphabetical order.
+A non-haphazard order makes it easier for humans to parse this field and appreciate changes.
+The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
+If the dependencies are already in alphabetical order, `use_package()` will keep it that way.
+In general, it can be nice to run `usethis::use_tidy_description()` regularly, which orders and formats `DESCRIPTION` fields according to a fixed standard.
+
+If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
+
+```{r include = FALSE}
+temp_pkg <- fs::path_temp("mypackage")
+withr::with_options(
+  list(usethis.description = NULL),
+  usethis::create_package(
+    temp_pkg, open = FALSE, rstudio = TRUE, check_name = FALSE
+  )
+)
+```
+
+```{r create-temp-pkg, include = FALSE}
+op <- usethis::proj_get()
+usethis::proj_set(temp_pkg)
+```
+
+```{r}
+usethis::use_package("dplyr") # Default is "Imports"
+
+usethis::use_package("ggplot2", "Suggests")
+```
+
+```{r include = FALSE}
+usethis::proj_set(op)
+```
+
 There are three other fields that allow you to express more specialised dependencies:
 
 -   `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends` was the only way to "depend" on another package.
@@ -272,6 +326,70 @@ But this is just a plain text field and is not automatically checked.
 Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
 
 <!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
+
+## Minimum versions
+
+If you need a specific version of a package, specify it in parentheses after the package name:
+
+``` yaml
+Imports:
+    dplyr (>= 1.0.0),
+    tidyr (>= 1.1.0)
+```
+
+You always want to specify a minimum version (`dplyr (>= 1.0.0)`) rather than an exact version (`dplyr (== 1.0.0)`).
+Since R can't have multiple versions of the same package loaded at the same time, specifying an exact dependency dramatically increases the chance of conflicting versions[^metadata-2].
+
+[^metadata-2]: The need to specify the exact versions of packages, rather than minimum versions, comes up more often in the development of non-package projects.
+    The [renv package](https://rstudio.github.io/renv/) provides a way to do this, by implementing project-specific environments (package libraries).
+    renv is a reboot of an earlier package called packrat.
+    If you want to freeze the dependencies of a project at exact versions, use renv instead of (or possibly in addition to) a `DESCRIPTION` file.
+
+Versioning is most important if you will release your package for use by others.
+Usually people don't have exactly the same versions of packages installed that you do.
+If someone has an older package that doesn't have a function your package needs, they'll get an unhelpful error message if your package does not advertise the minimum version it needs.
+However, if you state a minimum version, they'll learn about this problem clearly, probably at the time of installing your package.
+
+Think carefully if you declare a minimum version for a dependency.
+In some sense, the safest thing to do is to require a version greater than or equal to the package's current version.
+For public work, this is most naturally defined as the current CRAN version of a package; private or personal projects may adopt some other convention.
+But it's important to appreciate the implications for people who try to install your package: if their local installation doesn't fulfill all of your requirements around versions, installation will either fail or force upgrades of these dependencies.
+This is desirable if your minimum version requirements are genuine, i.e. your package would be broken otherwise.
+But if your stated requirements have a less solid rationale, this may be unnecessarily conservative and inconvenient.
+
+In the absence of clear, hard requirements, you should set minimum versions (or not) based on your expected user base, the package versions they are likely to have, and a cost-benefit analysis of being too lax versus too conservative.
+The *de facto* policy of the tidyverse team is to specify a minimum version when using a known new feature or when someone encounters a version problem in authentic use.
+This isn't perfect, but we don't currently have the tooling to do better, and it seems to work fairly well in practice.
+
+#### An R version gotcha
+
+Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
+The `saveRDS()` function writes a single R object as an `.rds` file, an R-specific format.
+For almost 20 years, `.rds` files used the "version 2" serialization format.
+"Version 3" became the new default in R 3.6.0 (released April 2019) and cannot be read by R versions prior to 3.5.0 (released April 2018).
+
+Many R packages have at least one `.rds` file lurking within and, if that gets re-generated with a modern R version, by default, the new `.rds` file will have the "version 3" format.
+When that R package is next built, such as for a CRAN submission, the required R version is automatically bumped to 3.5.0, signaled by this message:
+
+``` console
+NB: this package now depends on R (>= 3.5.0)
+  WARNING: Added dependency on R >= 3.5.0 because serialized objects in
+  serialize/load version 3 cannot be read in older versions of R.
+  File(s) containing such objects:
+    'path/to/some_file.rds'
+```
+
+Literally, the `DESCRIPTION` file in the bundled package says `Depends: R (>= 3.5.0)`, even if `DESCRIPTION` in the source package says differently[^metadata-3].
+
+[^metadata-3]: The different package states, such as source vs. bundled, are explained in @sec-package-states.
+
+When such a package is released on CRAN, the new minimum R version is viral, in the sense that all packages listing the original package in `Imports` or even `Suggests` have, to varying degrees, inherited the new dependency on R \>= 3.5.0.
+
+The immediate take-away is to be very deliberate about the `version` of `.rds` files until R versions prior to 3.5.0 have fallen off the edge of what you intend to support.
+This particular `.rds` issue won't be with us forever, but similar issues crop up elsewhere, such as in the standards implicit in compiled C or C++ source code.
+The broader message is that the more reverse dependencies your package has, the more thought you need to give to your package's stated minimum versions, especially for R itself.
+
+<!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
 
 ### The `License` field
 
