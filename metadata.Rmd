@@ -1,4 +1,4 @@
-# `DESCRIPTION` and `NAMESPACE` {#sec-metadata}
+# `DESCRIPTION` {#sec-metadata}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -7,27 +7,12 @@ status("restructuring")
 
 ## Introduction
 
-There are two important files that provide metadata about your package `DESCRIPTION` and `NAMESPACE`.
-The `DESCRIPTION` provides overall metadata about the package, and the `NAMESPACE` describes which functions you use from other packages and you expose to the world.
-In this chapter, you'll learn the basic structure of these files and some of their simple applications: like the name and title of your package and who wrote it.
+`DESCRIPTION` and `NAMESPACE` are two important files that provide metadata about your package.
+The `DESCRIPTION` file provides overall metadata about the package, such as the package name and which other packages it depends on.
+The `NAMESPACE` file advertises which functions your package makes available for others to use and, optionally, imports functions from other packages.
 
-We'll continue in the next chapters to explain:
-
--   Licensing is a big enough topic that it has a dedicated chapter (@sec-license).
-    If you have no plans to share your package, you may be able to ignore licensing.
-    But if you plan to share, even if only by putting the code where others can see it, you really should specify a license.
-
--   The `License` field which defines who can use your package.
-
--   The dependencies of your package.
-
-### Introduction TODOs
-
-DESCRIPTION and NAMESPACE are important files and we describe them in this chapter.
-
-In this chapter we literally describe these files, i.e. if you put X here, it means Y
-
-Subsequent chapters will go more into decision-making (why would do X?) and downstream implications (if you do X, you'll need to know about Z)
+In this chapter, you'll learn about the most important fields found in `DESCRIPTION`.
+The NAMESPACE file is covered in CROSSREF, where we INSERT DESCRIPTION OF DEPENDENCIES CHAPTER(S) HERE. The metadata part of the book concludes with @sec-license, which covers licensing.
 
 ## The `DESCRIPTION` file {#sec-description}
 
@@ -46,7 +31,9 @@ This minimal `DESCRIPTION` will vary a bit depending on your settings, but shoul
     In fact, the project for this book does exactly this!
     This off-label use of `DESCRIPTION` makes it easy to piggy-back on package development tooling to install all the packages necessary to work with a non-package project.
 
-```{r include = FALSE, cache = FALSE}
+```{r}
+#| include: FALSE
+#| cache: FALSE
 temp_pkg <- fs::path_temp("mypackage")
 withr::with_options(
   list(usethis.description = NULL),
@@ -69,16 +56,16 @@ Each line consists of a **field** name and a value, separated by a colon.
 When values span multiple lines, they need to be indented:
 
 ``` yaml
-Description: The description of a package is usually long,
-    spanning multiple lines. The second and subsequent lines
-    should be indented, usually with four spaces.
+Description: The description of a package usually spans multiple lines.
+    The second and subsequent lines should be indented, usually with four
+    spaces.
 ```
 
-If you ever need to work with a `DESCRIPTION` file programmatically, take a look at the [desc package](https://www.r-pkg.org/pkg/desc), which usethis uses heavily under-the-hood.
+If you ever need to work with a `DESCRIPTION` file programmatically, take a look at the [desc package](https://r-lib.github.io/desc/), which usethis uses heavily under-the-hood.
 
-This chapter will show you how to use the straightforward `DESCRIPTION` fields.
+This chapter shows you how to use the most important `DESCRIPTION` fields.
 
-### Title and description: What does your package do? {#description-title-description}
+## `Title` and `Description`: What does your package do? {#description-title-description}
 
 The title and description fields describe what the package does.
 They differ only in length:
@@ -124,9 +111,9 @@ You'll notice that `Description` only gives you a small amount of space to descr
 This is why it's so important to also include a `README.md` file that goes into much more depth and shows a few examples.
 You'll learn about that in @sec-readme.
 
-### Author: who are you? {#description-authors}
+## Author: who are you? {#description-authors}
 
-To identify the package's author, and whom to contact if something goes wrong, use the `Authors@R` field.
+Use the `Authors@R` field to identify the package's author, and whom to contact if something goes wrong.
 This field is unusual because it contains executable R code rather than plain text.
 Here's an example:
 
@@ -146,7 +133,7 @@ The `person()` function has four main inputs:
 -   The name, specified by the first two arguments, `given` and `family` (these are normally supplied by position, not name).
     In English cultures, `given` (first name) comes before `family` (last name).
     In many cultures, this convention does not hold.
-    For a non-person entity, such as "R Core Team" or "RStudio", use the `given` argument (and omit `family`).
+    For a non-person entity, such as "R Core Team" or "Posit PBC", use the `given` argument (and omit `family`).
 
 -   The `email` address.
     It's important to note that this is the address CRAN uses to let you know if your package needs to be fixed in order to stay on CRAN.
@@ -183,7 +170,9 @@ The `person()` function has four main inputs:
     )
     ```
 
-```{r, eval = FALSE, include = FALSE}
+```{r}
+#| eval: FALSE
+#| include: FALSE
 db <- getNamespace("utils")$MARC_relator_db
 db <- db[db$usage != "",]
 tibble::as_tibble(db)
@@ -215,16 +204,16 @@ Authors@R: c(
 Every package must have at least one author (`aut`) and one maintainer (`cre`) (they might be the same person).
 The maintainer (`cre`) must have an email address.
 These fields are used to generate the basic citation for the package (e.g. `citation("pkgname")`).
-Only people listed as authors will be included in the auto-generated citation.
+Only people listed as authors will be included in the auto-generated citation (@sec-misc-inst-citation).
 There are a few extra details if you're including code that other people have written, which you can learn about in @sec-code-you-bundle.
 
 An older, still valid approach is to have separate `Maintainer` and `Author` fields in `DESCRIPTION`.
 However, we strongly recommend the more modern approach of `Authors@R` and the `person()` function, because it offers richer metadata for various downstream uses.
 
-### `Url` and `BugReports`
+## `URL` and `BugReports`
 
 As well as the maintainer's email address, it's a good idea to list other places people can learn more about your package.
-The `URL` field is commonly used to advertise the package's website and to link to a public source repository, where development happens.
+The `URL` field is commonly used to advertise the package's website (@sec-website) and to link to a public source repository, where development happens.
 Multiple URLs are separated with a comma.
 `BugReports` is the URL where bug reports should be submitted, e.g., as GitHub issues.
 For example, devtools has:
@@ -237,17 +226,16 @@ BugReports: https://github.com/r-lib/devtools/issues
 If you use `usethis::use_github()` to connect your local package to a remote GitHub repository, it will automatically populate `URL` and `BugReports` for you.
 If a package is already connected to a remote GitHub repository, `usethis::use_github_links()` can be called to just add the relevant links to `DESCRIPTION`.
 
-### `Imports`, `Suggests`, and friends
+## The `License` field
 
-New section laying out the basics of Imports, Suggests, Depends, LinkingTo, Enhances
+The `License` field is mandatory and must specify your package's license in a standard form recognized by R.
+The official tooling aims to identify standard open source licenses, so it's important to appreciate that `License` is basically a machine-readable field.
+See @sec-license for a full discussion.
 
-There's also SystemRequirements
+## `Imports`, `Suggests`, and friends
 
-stuff below here just transplanted!
-
-These are the two most common ways to depend on something
-
-Packages listed in `Imports` are needed by your users at runtime.
+Two of the most important and commonly used `DESCRIPTION` fields are `Imports` and `Suggests`, which list other packages that your package depends on.
+Packages listed in `Imports` are needed by your users at runtime and will be installed (or potentially updated) when users install your package via `install.packages()`.
 The following lines indicate that your package absolutely needs both dplyr and tidyr to work.
 
 ``` yaml
@@ -268,13 +256,15 @@ Suggests:
 Both `Imports` and `Suggests` take a comma-separated list of package names.
 We recommend putting one package on each line, and keeping them in alphabetical order.
 A non-haphazard order makes it easier for humans to parse this field and appreciate changes.
+
 The easiest way to add a package to `Imports` or `Suggests` is with `usethis::use_package()`.
 If the dependencies are already in alphabetical order, `use_package()` will keep it that way.
 In general, it can be nice to run `usethis::use_tidy_description()` regularly, which orders and formats `DESCRIPTION` fields according to a fixed standard.
 
-If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
+If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them (explained more in CROSSREF).
 
-```{r include = FALSE}
+```{r create-temp-pkg}
+#| include: FALSE
 temp_pkg <- fs::path_temp("mypackage")
 withr::with_options(
   list(usethis.description = NULL),
@@ -282,9 +272,6 @@ withr::with_options(
     temp_pkg, open = FALSE, rstudio = TRUE, check_name = FALSE
   )
 )
-```
-
-```{r create-temp-pkg, include = FALSE}
 op <- usethis::proj_get()
 usethis::proj_set(temp_pkg)
 ```
@@ -295,39 +282,12 @@ usethis::use_package("dplyr") # Default is "Imports"
 usethis::use_package("ggplot2", "Suggests")
 ```
 
-```{r include = FALSE}
+```{r}
+#| include: FALSE
 usethis::proj_set(op)
 ```
 
-There are three other fields that allow you to express more specialised dependencies:
-
--   `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends` was the only way to "depend" on another package.
-    Now, despite the name, you should almost always use `Imports`, not `Depends`.
-    You'll learn why, and when you should still use `Depends`, in @sec-dependencies.
-
-    You can also use `Depends` to state a minimum version for R itself, e.g.
-    `Depends: R (>= 4.0.0)`.
-    Again, think carefully if you do this.
-    This raises the same issues as setting a minimum version for a package you depend on, except the stakes are much higher when it comes to R itself.
-    Users can't simply consent to the necessary upgrade, so, if other packages depend on yours, your minimum version requirement for R can cause a cascade of package installation failures.
-
-    -   The [backports package](https://cran.r-project.org/package=backports) is useful if you want to use a function like `tools::R_user_dir()`, which was introduced in 4.0.0 in 2020, while still supporting older R versions.
-    -   The tidyverse packages officially support the current R version, the devel version, and four previous versions. We proactively test this support in the standard build matrix we use for continuous integration.
-    -   Packages with a lower level of use may not need this level of rigour. The main takeaway is: if you state a minimum of R, you should have a reason and you should take reasonable measures to test your claim regularly.
-
--   `LinkingTo`: if your package uses C or C++ code from another package, you need to list it here.
-
--   `Enhances`: packages listed here are "enhanced" by your package.
-    Typically, this means you provide methods for classes defined in another package (a sort of reverse `Suggests`).
-    But it's hard to define what that means, so we don't recommend using `Enhances`.
-
-You can also list things that your package needs outside of R in the `SystemRequirements` field.
-But this is just a plain text field and is not automatically checked.
-Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
-
-<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
-
-## Minimum versions
+### Minimum versions
 
 If you need a specific version of a package, specify it in parentheses after the package name:
 
@@ -361,7 +321,31 @@ In the absence of clear, hard requirements, you should set minimum versions (or 
 The *de facto* policy of the tidyverse team is to specify a minimum version when using a known new feature or when someone encounters a version problem in authentic use.
 This isn't perfect, but we don't currently have the tooling to do better, and it seems to work fairly well in practice.
 
-#### An R version gotcha
+### `Depends` and `LinkingTo`
+
+There are three other fields that allow you to express more specialised dependencies:
+
+-   `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends` was the only way to "depend" on another package.
+    Now, despite the name, you should almost always use `Imports`, not `Depends`.
+    You'll learn why, and when you should still use `Depends`, in @sec-dependencies.
+
+    The most legitimate current use of `Depends` is to state a minimum version for R itself, e.g.
+    `Depends: R (>= 4.0.0)`.
+    Again, think carefully if you do this.
+    This raises the same issues as setting a minimum version for a package you depend on, except the stakes are much higher when it comes to R itself.
+    Users can't simply consent to the necessary upgrade, so, if other packages depend on yours, your minimum version requirement for R can cause a cascade of package installation failures.
+
+    -   The [backports package](https://cran.r-project.org/package=backports) is useful if you want to use a function like `tools::R_user_dir()`, which was introduced in 4.0.0 in 2020, while still supporting older R versions.
+    -   The tidyverse packages officially support the current R version, the devel version, and four previous versions. We proactively test this support in the standard build matrix we use for continuous integration.
+    -   Packages with a lower level of use may not need this level of rigour. The main takeaway is: if you state a minimum of R, you should have a reason and you should take reasonable measures to test your claim regularly.
+
+-   `LinkingTo`: if your package uses C or C++ code from another package, you need to list it here.
+
+-   `Enhances`: packages listed here are "enhanced" by your package.
+    Typically, this means you provide methods for classes defined in another package (a sort of reverse `Suggests`).
+    But it's hard to define what that means, so we don't recommend using `Enhances`.
+
+### An R version gotcha
 
 Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
 The `saveRDS()` function writes a single R object as an `.rds` file, an R-specific format.
@@ -391,43 +375,94 @@ The broader message is that the more reverse dependencies your package has, the 
 
 <!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
 
-### The `License` field
-
-new section that is really short but explains there's a field in DESCRIPTION and possibly other files related to licensing
-
-see the licensing chapter for more
-
-### Other fields {#description-other-fields}
+## Other fields {#description-other-fields}
 
 A few other `DESCRIPTION` fields are heavily used and worth knowing about:
 
--   `Encoding` describes the character encoding of files throughout your package.
-    Our package development workflow always assumes that this is set to `Encoding: UTF-8` as this now the most commonly used text encoding, and we are not aware of any reasons to use a different value.
-
--   `Collate` controls the order in which R files are sourced.
-    This only matters if your code has side-effects; most commonly because you're using S4.
-
--   `Version` is really important as a way of communicating where your package is in its lifecycle and how it is evolving over time.
+-   `Version` is very important as a way of communicating where your package is in its lifecycle and how it is evolving over time.
     Learn more in @sec-lifecycle.
 
 -   `LazyData` is relevant if your package makes data available to the user.
     If you specify `LazyData: true`, the datasets are lazy-loaded, which makes them more immediately available, i.e. users don't have to use `data()`.
     The addition of `LazyData: true` is handled automatically by `usethis::use_data()`.
-    More detail is given when we talk about external data in @sec-data.
+    More detail is given in @sec-data.
 
--   TO ADD: `VignetteBuilder`, `Language` (?)
+-   `Encoding` describes the character encoding of files throughout your package.
+    Our package development workflow always assumes that this is set to `Encoding: UTF-8` as this is now the most commonly used text encoding, and we are not aware of any reasons to use a different value.
 
-There are actually many other rarely, if ever, used fields.
-A complete list can be found in the "The DESCRIPTION file" section of the [R extensions manual](https://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file).
+-   `Collate` controls the order in which R files are sourced.
+    This only matters if your code has side-effects; most commonly because you're using S4.
 
-### Custom fields {#sec-metadata-custom-fields}
+-   `VignetteBuilder` lists any package that your package needs as a vignette engine.
+    Our recommended vignette workflow is described in @sec-vignettes-workflow-writing, which will list the knitr package in `VignetteBuilder`.
+
+-   `SystemRequirements` is where you describe dependencies external to R.
+    This is a plain text field and does not, for example, actually install or check for anything, so you might need to include additional installation details in your README (@sec-readme).
+    The most common usage is in the context of a package with compiled code, where `SystemRequirements` is used to declare the C++ standard or the need for GNU make.
+    Examples:
+
+    ``` yaml
+    SystemRequirements: C++17
+    SystemRequirements: GNU make
+    SystemRequirements: C++11, GNU make
+    SystemRequirements: pandoc (>= 1.14) - http://pandoc.org
+    SystemRequirements: TensorFlow (https://www.tensorflow.org/
+    ```
+
+```{r}
+#| eval: FALSE
+#| include: FALSE
+library(tidyverse)
+library(pkgsearch)
+
+sr <- advanced_search("_exists_" = "SystemRequirements", size = 1600)
+attr(sr, "metadata")$total
+#> [1] 1577
+
+tibble(raw = sr$package_data) |> 
+  hoist(raw, "SystemRequirements") |> 
+  count(SystemRequirements, sort = TRUE) |> 
+  print(n = 20)
+#> # A tibble: 688 × 2
+#>    SystemRequirements                                              n
+#>    <chr>                                                       <int>
+#>  1 "C++11"                                                       396
+#>  2 "GNU make"                                                    194
+#>  3 "C++14"                                                        23
+#>  4 "Java (>= 8)"                                                  16
+#>  5 "C++11, GNU make"                                              15
+#>  6 "C++17"                                                        15
+#>  7 "JAGS (http://mcmc-jags.sourceforge.net)"                      14
+#>  8 "Java (>= 5.0)"                                                13
+#>  9 "GNU GSL"                                                      11
+#> 10 "GNU make, C++11"                                              10
+#> 11 "pandoc"                                                        9
+#> 12 "C++ 17, gmp, mpfr"                                             8
+#> 13 "pandoc (>= 1.12.3), pandoc-citeproc"                           8
+#> 14 "pandoc (>= 1.14) - http://pandoc.org"                          8
+#> 15 "TensorFlow (https://www.tensorflow.org/)"                      6
+#> 16 "pandoc (>= 1.12.3) - http://pandoc.org"                        6
+#> 17 "BEAST2 (https://www.beast2.org/)"                              5
+#> 18 "C++11, GDAL (>= 2.0.1), GEOS (>= 3.4.0), PROJ (>=\n4.8.0)"     5
+#> 19 "fftw3 (>= 3.1.2)"                                              5
+#> 20 "pandoc with https support"                                     5
+#> # … with 668 more rows
+```
+
+We discourage the explicit use of the `Date` field, as it is extremely easy to forget to update it if you manage `Date` by hand.
+This field will be populated in the natural course of bundling the package, e.g. when submitting to CRAN, and we recommend that you just let that happen.
+
+There are many other DESCRIPTION fields that are used less frequently.
+A complete list can be found in the "The DESCRIPTION file" section of [Writing R Extensions](https://cran.r-project.org/doc/manuals/R-exts.html#The-DESCRIPTION-file).
+
+## Custom fields {#sec-metadata-custom-fields}
 
 There is also some flexibility to create your own fields to add additional metadata.
 In the narrowest sense, the only restriction is that you shouldn't re-purpose the official field names used by R.
 You should also limit yourself to valid English words, so the field names aren't flagged by the spell-check.
 
 In practice, if you plan to submit to CRAN, we recommend that any custom field name should start with `Config/`.
-We featured an example of this earlier, where `Config/Needs/website` is used to record additional packages needed to build a package's website.
+We'll revisit this later when we explain how `Config/Needs/website` is used to record additional packages needed to build a package's website.
 
 You might notice that `create_package()` writes two more fields we haven't discussed yet, relating to the use of the roxygen2 package for documentation:
 
@@ -438,55 +473,3 @@ RoxygenNote: 7.2.1
 
 You will learn more about these in @sec-man.
 The use of these specific field names is basically an accident of history and, if it were re-done today, they would follow the `Config/*` pattern recommended above.
-
-## The `NAMESPACE` file {#sec-metadata-namespace}
-
-The following code is an excerpt of the `NAMESPACE` file from the testthat package.
-
-    # Generated by roxygen2 (4.0.2): do not edit by hand
-    S3method(as.character,expectation)
-    S3method(compare,character)
-    export(auto_test)
-    export(auto_test_package)
-    export(colourise)
-    export(context)
-    exportClasses(ListReporter)
-    exportClasses(MinimalReporter)
-    importFrom(methods,setRefClass)
-    useDynLib(testthat,duplicate_)
-    useDynLib(testthat,reassign_function)
-
-You can see that the `NAMESPACE` file looks a bit like R code.
-Each line contains a **directive**: `S3method()`, `export()`, `exportClasses()`, and so on.
-Each directive describes an R object, and says whether it's exported from this package to be used by others, or it's imported from another package to be used locally.
-
-In total, there are eight namespace directives.
-Four describe exports:
-
--   `export()`: export functions (including S3 and S4 generics).
--   `exportPattern()`: export all functions that match a pattern.
--   `exportClasses()`, `exportMethods()`: export S4 classes and methods.
--   `S3method()`: export S3 methods.
-
-And four describe imports:
-
--   `import()`: import all functions from a package.
--   `importFrom()`: import selected functions (including S4 generics).
--   `importClassesFrom()`, `importMethodsFrom()`: import S4 classes and methods.
-
-I don't recommend writing these directives by hand.
-Instead, in this chapter you'll learn how to generate the `NAMESPACE` file with roxygen2.
-There are three main advantages to using roxygen2:
-
--   Namespace definitions live next to its associated function, so when you read the code it's easier to see what's being imported and exported.
-
--   Roxygen2 abstracts away some of the details of `NAMESPACE`.
-    You only need to learn one tag, `@export`, which will automatically generate the right directive for functions, S3 methods, S4 methods and S4 classes.
-
--   Roxygen2 makes `NAMESPACE` tidy.
-    No matter how many times you use `@importFrom foo bar` you'll only get one `importFrom(foo, bar)` in your `NAMESPACE`.
-    This makes it easy to attach import directives to every function that need them, rather than trying to manage in one central place.
-
-Note that you can choose to use roxygen2 to generate just `NAMESPACE`, just `man/*.Rd`, or both.
-If you don't use any namespace related tags, roxygen2 won't touch `NAMESPACE`.
-If you don't use any documentation related tags, roxygen2 won't touch `man/`.
