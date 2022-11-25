@@ -1,4 +1,4 @@
-# Dependencies: What does your package need? {#sec-dependencies}
+# Importing functionality from others {#sec-dependencies}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -23,7 +23,38 @@ When you first start using namespaces, it'll seem like a lot of work for little 
 However, having a high quality namespace helps encapsulate your package and makes it self-contained.
 This ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
 
-## Run-time vs develop-time dependencies
+### Introduction TODOs
+
+Revise to be more like ...
+
+A dependency is something your package needs and DESCRIPTION (cross-ref) is the main place where you declare your dependencies.
+
+Then, by definition, you will use those dependencies in various ways elsewhere in your package.
+And we have a lot to say about how that happens for different types of dependencies and different types of usage:
+
+-   in your functions, below R/
+-   in your tests, below tests/
+-   in your help topics, below man/
+-   in your vignettes and articles, below vignettes/
+
+## When should you take a dependency?
+
+<https://www.tidyverse.org/blog/2019/05/itdepends/>
+
+### Tidyverse dependencies
+
+Here's our policies about the role of different packages.
+`use_tidy_dependencies()`.
+"Free" dependencies.
+
+## Different types of dependencies
+
+TODO: generalize this to "different types of dependencies".
+Imports (incl. Depends), Suggests, custom ones like "website build time"
+
+### Imports and Suggests
+
+These are the two most common ways to depend on something
 
 Packages listed in `Imports` are needed by your users at runtime.
 The following lines indicate that your package absolutely needs both dplyr and tidyr to work.
@@ -78,34 +109,14 @@ In general, it can be nice to run `usethis::use_tidy_description()` regularly, w
 
 [^dependencies-1]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
 
-If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
+`Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
+In that case, it's reasonable to just use `Imports` for everything.
+Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
+It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
 
-```{r include = FALSE}
-temp_pkg <- fs::path_temp("mypackage")
-withr::with_options(
-  list(usethis.description = NULL),
-  usethis::create_package(
-    temp_pkg, open = FALSE, rstudio = TRUE, check_name = FALSE
-  )
-)
-```
+### How to use functionality from an Imported package
 
-```{r create-temp-pkg, include = FALSE}
-op <- usethis::proj_get()
-usethis::proj_set(temp_pkg)
-```
-
-```{r}
-usethis::use_package("dplyr") # Default is "Imports"
-
-usethis::use_package("ggplot2", "Suggests")
-```
-
-```{r include = FALSE}
-usethis::proj_set(op)
-```
-
-### Guarding the use of a suggested package
+### How to use functionality from a Suggested package
 
 Inside a function in your own package, check for the availability of a suggested package with `requireNamespace("pkg", quietly = TRUE)`.
 There are two basic scenarios:
@@ -153,11 +164,6 @@ my_fun <- function(a, b) {
 ```
 
 These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
-
-`Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
-In that case, it's reasonable to just use `Imports` for everything.
-Using `Suggests` is mostly a courtesy to external users or to accommodate very lean installations.
-It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.
 
 Another common place to use a suggested package is in an example and here we often guard with `require()` (but you'll also see `requireNamespace()` used for this).
 This example is from `ggplot2::coord_map()`.
@@ -222,7 +228,34 @@ In this case, the sf package can be nontrivial to install and it is conceivable 
 
 Finally, note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
 
-### Minimum versions
+If you add packages to `DESCRIPTION` with `usethis::use_package()`, it will also remind you of the recommended way to call them.
+
+```{r include = FALSE}
+temp_pkg <- fs::path_temp("mypackage")
+withr::with_options(
+  list(usethis.description = NULL),
+  usethis::create_package(
+    temp_pkg, open = FALSE, rstudio = TRUE, check_name = FALSE
+  )
+)
+```
+
+```{r create-temp-pkg, include = FALSE}
+op <- usethis::proj_get()
+usethis::proj_set(temp_pkg)
+```
+
+```{r}
+usethis::use_package("dplyr") # Default is "Imports"
+
+usethis::use_package("ggplot2", "Suggests")
+```
+
+```{r include = FALSE}
+usethis::proj_set(op)
+```
+
+## Minimum versions
 
 If you need a specific version of a package, specify it in parentheses after the package name:
 
@@ -256,36 +289,6 @@ In the absence of clear, hard requirements, you should set minimum versions (or 
 The *de facto* policy of the tidyverse team is to specify a minimum version when using a known new feature or when someone encounters a version problem in authentic use.
 This isn't perfect, but we don't currently have the tooling to do better, and it seems to work fairly well in practice.
 
-### Other dependencies
-
-There are three other fields that allow you to express more specialised dependencies:
-
--   `Depends`: Prior to the roll-out of namespaces in R 2.14.0 in 2011, `Depends` was the only way to "depend" on another package.
-    Now, despite the name, you should almost always use `Imports`, not `Depends`.
-    You'll learn why, and when you should still use `Depends`, in @sec-dependencies.
-
-    You can also use `Depends` to state a minimum version for R itself, e.g.
-    `Depends: R (>= 4.0.0)`.
-    Again, think carefully if you do this.
-    This raises the same issues as setting a minimum version for a package you depend on, except the stakes are much higher when it comes to R itself.
-    Users can't simply consent to the necessary upgrade, so, if other packages depend on yours, your minimum version requirement for R can cause a cascade of package installation failures.
-
-    -   The [backports package](https://cran.r-project.org/package=backports) is useful if you want to use a function like `tools::R_user_dir()`, which was introduced in 4.0.0 in 2020, while still supporting older R versions.
-    -   The tidyverse packages officially support the current R version, the devel version, and four previous versions. We proactively test this support in the standard build matrix we use for continuous integration.
-    -   Packages with a lower level of use may not need this level of rigour. The main takeaway is: if you state a minimum of R, you should have a reason and you should take reasonable measures to test your claim regularly.
-
--   `LinkingTo`: if your package uses C or C++ code from another package, you need to list it here.
-
--   `Enhances`: packages listed here are "enhanced" by your package.
-    Typically, this means you provide methods for classes defined in another package (a sort of reverse `Suggests`).
-    But it's hard to define what that means, so we don't recommend using `Enhances`.
-
-You can also list things that your package needs outside of R in the `SystemRequirements` field.
-But this is just a plain text field and is not automatically checked.
-Think of it as a quick reference; you'll also need to include detailed system requirements (and how to install them) in your README.
-
-<!-- This description of SystemRequirements seems a bit too dismissive or wishy-washy now, given the importance of this field to RSPM, ubuntu-based CI, etc. But at the moment, we think more discussion fits best in the compiled code chapter. -->
-
 #### An R version gotcha
 
 Before we leave this topic, we give a concrete example of how easily an R version dependency can creep in and have a broader impact than you might expect.
@@ -316,7 +319,7 @@ The broader message is that the more reverse dependencies your package has, the 
 
 <!-- TODO: I could probably get the blessing to include a concrete example of this happening, as there are many. For example, the tidymodels team has direct experience. Does that seem necessary / beneficial? -->
 
-### Nonstandard dependencies
+## Nonstandard dependencies
 
 In packages developed with devtools, you may see `DESCRIPTION` files that use a couple other nonstandard fields for package dependencies specific to development tasks.
 
@@ -379,64 +382,6 @@ respectively.
 The `Config/Needs/*` convention is handy because it allows a developer to use `DESCRIPTION` as their definitive record of package dependencies, while maintaining a clean distinction between true runtime dependencies versus those that are only needed for specialized development tasks.
 
 <!-- re: describing different types of dependencies, another term you see for "runtime" dependency is "production" -->
-
-## Exports {#exports}
-
-For a function to be usable outside of your package, you must **export** it.
-When you create a new package with `usethis::create_package()`, nothing is exported at first.
-You can still experiment interactively with `load_all()` (since that loads all functions, not just those that are exported).
-But if you install and reload the package, you'll notice that no functions are available.
-
-To export an object, put `@export` in its roxygen block.
-For example:
-
-```{r}
-#' @export
-foo <- function(x, y, z) {
-  ...
-}
-```
-
-This will then generate `export()`, `exportMethods()`, `exportClass()` or `S3method()` depending on the type of the object.
-
-You export functions that you want other people to use.
-Exported functions must be documented, and you must be cautious when changing their interface --- other people are using them!
-Generally, it's better to export too little than too much.
-It's easy to export things that you didn't before; it's hard to stop exporting a function because it might break existing code.
-Always err on the side of caution, and simplicity.
-It's easier to give people more functionality than it is to take away stuff they're used to.
-
-I believe that packages that have a wide audience should strive to do one thing and do it well.
-All functions in a package should be related to a single problem (or a set of closely related problems).
-Any functions not related to that purpose should not be exported.
-For example, most of my packages have a `utils.R` file that contains many small functions that are useful for me, but aren't part of the core purpose of those packages.
-I never export these functions.
-
-```{r}
-# Defaults for NULL values
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
-# Remove NULLs from a list
-compact <- function(x) {
-  x[!vapply(x, is.null, logical(1))]
-}
-```
-
-That said, if you're creating a package for yourself, it's far less important to be so disciplined.
-Because you know what's in your package, it's fine to have a local "misc" package that contains a passel of functions that you find useful.
-But I don't think you should release such a package.
-
-The following sections describe what you should export if you're using S3, S4 or RC.
-
-## When should you take a dependency?
-
-<https://www.tidyverse.org/blog/2019/05/itdepends/>
-
-### Tidyverse dependencies
-
-Here's our policies about the role of different packages.
-`use_tidy_dependencies()`.
-"Free" dependencies.
 
 ## Namespace {#sec-dependencies-namespace}
 
@@ -565,20 +510,6 @@ Now that you understand the importance of the namespace, let's dive into the nit
 The two sides of the package namespace, imports and exports, are both described by the `NAMESPACE`.
 You'll learn what this file looks like in the next section.
 In the section after that, you'll learn the details of exporting and importing functions and other objects.
-
-### Workflow {#namespace-workflow}
-
-Generating the namespace with roxygen2 is just like generating function documentation with roxygen2.
-You use roxygen2 blocks (starting with `#'`) and tags (starting with `@`).
-The workflow is the same:
-
-1.  Add roxygen comments to your `.R` files.
-
-2.  Run `devtools::document()` (or press Ctrl/Cmd + Shift + D in RStudio) to convert roxygen comments to `.Rd` files.
-
-3.  Look at `NAMESPACE` and run tests to check that the specification is correct.
-
-4.  Rinse and repeat until the correct functions are exported.
 
 ### Imports {#sec-imports}
 
