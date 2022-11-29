@@ -1,4 +1,4 @@
-# Importing functionality from others {#sec-dependencies}
+# Dependencies {#sec-dependencies}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -7,59 +7,161 @@ status("restructuring")
 
 ## Introduction
 
-A dependency is a code that your package needs to run.
-Dependencies are managed by two files.
-The `DESCRIPTION` manages dependencies at the package level; i.e. what packages needs to be installed for your package to work.
-R has a rich set of ways to describe different types of dependencies.
-A key point is whether a dependency is needed by regular users or is only needed for development tasks or optional functionality.
+A dependency is when your package uses functionality from another package (or other external tool).
+In @sec-description-imports-suggests, we explained how to declare a dependency on another package by listing it in `Imports` or `Suggests`.
+But that still leaves many issues for the maintainer to think about:
 
-The flip-side is that your package will also be a dependency of other people's scripts and packages.
-The job of the `NAMESPACE` is to define what functions you make available for others to use.
-The package namespace (as recorded in the `NAMESPACE` file) is one of the more confusing parts of building a package.
-It's a fairly advanced topic, and by-and-large, not that important if you're only developing packages for yourself.
-However, understanding namespaces is vital if you plan to submit your package to CRAN.
-This is because CRAN requires that your package plays nicely with other packages.
-When you first start using namespaces, it'll seem like a lot of work for little gain.
-However, having a high quality namespace helps encapsulate your package and makes it self-contained.
+-   When should you take a dependency?
+    What are the risk and rewards?
+
+-   How should you use different kinds of dependencies in different contexts?
+    I.e. imported vs. suggested packages, used inside your functions vs tests vs documentation.
+
+A key concept we'll have to cover along the way is that of a *namespace*.
+Your package's namespace is specified via its `NAMESPACE` file, which lays out the functions (or other objects) that your package exports for use by others.
+The `NAMESPACE` file can also be used to import functions (or other objects) from your dependencies into your own package.
+Although it can be a bit confusing, R's namespace system is vital for the package ecosystem.
+The purpose of the namespace is to keep each package encapsulated and self-contained.
 This ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
-
-### Introduction TODOs
-
-Revise to be more like ...
-
-A dependency is something your package needs and DESCRIPTION (cross-ref) is the main place where you declare your dependencies.
-
-Then, by definition, you will use those dependencies in various ways elsewhere in your package.
-And we have a lot to say about how that happens for different types of dependencies and different types of usage:
-
--   in your functions, below R/
--   in your tests, below tests/
--   in your help topics, below man/
--   in your vignettes and articles, below vignettes/
 
 ## When should you take a dependency?
 
-<https://www.tidyverse.org/blog/2019/05/itdepends/>
+*This section is adapted from the "It Depends" [blog post](https://www.tidyverse.org/blog/2019/05/itdepends/) and [talk](https://www.rstudio.com/resources/rstudioconf-2019/it-depends-a-dialog-about-dependencies/) authored by Jim Hester.*
 
-https://github.com/hadley/r-pkgs/issues/486
+Software dependencies can be a double-edged sword.
 
-Importing tidyverse is a bad idea
+On one hand, they let you take advantage of others' work, giving your software new capabilities and making its behaviour and interface more consistent with other packages.
+By using a pre-existing solution, you avoid re-implementing functionality, which eliminates many opportunities for you to introduce bugs.
 
-Use just the bits you need https://github.com/hadley/r-pkgs/issues/609
+On the other hand, your dependencies will likely change over time, which could require you to make changes to your package, potentially increasing your maintenance burden.
+Your dependencies can also increase the time and disk space needed when users install your package.
 
-Main tidyverse thing to address is tidy eval stuff
+These downsides have led some to suggest a 'dependency zero' mindset.
+We feel that this is bad advice for most projects, and is likely to lead to lower functionality, increased maintenance, and new bugs.
 
-Caring too much about imports is a bad idea
+### Dependencies are not equal
 
-Having many imports for a low-level package is a bad idea
+One problem with simply minimizing the absolute number of dependencies is that it treats all dependencies as equivalent.
+However, in reality, this is far from the truth.
+There are many axes upon which dependencies can differ, but some of the most important include:
 
-CRAN's complaint about too many dependencies
+1.  The type of the dependency.
+    Some dependencies come bundled with R itself (e.g. base, utils, stats) or are one of the 'Recommended' packages (e.g. Matrix, survival).
+    These packages are very low cost to depend on, as they are (nearly) universally installed on all users' systems, and mostly change only with new R versions.
+    In contrast, there is a higher cost for a dependency that comes from, e.g., a non-CRAN repository, which requires users to configure additional repositories before installation.
 
-### Tidyverse dependencies
+2.  The number of upstream dependencies, i.e. recursive dependencies.
+    For example, the [rlang](https://rlang.r-lib.org) package is intentionally managed as a low-level package and has no upstream dependencies apart from R itself.
+    At the other extreme, there are packages on CRAN with \~250 recursive dependencies.
 
-Here's our policies about the role of different packages.
-`use_tidy_dependencies()`.
-"Free" dependencies.
+3.  Already fulfilled dependencies.
+    If your package depends on dplyr then taking a dependency on tibble does not change the dependency footprint, as dplyr itself already depends on tibble.
+    Additionally, some of the most popular packages (e.g. ggplot2) will already be installed on the majority of users' machines.
+    So adding a ggplot2 dependency is unlikely to incur additional installation costs in most cases.
+
+4.  The burden of installing the package.
+    Various factors make a package more costly to install, in terms of time, space, and human aggravation:
+
+    -   Time to compile: Packages that contain C/C++ can take very different amounts of time to install depending on the complexity of the code.
+        For example, the [glue](https://glue.tidyverse.org) package takes \~5 seconds to compile on CRAN's build machines, whereas the [readr](https://readr.tidyverse.org) package takes \~100 seconds to install on the same machines.
+
+    -   Binary package size: Users installing binary packages need to download them, so the size of the binary is relevant, particularly for those with slow internet connections.
+        This also varies a great deal across packages.
+        The smallest packages on CRAN are around 1 Kb in size, while the [h2o](https://cran.r-project.org/package=h2o) package is 170 Mb, and there are Bioconductor binaries that are over 4 Gb!
+
+    -   System requirements: Some packages require additional system dependencies in order to be used.
+        For instance, the [rjags](https://cran.r-project.org/package=rjags) package requires a matching installation of the JAGS library.
+        Another example is [rJava](https://cran.r-project.org/package=rJava) which requires a Java SDK and also has additional steps needed to configure R for the proper Java installation, which has caused [installation issues for many people](https://stackoverflow.com/questions/tagged/rjava).
+
+5.  Maintenance capacity.
+    It is reasonable to have higher confidence in a package that is well-established and that is maintained by developers or teams with a long track record and that maintain many other packages.
+    This increases the likelihood that the package will remain on CRAN without interruptions and that the maintainer has an intentional approach to the software life cycle (@sec-lifecycle).
+
+The specifics above hopefully make it clear that package dependencies are not equal.
+
+### Prefer a holistic, balanced, and quantitative approach
+
+Instead of striving for a minimal number of dependencies, we recommend a more holistic, balanced, and quantitative approach.
+
+A holistic approach looks at the project as a whole and asks "who is the primary audience?".
+If the audience is other package authors, then a leaner package with fewer dependencies may be more appropriate.
+If, instead, the target user is a data scientist or statistician, they will likely already have many popular dependencies installed and would benefit from a more feature-full package.
+
+A balanced approach understands that adding (or removing) dependencies comes with trade-offs.
+Adding a dependency gives you additional features, bug fixes, and real-world testing, at the cost of increased installation time, disk space and maintenance if the dependency has breaking changes.
+In some cases it makes sense to *increase* dependencies for a package, even if an implementation already exists.
+For instance, base R has a number of different implementations of non-standard evaluation with varying semantics across its functions.
+The same used to be true of tidyverse packages as well, but now they all depend on the implementations in the [tidyselect](https://tidyselect.r-lib.org) and [rlang](https://rlang.r-lib.org) packages.
+Users benefit from the improved consistency of this feature and individual package developers can let the maintainers of tidyselect and rlang worry about the technical details.
+
+In contrast, removing a dependency lowers installation time, disk space, and avoids potential breaking changes.
+However, it means your package will have fewer features or that you must re-implement them yourself.
+That, in turn, takes development time and introduces new bugs.
+One advantage of using an existing solution is that you'll get the benefit of all the bugs that have already been discovered and fixed.
+Especially if the dependency is relied on by many other packages, this is a gift that keeps on giving.
+
+Similar to optimizing performance, if you are worried about the burden of dependencies, it makes sense to address those concerns in a specific and quantitiave way.
+The experimental [itdepends](https://github.com/r-lib/itdepends) package was created for the [talk](https://www.rstudio.com/resources/rstudioconf-2019/it-depends-a-dialog-about-dependencies/) and [blog post](https://www.tidyverse.org/blog/2019/05/itdepends/) this section is based on.
+It is still a useful source of concrete ideas (and code) for analyzing how heavy a dependency is.
+The [pak](https://pak.r-lib.org/) package also has several functions that are useful for dependency analysis:
+
+```{r}
+pak::pkg_deps_tree("tibble")
+
+pak::pkg_deps_explain("tibble", "rlang")
+```
+
+### Dependency thoughts specific to the tidyverse
+
+The packages maintained by the tidyverse team play different roles in the ecosystem and are managed accordingly.
+For example, the tidyverse and devtools packages are essentially meta-packages that exist for the convenience of an end-user.
+Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-1] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.
+
+[^dependencies-1]: There is a blog post that warns people away from depending on the tidyverse package: <https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/>.
+
+In the previous section, we talked about different ways to gauge the weight of a dependency.
+Both the tidyverse and devtools can be seen as heavy due to the very high number of recursive dependencies:
+
+```{r}
+n_hard_deps <- function(pkg) {
+  deps <- tools::package_dependencies(pkg, recursive = TRUE)
+  sapply(deps, length)
+}
+
+n_hard_deps(c("tidyverse", "devtools"))
+```
+
+In contrast, several packages are specifically conceived as low-level packages that implement features that should work and feel the same across the whole ecosystem.
+At the time of writing, this includes:
+
+-   rlang, to support tidy eval and throw errors
+-   cli and glue, for creating a rich user interface
+-   withr, for managing state responsibly
+-   lifecycle, for managing the life cycle of functions and arguments
+
+These are basically regarded as free dependencies and are added to `DESCRIPTION` via `usethis::use_tidy_dependencies()` (which also does a few more things).
+It should come as no surprise that these packages have a very small dependency footprint.
+
+```{r}
+tools::package_dependencies(c("rlang", "cli", "glue", "withr", "lifecycle"))
+```
+
+::: callout-warning
+## Submitting to CRAN
+
+Under certain configurations, including those used for incoming CRAN submissions, `R CMD check` issues a `NOTE` if there are 20 or more "non-default" packages in `Imports`:
+
+    N  checking package dependencies (1.5s)
+       Imports includes 29 non-default packages.
+       Importing from so many packages makes the package vulnerable to any of
+       them becoming unavailable.  Move as many as possible to Suggests and
+       use conditionally.
+
+Our best advice is to try hard to comply, as it should be rather rare to need so many dependencies and it's best to eliminate any `NOTE` that you can.
+Of course, there are exceptions to every rule and perhaps your package is one them.
+In that case, you may need to argue your case.
+It is certainly true that many CRAN packages violate this threshhold (\>300 at the time of writing).
+:::
 
 ### Whether to Import or Suggest
 
@@ -74,7 +176,7 @@ In that case, withr should be listed in `Imports`.
     Any time your package is installed, those packages will also be installed, if not already present.
     `devtools::load_all()` also checks that all packages in `Imports` are installed.
 
-    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-1].
+    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-2].
     Inside your package, the best practice is to explicitly refer to external functions using the syntax `package::function()`. This makes it very easy to identify which functions live outside of your package.
     This is especially useful when you read your code in the future.
 
@@ -89,7 +191,7 @@ In that case, withr should be listed in `Imports`.
     This means that you can't assume the package is available unconditionally.
     Below we show various ways to handle these checks.
 
-[^dependencies-1]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
+[^dependencies-2]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
 
 `Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
@@ -292,6 +394,11 @@ You'll learn what this file looks like in the next section.
 In the section after that, you'll learn the details of exporting and importing functions and other objects.
 
 ## Imports {#sec-imports}
+
+-   in your functions, below R/
+-   in your tests, below tests/
+-   in your help topics, below man/
+-   in your vignettes and articles, below vignettes/
 
 `NAMESPACE` also controls which external functions can be used by your package without having to use `::`.
 
@@ -504,6 +611,8 @@ For a function to be usable outside of your package, you must **export** it.
 When you create a new package with `usethis::create_package()`, nothing is exported at first.
 You can still experiment interactively with `load_all()` (since that loads all functions, not just those that are exported).
 But if you install and reload the package, you'll notice that no functions are available.
+
+In the devtools workflow and this book, the NAMESPACE file is automatically generated from special roxygen comments in the R/\*.R files.
 
 To export an object, put `@export` in its roxygen block.
 For example:
