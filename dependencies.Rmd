@@ -41,7 +41,7 @@ We feel that this is bad advice for most projects, and is likely to lead to lowe
 
 ### Dependencies are not equal
 
-One problem with simply minimizing the absolute number of dependencies is that it treats all dependencies as equivalent.
+One problem with simply minimizing the absolute number of dependencies is that it treats all dependencies as equivalent, as if they all have the same costs and benefits (or even, infinite cost and no benefit).
 However, in reality, this is far from the truth.
 There are many axes upon which dependencies can differ, but some of the most important include:
 
@@ -77,6 +77,20 @@ There are many axes upon which dependencies can differ, but some of the most imp
     It is reasonable to have higher confidence in a package that is well-established and that is maintained by developers or teams with a long track record and that maintain many other packages.
     This increases the likelihood that the package will remain on CRAN without interruptions and that the maintainer has an intentional approach to the software life cycle (@sec-lifecycle).
 
+6.  Functionality.
+    Some packages implement a critical piece of functionality that is used across many packages.
+    In the tidyverse, broadly defined, the rlang, tidyselect, vctrs, and tibble packages are all examples of this.
+    By using these packages for tricky tasks like non-standard evaluation or manipulation of vectors and data frames, package authors can avoid re-implementing basic functionality.
+    It's easy to think "how hard can it be to write my own X?" when you are focused on the Happy Path[^dependencies-1].
+    But a huge part of the value brought by packages like vctrs or tibble is letting someone else worry about edge cases and error handling[^dependencies-2]
+    . There is also value in having shared behaviour with other packages, e.g. the tidyverse rules for [name repair](https://vctrs.r-lib.org/reference/vec_as_names.html) or [recycling](https://vctrs.r-lib.org/reference/vector_recycling_rules.html).
+
+[^dependencies-1]: In programming, the Happy Path is the scenario where all the inputs make sense and are exactly how things "should be".
+    The Unhappy Path is everything else (objects of length or dimension zero, objects with missing data or dimensions or attributes, objects that don't exist, etc.).
+
+[^dependencies-2]: Before writing your own version of X, have a good look at the bug tracker and test suite for another package that implements X.
+    This can be useful for appreciating what is actually involved.
+
 The specifics above hopefully make it clear that package dependencies are not equal.
 
 ### Prefer a holistic, balanced, and quantitative approach
@@ -88,7 +102,7 @@ If the audience is other package authors, then a leaner package with fewer depen
 If, instead, the target user is a data scientist or statistician, they will likely already have many popular dependencies installed and would benefit from a more feature-full package.
 
 A balanced approach understands that adding (or removing) dependencies comes with trade-offs.
-Adding a dependency gives you additional features, bug fixes, and real-world testing, at the cost of increased installation time, disk space and maintenance if the dependency has breaking changes.
+Adding a dependency gives you additional features, bug fixes, and real-world testing, at the cost of increased installation time, disk space and maintenance, if the dependency has breaking changes.
 In some cases it makes sense to *increase* dependencies for a package, even if an implementation already exists.
 For instance, base R has a number of different implementations of non-standard evaluation with varying semantics across its functions.
 The same used to be true of tidyverse packages as well, but now they all depend on the implementations in the [tidyselect](https://tidyselect.r-lib.org) and [rlang](https://rlang.r-lib.org) packages.
@@ -115,9 +129,9 @@ pak::pkg_deps_explain("tibble", "rlang")
 
 The packages maintained by the tidyverse team play different roles in the ecosystem and are managed accordingly.
 For example, the tidyverse and devtools packages are essentially meta-packages that exist for the convenience of an end-user.
-Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-1] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.
+Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-3] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.
 
-[^dependencies-1]: There is a blog post that warns people away from depending on the tidyverse package: <https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/>.
+[^dependencies-3]: There is a blog post that warns people away from depending on the tidyverse package: <https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/>.
 
 In the previous section, we talked about different ways to gauge the weight of a dependency.
 Both the tidyverse and devtools can be seen as heavy due to the very high number of recursive dependencies:
@@ -135,7 +149,7 @@ In contrast, several packages are specifically conceived as low-level packages t
 At the time of writing, this includes:
 
 -   rlang, to support tidy eval and throw errors
--   cli and glue, for creating a rich user interface
+-   cli and glue, for creating a rich user interface (which includes errors)
 -   withr, for managing state responsibly
 -   lifecycle, for managing the life cycle of functions and arguments
 
@@ -160,7 +174,7 @@ Under certain configurations, including those used for incoming CRAN submissions
 Our best advice is to try hard to comply, as it should be rather rare to need so many dependencies and it's best to eliminate any `NOTE` that you can.
 Of course, there are exceptions to every rule and perhaps your package is one them.
 In that case, you may need to argue your case.
-It is certainly true that many CRAN packages violate this threshhold (\>300 at the time of writing).
+It is certainly true that many CRAN packages violate this threshold.
 :::
 
 ### Whether to Import or Suggest
@@ -176,7 +190,7 @@ In that case, withr should be listed in `Imports`.
     Any time your package is installed, those packages will also be installed, if not already present.
     `devtools::load_all()` also checks that all packages in `Imports` are installed.
 
-    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-2].
+    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-4].
     Inside your package, the best practice is to explicitly refer to external functions using the syntax `package::function()`. This makes it very easy to identify which functions live outside of your package.
     This is especially useful when you read your code in the future.
 
@@ -191,7 +205,7 @@ In that case, withr should be listed in `Imports`.
     This means that you can't assume the package is available unconditionally.
     Below we show various ways to handle these checks.
 
-[^dependencies-2]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
+[^dependencies-4]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
 
 `Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
