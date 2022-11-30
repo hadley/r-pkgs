@@ -378,9 +378,142 @@ https://adv-r.hadley.nz/environments.html#special-environments
 
 https://adv-r.hadley.nz/environments.html#namespaces
 
-### 
+### Segue to search path
 
-### 
+In this section, you'll learn about the most important environments, starting with the package environments.
+Then you'll see how the package and function environments interact to support namespaces, which ensure that a package always behaves the same way, regardless of what other packages the user has loaded.
+
+#### The package environment
+
+Each package attached by `library()` or `require()` becomes one of the parents of the global environment.
+The immediate parent of the global environment is the last package you attached[^dependencies-mindset-background-6], the parent of that package is the second to last package you attached, ...
+
+[^dependencies-mindset-background-6]: Note the difference between attached and loaded.
+    A package is loaded automatically if you access one of its functions using `::`; it is only **attached** to the search path by `library()` or `require()`.
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/search-path.png")
+```
+
+If you follow all the parents back, you see the order in which every package has been attached.
+This is known as the **search path** because all objects in these environments can be found from the top-level interactive workspace.
+You can see the names of these environments with `base::search()`, or the environments themselves with `rlang::search_envs()`:
+
+```{r}
+search()
+
+rlang::search_envs()
+```
+
+The last two environments on the search path are always the same:
+
+-   The `Autoloads` environment uses delayed bindings to save memory by only loading package objects (like big datasets) when needed.
+
+-   The base environment, `package:base` or sometimes just `base`, is the environment of the base package.
+    It is special because it has to be able to bootstrap the loading of all other packages.
+    You can access it directly with `base_env()`.
+
+Note that when you attach another package with `library()`, the parent environment of the global environment changes:
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/search-path-2.png")
+```
+
+#### The function environment {#function-environments}
+
+A function binds the current environment when it is created.
+This is called the **function environment**, and is used for lexical scoping.
+Across computer languages, functions that capture (or enclose) their environments are called **closures**, which is why this term is often used interchangeably with *function* in R's documentation.
+
+You can get the function environment with `fn_env()`:
+
+```{r}
+y <- 1
+f <- function(x) x + y
+fn_env(f)
+```
+
+::: base
+Use `environment(f)` to access the environment of function `f`.
+:::
+
+In diagrams, I'll draw a function as a rectangle with a rounded end that binds an environment.
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/binding.png")
+```
+
+In this case, `f()` binds the environment that binds the name `f` to the function.
+But that's not always the case: in the following example `g` is bound in a new environment `e`, but `g()` binds the global environment.
+The distinction between binding and being bound by is subtle but important; the difference is how we find `g` versus how `g` finds its variables.
+
+```{r}
+e <- env()
+e$g <- function() 1
+```
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/binding-2.png")
+```
+
+#### Namespaces
+
+In the diagram above, you saw that the parent environment of a package varies based on what other packages have been loaded.
+This seems worrying: doesn't that mean that the package will find different functions if packages are loaded in a different order?
+The goal of **namespaces** is to make sure that this does not happen, and that every package works the same way regardless of what packages are attached by the user.
+
+For example, take `sd()`:
+
+```{r}
+sd
+```
+
+`sd()` is defined in terms of `var()`, so you might worry that the result of `sd()` would be affected by any function called `var()` either in the global environment, or in one of the other attached packages.
+R avoids this problem by taking advantage of the function versus binding environment described above.
+Every function in a package is associated with a pair of environments: the package environment, which you learned about earlier, and the **namespace** environment.
+
+-   The package environment is the external interface to the package.
+    It's how you, the R user, find a function in an attached package or with `::`.
+    Its parent is determined by search path, i.e. the order in which packages have been attached.
+
+-   The namespace environment is the internal interface to the package.
+    The package environment controls how we find the function; the namespace controls how the function finds its variables.
+
+Every binding in the package environment is also found in the namespace environment; this ensures every function can use every other function in the package.
+But some bindings only occur in the namespace environment.
+These are known as internal or non-exported objects, which make it possible to hide internal implementation details from the user.
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/namespace-bind.png")
+```
+
+Every namespace environment has the same set of ancestors:
+
+-   Each namespace has an **imports** environment that contains bindings to all the functions used by the package.
+    The imports environment is controlled by the package developer with the `NAMESPACE` file.
+
+-   Explicitly importing every base function would be tiresome, so the parent of the imports environment is the base **namespace**.
+    The base namespace contains the same bindings as the base environment, but it has a different parent.
+
+-   The parent of the base namespace is the global environment.
+    This means that if a binding isn't defined in the imports environment the package will look for it in the usual way.
+    This is usually a bad idea (because it makes code depend on other loaded packages), so `R CMD check` automatically warns about such code.
+    It is needed primarily for historical reasons, particularly due to how S3 method dispatch works.
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/namespace-env.png")
+```
+
+Putting all these diagrams together we get:
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("diagrams/namespace.png")
+```
+
+So when `sd()` looks for the value of `var` it always finds it in a sequence of environments determined by the package developer, but not by the package user.
+This ensures that package code always works the same way regardless of what packages have been attached by the user.
+
+There's no direct link between the package and namespace environments; the link is defined by the function environments.
 
 ### Search path {#sec-search-path}
 
