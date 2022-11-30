@@ -21,7 +21,7 @@ A key concept we'll have to cover along the way is that of a *namespace*.
 Your package's namespace is specified via its `NAMESPACE` file, which lays out the functions (or other objects) that your package exports for use by others.
 The `NAMESPACE` file can also be used to import functions (or other objects) from your dependencies into your own package.
 Although it can be a bit confusing, R's namespace system is vital for the package ecosystem.
-The purpose of the namespace is to keep each package encapsulated and self-contained.
+It keeps each package encapsulated and self-contained.
 This ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
 
 ## When should you take a dependency? {#sec-dependencies-mindset}
@@ -114,7 +114,7 @@ That, in turn, takes development time and introduces new bugs.
 One advantage of using an existing solution is that you'll get the benefit of all the bugs that have already been discovered and fixed.
 Especially if the dependency is relied on by many other packages, this is a gift that keeps on giving.
 
-Similar to optimizing performance, if you are worried about the burden of dependencies, it makes sense to address those concerns in a specific and quantitiave way.
+Similar to optimizing performance, if you are worried about the burden of dependencies, it makes sense to address those concerns in a specific and quantitative way.
 The experimental [itdepends](https://github.com/r-lib/itdepends) package was created for the [talk](https://www.rstudio.com/resources/rstudioconf-2019/it-depends-a-dialog-about-dependencies/) and [blog post](https://www.tidyverse.org/blog/2019/05/itdepends/) this section is based on.
 It is still a useful source of concrete ideas (and code) for analyzing how heavy a dependency is.
 The [pak](https://pak.r-lib.org/) package also has several functions that are useful for dependency analysis:
@@ -179,7 +179,8 @@ It is certainly true that many CRAN packages violate this threshold.
 
 ### Whether to Import or Suggest
 
-For example, the [withr package](https://withr.r-lib.org) is very useful for writing tests that clean up after themselves.
+The [withr package](https://withr.r-lib.org) is a good case study for deciding whether to list a dependency in `Imports` or `Suggests`.
+Withr is very useful for writing tests that clean up after themselves.
 Such usage is compatible with listing withr in `Suggests`, since regular users don't need to run the tests.
 But sometimes a package might also use withr in its own functions, perhaps to offer its own `with_*()` and `local_*()` functions.
 In that case, withr should be listed in `Imports`.
@@ -214,16 +215,8 @@ It can free users from downloading rarely needed packages (especially those that
 
 ## Namespace {#sec-dependencies-namespace}
 
-So far, we've explained the mechanics of declaring a dependency in `DESCRIPTION` (\@sec-description-imports-suggests) and how to think about the costs and benefits of dependencies (@sec-dependencies-mindset). Before we can explain how to use your dependencies in various parts of your package, we need to establish the concepts of a package namespace and the search path.
-
-https://github.com/hadley/r-pkgs/issues/204
-
-Suraj Gupta's explanation of R lookup\
-https://blog.thatbuthow.com/how-r-searches-and-finds-stuff/
-
-https://adv-r.hadley.nz/environments.html#special-environments
-
-https://adv-r.hadley.nz/environments.html#namespaces
+So far, we've explained the mechanics of declaring a dependency in `DESCRIPTION` (@sec-description-imports-suggests) and how to think about the costs and benefits of dependencies (@sec-dependencies-mindset).
+Before we can explain how to use your dependencies in various parts of your package, we need to establish the concepts of a package namespace and the search path.
 
 ### Motivation {#sec-dependencies-namespace-motivation}
 
@@ -234,15 +227,35 @@ Without knowing it, you've probably already used namespaces.
 For example, have you ever used the `::` operator?
 It disambiguates functions with the same name.
 For example, both the lubridate and here packages provide a `here()` function.
-If you load lubridate, then here, `here()` will refer to the here version, because the last package attached wins.
-But if you load the packages in the opposite order, `here()` will refer to the lubridate version.
+If you attach lubridate, then here, `here()` will refer to the here version, because the last package attached wins.
+But if you attach the packages in the opposite order, `here()` will refer to the lubridate version.
+
+```{r}
+#| eval: FALSE
+library(lubridate)              library(here)
+library(here)                   library(lubridate)
+
+here() # gets here::here()      here() # gets lubridate::here()
+```
+
 This can be confusing.
 Instead, you can qualify the function call with a specific namespace: `lubridate::here()` and `here::here()`.
-Then the order in which the packages are loaded won't matter.
+Then the order in which the packages are attached won't matter[^dependencies-5].
 
-A package's namespace makes it self-contained in two ways: the **imports** and the **exports**.
-The **imports** define how a function in one package finds a function it needs.
-To illustrate, consider what happens when someone changes the definition of a function that you rely on: for example, the simple `nrow()` function in base R:
+[^dependencies-5]: We're going to stay focused on packages in this book, but there are other ways than using `::` to address conflicts in end-user code: the [conflicted package](https://conflicted.r-lib.org) and the [`"conflicts.policy"` option](https://developer.r-project.org/Blog/public/2019/03/19/managing-search-path-conflicts/) introduced in base R v3.6.0.
+
+```{r}
+#| eval: FALSE
+lubridate::here() # gets lubridate::here() NO MATTER WHAT
+here::here()      # gets here::here() NO MATTER WHAT
+```
+
+As you will see in CROSS-REF, the `package::function()` calling style is also our default recommendation for how to use your dependencies in the code below `R/`, because it eliminates all ambiguity.
+
+But, in the context of package code, the use of `::` is not really our main line of defense against the confusion seen in the example above.
+In packages, we rely on namespaces to ensure that every package works the same way regardless of what packages are attached by the user.
+
+Consider the `nrow()` function in base R:
 
 ```{r}
 nrow
@@ -259,11 +272,13 @@ nrow(mtcars)
 ```
 
 Surprisingly, it does not!
-That's because when `nrow()` looks for an object called `dim()`, it uses the package namespace, so it finds `dim()` in the base environment, not the `dim()` we created in the global environment.
+That's because when `nrow()` looks for an object called `dim()`, it starts in the base package namespace, so it finds `base::dim()`, not the `dim()` we created in the global environment.
+It would be chaos if functions like `nrow()` could be broken by a user redefining `dim()` or by attaching a package that overrides `dim()`.
+The package namespace system is what saves us from this fate.
 
-The **exports** help you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can't easily be used by another package).
-Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict.
-While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible, because it makes the lives of your users easier.
+A package's namespace makes it self-contained in two ways: the **imports** and the **exports**.
+The **imports** define how a function in one package finds a function in another.
+The **exports** specify the functions that your package makes available for external use.
 
 ### The `NAMESPACE` file {#sec-metadata-namespace}
 
@@ -280,6 +295,9 @@ Here are selected lines from the `NAMESPACE` file in the testthat package:
     importFrom(brio,readLines)
     useDynLib(testthat, .registration = TRUE)
 
+The first line announces that this file was not written by hand, but rather is generated by the roxygen2 package.
+We'll return to this topic soon, after we discuss the remaining lines.
+
 You can see that the `NAMESPACE` file looks a bit like R code (but it is not).
 Each line contains a **directive**: `S3method()`, `export()`, `importFrom()`, and so on.
 Each directive describes an R object, and says whether it's exported from this package to be used by others, or it's imported from another package to be used internally.
@@ -292,14 +310,15 @@ These directives are the most important in our development approach, in order of
 -   `import()`: import all objects from another package's namespace. package.
 -   `useDynLib()`: registers routines from a DLL.
 
-There are other directives that we won't cover here, because they are explicitly discouraged or they rarely come up in our development work.
+There are other directives that we won't cover here, because they are explicitly discouraged or they just rarely come up in our development work.
 
--   `exportPattern()`: exports all functions that match a pattern. Note that we feel it's better to always use explicit exports.
--   `exportClasses()`, `exportMethods()`, `importClassesFrom()`, `importMethodsFrom()`: export and import S4 classes and methods. We only engage in the S4 system when necessary for compatibility with another other package, i.e. we do not implement methods or classes that we own with S4. Therefore the S4 coverage in this book is very minimal.
+-   `exportPattern()`: exports all functions that match a pattern. We feel it's safer to always use explicit exports and we avoid the use of this directive.
+-   `exportClasses()`, `exportMethods()`, `importClassesFrom()`, `importMethodsFrom()`: export and import S4 classes and methods. We only work in the S4 system when necessary for compatibility with another other package, i.e. we generally don't implement methods or classes that we own with S4. Therefore the S4 coverage in this book is very minimal.
 
 In the devtools workflow, the `NAMESPACE` file is not written by hand!
 Instead, we prefer to generate `NAMESPACE` with the roxygen2 package, using specific tags located in a roxygen comment above, e.g., each function's definition in the `R/*.R` files.
-We will have much more to say about roxygen comments and the roxygen2 package when we discuss package documentation in @sec-man. For now, we just lay out the reasons we prefer this method of generating the `NAMESPACE` file:
+We will have much more to say about roxygen comments and the roxygen2 package when we discuss package documentation in @sec-man.
+For now, we just lay out the reasons we prefer this method of generating the `NAMESPACE` file:
 
 -   Namespace definitions live next to their associated functions, so when you read the code it's easier to see what's being imported and exported.
 
@@ -309,11 +328,26 @@ We will have much more to say about roxygen comments and the roxygen2 package wh
 -   Roxygen2 keeps `NAMESPACE` tidy.
     No matter how many times you use `@importFrom foo bar` in your roxygen comments, you'll only get one `importFrom(foo, bar)` in your `NAMESPACE`.
     Roxygen2 also keeps NAMESPACE organised in a principled order, sorting first by the directive type and then alphabetically.
-    Roxygen2 takes away the burden of writing NAMESPACE, but it also tries to make the file as readable as possible.
+    Roxygen2 takes away the burden of writing NAMESPACE, while also trying to keep the file as readable as possible.
 
 Note that you can choose to use roxygen2 to generate just `NAMESPACE`, just `man/*.Rd` (@sec-man), or both (as is our practice).
 If you don't use any namespace related tags, roxygen2 won't touch `NAMESPACE`.
 If you don't use any documentation related tags, roxygen2 won't touch `man/`.
+
+help you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can't easily be used by another package).
+
+Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict.
+While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible, because it makes the lives of your users easier.
+
+https://github.com/hadley/r-pkgs/issues/204
+
+https://adv-r.hadley.nz/environments.html#special-environments
+
+https://adv-r.hadley.nz/environments.html#namespaces
+
+### 
+
+### 
 
 ### Search path {#sec-search-path}
 
