@@ -1,4 +1,4 @@
-# Dependencies {#sec-dependencies}
+# Dependencies: Mindset and Background {#sec-dependencies-mindset-background}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -24,7 +24,7 @@ Although it can be a bit confusing, R's namespace system is vital for the packag
 It keeps each package encapsulated and self-contained.
 This ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
 
-## When should you take a dependency? {#sec-dependencies-mindset}
+## When should you take a dependency? {#sec-dependencies-pros-cons}
 
 *This section is adapted from the "It Depends" [blog post](https://www.tidyverse.org/blog/2019/05/itdepends/) and [talk](https://www.rstudio.com/resources/rstudioconf-2019/it-depends-a-dialog-about-dependencies/) authored by Jim Hester.*
 
@@ -81,14 +81,14 @@ There are many axes upon which dependencies can differ, but some of the most imp
     Some packages implement a critical piece of functionality that is used across many packages.
     In the tidyverse, broadly defined, the rlang, tidyselect, vctrs, and tibble packages are all examples of this.
     By using these packages for tricky tasks like non-standard evaluation or manipulation of vectors and data frames, package authors can avoid re-implementing basic functionality.
-    It's easy to think "how hard can it be to write my own X?" when you are focused on the Happy Path[^dependencies-1].
-    But a huge part of the value brought by packages like vctrs or tibble is letting someone else worry about edge cases and error handling[^dependencies-2]
+    It's easy to think "how hard can it be to write my own X?" when you are focused on the Happy Path[^dependencies-mindset-background-1].
+    But a huge part of the value brought by packages like vctrs or tibble is letting someone else worry about edge cases and error handling[^dependencies-mindset-background-2]
     . There is also value in having shared behaviour with other packages, e.g. the tidyverse rules for [name repair](https://vctrs.r-lib.org/reference/vec_as_names.html) or [recycling](https://vctrs.r-lib.org/reference/vector_recycling_rules.html).
 
-[^dependencies-1]: In programming, the Happy Path is the scenario where all the inputs make sense and are exactly how things "should be".
+[^dependencies-mindset-background-1]: In programming, the Happy Path is the scenario where all the inputs make sense and are exactly how things "should be".
     The Unhappy Path is everything else (objects of length or dimension zero, objects with missing data or dimensions or attributes, objects that don't exist, etc.).
 
-[^dependencies-2]: Before writing your own version of X, have a good look at the bug tracker and test suite for another package that implements X.
+[^dependencies-mindset-background-2]: Before writing your own version of X, have a good look at the bug tracker and test suite for another package that implements X.
     This can be useful for appreciating what is actually involved.
 
 The specifics above hopefully make it clear that package dependencies are not equal.
@@ -120,18 +120,51 @@ It is still a useful source of concrete ideas (and code) for analyzing how heavy
 The [pak](https://pak.r-lib.org/) package also has several functions that are useful for dependency analysis:
 
 ```{r}
+#| eval: false
 pak::pkg_deps_tree("tibble")
+#> tibble 3.1.8 ✨
+#> ├─fansi 1.0.3 ✨
+#> ├─lifecycle 1.0.3 ✨
+#> │ ├─cli 3.4.1 ✨ ⬇ (1.28 MB)
+#> │ ├─glue 1.6.2 ✨
+#> │ └─rlang 1.0.6 ✨ ⬇ (1.81 MB)
+#> ├─magrittr 2.0.3 ✨
+#> ├─pillar 1.8.1 ✨ ⬇ (673.95 kB)
+#> │ ├─cli
+#> │ ├─fansi
+#> │ ├─glue
+#> │ ├─lifecycle
+#> │ ├─rlang
+#> │ ├─utf8 1.2.2 ✨
+#> │ └─vctrs 0.5.1 ✨ ⬇ (1.82 MB)
+#> │   ├─cli
+#> │   ├─glue
+#> │   ├─lifecycle
+#> │   └─rlang
+#> ├─pkgconfig 2.0.3 ✨
+#> ├─rlang
+#> └─vctrs
+#>
+#> Key:  ✨ new |  ⬇ download
 
 pak::pkg_deps_explain("tibble", "rlang")
+#> tibble -> lifecycle -> rlang
+#> tibble -> pillar -> lifecycle -> rlang
+#> tibble -> pillar -> rlang
+#> tibble -> pillar -> vctrs -> lifecycle -> rlang
+#> tibble -> pillar -> vctrs -> rlang
+#> tibble -> rlang
+#> tibble -> vctrs -> lifecycle -> rlang
+#> tibble -> vctrs -> rlang
 ```
 
 ### Dependency thoughts specific to the tidyverse
 
 The packages maintained by the tidyverse team play different roles in the ecosystem and are managed accordingly.
 For example, the tidyverse and devtools packages are essentially meta-packages that exist for the convenience of an end-user.
-Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-3] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.
+Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-mindset-background-3] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.
 
-[^dependencies-3]: There is a blog post that warns people away from depending on the tidyverse package: <https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/>.
+[^dependencies-mindset-background-3]: There is a blog post that warns people away from depending on the tidyverse package: <https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/>.
 
 In the previous section, we talked about different ways to gauge the weight of a dependency.
 Both the tidyverse and devtools can be seen as heavy due to the very high number of recursive dependencies:
@@ -191,7 +224,7 @@ In that case, withr should be listed in `Imports`.
     Any time your package is installed, those packages will also be installed, if not already present.
     `devtools::load_all()` also checks that all packages in `Imports` are installed.
 
-    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-4].
+    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-mindset-background-4].
     Inside your package, the best practice is to explicitly refer to external functions using the syntax `package::function()`. This makes it very easy to identify which functions live outside of your package.
     This is especially useful when you read your code in the future.
 
@@ -206,7 +239,7 @@ In that case, withr should be listed in `Imports`.
     This means that you can't assume the package is available unconditionally.
     Below we show various ways to handle these checks.
 
-[^dependencies-4]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
+[^dependencies-mindset-background-4]: The difference between loading and attaching a package is covered in more detail in @sec-search-path.
 
 `Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
@@ -215,7 +248,7 @@ It can free users from downloading rarely needed packages (especially those that
 
 ## Namespace {#sec-dependencies-namespace}
 
-So far, we've explained the mechanics of declaring a dependency in `DESCRIPTION` (@sec-description-imports-suggests) and how to think about the costs and benefits of dependencies (@sec-dependencies-mindset).
+So far, we've explained the mechanics of declaring a dependency in `DESCRIPTION` (@sec-description-imports-suggests) and how to think about the costs and benefits of dependencies (@sec-dependencies-pros-cons).
 Before we can explain how to use your dependencies in various parts of your package, we need to establish the concepts of a package namespace and the search path.
 
 ### Motivation {#sec-dependencies-namespace-motivation}
@@ -240,9 +273,9 @@ here() # gets here::here()      here() # gets lubridate::here()
 
 This can be confusing.
 Instead, you can qualify the function call with a specific namespace: `lubridate::here()` and `here::here()`.
-Then the order in which the packages are attached won't matter[^dependencies-5].
+Then the order in which the packages are attached won't matter[^dependencies-mindset-background-5].
 
-[^dependencies-5]: We're going to stay focused on packages in this book, but there are other ways than using `::` to address conflicts in end-user code: the [conflicted package](https://conflicted.r-lib.org) and the [`"conflicts.policy"` option](https://developer.r-project.org/Blog/public/2019/03/19/managing-search-path-conflicts/) introduced in base R v3.6.0.
+[^dependencies-mindset-background-5]: We're going to stay focused on packages in this book, but there are other ways than using `::` to address conflicts in end-user code: the [conflicted package](https://conflicted.r-lib.org) and the [`"conflicts.policy"` option](https://developer.r-project.org/Blog/public/2019/03/19/managing-search-path-conflicts/) introduced in base R v3.6.0.
 
 ```{r}
 #| eval: FALSE
@@ -280,7 +313,7 @@ A package's namespace makes it self-contained in two ways: the **imports** and t
 The **imports** define how a function in one package finds a function in another.
 The **exports** specify the functions that your package makes available for external use.
 
-### The `NAMESPACE` file {#sec-metadata-namespace}
+### The `NAMESPACE` file {#sec-dependencies-namespace-file}
 
 The NAMESPACE file is a key player in defining your package's namespace.
 Here are selected lines from the `NAMESPACE` file in the testthat package:
