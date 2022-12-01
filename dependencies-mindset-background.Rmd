@@ -13,16 +13,20 @@ But that still leaves many issues for the maintainer to think about:
 
 -   When should you take a dependency?
     What are the risk and rewards?
+    In @sec-dependencies-pros-cons we provide a framework for deciding whether a dependency is worth it.
+    This chapter also includes specific sections for deciding between `Imports` and `Suggests` (@sec-description-imports-suggests) and between Imports and `Depends` (@sec-dependencies-imports-vs-depends).
 
 -   How should you use different kinds of dependencies in different contexts?
     I.e. imported vs. suggested packages, used inside your functions vs tests vs documentation.
+    We have to defer this to the next chapter (@sec-dependencies-in-practice), because the justification for those recommendations relies on some additional technical background that we share here.
 
-A key concept we'll have to cover along the way is that of a *namespace*.
-Your package's namespace is specified via its `NAMESPACE` file, which lays out the functions (or other objects) that your package exports for use by others.
-The `NAMESPACE` file can also be used to import functions (or other objects) from your dependencies into your own package.
+A key concept for understanding how packages are meant to work together is that of a namespace (@sec-dependencies-namespace).
 Although it can be a bit confusing, R's namespace system is vital for the package ecosystem.
-It keeps each package encapsulated and self-contained.
-This ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
+It is what ensures that other packages won't interfere with your code, that your code won't interfere with other packages, and that your package works regardless of the environment in which it's run.
+We will show how the namespace system works alongside and in concert with the user's search path (@sec-dependencies-search).
+
+This chapter contains material that could be skipped (or skimmed) when making your first package, when you're probably happy just to make a package that works!
+But you'll want to revisit the material in this chapter as your packages get more ambitious and sophisticated.
 
 ## When should you take a dependency? {#sec-dependencies-pros-cons}
 
@@ -210,7 +214,7 @@ In that case, you may need to argue your case.
 It is certainly true that many CRAN packages violate this threshold.
 :::
 
-### Whether to Import or Suggest
+### Whether to Import or Suggest {#sec-dependencies-imports-vs-suggests}
 
 The [withr package](https://withr.r-lib.org) is a good case study for deciding whether to list a dependency in `Imports` or `Suggests`.
 Withr is very useful for writing tests that clean up after themselves.
@@ -365,13 +369,13 @@ Note that you can choose to use roxygen2 to generate just `NAMESPACE`, just `man
 If you don't use any namespace related tags, roxygen2 won't touch `NAMESPACE`.
 If you don't use any documentation related tags, roxygen2 won't touch `man/`.
 
-## Search path
+## Search path {#sec-dependencies-search}
 
 To understand why namespaces are important, you need a solid understanding of search paths.
 To call a function, R first has to find it.
 This search unfolds differently for user code than for package code and that is because of the namespace system.
 
-### Function lookup for user code {#sec-dependencies-user-search-path}
+### Function lookup for user code {#sec-dependencies-search-path-user}
 
 The first place R looks for an object is the global environment.
 If R doesn't find it there, it looks in the search path, the list of all the packages you have **attached**.
@@ -491,7 +495,7 @@ If a package is installed,
     After loading, the package is available in memory, but because it's not in the search path, you won't be able to access its components without using `::`.
     Confusingly, `::` will also load a package automatically if it isn't already loaded.
 
--   **Attaching** puts the package in the search path (@sec-dependencies-user-search-path).
+-   **Attaching** puts the package in the search path (@sec-dependencies-search-path-user).
     You can't attach a package without first loading it, so both `library()` (or `require()`) load then attach the package.
     This also runs the `.onAttach()` function.
 
@@ -532,7 +536,7 @@ if (!interactive()) {
 }
 ```
 
-### Whether to Import or Depend
+### Whether to Import or Depend {#sec-dependencies-imports-vs-depends}
 
 We are now in a position to lay out the difference between between `Depends` and `Imports` in the `DESCRIPTION`.
 Listing a package in either `Depends` or `Imports` ensures that it's installed when needed.
@@ -580,3 +584,9 @@ help you avoid conflicts with other packages by specifying which functions are a
 
 Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict.
 While conflicts aren't the end of the world because you can always use `::` to disambiguate, they're best avoided where possible, because it makes the lives of your users easier.
+
+keeps each package encapsulated and self-contained.
+This
+
+Your package's namespace is specified via its `NAMESPACE` file (@sec-dependencies-namespace-file), which lays out the functions (or other objects) that your package exports for use by others.
+The `NAMESPACE` file can also be used to import functions (or other objects) from your dependencies into your own namespace.
