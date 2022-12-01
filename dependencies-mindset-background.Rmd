@@ -371,7 +371,7 @@ To understand why namespaces are important, you need a solid understanding of se
 To call a function, R first has to find it.
 This search unfolds differently for user code than for package code and that is because of the namespace system.
 
-### Function lookup for user code
+### Function lookup for user code {#sec-dependencies-user-search-path}
 
 The first place R looks for an object is the global environment.
 If R doesn't find it there, it looks in the search path, the list of all the packages you have **attached**.
@@ -477,118 +477,88 @@ A user (or some package) is free to define a function named `var()`.
 But when that user calls `sd()`, it will always call `stats::var()` because `sd()` searches in a sequence of environments determined by the stats package, not by the user.
 This is how the namespace system ensures that package code always works the same way, regardless of what's been defined in the global environment or what's been attached.
 
-## Attaching versus loading
+## Attaching versus loading {#sec-dependencies-attach-vs-load}
 
-There's an important difference between loading and attaching a package.
-Normally when you talk about loading a package you think of `library()`, but that actually attaches the package.
+It's common to hear something like "we use `library(somepackage)` to load somepackage".
+But technically `library()` *attaches* a package to the search path.
+This casual abuse of terminology is often harmless and can even be beneficial in some settings.
+But sometimes it's important to be precise and pedantic and this is one of those times.
+Package developers need to know the difference between attaching and loading a package and when to care about this difference.
 
 If a package is installed,
 
--   **Loading** will load code, data and any DLLs; register S3 and S4 methods; and run the `.onLoad()` function.
+-   **Loading** will load code, data, and any DLLs; register S3 and S4 methods; and run the `.onLoad()` function.
     After loading, the package is available in memory, but because it's not in the search path, you won't be able to access its components without using `::`.
     Confusingly, `::` will also load a package automatically if it isn't already loaded.
-    It's rare to load a package explicitly, but you can do so with `requireNamespace()` or `loadNamespace()`.
 
--   **Attaching** puts the package in the search path.
-    You can't attach a package without first loading it, so both `library()` or `require()` load then attach the package.
-    You can see the currently attached packages with `search()`.
-
-If a package isn't installed, loading (and hence attaching) will fail with an error.
-
-To see the differences more clearly, consider two ways of running `expect_that()` from the testthat package.
-If we use `library()`, testthat is attached to the search path.
-If we use `::`, it's not.
-
-```{r, error = TRUE}
-old <- search()
-testthat::expect_equal(1, 1)
-setdiff(search(), old)
-expect_true(TRUE)
-    
-library(testthat)
-expect_equal(1, 1)
-setdiff(search(), old)
-expect_true(TRUE)
-```
+-   **Attaching** puts the package in the search path (@sec-dependencies-user-search-path).
+    You can't attach a package without first loading it, so both `library()` (or `require()`) load then attach the package.
+    This also runs the `.onAttach()` function.
 
 There are four functions that make a package available.
-They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns FALSE).
+They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns `FALSE`).
 
 |        | Throws error         | Returns `FALSE`                         |
 |--------|----------------------|-----------------------------------------|
 | Load   | `loadNamespace("x")` | `requireNamespace("x", quietly = TRUE)` |
 | Attach | `library(x)`         | `require(x, quietly = TRUE)`            |
 
-Of the four, you should only ever use two:
+Of the four, these two functions are by far the most useful:
 
--   Use `library(x)` in data analysis scripts.
+-   Use `library(x)` in, e.g., a data analysis script or a vignette.
     It will throw an error if the package is not installed, and will terminate the script.
     You want to attach the package to save typing.
     Never use `library()` in a package.
 
--   Use `requireNamespace("x", quietly = TRUE)` inside a package if you want a specific action (e.g. throw an error) depending on whether or not a suggested package is installed.
+-   Use `requireNamespace("x", quietly = TRUE)` inside a package if you want to specify different behaviour depending on whether or not a suggested package is installed.
+    Note that this also loads the package.
 
-You never need to use `require()` (`requireNamespace()` is almost always better), or `loadNamespace()` (which is only needed for internal R code).
-You should never use `require()` or `library()` in a package: instead, use the `Depends` or `Imports` fields in the `DESCRIPTION`.
+`loadNamespace()` is somewhat esoteric and is really only needed for internal R code.
 
-https://github.com/hadley/r-pkgs/issues/588 is about require()
+`require(pkg)` is almost never a good idea[^dependencies-mindset-background-6] and, we suspect, may come from people projecting certain hopes and dreams onto the function name.
+Ironically, `require(pkg)` does not actually require success in attaching pkg and your function or script will soldier on even in the case of failure.
+This, in turn, often leads to a very puzzling error much later.
+If you want to "attach or fail", use `library()`. If you want to check whether pkg is available and proceed accordingly, use `requireNamespace("pkg", quietly = TRUE)`.
 
-Now's a good time to come back to an important issue which we glossed over earlier.
-What's the difference between `Depends` and `Imports` in the `DESCRIPTION`?
-When should you use one or the other?
+[^dependencies-mindset-background-6]: The classic blog post ["`library()` vs `require()` in R"](https://yihui.org/en/2014/07/library-vs-require/) by Yihui Xie is another good resource on this.
 
+One place where we do use `require()` is to conditionally do something in `.Rprofile`.
+For example, this snippet attempts to attach the reprex package in an interactive session, but fails quietly if reprex is unavailable:
+
+```{r}
+#| eval: false
+if (!interactive()) {
+  suppressMessages(require(reprex))
+}
+```
+
+### Whether to Import or Depend
+
+We are now in a position to lay out the difference between between `Depends` and `Imports` in the `DESCRIPTION`.
 Listing a package in either `Depends` or `Imports` ensures that it's installed when needed.
-The main difference is that where `Imports` just *loads* the package, `Depends` *attaches* it.
-There are no other differences.
-The rest of the advice in this chapter applies whether or not the package is in `Depends` or `Imports`.
+The main difference is that a package you list in `Imports` will just be *loaded* when you use it, whereas a package you list in `Depends`will be *attached* when your package is attached.
 
 Unless there is a good reason otherwise, you should always list packages in `Imports` not `Depends`.
 That's because a good package is self-contained, and minimises changes to the global environment (including the search path).
-The only exception is if your package is designed to be used in conjunction with another package.
-For example, the [analogue](https://github.com/gavinsimpson/analogue) package builds on top of [vegan](https://github.com/vegandevs/vegan).
-It's not useful without vegan, so it has vegan in `Depends` instead of `Imports`.
-Similarly, ggplot2 should really `Depend` on scales, rather than `Import`ing it.
 
-TODO: the new example should probably be devtools and usethis https://github.com/hadley/r-pkgs/issues/608
-
-#### The function environment {#function-environments}
-
-A function binds the current environment when it is created.
-This is called the **function environment**, and is used for lexical scoping.
-Across computer languages, functions that capture (or enclose) their environments are called **closures**, which is why this term is often used interchangeably with *function* in R's documentation.
-
-You can get the function environment with `fn_env()`:
+Users of devtools are actually regularly exposed to the fact that devtools `Depends` on usethis:
 
 ```{r}
 #| eval: false
-y <- 1
-f <- function(x) x + y
-fn_env(f)
+library(devtools)
+search()
+#> Loading required package: usethis
+#>  [1] ".GlobalEnv"        "package:devtools"  "package:usethis"  
+#>  ...
 ```
 
-::: base
-Use `environment(f)` to access the environment of function `f`.
-:::
+This choice is motivated by backwards compatibility.
+When devtools was split into several smaller packages (@sec-setup-usage), many of the user-facing functions moved to usethis.
+Putting usethis in Depends was a pragmatic choice to insulate users from keeping track of which function ended up where.
 
-In diagrams, I'll draw a function as a rectangle with a rounded end that binds an environment.
-
-```{r, echo = FALSE, out.width = NULL}
-knitr::include_graphics("diagrams/binding.png")
-```
-
-In this case, `f()` binds the environment that binds the name `f` to the function.
-But that's not always the case: in the following example `g` is bound in a new environment `e`, but `g()` binds the global environment.
-The distinction between binding and being bound by is subtle but important; the difference is how we find `g` versus how `g` finds its variables.
-
-```{r}
-#| eval: false
-e <- env()
-e$g <- function() 1
-```
-
-```{r, echo = FALSE, out.width = NULL}
-knitr::include_graphics("diagrams/binding-2.png")
-```
+A more classic example of `Depends` is how the [censored package](https://censored.tidymodels.org) depends on the [parsnip](https://parsnip.tidymodels.org) and [survival](https://cran.r-project.org/package=survival) packages.
+Parsnip provides a unified interface for fitting models, and censored is an extension package for survival analysis.
+Censored is not useful without parsnip and survival, so it makes sense to list them in *Depends*.
 
 ### Leftovers
 
