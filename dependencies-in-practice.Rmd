@@ -26,7 +26,7 @@ First, we want to tackle a common source of confusion:
 > Listing a package in `Imports` in `DESCRIPTION` has nothing to do with "importing" that package.
 
 This is just an unfortunate choice of name for the `Imports` field.
-The `Imports` field makes sure that a certain set of packages is installed when your package is installed.
+The `Imports` field makes sure that the packages listed there are installed when your package is installed.
 It does not make those functions available to you, e.g. below `R/`, or to your user.
 
 It is neither automatic nor necessarily advisable that a package listed in `Imports` also appears in `NAMESPACE` via `imports()` or `importFrom()`.
@@ -41,9 +41,9 @@ But if we need to talk about a generic package or function, here are the convent
 
 -   pkg: the name of your hypothetical package
 
--   aaapkg: the name of a hypothetical dependency of your package
+-   aaapkg: the name of a hypothetical package your package depends on
 
--   `aaa_fun()`: the name of a function provided by aaapkg
+-   `aaa_fun()`: the name of a function exported by aaapkg
 
 ## Package is listed in `Imports`
 
@@ -58,7 +58,7 @@ The code inside your package can assume that aaapkg is installed on the system.
 
 ### In code below R/
 
-Usually you should call functions in aaapkg explicitly using `::`, like this:
+Our recommended default is to call external functions using the `package::function()` syntax:
 
 ```{r}
 #| eval: false
@@ -70,7 +70,8 @@ somefunction <- function(...) {
 ```
 
 Specifically, we recommend that you default to *not* importing anything from aaapkg into your namespace.
-The basic rationale is to do the most minimal and hygienic thing.
+This makes it very easy to identify which functions live outside of your package, which is especially useful when you read your code in the future.
+This also eliminates any concerns about name conflicts between aaapkg and your package.
 
 Of course there are reasons to make exceptions to this rule and to import something from another package into yours:
 
@@ -81,7 +82,8 @@ Of course there are reasons to make exceptions to this rule and to import someth
     This literally reduces the number of characters required to call the external function.
     This can be especially handy when generating user-facing messages, because it makes it more likely that lines in the source correspond to lines in the output.
 
--   A function that you call in a tight loop: blah blah
+-   A function that you call in a tight loop: There is a minor performance penalty associated with `::`.
+    It's on the order of 5µs, so it will only matter if you call the function millions of times.
 
 A handy function for your interactive workflow is `usethis::use_import_from()`:
 
@@ -105,7 +107,7 @@ There are two ways to play this:
 -   As close as possible to the usage of the external function.
     With this mindset, you would place `@importFrom` in the roxygen comment above the function in your package where you use the external function.
     If this is your style, you'll have to do it by hand.
-    (This starts to break down once you use the external function in multiple places.)
+    This starts to break down as soon as you use the external function in more than one place.
 
 -   In a central location.
     This approach keeps all `@importFrom` tags together, in a dedicated section of the package-level documentation file (which can be created with `usethis::use_package_doc()`).
@@ -159,6 +161,7 @@ After calling `devtools::document()`, this roxygen tag causes this directive to 
     import(rlang)
 
 This is the least recommended solution because it can make your code harder to read (you can't tell where a function is coming from), and if you `@import` many packages, it increases the chance of function name conflicts.
+Save this for very special situations.
 
 #### How to *not* use a package in Imports
 
@@ -168,15 +171,16 @@ This is the least recommended solution because it can make your code harder to r
 
 Refer to external functions in your tests just as you refer to them in the code below `R/`.
 Usually this means you should use `aaapkg::aaa_fun()`.
-But if you have imported a particular function, either specifically or as part of an entire namespace, you can just call it directly.
+But if you have imported a particular function, either specifically or as part of an entire namespace, you can just call it directly in your test code.
 
-It's generally a bad idea to use `library()` to attach one of your dependencies somewhere in your tests, because it makes the search path situation in your tests different from how your package works "in production".
+It's generally a bad idea to use `library(aaapkg)` to attach one of your dependencies somewhere in your tests, because it makes the search path in your tests different from how your package actually works.
 This is covered in more detail in @sec-testing-design-tension.
 
 ### In examples and vignettes
 
 If you use a package that appears in `Imports` in one of your examples or vignettes, you'll need to either attach the package with `library(aaapkg)` or use a `aaapkg::aaa_fun()`-style call.
 You can assume that aaapkg is available, because that's what `Imports` guarantees.
+Read more in @sec-man-examples-dependencies-conditional-execution and @sec-vignettes-eval-option.
 
 ## Package is listed in `Suggests` {#sec-imports}
 
@@ -203,7 +207,7 @@ Broadly speaking, the default is to not install packages in `Suggests`.
 ### In code below R/
 
 Inside a function in your own package, check for the availability of a suggested package with `requireNamespace("pkg", quietly = TRUE)`.
-There are two basic scenarios:
+There are two basic scenarios: the dependency is absolutely required or your package offers some sort of fallback behaviour.
 
 ```{r}
 # the suggested package is required 
@@ -227,7 +231,7 @@ my_fun <- function(a, b) {
 }
 ```
 
-The rlang package has some useful functions for checking package availability.
+The rlang package has some useful functions for checking package availability: `rlang::check_installed()` and `rlang::is_installed()`.
 Here's how the checks around a suggested package could look if you use rlang:
 
 ```{r}
@@ -249,7 +253,7 @@ my_fun <- function(a, b) {
 
 These rlang functions have handy features for programming, such as vectorization over `pkg`, classed errors with a data payload, and, for `check_installed()`, an offer to install the needed package in an interactive session.
 
-### In test code
+### In test code {#sec-dependencies-suggests-in-tests}
 
 The tidyverse team generally writes tests as if all suggested packages are available.
 That is, we use them unconditionally in the tests.
@@ -262,10 +266,11 @@ Also, empirically, in every important scenario of running `R CMD check`, the sug
 This is generally true for CRAN and we ensure that it's true in our own automated checks.
 However, it's important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.
 
-Sometimes even the tidyverse team makes an exception and guards the use of a suggested package in a test.
+Sometimes even we make an exception and guard the use of a suggested package in a test.
 Here's a test from ggplot2, which uses `testthat::skip_if_not_installed()` to skip execution if the suggested sf package is not available.
 
-```{r eval = FALSE}
+```{r}
+#| eval: false
 test_that("basic plot builds without error", {
   skip_if_not_installed("sf")
 
@@ -291,10 +296,11 @@ In this case, the sf package can be nontrivial to install and it is conceivable 
 
 Finally, note that `testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")` can be used to conditionally skip a test based on the version of the other package.
 
-### In examples and vignettes
+### In examples and vignettes {#sec-dependencies-suggests-in-examples-and-vignettes}
 
-Another common place to use a suggested package is in an example and here we often guard with `require()` (but you'll also see `requireNamespace()` used for this).
+Another common place to use a suggested package is in an example and here we often guard with `require()` or `requireNamespace()`.
 This example is from `ggplot2::coord_map()`.
+Ggplot2 lists the maps package in `Suggests`.
 
 ```{r}
 #| eval: false
@@ -314,12 +320,69 @@ An example is basically the only place where we would use `require()` inside a p
 Read more in @sec-dependencies-attach-vs-load.
 
 Our stance regarding the use of suggested packages in vignettes is similar to that for tests.
-The key package needed to build vignettes (rmarkdown and knitr) are listed in Suggests.
+The key packages needed to build vignettes (rmarkdown and knitr) are listed in `Suggests`.
 Therefore, if the vignettes are being built, it's reasonable to assume that all of the suggested packages are available.
 We typically use suggested packages unconditionally inside vignettes.
 
 But if you choose to use suggested packages conditionally in your vignettes, the knitr chunk option `eval` is very useful for achieving this.
 See @sec-vignettes-eval-option for more.
+
+## Package is listed in Depends
+
+Consider a dependency that is listed in `DESCRIPTION` in `Depends`:
+
+``` yaml
+Depends:
+    aaapkg
+```
+
+This situation has a lot in common with a package listed in `Imports`.
+The code inside your package can assume that aaapkg is installed on the system.
+The only difference is that aaapkg will be attached whenever your package is.
+
+### In code below `R/` and in test code
+
+Your options are exactly the same as using functions from a package listed in `Imports`:
+
+-   Use the `aaapkg::aaa_fun()` syntax.
+
+-   Import an individual function with the `@importFrom aaapkg aaa_fun` roxygen tag and call `aaa_fun()` directly.
+
+-   Import the entire aaapkg namespace with the `@import aaapkg` roxygen tag and call any function directly.
+
+The main difference between this situation and a dependency listed in `Imports` is that it's much more common to import the entire namespace of a package listed in `Depends`.
+This often makes sense, due to the special dependency relationship that motivated listing it in `Depends` in the first place.
+
+### In examples and vignettes
+
+This is the most obvious difference with a dependency in `Depends` versus `Imports`.
+Since your package is attached when your examples are executed, so is the package listed in `Depends`.
+You don't have to attach it explicitly with `library(aaapkg)`.
+
+The ggforce package `Depends` on ggplot2 and the examples for `ggforce::geom_mark_rect()` use functions like `ggplot2::ggplot()` and `ggplot2::geom_point()` without any explicit call to `library(ggplot2)`:
+
+```{r}
+#| eval: false
+ggplot(iris, aes(Petal.Length, Petal.Width)) +
+  geom_mark_rect(aes(fill = Species, filter = Species != 'versicolor')) +
+  geom_point()
+# example code continues ...
+```
+
+The first line of code executed in one of your vignettes is probably `library(pkg)`, which attaches your package and, as a side effect, attaches any dependency listed in `Depends`.
+You do not need to explicitly attach the dependency before using it.
+The censored package `Depends` on the survival package and the code in `vignette("examples", package = "censored")` starts out like so:
+
+```{r}
+#| eval: false
+library(tidymodels)
+library(censored)
+#> Loading required package: survival
+
+# vignette code continues ...
+```
+
+## Package is a non-standard dependency {#sec-dependencies-nonstandard}
 
 ## Exports {#exports}
 

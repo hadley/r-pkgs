@@ -228,13 +228,9 @@ In that case, withr should be listed in `Imports`.
     Any time your package is installed, those packages will also be installed, if not already present.
     `devtools::load_all()` also checks that all packages in `Imports` are installed.
 
-    Adding a package to `Imports` ensures it will be installed, but it does *not* mean that it will be attached along with your package, i.e. it does not do the equivalent of `library(otherpkg)`[^dependencies-mindset-background-4].
-    Inside your package, the best practice is to explicitly refer to external functions using the syntax `package::function()`. This makes it very easy to identify which functions live outside of your package.
-    This is especially useful when you read your code in the future.
-
-    If you use a lot of functions from another package, this is rather verbose.
-    There's also a minor performance penalty associated with `::` (on the order of 5µs, so it will only matter if you call the function millions of times).
-    You'll learn about alternative ways to make functions in other packages available inside your package in @sec-imports.
+    Adding a package to `Imports` ensures it will be installed, but that is also all it does.
+    It has nothing to do with actually importing or attaching that package.
+    See @sec-dependencies-in-practice for more.
 
 -   `Suggests`: your package can use these packages, but doesn't require them.
     You might use suggested packages for example datasets, to run tests, build vignettes, or maybe there's only one function that needs the package.
@@ -242,8 +238,6 @@ In that case, withr should be listed in `Imports`.
     Packages listed in `Suggests` are not automatically installed along with your package.
     This means that you can't assume the package is available unconditionally.
     Below we show various ways to handle these checks.
-
-[^dependencies-mindset-background-4]: The difference between loading and attaching a package is covered in more detail in @sec-dependencies-attach-vs-load.
 
 `Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
@@ -277,9 +271,9 @@ here() # here::here() |  here() # lubridate::here()
 
 This can be confusing.
 Instead, you can qualify the function call with a specific namespace: `lubridate::here()` and `here::here()`.
-Then the order in which the packages are attached won't matter[^dependencies-mindset-background-5].
+Then the order in which the packages are attached won't matter[^dependencies-mindset-background-4].
 
-[^dependencies-mindset-background-5]: We're going to stay focused on packages in this book, but there are other ways than using `::` to address conflicts in end-user code: the [conflicted package](https://conflicted.r-lib.org) and the [`"conflicts.policy"` option](https://developer.r-project.org/Blog/public/2019/03/19/managing-search-path-conflicts/) introduced in base R v3.6.0.
+[^dependencies-mindset-background-4]: We're going to stay focused on packages in this book, but there are other ways than using `::` to address conflicts in end-user code: the [conflicted package](https://conflicted.r-lib.org) and the [`"conflicts.policy"` option](https://developer.r-project.org/Blog/public/2019/03/19/managing-search-path-conflicts/) introduced in base R v3.6.0.
 
 ```{r}
 #| eval: FALSE
@@ -559,12 +553,12 @@ Of the four, these two functions are by far the most useful:
 
 `loadNamespace()` is somewhat esoteric and is really only needed for internal R code.
 
-`require(pkg)` is almost never a good idea[^dependencies-mindset-background-6] and, we suspect, may come from people projecting certain hopes and dreams onto the function name.
+`require(pkg)` is almost never a good idea[^dependencies-mindset-background-5] and, we suspect, may come from people projecting certain hopes and dreams onto the function name.
 Ironically, `require(pkg)` does not actually require success in attaching pkg and your function or script will soldier on even in the case of failure.
 This, in turn, often leads to a very puzzling error much later.
 If you want to "attach or fail", use `library()`. If you want to check whether pkg is available and proceed accordingly, use `requireNamespace("pkg", quietly = TRUE)`.
 
-[^dependencies-mindset-background-6]: The classic blog post ["`library()` vs `require()` in R"](https://yihui.org/en/2014/07/library-vs-require/) by Yihui Xie is another good resource on this.
+[^dependencies-mindset-background-5]: The classic blog post ["`library()` vs `require()` in R"](https://yihui.org/en/2014/07/library-vs-require/) by Yihui Xie is another good resource on this.
 
 One place where we do use `require()` is to conditionally do something in `.Rprofile`.
 For example, this snippet attempts to attach the reprex package in an interactive session, but fails quietly if reprex is unavailable:
@@ -575,6 +569,8 @@ if (!interactive()) {
   suppressMessages(require(reprex))
 }
 ```
+
+Another legitimate use of `require()` is in an example that uses a package your package `Suggests`, which is covered in @sec-dependencies-suggests-in-examples-and-vignettes.
 
 ### Whether to Import or Depend {#sec-dependencies-imports-vs-depends}
 
@@ -602,7 +598,7 @@ Putting usethis in Depends was a pragmatic choice to insulate users from keeping
 
 A more classic example of `Depends` is how the [censored package](https://censored.tidymodels.org) depends on the [parsnip](https://parsnip.tidymodels.org) and [survival](https://cran.r-project.org/package=survival) packages.
 Parsnip provides a unified interface for fitting models, and censored is an extension package for survival analysis.
-Censored is not useful without parsnip and survival, so it makes sense to list them in *Depends*.
+Censored is not useful without parsnip and survival, so it makes sense to list them in `Depends`.
 
 ### Leftovers
 
