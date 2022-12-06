@@ -165,7 +165,35 @@ Save this for very special situations.
 
 #### How to *not* use a package in Imports
 
-<https://github.com/hadley/r-pkgs/issues/828>
+Sometimes you have a package listed in `Imports`, but you don't actually use it inside your package or, at least, R doesn't think you use it.
+That leads to a `NOTE` from `R CMD check`:
+
+    * checking dependencies in R code ... NOTE
+    Namespace in Imports field not imported from: ‘aaapkg’
+      All declared Imports should be used.
+
+This can happen if your only use of aaapkg is a call like `aaapkg::aaa_fun()` in the default for a function argument in your package.
+Another example is if you want to list an indirect dependency in `Imports`, so you can state a minimum version for it.
+The tidyverse meta-package has this problem on a large scale, since it exists mostly to install a bundle of packages at specific versions.
+
+How can you get rid of this `NOTE`?
+
+Our recommendation is to put a reference (not a call) to an object in aaapkg in some file below `R/`, maybe in a `.R` file associated with package-wide setup:
+
+```{r}
+#| eval: false
+ignore_unused_imports <- function() aaapkg::aaa_fun
+```
+
+You don't need to call `ignore_unused_imports()` anywhere.
+You shouldn't export it.
+You don't have to actually exercise `aaapkg::aaa_fun()`.
+What's important is to access something in aaapkg's namespace with `::`.
+
+An alternative approach you might be tempted to use it to import `aaapkg::aaa_fun()` into your package's namespace, probably with the roxygen tag `#' @importFrom aaapkg aaa_fun`.
+However, note that this causes aaapkg to be loaded whenever your package is loaded.
+In contrast, if you use the approach we recommend, the aaapkg will only be loaded if your user does something actually requires it.
+This rarely matters in practice, but it's always nice to keep your namespace as clean and small as possible.
 
 ### In test code
 
