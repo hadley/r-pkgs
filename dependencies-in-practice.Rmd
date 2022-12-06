@@ -382,7 +382,70 @@ library(censored)
 # vignette code continues ...
 ```
 
-## Package is a non-standard dependency {#sec-dependencies-nonstandard}
+## Package is a nonstandard dependency {#sec-dependencies-nonstandard}
+
+In packages developed with devtools, you may see `DESCRIPTION` files that use a couple other nonstandard fields for package dependencies specific to development tasks.
+
+### Depending on the development version of a package
+
+The `Remotes` field can be used when you need to install a dependency from a nonstandard place, i.e. from somewhere besides CRAN or Bioconductor.
+One common example of this is when you're developing against a development version of one of your dependencies.
+During this time, you'll want to install the dependency from its development repository, which is often GitHub.
+The way to specify various remote sources is described in a [devtools vignette](https://devtools.r-lib.org/articles/dependencies.html).
+
+<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along. -->
+
+The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
+`usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
+If your package temporarily relies on a development version of aaapkg, the affected `DESCRIPTION` fields might evolve like this:
+
+<!-- This is unlovely, but I just wanted to get the content down "on paper". It's easier to convey with a concrete example. -->
+
+    Stable -->               Dev -->                       Stable again
+    ----------------------   ---------------------------   ----------------------
+    Package: pkg             Package: pkg                  Package: pkg
+    Version: 1.0.0           Version: 1.0.0.9000           Version: 1.1.0
+    Imports:                 Imports:                      Imports: 
+        aaapkg (>= 2.1.3)       aaapkg (>= 2.1.3.9000)       aaapkg (>= 2.2.0)
+                             Remotes:   
+                                 jane/aaapkg 
+
+It's important to note that you should not submit your package to CRAN in the intermediate state, meaning with a `Remotes` field and with a dependency required at a version that's not available from CRAN or Bioconductor.
+For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.
+
+### `Config/Needs/*` field
+
+You may also see devtools-developed packages with packages listed in `DESCRIPTION` fields in the form of `Config/Needs/*`.
+This pattern takes advantage of the fact that fields prefixed with `Config/` are ignored by CRAN and also do not trigger a NOTE about "Unknown, possibly mis-spelled, fields in `DESCRIPTION`".
+
+```{=html}
+<!--
+https://github.com/wch/r-source/blob/de49776d9fe54cb4580fbbd04906b40fe2f6117e/src/library/tools/R/QC.R#L7133
+https://github.com/wch/r-source/blob/efacf56dcf2f880b9db8eafa28d49a08d56e861e/src/library/tools/R/utils.R#L1316-L1389
+-->
+```
+The use of `Config/Needs/*` is not directly related to devtools.
+It's more accurate to say that it's associated with continuous integration workflows made available to the community at <https://github.com/r-lib/actions/> and exposed via functions such as `usethis::use_github_actions()`.
+A `Config/Needs/*` field tells the [`setup-r-dependencies`](https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme) GitHub Action about extra packages that need to be installed.
+
+`Config/Needs/website` is the most common and it provides a place to specify packages that aren't a formal dependency, but that must be present in order to build the package's website (@sec-website).
+The readxl package is a good example.
+It has a [non-vignette article on workflows](https://readxl.tidyverse.org/articles/readxl-workflows.html) that shows readxl working in concert with other tidyverse packages, such as readr and purrr.
+But it doesn't make sense for readxl to have a formal dependency on readr or purrr or (even worse) the tidyverse!
+
+On the left is what readxl has in the `Config/Needs/website` field of `DESCRIPTION` to indicate that the tidyverse is needed in order to build the website, which is also formatted with styling that lives in the `tidyverse/template` GitHub repo.
+On the right is the corresponding excerpt from the configuration of the workflow that builds and deploys the website.
+
+    in DESCRIPTION                  in .github/workflows/pkgdown.yaml
+    --------------------------      ---------------------------------
+    Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
+        tidyverse,                    with:
+        tidyverse/tidytemplate          extra-packages: pkgdown
+                                        needs: website
+
+Package websites and continuous integration are discussed more in @sec-website and @sec-ci, respectively.
+
+The `Config/Needs/*` convention is handy because it allows a developer to use `DESCRIPTION` as their definitive record of package dependencies, while maintaining a clean distinction between true runtime dependencies versus those that are only needed for specialized development tasks.
 
 ## Exports {#exports}
 
@@ -468,67 +531,3 @@ https://github.com/hadley/r-pkgs/issues/447 .onLoad(), .onAttach() what they are
 https://github.com/hadley/r-pkgs/issues/485 why you don't want Depends
 
 https://github.com/hadley/r-pkgs/issues/657 Decide what's happening with S3, S4, R6, R7
-
-### Nonstandard dependencies
-
-In packages developed with devtools, you may see `DESCRIPTION` files that use a couple other nonstandard fields for package dependencies specific to development tasks.
-
-The `Remotes` field can be used when you need to install a dependency from a nonstandard place, i.e. from somewhere besides CRAN or Bioconductor.
-One common example of this is when you're developing against a development version of one of your dependencies.
-During this time, you'll want to install the dependency from its development repository, which is often GitHub.
-The way to specify various remote sources is described in a [devtools vignette](https://devtools.r-lib.org/articles/dependencies.html).
-
-<!-- TODO: long-term, a better link will presumably be https://pak.r-lib.org/reference/pak_package_sources.html, once the pivot from remotes to pak is further along. -->
-
-The dependency and any minimum version requirement still need to be declared in the normal way in, e.g., `Imports`.
-`usethis::use_dev_package()` helps to make the necessary changes in `DESCRIPTION`.
-If your package temporarily relies on a development version of usethis, the affected `DESCRIPTION` fields might evolve like this:
-
-<!-- This is unlovely, but I just wanted to get the content down "on paper". It's easier to convey with a concrete example. -->
-
-    Stable -->               Dev -->                       Stable again
-    ----------------------   ---------------------------   ----------------------
-    Package: yourpkg         Package: yourpkg              Package: yourpkg
-    Version: 1.0.0           Version: 1.0.0.9000           Version: 1.1.0
-    Imports:                 Imports:                      Imports: 
-        usethis (>= 2.1.3)       usethis (>= 2.1.3.9000)       usethis (>= 2.2.0)
-                             Remotes:   
-                                 r-lib/usethis 
-
-It's important to note that you should not submit your package to CRAN in the intermediate state, meaning with a `Remotes` field and with a dependency required at a version that's not available from CRAN or Bioconductor.
-For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.
-
-You may also see devtools-developed packages with packages listed in `DESCRIPTION` fields in the form of `Config/Needs/*`.
-This pattern takes advantage of the fact that fields prefixed with `Config/` are ignored by CRAN and also do not trigger a NOTE about "Unknown, possibly mis-spelled, fields in `DESCRIPTION`".
-
-```{=html}
-<!--
-https://github.com/wch/r-source/blob/de49776d9fe54cb4580fbbd04906b40fe2f6117e/src/library/tools/R/QC.R#L7133
-https://github.com/wch/r-source/blob/efacf56dcf2f880b9db8eafa28d49a08d56e861e/src/library/tools/R/utils.R#L1316-L1389
--->
-```
-The use of `Config/Needs/*` is not directly related to devtools.
-It's more accurate to say that it's associated with continuous integration workflows made available to the community at <https://github.com/r-lib/actions/> and exposed via functions such as `usethis::use_github_actions()`.
-A `Config/Needs/*` field tells the [`setup-r-dependencies`](https://github.com/r-lib/actions/tree/master/setup-r-dependencies#readme) GitHub Action about extra packages that need to be installed.
-
-`Config/Needs/website` is the most common and it provides a place to specify packages that aren't a formal dependency, but that must be present in order to build the package's website.
-On the left is an example of what might appear in `DESCRIPTION` for a package that uses various tidyverse packages in the non-vignette articles on its website, which is also formatted with styling that lives in the `tidyverse/template` GitHub repo.
-On the right is the corresponding excerpt from the configuration of the workflow that builds and deploys the website.
-
-    in DESCRIPTION                  in .github/workflows/pkgdown.yaml
-    --------------------------      ---------------------------------
-    Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
-        tidyverse,                    with:
-        tidyverse/tidytemplate          extra-packages: pkgdown
-                                        needs: website
-
-Continuous integration and package websites are discussed more in ??
-and ??,
-respectively.
-*These chapters are a yet-to-be-(re)written task for the 2nd edition.*
-
-<!-- TODO: Link to CI and pkgdown material when it has been written and/or revised. -->
-
-The `Config/Needs/*` convention is handy because it allows a developer to use `DESCRIPTION` as their definitive record of package dependencies, while maintaining a clean distinction between true runtime dependencies versus those that are only needed for specialized development tasks.
-
-<!-- re: describing different types of dependencies, another term you see for "runtime" dependency is "production" -->
