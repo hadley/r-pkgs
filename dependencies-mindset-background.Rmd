@@ -229,15 +229,15 @@ In that case, withr should be listed in `Imports`.
     `devtools::load_all()` also checks that all packages in `Imports` are installed.
 
     Adding a package to `Imports` ensures it will be installed, but that is also all it does.
-    It has nothing to do with actually importing or attaching that package.
-    See @sec-dependencies-in-practice for more.
+    It has nothing to do with actually importing functions from that package.
+    See @sec-dependencies-in-imports for more about how to use a package in `Imports`.
 
 -   `Suggests`: your package can use these packages, but doesn't require them.
     You might use suggested packages for example datasets, to run tests, build vignettes, or maybe there's only one function that needs the package.
 
     Packages listed in `Suggests` are not automatically installed along with your package.
     This means that you can't assume the package is available unconditionally.
-    Below we show various ways to handle these checks.
+    See @sec-dependencies-in-suggests for more about how to check whether a suggested package is installed.
 
 `Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
@@ -281,7 +281,7 @@ lubridate::here() # always gets lubridate::here()
 here::here()      # always gets here::here()
 ```
 
-As you will see in CROSS-REF, the `package::function()` calling style is also our default recommendation for how to use your dependencies in the code below `R/`, because it eliminates all ambiguity.
+As you will see in @sec-dependencies-in-imports, the `package::function()` calling style is also our default recommendation for how to use your dependencies in the code below `R/`, because it eliminates all ambiguity.
 
 But, in the context of package code, the use of `::` is not really our main line of defense against the confusion seen in the example above.
 In packages, we rely on namespaces to ensure that every package works the same way regardless of what packages are attached by the user.
@@ -304,7 +304,7 @@ sd(1:5)
 ```
 
 Surprisingly, it does not!
-That's because when `sd()` looks for an object called `var()`, it starts in the stats package namespace, so it finds `stats::var()`, not the `var()` we created in the global environment.
+That's because when `sd()` looks for an object called `var()`, it looks first in the stats package namespace, so it finds `stats::var()`, not the `var()` we created in the global environment.
 It would be chaos if functions like `sd()` could be broken by a user redefining `var()` or by attaching a package that overrides `var()`.
 The package namespace system is what saves us from this fate.
 
@@ -546,10 +546,11 @@ Of the four, these two functions are by far the most useful:
 -   Use `library(x)` in, e.g., a data analysis script or a vignette.
     It will throw an error if the package is not installed, and will terminate the script.
     You want to attach the package to save typing.
-    Never use `library()` in a package.
+    Never use `library()` in package code below `R/` or `tests/`.
 
 -   Use `requireNamespace("x", quietly = TRUE)` inside a package if you want to specify different behaviour depending on whether or not a suggested package is installed.
     Note that this also loads the package.
+    We give examples in @sec-dependencies-in-suggests-r-code.
 
 `loadNamespace()` is somewhat esoteric and is really only needed for internal R code.
 
@@ -560,17 +561,7 @@ If you want to "attach or fail", use `library()`. If you want to check whether p
 
 [^dependencies-mindset-background-5]: The classic blog post ["`library()` vs `require()` in R"](https://yihui.org/en/2014/07/library-vs-require/) by Yihui Xie is another good resource on this.
 
-One place where we do use `require()` is to conditionally do something in `.Rprofile`.
-For example, this snippet attempts to attach the reprex package in an interactive session, but fails quietly if reprex is unavailable:
-
-```{r}
-#| eval: false
-if (!interactive()) {
-  suppressMessages(require(reprex))
-}
-```
-
-Another legitimate use of `require()` is in an example that uses a package your package `Suggests`, which is covered in @sec-dependencies-suggests-in-examples-and-vignettes.
+One reasonable use of `require()` is in an example that uses a package your package `Suggests`, which is further discussed in @sec-dependencies-suggests-in-examples-and-vignettes.
 
 ### Whether to Import or Depend {#sec-dependencies-imports-vs-depends}
 
