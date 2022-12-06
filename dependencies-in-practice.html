@@ -525,7 +525,18 @@ importFrom(glue, glue_collapse)</code></pre>
 <p>This is the least recommended solution because it can make your code harder to read (you can’t tell where a function is coming from), and if you <code>@import</code> many packages, it increases the chance of function name conflicts. Save this for very special situations.</p>
 <section id="how-to-not-use-a-package-in-imports" class="level4" data-number="12.4.1.1"><h4 data-number="12.4.1.1" class="anchored" data-anchor-id="how-to-not-use-a-package-in-imports">
 <span class="header-section-number">12.4.1.1</span> How to <em>not</em> use a package in Imports</h4>
-<p><a href="https://github.com/hadley/r-pkgs/issues/828" class="uri">https://github.com/hadley/r-pkgs/issues/828</a></p>
+<p>Sometimes you have a package listed in <code>Imports</code>, but you don’t actually use it inside your package or, at least, R doesn’t think you use it. That leads to a <code>NOTE</code> from <code>R CMD check</code>:</p>
+<pre><code>* checking dependencies in R code ... NOTE
+Namespace in Imports field not imported from: ‘aaapkg’
+  All declared Imports should be used.</code></pre>
+<p>This can happen if your only use of aaapkg is a call like <code>aaapkg::aaa_fun()</code> in the default for a function argument in your package. Another example is if you want to list an indirect dependency in <code>Imports</code>, so you can state a minimum version for it. The tidyverse meta-package has this problem on a large scale, since it exists mostly to install a bundle of packages at specific versions.</p>
+<p>How can you get rid of this <code>NOTE</code>?</p>
+<p>Our recommendation is to put a reference (not a call) to an object in aaapkg in some file below <code>R/</code>, maybe in a <code>.R</code> file associated with package-wide setup:</p>
+<div class="cell">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">ignore_unused_imports</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="fu">aaapkg</span><span class="fu">::</span><span class="va">aaa_fun</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>You don’t need to call <code>ignore_unused_imports()</code> anywhere. You shouldn’t export it. You don’t have to actually exercise <code>aaapkg::aaa_fun()</code>. What’s important is to access something in aaapkg’s namespace with <code>::</code>.</p>
+<p>An alternative approach you might be tempted to use it to import <code>aaapkg::aaa_fun()</code> into your package’s namespace, probably with the roxygen tag <code>#' @importFrom aaapkg aaa_fun</code>. However, note that this causes aaapkg to be loaded whenever your package is loaded. In contrast, if you use the approach we recommend, the aaapkg will only be loaded if your user does something actually requires it. This rarely matters in practice, but it’s always nice to keep your namespace as clean and small as possible.</p>
 </section></section><section id="in-test-code" class="level3" data-number="12.4.2"><h3 data-number="12.4.2" class="anchored" data-anchor-id="in-test-code">
 <span class="header-section-number">12.4.2</span> In test code</h3>
 <p>Refer to external functions in your tests just as you refer to them in the code below <code>R/</code>. Usually this means you should use <code>aaapkg::aaa_fun()</code>. But if you have imported a particular function, either specifically or as part of an entire namespace, you can just call it directly in your test code.</p>
@@ -537,11 +548,11 @@ importFrom(glue, glue_collapse)</code></pre>
 <span class="header-section-number">12.5</span> Package is listed in <code>Suggests</code>
 </h2>
 <p>Consider a dependency that is listed in <code>DESCRIPTION</code> in <code>Suggests</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Suggests</span><span class="kw">:</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">    aaapkg</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Suggests</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">    aaapkg</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The code inside your package can NOT assume that aaapkg is installed on the system. That will depend on how your package was installed. Most of the functions that are used to install packages support a <code>dependencies</code> argument that controls whether to install just the hard dependencies or to take a more expansive approach:</p>
 <div class="cell">
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span>dependencies <span class="op">=</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span>dependencies <span class="op">=</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span>dependencies <span class="op">=</span><span class="op">)</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="http://pak.r-lib.org/reference/pkg_install.html">pkg_install</a></span><span class="op">(</span>dependencies <span class="op">=</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -551,7 +562,7 @@ importFrom(glue, glue_collapse)</code></pre>
 </h3>
 <p>Inside a function in your own package, check for the availability of a suggested package with <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace("pkg", quietly = TRUE)</a></code>. There are two basic scenarios: the dependency is absolutely required or your package offers some sort of fallback behaviour.</p>
 <div class="cell">
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># the suggested package is required </span></span>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># the suggested package is required </span></span>
 <span><span class="va">my_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"aaapkg"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/stop.html">stop</a></span><span class="op">(</span></span>
@@ -573,7 +584,7 @@ importFrom(glue, glue_collapse)</code></pre>
 </div>
 <p>The rlang package has some useful functions for checking package availability: <code><a href="https://rlang.r-lib.org/reference/is_installed.html">rlang::check_installed()</a></code> and <code><a href="https://rlang.r-lib.org/reference/is_installed.html">rlang::is_installed()</a></code>. Here’s how the checks around a suggested package could look if you use rlang:</p>
 <div class="cell">
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># the suggested package is required </span></span>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># the suggested package is required </span></span>
 <span><span class="va">my_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/is_installed.html">check_installed</a></span><span class="op">(</span><span class="st">"aaapkg"</span>, reason <span class="op">=</span> <span class="st">"to use `aaa_fun()`"</span><span class="op">)</span></span>
 <span>  <span class="co"># code that includes calls such as aaapkg::aaa_fun()</span></span>
@@ -596,7 +607,7 @@ importFrom(glue, glue_collapse)</code></pre>
 <p>Also, empirically, in every important scenario of running <code>R CMD check</code>, the suggested packages are installed. This is generally true for CRAN and we ensure that it’s true in our own automated checks. However, it’s important to note that other package maintainers take a different stance and choose to protect all usage of suggested packages in their tests and vignettes.</p>
 <p>Sometimes even we make an exception and guard the use of a suggested package in a test. Here’s a test from ggplot2, which uses <code><a href="https://testthat.r-lib.org/reference/skip.html">testthat::skip_if_not_installed()</a></code> to skip execution if the suggested sf package is not available.</p>
 <div class="cell">
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">test_that</span><span class="op">(</span><span class="st">"basic plot builds without error"</span>, <span class="op">{</span></span>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">test_that</span><span class="op">(</span><span class="st">"basic plot builds without error"</span>, <span class="op">{</span></span>
 <span>  <span class="fu">skip_if_not_installed</span><span class="op">(</span><span class="st">"sf"</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">nc_tiny_coords</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span></span>
@@ -621,7 +632,7 @@ importFrom(glue, glue_collapse)</code></pre>
 <span class="header-section-number">12.5.3</span> In examples and vignettes</h3>
 <p>Another common place to use a suggested package is in an example and here we often guard with <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code>. This example is from <code><a href="https://ggplot2.tidyverse.org/reference/coord_map.html">ggplot2::coord_map()</a></code>. Ggplot2 lists the maps package in <code>Suggests</code>.</p>
 <div class="cell">
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examples</span></span>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examples</span></span>
 <span><span class="co">#' if (require("maps")) {</span></span>
 <span><span class="co">#'   nz &lt;- map_data("nz")</span></span>
 <span><span class="co">#'   # Prepare a map of NZ</span></span>
@@ -638,8 +649,8 @@ importFrom(glue, glue_collapse)</code></pre>
 </section></section><section id="sec-dependencies-in-depends" class="level2" data-number="12.6"><h2 data-number="12.6" class="anchored" data-anchor-id="sec-dependencies-in-depends">
 <span class="header-section-number">12.6</span> Package is listed in Depends</h2>
 <p>Consider a dependency that is listed in <code>DESCRIPTION</code> in <code>Depends</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Depends</span><span class="kw">:</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">    aaapkg</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Depends</span><span class="kw">:</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="at">    aaapkg</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This situation has a lot in common with a package listed in <code>Imports</code>. The code inside your package can assume that aaapkg is installed on the system. The only difference is that aaapkg will be attached whenever your package is.</p>
 <section id="in-code-below-r-and-in-test-code" class="level3" data-number="12.6.1"><h3 data-number="12.6.1" class="anchored" data-anchor-id="in-code-below-r-and-in-test-code">
 <span class="header-section-number">12.6.1</span> In code below <code>R/</code> and in test code</h3>
@@ -655,14 +666,14 @@ importFrom(glue, glue_collapse)</code></pre>
 <p>This is the most obvious difference with a dependency in <code>Depends</code> versus <code>Imports</code>. Since your package is attached when your examples are executed, so is the package listed in <code>Depends</code>. You don’t have to attach it explicitly with <code><a href="https://rdrr.io/r/base/library.html">library(aaapkg)</a></code>.</p>
 <p>The ggforce package <code>Depends</code> on ggplot2 and the examples for <code>ggforce::geom_mark_rect()</code> use functions like <code><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot2::ggplot()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">ggplot2::geom_point()</a></code> without any explicit call to <code><a href="https://ggplot2.tidyverse.org">library(ggplot2)</a></code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">iris</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">Petal.Length</span>, <span class="va">Petal.Width</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">iris</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">Petal.Length</span>, <span class="va">Petal.Width</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_mark_rect</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>fill <span class="op">=</span> <span class="va">Species</span>, filter <span class="op">=</span> <span class="va">Species</span> <span class="op">!=</span> <span class="st">'versicolor'</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_point</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co"># example code continues ...</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The first line of code executed in one of your vignettes is probably <code><a href="https://rdrr.io/r/base/library.html">library(pkg)</a></code>, which attaches your package and, as a side effect, attaches any dependency listed in <code>Depends</code>. You do not need to explicitly attach the dependency before using it. The censored package <code>Depends</code> on the survival package and the code in <code>vignette("examples", package = "censored")</code> starts out like so:</p>
 <div class="cell">
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidymodels.tidymodels.org">tidymodels</a></span><span class="op">)</span></span>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidymodels.tidymodels.org">tidymodels</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/tidymodels/censored">censored</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Loading required package: survival</span></span>
 <span></span>
@@ -711,7 +722,7 @@ Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
 <p>In the devtools workflow and this book, the NAMESPACE file is automatically generated from special roxygen comments in the R/*.R files.</p>
 <p>To export an object, put <code>@export</code> in its roxygen block. For example:</p>
 <div class="cell">
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @export</span></span>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @export</span></span>
 <span><span class="va">foo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -720,7 +731,7 @@ Config/Needs/website:           - uses: r-lib/actions/setup-r-dependencies@v1
 <p>You export functions that you want other people to use. Exported functions must be documented, and you must be cautious when changing their interface — other people are using them! Generally, it’s better to export too little than too much. It’s easy to export things that you didn’t before; it’s hard to stop exporting a function because it might break existing code. Always err on the side of caution, and simplicity. It’s easier to give people more functionality than it is to take away stuff they’re used to.</p>
 <p>I believe that packages that have a wide audience should strive to do one thing and do it well. All functions in a package should be related to a single problem (or a set of closely related problems). Any functions not related to that purpose should not be exported. For example, most of my packages have a <code>utils.R</code> file that contains many small functions that are useful for me, but aren’t part of the core purpose of those packages. I never export these functions.</p>
 <div class="cell">
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Defaults for NULL values</span></span>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Defaults for NULL values</span></span>
 <span><span class="va">`%||%`</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span> <span class="va">b</span> <span class="kw">else</span> <span class="va">a</span></span>
 <span></span>
 <span><span class="co"># Remove NULLs from a list</span></span>
