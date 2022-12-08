@@ -2,14 +2,14 @@
 
 ```{r, echo = FALSE}
 source("common.R")
-status("restructuring")
+status("polishing")
 ```
 
 ## Introduction
 
 A dependency is when your package uses functionality from another package (or other external tool).
 In @sec-description-imports-suggests, we explained how to declare a dependency on another package by listing it in `DESCRIPTION`, usually in `Imports` or `Suggests`.
-But that still leaves many issues for the maintainer to think about:
+But that still leaves many issues for you to think about:
 
 -   When should you take a dependency?
     What are the risk and rewards?
@@ -18,7 +18,7 @@ But that still leaves many issues for the maintainer to think about:
 
 -   How should you use different kinds of dependencies in different contexts?
     I.e. imported vs. suggested packages, used inside your functions vs tests vs documentation.
-    We have to defer this to the next chapter (@sec-dependencies-in-practice), because the justification for those recommendations relies on some additional technical background that we share here.
+    We have to defer this to the next chapter (@sec-dependencies-in-practice), because the justification for those recommendations relies on some additional technical background that we develop here.
 
 A key concept for understanding how packages are meant to work together is that of a namespace (@sec-dependencies-namespace).
 Although it can be a bit confusing, R's namespace system is vital for the package ecosystem.
@@ -166,7 +166,7 @@ pak::pkg_deps_explain("tibble", "rlang")
 
 The packages maintained by the tidyverse team play different roles in the ecosystem and are managed accordingly.
 For example, the tidyverse and devtools packages are essentially meta-packages that exist for the convenience of an end-user.
-Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-mindset-background-3] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.
+Consequently, it is recommended that other packages **should not depend** on tidyverse[^dependencies-mindset-background-3] or devtools (@sec-setup-usage), i.e. these two packages should almost never appear in `Imports`. Instead, a package maintainer should identify and depend on the specific package that actually implements the desired functionality.
 
 [^dependencies-mindset-background-3]: There is a blog post that warns people away from depending on the tidyverse package: <https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/>.
 
@@ -190,7 +190,7 @@ At the time of writing, this includes:
 -   withr, for managing state responsibly
 -   lifecycle, for managing the life cycle of functions and arguments
 
-These are basically regarded as free dependencies and are added to `DESCRIPTION` via `usethis::use_tidy_dependencies()` (which also does a few more things).
+These are basically regarded as free dependencies and can be added to `DESCRIPTION` via `usethis::use_tidy_dependencies()` (which also does a few more things).
 It should come as no surprise that these packages have a very small dependency footprint.
 
 ```{r}
@@ -228,7 +228,7 @@ In that case, withr should be listed in `Imports`.
     Any time your package is installed, those packages will also be installed, if not already present.
     `devtools::load_all()` also checks that all packages in `Imports` are installed.
 
-    Adding a package to `Imports` ensures it will be installed, but that is also all it does.
+    It's worth pointing out that adding a package to `Imports` ensures it will be installed and **that is all it does**.
     It has nothing to do with actually importing functions from that package.
     See @sec-dependencies-in-imports for more about how to use a package in `Imports`.
 
@@ -237,7 +237,7 @@ In that case, withr should be listed in `Imports`.
 
     Packages listed in `Suggests` are not automatically installed along with your package.
     This means that you can't assume the package is available unconditionally.
-    See @sec-dependencies-in-suggests for more about how to check whether a suggested package is installed.
+    See @sec-dependencies-in-suggests for how to check whether a suggested package is installed.
 
 `Suggests` isn't terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context.
 In that case, it's reasonable to just use `Imports` for everything.
@@ -344,11 +344,10 @@ There are other directives that we won't cover here, because they are explicitly
 -   `exportClasses()`, `exportMethods()`, `importClassesFrom()`, `importMethodsFrom()`: export and import S4 classes and methods. We only work in the S4 system when necessary for compatibility with another other package, i.e. we generally don't implement methods or classes that we own with S4. Therefore the S4 coverage in this book is very minimal.
 
 In the devtools workflow, the `NAMESPACE` file is not written by hand!
-Instead, we prefer to generate `NAMESPACE` with the roxygen2 package, using specific tags located in a roxygen comment above each function's definition in the `R/*.R` files (CROSS REF).
-We will have much more to say about roxygen comments and the roxygen2 package when we discuss package documentation in @sec-man.
+Instead, we prefer to generate `NAMESPACE` with the roxygen2 package, using specific tags located in a roxygen comment above each function's definition in the `R/*.R` files (@sec-dependencies-NAMESPACE-workflow). We will have much more to say about roxygen comments and the roxygen2 package when we discuss package documentation in @sec-man.
 For now, we just lay out the reasons we prefer this method of generating the `NAMESPACE` file:
 
--   Namespace definitions live next to their associated functions, so when you read the code it's easier to see what's being exported and imported and why.
+-   Namespace tags are integrated into the source code, so when you read the code it's easier to see what's being exported and imported and why.
 
 -   Roxygen2 abstracts away some of the details of `NAMESPACE`.
     You only need to learn one tag, `@export`, and roxygen2 will figure out which specific directive to use, based on whether the associated object is a regular function, S3 method, S4 method, or S4 class.
@@ -426,7 +425,7 @@ Now we can explain how the namespace system designs this problem away.
 ### Function lookup inside a package
 
 In @sec-dependencies-namespace-motivation, we proved that a user's definition of a function named `var()` does *not* break `stats::sd()`.
-That is, somehow, to our immense relief, `stats::sd()` finds `stats::var()` when it should.
+Somehow, to our immense relief, `stats::sd()` finds `stats::var()` when it should.
 How does that work?
 
 This section is somewhat technical and you can absolutely develop a package with a well-behaved namespace without fully understanding these details.
