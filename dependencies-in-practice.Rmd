@@ -603,6 +603,7 @@ This help topic lists all re-exported objects and links to their primary documen
 R has multiple object-oriented programming (OOP) systems:
 
 -   S3 is currently the most important for us and is the one we that is addressed in various parts of this book.
+    The [S3 chapter of Advanced R](https://adv-r.hadley.nz/s3.html) is a good place to learn more about S3 conceptually and the [vctrs package](https://vctrs.r-lib.org) is worth studying for practical knowledge.
 
 -   S4 is very important within certain R communities, most notably within the Bioconductor project.
     We only use S4 when it's necessary for compatibility with other packages.
@@ -616,10 +617,11 @@ If your package "owns" an S3 class, it makes sense to export a user-friendly con
 This is often just a regular function and there is no special S3 angle.
 
 If your package "owns" an S3 generic and you want others to be able to use it, you should export the generic.
-Example: the dplyr package exports the generic function `dplyr::count()` and also implements and exports a specific method, `separate.data.frame()`:
+For example, the dplyr package exports the generic function `dplyr::count()` and also implements and exports a specific method, `separate.data.frame()`:
 
 ```{r}
 #| eval: false
+#' ... all the usual documentation for count() ...
 #' @export
 count <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
   UseMethod("count")
@@ -629,11 +631,18 @@ count <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
 count.data.frame <- function(x, ..., wt = NULL, sort = FALSE, name = NULL, .drop = group_by_drop_default(x)) { ... }
 ```
 
-If your package implements an S3 generic for a specific class, i.e. it offers an S3 method, you should import the generic and export your method.
-The package that owns the generic should be listed in `Imports` or `Suggests` (unless it's the base package).
+The corresponding lines in dplyr's `NAMESPACE` file look like this:
 
-Example: the dbplyr package implements dplyr's `count()` generic for the `tbl_lazy` class.
-In `DESCRIPTION`, we have:
+    ...
+    S3method(count,data.frame)
+    ...
+    export(count)
+    ...
+
+Now imagine that your package implements a method for `count()` for a class you "own" (not `data.frame`).
+A good example is the dbplyr package, which implements `count()` for the `tbl_lazy` class.
+An add-on package that implements an S3 generic for a new class should list the generic-providing package in Imports, import the generic into its namespace, and export its S3 method.
+Here's part of dbplyr's `DESCRIPTION` file:
 
     Imports: 
         ...,
@@ -655,7 +664,7 @@ In `NAMESPACE`, we have:
     ...
     importFrom(dplyr,count)
 
-dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()`.
+Dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()`.
 In this case, there is no need to import those generics, but it's still necessary to export the methods.
 In `dbplyr/R/tbl_lazy.R`, we have:
 
