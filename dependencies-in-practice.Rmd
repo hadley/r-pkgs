@@ -687,9 +687,52 @@ In `NAMESPACE`, this produces:
     ...
     S3method(names,tbl_lazy)
 
-POSSIBLE TODO: Registering S3 method when the generic comes from a package that's in `Suggests` (not `Imports`).
-Examples: glue and testthat/waldo/vctrs.
-googledrive and dplyr.
+The last and trickiest case is when your package offers a method for a generic "owned" by a package you've listed in `Suggests`.
+The basic idea is that you want to register the availability of your S3 method conditionally, when your package is being loaded.
+If the suggested package is present, your S3 method should be registered, but otherwise it should not.
+
+We'll illustrate this with an example.
+Within the tidyverse, the glue package is managed as a low-level package that should have minimal dependencies (@sec-dependencies-tidyverse). Glue functions generally return a character vector that also has the `"glue"` S3 class.
+
+```{r}
+library(glue)
+name <- "Betty"
+(ret <- glue('My name is {name}.'))
+class(ret)
+```
+
+The motivation for this is that it allows glue to offer special methods for `print()`, the `+` operator, and subseting via `[` and `[[`.
+One downside, though, is that this class attribute complicates string comparisons:
+
+```{r}
+identical(ret, "My name is Betty.")
+all.equal(ret, "My name is Betty.")
+```
+
+Therefore, for testing, it is helpful if glue offers a method for `testthat::compare()`, which explains why this expectation succeeds:
+
+```{r}
+testthat::expect_equal(ret, "My name is Betty.")
+```
+
+But glue can't list testthat in `Imports`!
+It must go in `Suggests`.
+The solution is to register the method conditionally when glue is loaded.
+Here is a redacted version of glue's `.onLoad()` function, where you'll see that it conditionally registers some other methods as well:
+
+```{r}
+#| eval: false
+.onLoad <- function(...) {
+  s3_register("testthat::compare", "glue")
+  s3_register("waldo::compare_proxy", "glue")
+  s3_register("vctrs::vec_ptype2", "glue.glue")
+  ...
+  invisible()
+}
+```
+
+The `s3_register()` function comes from the vctrs package.
+If you don't have an organic need to depend on vctrs, it is common (and encouraged) to simply inline the `s3_register()` source into your own package.
 
 ## Cutting room floor from refactorting this part of the book
 
