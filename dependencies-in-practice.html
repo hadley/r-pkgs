@@ -508,7 +508,7 @@ RStudio
 <p>Consider a dependency that is listed in <code>DESCRIPTION</code> in <code>Imports</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Imports</span><span class="kw">:</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">    aaapkg</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>The code inside your package can assume that aaapkg is installed on the system.</p>
+<p>The code inside your package can assume that aaapkg is installed whenever pkg is installed.</p>
 <section id="in-code-below-r" class="level3" data-number="12.5.1"><h3 data-number="12.5.1" class="anchored" data-anchor-id="in-code-below-r">
 <span class="header-section-number">12.5.1</span> In code below R/</h3>
 <p>Our recommended default is to call external functions using the <code>package::function()</code> syntax:</p>
@@ -579,7 +579,9 @@ Namespace in Imports field not imported from: ‘aaapkg’
 <p>How can you get rid of this <code>NOTE</code>?</p>
 <p>Our recommendation is to put a namespace-qualified reference (not a call) to an object in aaapkg in some file below <code>R/</code>, such as a <code>.R</code> file associated with package-wide setup:</p>
 <div class="cell">
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">ignore_unused_imports</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="fu">aaapkg</span><span class="fu">::</span><span class="va">aaa_fun</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">ignore_unused_imports</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">aaapkg</span><span class="fu">::</span><span class="va">aaa_fun</span></span>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>You don’t need to call <code>ignore_unused_imports()</code> anywhere. You shouldn’t export it. You don’t have to actually exercise <code>aaapkg::aaa_fun()</code>. What’s important is to access something in aaapkg’s namespace with <code>::</code>.</p>
 <p>An alternative approach you might be tempted to use it to import <code>aaapkg::aaa_fun()</code> into your package’s namespace, probably with the roxygen tag <code>#' @importFrom aaapkg aaa_fun</code>. This does suppress the <code>NOTE</code>, but it also does more. This causes aaapkg to be loaded whenever your package is loaded. In contrast, if you use the approach we recommend, the aaapkg will only be loaded if your user does something actually requires it. This rarely matters in practice, but it’s always nice to keep your namespace as clean and small as possible.</p>
@@ -676,7 +678,7 @@ Namespace in Imports field not imported from: ‘aaapkg’
 <p>Finally, note that <code>testthat::skip_if_not_installed(pkg, minimum_version = "x.y.z")</code> can be used to conditionally skip a test based on the version of the other package.</p>
 </section><section id="sec-dependencies-in-suggests-in-examples-and-vignettes" class="level3" data-number="12.6.3"><h3 data-number="12.6.3" class="anchored" data-anchor-id="sec-dependencies-in-suggests-in-examples-and-vignettes">
 <span class="header-section-number">12.6.3</span> In examples and vignettes</h3>
-<p>Another common place to use a suggested package is in an example and here we often guard with <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code>. This example is from <code><a href="https://ggplot2.tidyverse.org/reference/coord_map.html">ggplot2::coord_map()</a></code>. Ggplot2 lists the maps package in <code>Suggests</code>.</p>
+<p>Another common place to use a suggested package is in an example and here we often guard with <code><a href="https://rdrr.io/r/base/library.html">require()</a></code> or <code><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace()</a></code>. This example is from <code><a href="https://ggplot2.tidyverse.org/reference/coord_map.html">ggplot2::coord_map()</a></code>. ggplot2 lists the maps package in <code>Suggests</code>.</p>
 <div class="cell">
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @examples</span></span>
 <span><span class="co">#' if (require("maps")) {</span></span>
