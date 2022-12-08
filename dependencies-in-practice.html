@@ -856,7 +856,42 @@ importFrom(dplyr,count)</code></pre>
 <pre><code>S3method(dim,tbl_lazy)
 ...
 S3method(names,tbl_lazy)</code></pre>
-<p>POSSIBLE TODO: Registering S3 method when the generic comes from a package that’s in <code>Suggests</code> (not <code>Imports</code>). Examples: glue and testthat/waldo/vctrs. googledrive and dplyr.</p>
+<p>The last and trickiest case is when your package offers a method for a generic “owned” by a package you’ve listed in <code>Suggests</code>. The basic idea is that you want to register the availability of your S3 method conditionally, when your package is being loaded. If the suggested package is present, your S3 method should be registered, but otherwise it should not.</p>
+<p>We’ll illustrate this with an example. Within the tidyverse, the glue package is managed as a low-level package that should have minimal dependencies (<a href="dependencies-mindset-background.html#sec-dependencies-tidyverse"><span>Section&nbsp;11.2.3</span></a>). Glue functions generally return a character vector that also has the <code>"glue"</code> S3 class.</p>
+<div class="cell">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/tidyverse/glue">glue</a></span><span class="op">)</span></span>
+<span><span class="va">name</span> <span class="op">&lt;-</span> <span class="st">"Betty"</span></span>
+<span><span class="op">(</span><span class="va">ret</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://glue.tidyverse.org/reference/glue.html">glue</a></span><span class="op">(</span><span class="st">'My name is {name}.'</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; My name is Betty.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span><span class="op">(</span><span class="va">ret</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "glue"      "character"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The motivation for this is that it allows glue to offer special methods for <code><a href="https://rdrr.io/r/base/print.html">print()</a></code>, the <code>+</code> operator, and subseting via <code>[</code> and <code>[[</code>. One downside, though, is that this class attribute complicates string comparisons:</p>
+<div class="cell">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">ret</span>, <span class="st">"My name is Betty."</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html">all.equal</a></span><span class="op">(</span><span class="va">ret</span>, <span class="st">"My name is Betty."</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Attributes: &lt; Modes: list, NULL &gt;"                   </span></span>
+<span><span class="co">#&gt; [2] "Attributes: &lt; Lengths: 1, 0 &gt;"                       </span></span>
+<span><span class="co">#&gt; [3] "Attributes: &lt; names for target but not for current &gt;"</span></span>
+<span><span class="co">#&gt; [4] "Attributes: &lt; current is not list-like &gt;"            </span></span>
+<span><span class="co">#&gt; [5] "target is glue, current is character"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Therefore, for testing, it is helpful if glue offers a method for <code><a href="https://testthat.r-lib.org/reference/compare.html">testthat::compare()</a></code>, which explains why this expectation succeeds:</p>
+<div class="cell">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal</a></span><span class="op">(</span><span class="va">ret</span>, <span class="st">"My name is Betty."</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>But glue can’t list testthat in <code>Imports</code>! It must go in <code>Suggests</code>. The solution is to register the method conditionally when glue is loaded. Here is a redacted version of glue’s <code>.onLoad()</code> function, where you’ll see that it conditionally registers some other methods as well:</p>
+<div class="cell">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">s3_register</span><span class="op">(</span><span class="st">"testthat::compare"</span>, <span class="st">"glue"</span><span class="op">)</span></span>
+<span>  <span class="fu">s3_register</span><span class="op">(</span><span class="st">"waldo::compare_proxy"</span>, <span class="st">"glue"</span><span class="op">)</span></span>
+<span>  <span class="fu">s3_register</span><span class="op">(</span><span class="st">"vctrs::vec_ptype2"</span>, <span class="st">"glue.glue"</span><span class="op">)</span></span>
+<span>  <span class="va">...</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The <code>s3_register()</code> function comes from the vctrs package. If you don’t have an organic need to depend on vctrs, it is common (and encouraged) to simply inline the <code>s3_register()</code> source into your own package.</p>
 </section><section id="cutting-room-floor-from-refactorting-this-part-of-the-book" class="level2" data-number="12.11"><h2 data-number="12.11" class="anchored" data-anchor-id="cutting-room-floor-from-refactorting-this-part-of-the-book">
 <span class="header-section-number">12.11</span> Cutting room floor from refactorting this part of the book</h2>
 <p><em>random snippets of text that, in general, will probably just be deleted</em></p>
