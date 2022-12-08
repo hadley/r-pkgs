@@ -401,7 +401,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header><div class="cell">
 <div class="cell-output-display">
-<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-note callout callout-style-default callout-captioned">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
@@ -411,17 +411,17 @@ Second edition
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>You are reading the work-in-progress second edition of R Packages. This chapter is undergoing heavy restructuring and may be confusing or incomplete.</p>
+<p>You are reading the work-in-progress second edition of R Packages. This chapter should be readable but is currently undergoing final polishing.</p>
 </div>
 </div>
 </div>
 </div>
 <section id="introduction" class="level2" data-number="11.1"><h2 data-number="11.1" class="anchored" data-anchor-id="introduction">
 <span class="header-section-number">11.1</span> Introduction</h2>
-<p>A dependency is when your package uses functionality from another package (or other external tool). In <a href="description.html#sec-description-imports-suggests"><span>Section&nbsp;10.7</span></a>, we explained how to declare a dependency on another package by listing it in <code>DESCRIPTION</code>, usually in <code>Imports</code> or <code>Suggests</code>. But that still leaves many issues for the maintainer to think about:</p>
+<p>A dependency is when your package uses functionality from another package (or other external tool). In <a href="description.html#sec-description-imports-suggests"><span>Section&nbsp;10.7</span></a>, we explained how to declare a dependency on another package by listing it in <code>DESCRIPTION</code>, usually in <code>Imports</code> or <code>Suggests</code>. But that still leaves many issues for you to think about:</p>
 <ul>
 <li><p>When should you take a dependency? What are the risk and rewards? In <a href="#sec-dependencies-pros-cons"><span>Section&nbsp;11.2</span></a> we provide a framework for deciding whether a dependency is worth it. This chapter also includes specific sections for deciding between <code>Imports</code> and <code>Suggests</code> (<a href="#sec-dependencies-imports-vs-suggests"><span>Section&nbsp;11.2.4</span></a>) and between Imports and <code>Depends</code> (<a href="#sec-dependencies-imports-vs-depends"><span>Section&nbsp;11.5.1</span></a>).</p></li>
-<li><p>How should you use different kinds of dependencies in different contexts? I.e. imported vs.&nbsp;suggested packages, used inside your functions vs tests vs documentation. We have to defer this to the next chapter (<a href="dependencies-in-practice.html"><span>Chapter&nbsp;12</span></a>), because the justification for those recommendations relies on some additional technical background that we share here.</p></li>
+<li><p>How should you use different kinds of dependencies in different contexts? I.e. imported vs.&nbsp;suggested packages, used inside your functions vs tests vs documentation. We have to defer this to the next chapter (<a href="dependencies-in-practice.html"><span>Chapter&nbsp;12</span></a>), because the justification for those recommendations relies on some additional technical background that we develop here.</p></li>
 </ul>
 <p>A key concept for understanding how packages are meant to work together is that of a namespace (<a href="#sec-dependencies-namespace"><span>Section&nbsp;11.3</span></a>). Although it can be a bit confusing, R’s namespace system is vital for the package ecosystem. It is what ensures that other packages won’t interfere with your code, that your code won’t interfere with other packages, and that your package works regardless of the environment in which it’s run. We will show how the namespace system works alongside and in concert with the user’s search path (<a href="#sec-dependencies-search"><span>Section&nbsp;11.4</span></a>).</p>
 <p>This chapter contains material that could be skipped (or skimmed) when making your first package, when you’re probably happy just to make a package that works! But you’ll want to revisit the material in this chapter as your packages get more ambitious and sophisticated.</p>
@@ -497,7 +497,7 @@ Second edition
 </div>
 </section><section id="dependency-thoughts-specific-to-the-tidyverse" class="level3" data-number="11.2.3"><h3 data-number="11.2.3" class="anchored" data-anchor-id="dependency-thoughts-specific-to-the-tidyverse">
 <span class="header-section-number">11.2.3</span> Dependency thoughts specific to the tidyverse</h3>
-<p>The packages maintained by the tidyverse team play different roles in the ecosystem and are managed accordingly. For example, the tidyverse and devtools packages are essentially meta-packages that exist for the convenience of an end-user. Consequently, it is recommended that other packages <strong>should not depend</strong> on tidyverse<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> or devtools (<a href="setup.html#sec-setup-usage"><span>Section&nbsp;3.2</span></a>), i.e.&nbsp;these two packages should almost never appear in <code>Imports</code>. Instead, a package maintainer should identify and depend on the lower-level package that actually implements the desired functionality.</p>
+<p>The packages maintained by the tidyverse team play different roles in the ecosystem and are managed accordingly. For example, the tidyverse and devtools packages are essentially meta-packages that exist for the convenience of an end-user. Consequently, it is recommended that other packages <strong>should not depend</strong> on tidyverse<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> or devtools (<a href="setup.html#sec-setup-usage"><span>Section&nbsp;3.2</span></a>), i.e.&nbsp;these two packages should almost never appear in <code>Imports</code>. Instead, a package maintainer should identify and depend on the specific package that actually implements the desired functionality.</p>
 <p>In the previous section, we talked about different ways to gauge the weight of a dependency. Both the tidyverse and devtools can be seen as heavy due to the very high number of recursive dependencies:</p>
 <div class="cell">
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">n_hard_deps</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pkg</span><span class="op">)</span> <span class="op">{</span></span>
@@ -516,7 +516,7 @@ Second edition
 <li>withr, for managing state responsibly</li>
 <li>lifecycle, for managing the life cycle of functions and arguments</li>
 </ul>
-<p>These are basically regarded as free dependencies and are added to <code>DESCRIPTION</code> via <code><a href="https://usethis.r-lib.org/reference/tidyverse.html">usethis::use_tidy_dependencies()</a></code> (which also does a few more things). It should come as no surprise that these packages have a very small dependency footprint.</p>
+<p>These are basically regarded as free dependencies and can be added to <code>DESCRIPTION</code> via <code><a href="https://usethis.r-lib.org/reference/tidyverse.html">usethis::use_tidy_dependencies()</a></code> (which also does a few more things). It should come as no surprise that these packages have a very small dependency footprint.</p>
 <div class="cell">
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/package_dependencies.html">package_dependencies</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"rlang"</span>, <span class="st">"cli"</span>, <span class="st">"glue"</span>, <span class="st">"withr"</span>, <span class="st">"lifecycle"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $rlang</span></span>
@@ -560,11 +560,11 @@ Submitting to CRAN
 <ul>
 <li>
 <p><code>Imports</code>: packages listed here <em>must</em> be present for your package to work. Any time your package is installed, those packages will also be installed, if not already present. <code><a href="https://devtools.r-lib.org/reference/load_all.html">devtools::load_all()</a></code> also checks that all packages in <code>Imports</code> are installed.</p>
-<p>Adding a package to <code>Imports</code> ensures it will be installed, but that is also all it does. It has nothing to do with actually importing functions from that package. See <a href="dependencies-in-practice.html#sec-dependencies-in-imports"><span>Section&nbsp;12.5</span></a> for more about how to use a package in <code>Imports</code>.</p>
+<p>It’s worth pointing out that adding a package to <code>Imports</code> ensures it will be installed and <strong>that is all it does</strong>. It has nothing to do with actually importing functions from that package. See <a href="dependencies-in-practice.html#sec-dependencies-in-imports"><span>Section&nbsp;12.5</span></a> for more about how to use a package in <code>Imports</code>.</p>
 </li>
 <li>
 <p><code>Suggests</code>: your package can use these packages, but doesn’t require them. You might use suggested packages for example datasets, to run tests, build vignettes, or maybe there’s only one function that needs the package.</p>
-<p>Packages listed in <code>Suggests</code> are not automatically installed along with your package. This means that you can’t assume the package is available unconditionally. See <a href="dependencies-in-practice.html#sec-dependencies-in-suggests"><span>Section&nbsp;12.6</span></a> for more about how to check whether a suggested package is installed.</p>
+<p>Packages listed in <code>Suggests</code> are not automatically installed along with your package. This means that you can’t assume the package is available unconditionally. See <a href="dependencies-in-practice.html#sec-dependencies-in-suggests"><span>Section&nbsp;12.6</span></a> for how to check whether a suggested package is installed.</p>
 </li>
 </ul>
 <p><code>Suggests</code> isn’t terribly relevant for packages where the user base is approximately equal to the development team or for packages that are used in a very predictable context. In that case, it’s reasonable to just use <code>Imports</code> for everything. Using <code>Suggests</code> is mostly a courtesy to external users or to accommodate very lean installations. It can free users from downloading rarely needed packages (especially those that are tricky to install) and lets them get started with your package as quickly as possible.</p>
@@ -594,7 +594,7 @@ Submitting to CRAN
 <span><span class="co">#&gt; function (x, na.rm = FALSE) </span></span>
 <span><span class="co">#&gt; sqrt(var(if (is.vector(x) || is.factor(x)) x else as.double(x), </span></span>
 <span><span class="co">#&gt;     na.rm = na.rm))</span></span>
-<span><span class="co">#&gt; &lt;bytecode: 0x55d1d0339778&gt;</span></span>
+<span><span class="co">#&gt; &lt;bytecode: 0x56376e6fbac0&gt;</span></span>
 <span><span class="co">#&gt; &lt;environment: namespace:stats&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>It’s defined in terms of another function, <code><a href="https://rdrr.io/r/stats/cor.html">var()</a></code>, also from the stats package. So what happens if we override <code><a href="https://rdrr.io/r/stats/cor.html">var()</a></code> with our own definition? Does it break <code><a href="https://rdrr.io/r/stats/sd.html">sd()</a></code>?</p>
@@ -641,9 +641,9 @@ useDynLib(testthat, .registration = TRUE)</code></pre>
 <li>
 <code>exportClasses()</code>, <code>exportMethods()</code>, <code>importClassesFrom()</code>, <code>importMethodsFrom()</code>: export and import S4 classes and methods. We only work in the S4 system when necessary for compatibility with another other package, i.e.&nbsp;we generally don’t implement methods or classes that we own with S4. Therefore the S4 coverage in this book is very minimal.</li>
 </ul>
-<p>In the devtools workflow, the <code>NAMESPACE</code> file is not written by hand! Instead, we prefer to generate <code>NAMESPACE</code> with the roxygen2 package, using specific tags located in a roxygen comment above each function’s definition in the <code>R/*.R</code> files (CROSS REF). We will have much more to say about roxygen comments and the roxygen2 package when we discuss package documentation in <a href="man.html"><span>Chapter&nbsp;17</span></a>. For now, we just lay out the reasons we prefer this method of generating the <code>NAMESPACE</code> file:</p>
+<p>In the devtools workflow, the <code>NAMESPACE</code> file is not written by hand! Instead, we prefer to generate <code>NAMESPACE</code> with the roxygen2 package, using specific tags located in a roxygen comment above each function’s definition in the <code>R/*.R</code> files (<a href="dependencies-in-practice.html#sec-dependencies-NAMESPACE-workflow"><span>Section&nbsp;12.4</span></a>). We will have much more to say about roxygen comments and the roxygen2 package when we discuss package documentation in <a href="man.html"><span>Chapter&nbsp;17</span></a>. For now, we just lay out the reasons we prefer this method of generating the <code>NAMESPACE</code> file:</p>
 <ul>
-<li><p>Namespace definitions live next to their associated functions, so when you read the code it’s easier to see what’s being exported and imported and why.</p></li>
+<li><p>Namespace tags are integrated into the source code, so when you read the code it’s easier to see what’s being exported and imported and why.</p></li>
 <li><p>Roxygen2 abstracts away some of the details of <code>NAMESPACE</code>. You only need to learn one tag, <code>@export</code>, and roxygen2 will figure out which specific directive to use, based on whether the associated object is a regular function, S3 method, S4 method, or S4 class.</p></li>
 <li><p>Roxygen2 keeps <code>NAMESPACE</code> tidy. No matter how many times <code>@importFrom foo bar</code> appears in your roxygen comments, you’ll only get one <code>importFrom(foo, bar)</code> in your <code>NAMESPACE</code>. Roxygen2 also keeps NAMESPACE organised in a principled order, sorting first by the directive type and then alphabetically. Roxygen2 takes away the burden of writing NAMESPACE, while also trying to keep the file as readable as possible. This organization also makes Git diffs much more informative.</p></li>
 </ul>
@@ -693,7 +693,7 @@ useDynLib(testthat, .registration = TRUE)</code></pre>
 <p>This sort of confusion would be even more damaging if it applied to package code, but luckily it does not. Now we can explain how the namespace system designs this problem away.</p>
 </section><section id="function-lookup-inside-a-package" class="level3" data-number="11.4.2"><h3 data-number="11.4.2" class="anchored" data-anchor-id="function-lookup-inside-a-package">
 <span class="header-section-number">11.4.2</span> Function lookup inside a package</h3>
-<p>In <a href="#sec-dependencies-namespace-motivation"><span>Section&nbsp;11.3.1</span></a>, we proved that a user’s definition of a function named <code><a href="https://rdrr.io/r/stats/cor.html">var()</a></code> does <em>not</em> break <code><a href="https://rdrr.io/r/stats/sd.html">stats::sd()</a></code>. That is, somehow, to our immense relief, <code><a href="https://rdrr.io/r/stats/sd.html">stats::sd()</a></code> finds <code><a href="https://rdrr.io/r/stats/cor.html">stats::var()</a></code> when it should. How does that work?</p>
+<p>In <a href="#sec-dependencies-namespace-motivation"><span>Section&nbsp;11.3.1</span></a>, we proved that a user’s definition of a function named <code><a href="https://rdrr.io/r/stats/cor.html">var()</a></code> does <em>not</em> break <code><a href="https://rdrr.io/r/stats/sd.html">stats::sd()</a></code>. Somehow, to our immense relief, <code><a href="https://rdrr.io/r/stats/sd.html">stats::sd()</a></code> finds <code><a href="https://rdrr.io/r/stats/cor.html">stats::var()</a></code> when it should. How does that work?</p>
 <p>This section is somewhat technical and you can absolutely develop a package with a well-behaved namespace without fully understanding these details. Consider this optional reading that you can consult when and if you’re interested. You can learn even more in <a href="https://adv-r.hadley.nz">Advanced R</a>, especially in the chapter on environments, from which we have adapted some of this material.</p>
 <p>Every function in a package is associated with a pair of environments: the package environment, which is what appears in the user’s search path, and the <strong>namespace</strong> environment.</p>
 <ul>
