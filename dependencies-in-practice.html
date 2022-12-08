@@ -803,14 +803,15 @@ importFrom(sessioninfo,session_info)
 <span class="header-section-number">12.10</span> Imports and exports related to S3</h2>
 <p>R has multiple object-oriented programming (OOP) systems:</p>
 <ul>
-<li><p>S3 is currently the most important for us and is the one we that is addressed in various parts of this book.</p></li>
+<li><p>S3 is currently the most important for us and is the one we that is addressed in various parts of this book. The <a href="https://adv-r.hadley.nz/s3.html">S3 chapter of Advanced R</a> is a good place to learn more about S3 conceptually and the <a href="https://vctrs.r-lib.org">vctrs package</a> is worth studying for practical knowledge.</p></li>
 <li><p>S4 is very important within certain R communities, most notably within the Bioconductor project. We only use S4 when it’s necessary for compatibility with other packages. If you want to learn more, the <a href="https://adv-r.hadley.nz/s4.html">S4 chapter of Advanced R</a> is a good starting point and has recommendations for additional resources.</p></li>
 <li><p>R6 is used in many tidyverse packages (broadly defined), but is out of scope for this book. Good places to learn more include the <a href="https://r6.r-lib.org">R6 package website</a>, the <a href="https://adv-r.hadley.nz/r6.html">R6 chapter of Advanced R</a>, and the <a href="https://roxygen2.r-lib.org/articles/rd-other.html#r6">roxygen2 documentation related to R6</a>.</p></li>
 </ul>
 <p>In terms of namespace issues around S3 classes, the main things to consider are generic functions and their class-specific implementations known as methods. If your package “owns” an S3 class, it makes sense to export a user-friendly constructor function. This is often just a regular function and there is no special S3 angle.</p>
-<p>If your package “owns” an S3 generic and you want others to be able to use it, you should export the generic. Example: the dplyr package exports the generic function <code><a href="https://dplyr.tidyverse.org/reference/count.html">dplyr::count()</a></code> and also implements and exports a specific method, <code>separate.data.frame()</code>:</p>
+<p>If your package “owns” an S3 generic and you want others to be able to use it, you should export the generic. For example, the dplyr package exports the generic function <code><a href="https://dplyr.tidyverse.org/reference/count.html">dplyr::count()</a></code> and also implements and exports a specific method, <code>separate.data.frame()</code>:</p>
 <div class="cell">
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @export</span></span>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' ... all the usual documentation for count() ...</span></span>
+<span><span class="co">#' @export</span></span>
 <span><span class="va">count</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, <span class="va">wt</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">sort</span> <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">name</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/UseMethod.html">UseMethod</a></span><span class="op">(</span><span class="st">"count"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
@@ -818,15 +819,20 @@ importFrom(sessioninfo,session_info)
 <span><span class="co">#' @export</span></span>
 <span><span class="va">count.data.frame</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, <span class="va">wt</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">sort</span> <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">name</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">.drop</span> <span class="op">=</span> <span class="fu">group_by_drop_default</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="va">...</span> <span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>If your package implements an S3 generic for a specific class, i.e.&nbsp;it offers an S3 method, you should import the generic and export your method. The package that owns the generic should be listed in <code>Imports</code> or <code>Suggests</code> (unless it’s the base package).</p>
-<p>Example: the dbplyr package implements dplyr’s <code>count()</code> generic for the <code>tbl_lazy</code> class. In <code>DESCRIPTION</code>, we have:</p>
+<p>The corresponding lines in dplyr’s <code>NAMESPACE</code> file look like this:</p>
+<pre><code>...
+S3method(count,data.frame)
+...
+export(count)
+...</code></pre>
+<p>Now imagine that your package implements a method for <code>count()</code> for a class you “own” (not <code>data.frame</code>). A good example is the dbplyr package, which implements <code>count()</code> for the <code>tbl_lazy</code> class. An add-on package that implements an S3 generic for a new class should list the generic-providing package in Imports, import the generic into its namespace, and export its S3 method. Here’s part of dbplyr’s <code>DESCRIPTION</code> file:</p>
 <pre><code>Imports: 
     ...,
     dplyr,
     ...</code></pre>
 <p>In <code>dbplyr/R/verb-count.R</code>, we have:</p>
 <div class="cell">
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @importFrom dplyr count</span></span>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @importFrom dplyr count</span></span>
 <span><span class="co">#' @export</span></span>
 <span><span class="va">count.tbl_lazy</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, <span class="va">wt</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">sort</span> <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">name</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span> <span class="va">...</span> <span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -834,9 +840,9 @@ importFrom(sessioninfo,session_info)
 <pre><code>S3method(count,tbl_lazy)
 ...
 importFrom(dplyr,count)</code></pre>
-<p>dbplyr also provides methods for various generics provided by the base package, such as <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> and <code><a href="https://rdrr.io/r/base/names.html">names()</a></code>. In this case, there is no need to import those generics, but it’s still necessary to export the methods. In <code>dbplyr/R/tbl_lazy.R</code>, we have:</p>
+<p>Dbplyr also provides methods for various generics provided by the base package, such as <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> and <code><a href="https://rdrr.io/r/base/names.html">names()</a></code>. In this case, there is no need to import those generics, but it’s still necessary to export the methods. In <code>dbplyr/R/tbl_lazy.R</code>, we have:</p>
 <div class="cell">
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @export</span></span>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @export</span></span>
 <span><span class="va">dim.tbl_lazy</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="fu">op_vars</span><span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">lazy_query</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
