@@ -496,6 +496,11 @@ If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effect
 By convention, `.onLoad()` and friends are usually saved in a file called `R/zzz.R`.
 (Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should no longer be used.)
 
+One especially hairy thing to do in a function like `.onLoad()` or `.onAttach()` is to change the state of the random number generator.
+Once upon a time, ggplot2 used `sample()` when deciding whether to show a startup message, but only in interactive sessions.
+This, in turn, created a reproducibility puzzle for users who were using `set.seed()` for their own purposes, prior to attaching ggplot2 with `library(ggplot2)`, and running the code both interactively and noninteractively.
+The chosen solution was to wrap the offending startup code inside `withr::with_preserve_seed()`, which leaves the user's random seed as it found it.
+
 ## Constant health checks
 
 Here is a typical sequence of calls when using devtools for package development:
