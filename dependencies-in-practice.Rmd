@@ -11,7 +11,7 @@ This chapter presents the practical details of working with your dependencies in
 If you need a refresher on any of the background:
 
 -   @sec-description covers the DESCRIPTION file.
-    Listing a dependency in that file, such as in Imports, is a necessary first step when taking a dependency.
+    Listing a dependency in that file, such as in `Imports`, is a necessary first step when taking a dependency.
 
 -   @sec-dependencies-pros-cons provides a decision-making framework for dependencies.
 
@@ -128,7 +128,7 @@ This also eliminates any concerns about name conflicts between aaapkg and your p
 Of course there are reasons to make exceptions to this rule and to import something from another package into yours:
 
 -   An operator: You can't call an operator from another package via `::`, so you must import it.
-    Example: the null-coalescing operator from `%||%` from rlang or the original pipe from magrittr `%>%`.
+    Example: the null-coalescing operator `%||%` from rlang or the original pipe `%>%` from magrittr.
 
 -   A function that you use *a lot*: If importing a function makes your code much more readable, that's a good enough reason to import it.
     This literally reduces the number of characters required to call the external function.
@@ -141,57 +141,52 @@ A handy function for your interactive workflow is `usethis::use_import_from()`:
 
 ```{r}
 #| eval: false
-usethis::use_import_from("magrittr", "%>%")
 usethis::use_import_from("glue", "glue_collapse")
 ```
 
-The calls above write these roxygen tags into the source code of your package:
+The call above writes this roxygen tag into the source code of your package:
 
 ```{r}
 #| eval: false
-#' @importFrom magrittr %>%
 #' @importFrom glue glue_collapse
 ```
 
-Where should these roxygen tags go?
-There are two ways to play this:
+Where should this roxygen tag go?
+There are two reasonable locations:
 
 -   As close as possible to the usage of the external function.
     With this mindset, you would place `@importFrom` in the roxygen comment above the function in your package where you use the external function.
     If this is your style, you'll have to do it by hand.
-    This starts to break down as soon as you use the external function in more than one place.
+    We have found that this feels natural at first, but starts to break down as you use more external functions in more places.
 
 -   In a central location.
     This approach keeps all `@importFrom` tags together, in a dedicated section of the package-level documentation file (which can be created with `usethis::use_package_doc()`).
     This is what `use_import_from()` implements.
-    So, in `R/pkg-package.R`, you'll have something like this:
+    So, in `R/pkg-package.R`, you'll end up with something like this:
 
     ```{r}
     # The following block is used by usethis to automatically manage
     # roxygen namespace tags. Modify with care!
     ## usethis namespace: start
-    #' @importFrom magrittr %>%
     #' @importFrom glue glue_collapse
     ## usethis namespace: end
     NULL
     ```
 
-Recall that `devtools::document()` processes your roxygen comments, which writes help topics to `man/*.Rd` and, relevant to our current goal, generates the `NAMESPACE` file.
+Recall that `devtools::document()` processes your roxygen comments (@sec-dependencies-NAMESPACE-workflow), which writes help topics to `man/*.Rd` and, relevant to our current goal, generates the `NAMESPACE` file.
 If you use `use_import_from()`, it does this for you and also calls `load_all()`, making the newly imported function available in your current session.
 
-The roxygen tags above cause these directives to appear in the `NAMESPACE` file:
+The roxygen tag above cause this directive to appear in the `NAMESPACE` file:
 
-    importFrom(magrittr, "%>%")
     importFrom(glue, glue_collapse)
 
-Now you can use the imported operator or function directly in your code:
+Now you can use the imported function directly in your code:
 
 ```{r}
 #| eval: false
 somefunction <- function(...) {
   ...
-  x <- ... %>%
-    glue_collapse()
+  x <- glue_collapse(...)
   ...
 }
 ```
@@ -225,12 +220,12 @@ That leads to a `NOTE` from `R CMD check`:
       All declared Imports should be used.
 
 This can happen if your only use of aaapkg is a call like `aaapkg::aaa_fun()` in the default for a function argument in your package.
-Another example is if you want to list an indirect dependency in `Imports`, so you can state a minimum version for it.
+This also comes up if you want to list an indirect dependency in `Imports`, so you can state a minimum version for it.
 The tidyverse meta-package has this problem on a large scale, since it exists mostly to install a bundle of packages at specific versions.
 
 How can you get rid of this `NOTE`?
 
-Our recommendation is to put a namespace-qualified reference (not a call) to an object in aaapkg in some file below `R/`, maybe in a `.R` file associated with package-wide setup:
+Our recommendation is to put a namespace-qualified reference (not a call) to an object in aaapkg in some file below `R/`, such as a `.R` file associated with package-wide setup:
 
 ```{r}
 #| eval: false
@@ -287,7 +282,7 @@ Broadly speaking, the default is to not install packages in `Suggests`.
 
 ### In code below `R/` {#sec-dependencies-in-suggests-r-code}
 
-Inside a function in your own package, check for the availability of a suggested package with `requireNamespace("pkg", quietly = TRUE)`.
+Inside a function in your own package, check for the availability of a suggested package with `requireNamespace("aaapkg", quietly = TRUE)`.
 There are two basic scenarios: the dependency is absolutely required or your package offers some sort of fallback behaviour.
 
 ```{r}
@@ -603,7 +598,93 @@ And this explains how `library(devtools)` makes `session_info()` available in th
 This will also lead to the creation of the `man/reexports.Rd` file, which finesses the requirement that your package must document all of its exported functions.
 This help topic lists all re-exported objects and links to their primary documentation.
 
-## Stuff yet to be placed
+## Imports and exports related to S3
+
+R has multiple object-oriented programming (OOP) systems:
+
+-   S3 is currently the most important for us and is the one we that is addressed in various parts of this book.
+
+-   S4 is very important within certain R communities, most notably within the Bioconductor project.
+    We only use S4 when it's necessary for compatibility with other packages.
+    If you want to learn more, the [S4 chapter of Advanced R](https://adv-r.hadley.nz/s4.html) is a good starting point and has recommendations for additional resources.
+
+-   R6 is used in many tidyverse packages (broadly defined), but is out of scope for this book.
+    Good places to learn more include the [R6 package website](https://r6.r-lib.org), the [R6 chapter of Advanced R](https://adv-r.hadley.nz/r6.html), and the [roxygen2 documentation related to R6](https://roxygen2.r-lib.org/articles/rd-other.html#r6).
+
+In terms of namespace issues around S3 classes, the main things to consider are generic functions and their class-specific implementations known as methods.
+If your package "owns" an S3 class, it makes sense to export a user-friendly constructor function.
+This is often just a regular function and there is no special S3 angle.
+
+If your package "owns" an S3 generic and you want others to be able to use it, you should export the generic.
+Example: the dplyr package exports the generic function `dplyr::count()` and also implements and exports a specific method, `separate.data.frame()`:
+
+```{r}
+#| eval: false
+#' @export
+count <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
+  UseMethod("count")
+}
+
+#' @export
+count.data.frame <- function(x, ..., wt = NULL, sort = FALSE, name = NULL, .drop = group_by_drop_default(x)) { ... }
+```
+
+If your package implements an S3 generic for a specific class, i.e. it offers an S3 method, you should import the generic and export your method.
+The package that owns the generic should be listed in `Imports` or `Suggests` (unless it's the base package).
+
+Example: the dbplyr package implements dplyr's `count()` generic for the `tbl_lazy` class.
+In `DESCRIPTION`, we have:
+
+    Imports: 
+        ...,
+        dplyr,
+        ...
+
+In `dbplyr/R/verb-count.R`, we have:
+
+```{r}
+#| eval: false
+#' @importFrom dplyr count
+#' @export
+count.tbl_lazy <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) { ... }
+```
+
+In `NAMESPACE`, we have:
+
+    S3method(count,tbl_lazy)
+    ...
+    importFrom(dplyr,count)
+
+dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()`.
+In this case, there is no need to import those generics, but it's still necessary to export the methods.
+In `dbplyr/R/tbl_lazy.R`, we have:
+
+```{r}
+#| eval: false
+#' @export
+dim.tbl_lazy <- function(x) {
+  c(NA, length(op_vars(x$lazy_query)))
+}
+
+#' @export
+names.tbl_lazy <- function(x) {
+  colnames(x)
+}
+```
+
+In `NAMESPACE`, this produces:
+
+    S3method(dim,tbl_lazy)
+    ...
+    S3method(names,tbl_lazy)
+
+POSSIBLE TODO: Registering S3 method when the generic comes from a package that's in `Suggests` (not `Imports`).
+Examples: glue and testthat/waldo/vctrs.
+googledrive and dplyr.
+
+## Cutting room floor from refactorting this part of the book
+
+*random snippets of text that, in general, will probably just be deleted*
 
 -   in your functions, below R/
 -   in your tests, below tests/
@@ -618,8 +699,6 @@ https://github.com/hadley/r-pkgs/issues/447 .onLoad(), .onAttach() what they are
 https://github.com/hadley/r-pkgs/issues/485 why you don't want Depends
 
 https://github.com/hadley/r-pkgs/issues/657 Decide what's happening with S3, S4, R6, R7
-
-### Leftovers
 
 In this section, you'll learn about the most important environments, starting with the package environments.
 Then you'll see how the package and function environments interact to support namespaces, which ensure that a package always behaves the same way, regardless of what other packages the user has loaded.
