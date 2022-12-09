@@ -41,7 +41,7 @@ But if we need to talk about a generic package or function, here are the convent
 
 -   pkg: the name of your hypothetical package
 
--   aaapkg: the name of a hypothetical package your package depends on
+-   aaapkg or bbbpkg: the name of a hypothetical package your package depends on
 
 -   `aaa_fun()`: the name of a function exported by aaapkg
 
@@ -135,7 +135,7 @@ Of course there are reasons to make exceptions to this rule and to import someth
     This can be especially handy when generating user-facing messages, because it makes it more likely that lines in the source correspond to lines in the output.
 
 -   A function that you call in a tight loop: There is a minor performance penalty associated with `::`.
-    It's on the order of 5µs, so it will only matter if you call the function millions of times.
+    It's on the order of 100ns, so it will only matter if you call the function millions of times.
 
 A handy function for your interactive workflow is `usethis::use_import_from()`:
 
@@ -183,7 +183,6 @@ The roxygen tag above cause this directive to appear in the `NAMESPACE` file:
 Now you can use the imported function directly in your code:
 
 ```{r}
-#| eval: false
 somefunction <- function(...) {
   ...
   x <- glue_collapse(...)
@@ -269,8 +268,8 @@ Suggests:
     aaapkg
 ```
 
-The code inside your package can NOT assume that aaapkg is installed on the system.
-That will depend on how your package was installed.
+You can NOT assume that every user has installed aaapkg (but you can assume that a developer has).
+Whether a user has aaapkg will depend on how they installed your package.
 Most of the functions that are used to install packages support a `dependencies` argument that controls whether to install just the hard dependencies or to take a more expansive approach, which includes suggested packages:
 
 ```{r}
@@ -488,13 +487,16 @@ If your package temporarily relies on a development version of aaapkg, the affec
                              Remotes:   
                                  jane/aaapkg 
 
+::: callout-warning
+## CRAN
+
 It's important to note that you should not submit your package to CRAN in the intermediate state, meaning with a `Remotes` field and with a dependency required at a version that's not available from CRAN or Bioconductor.
 For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.
+:::
 
 ### `Config/Needs/*` field
 
-You may also see devtools-developed packages with packages listed in `DESCRIPTION` fields in the form of `Config/Needs/*`.
-This pattern takes advantage of the fact that fields prefixed with `Config/` are ignored by CRAN and also do not trigger a NOTE about "Unknown, possibly mis-spelled, fields in `DESCRIPTION`".
+You may also see devtools-developed packages with packages listed in `DESCRIPTION` fields in the form of `Config/Needs/*`, which we described in @sec-description-custom-fields.
 
 ```{=html}
 <!--
