@@ -441,18 +441,18 @@ Second edition
 </section><section id="confusion-about-imports" class="level2" data-number="12.2"><h2 data-number="12.2" class="anchored" data-anchor-id="confusion-about-imports">
 <span class="header-section-number">12.2</span> Confusion about <code>Imports</code>
 </h2>
-<p>First, we want to tackle a common misconception:</p>
+<p>Let’s make this crystal clear:</p>
 <blockquote class="blockquote">
 <p>Listing a package in <code>Imports</code> in <code>DESCRIPTION</code> does not “import” that package.</p>
 </blockquote>
-<p>This is just an unfortunate choice of name for the <code>Imports</code> field. The <code>Imports</code> field makes sure that the packages listed there are installed when your package is installed. It does not make those functions available to you, e.g.&nbsp;below <code>R/</code>, or to your user.</p>
+<p>It is natural to assume that listing a package in <code>Imports</code> actually “imports” the package, but this is just an unfortunate choice of name for the <code>Imports</code> field. The <code>Imports</code> field makes sure that the packages listed there are installed when your package is installed. It does not make those functions available to you, e.g.&nbsp;below <code>R/</code>, or to your user.</p>
 <p>It is neither automatic nor necessarily advisable that a package listed in <code>Imports</code> also appears in <code>NAMESPACE</code> via <code>imports()</code> or <code>importFrom()</code>. It is common for a package to be listed in <code>Imports</code> in <code>DESCRIPTION</code>, but not in <code>NAMESPACE</code>. The converse is not true. Every package mentioned in <code>NAMESPACE</code> must also be present in the <code>Imports</code> or <code>Depends</code> fields.</p>
 </section><section id="conventions-for-this-chapter" class="level2" data-number="12.3"><h2 data-number="12.3" class="anchored" data-anchor-id="conventions-for-this-chapter">
 <span class="header-section-number">12.3</span> Conventions for this chapter</h2>
 <p>Sometimes our examples can feature real functions from real packages. But if we need to talk about a generic package or function, here are the conventions we use below:</p>
 <ul>
 <li><p>pkg: the name of your hypothetical package</p></li>
-<li><p>aaapkg: the name of a hypothetical package your package depends on</p></li>
+<li><p>aaapkg or bbbpkg: the name of a hypothetical package your package depends on</p></li>
 <li><p><code>aaa_fun()</code>: the name of a function exported by aaapkg</p></li>
 </ul></section><section id="sec-dependencies-NAMESPACE-workflow" class="level2" data-number="12.4"><h2 data-number="12.4" class="anchored" data-anchor-id="sec-dependencies-NAMESPACE-workflow">
 <span class="header-section-number">12.4</span> <code>NAMESPACE</code> Workflow</h2>
@@ -524,7 +524,7 @@ RStudio
 <ul>
 <li><p>An operator: You can’t call an operator from another package via <code>::</code>, so you must import it. Example: the null-coalescing operator <code>%||%</code> from rlang or the original pipe <code>%&gt;%</code> from magrittr.</p></li>
 <li><p>A function that you use <em>a lot</em>: If importing a function makes your code much more readable, that’s a good enough reason to import it. This literally reduces the number of characters required to call the external function. This can be especially handy when generating user-facing messages, because it makes it more likely that lines in the source correspond to lines in the output.</p></li>
-<li><p>A function that you call in a tight loop: There is a minor performance penalty associated with <code>::</code>. It’s on the order of 5µs, so it will only matter if you call the function millions of times.</p></li>
+<li><p>A function that you call in a tight loop: There is a minor performance penalty associated with <code>::</code>. It’s on the order of 100ns, so it will only matter if you call the function millions of times.</p></li>
 </ul>
 <p>A handy function for your interactive workflow is <code><a href="https://usethis.r-lib.org/reference/use_import_from.html">usethis::use_import_from()</a></code>:</p>
 <div class="cell">
@@ -598,7 +598,7 @@ Namespace in Imports field not imported from: ‘aaapkg’
 <p>Consider a dependency that is listed in <code>DESCRIPTION</code> in <code>Suggests</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Suggests</span><span class="kw">:</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="at">    aaapkg</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>The code inside your package can NOT assume that aaapkg is installed on the system. That will depend on how your package was installed. Most of the functions that are used to install packages support a <code>dependencies</code> argument that controls whether to install just the hard dependencies or to take a more expansive approach, which includes suggested packages:</p>
+<p>You can NOT assume that every user has installed aaapkg (but you can assume that a developer has). Whether a user has aaapkg will depend on how they installed your package. Most of the functions that are used to install packages support a <code>dependencies</code> argument that controls whether to install just the hard dependencies or to take a more expansive approach, which includes suggested packages:</p>
 <div class="cell">
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span>dependencies <span class="op">=</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span>dependencies <span class="op">=</span><span class="op">)</span></span>
@@ -744,10 +744,22 @@ Imports:                 Imports:                      Imports:
     aaapkg (&gt;= 2.1.3)       aaapkg (&gt;= 2.1.3.9000)       aaapkg (&gt;= 2.2.0)
                          Remotes:   
                              jane/aaapkg </code></pre>
+<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+CRAN
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <p>It’s important to note that you should not submit your package to CRAN in the intermediate state, meaning with a <code>Remotes</code> field and with a dependency required at a version that’s not available from CRAN or Bioconductor. For CRAN packages, this can only be a temporary development state, eventually resolved when the dependency updates on CRAN and you can bump your minimum version accordingly.</p>
+</div>
+</div>
 </section><section id="configneeds-field" class="level3" data-number="12.8.2"><h3 data-number="12.8.2" class="anchored" data-anchor-id="configneeds-field">
 <span class="header-section-number">12.8.2</span> <code>Config/Needs/*</code> field</h3>
-<p>You may also see devtools-developed packages with packages listed in <code>DESCRIPTION</code> fields in the form of <code>Config/Needs/*</code>. This pattern takes advantage of the fact that fields prefixed with <code>Config/</code> are ignored by CRAN and also do not trigger a NOTE about “Unknown, possibly mis-spelled, fields in <code>DESCRIPTION</code>”.</p>
+<p>You may also see devtools-developed packages with packages listed in <code>DESCRIPTION</code> fields in the form of <code>Config/Needs/*</code>, which we described in <a href="description.html#sec-description-custom-fields"><span>Section&nbsp;10.9</span></a>.</p>
 <!--
 https://github.com/wch/r-source/blob/de49776d9fe54cb4580fbbd04906b40fe2f6117e/src/library/tools/R/QC.R#L7133
 https://github.com/wch/r-source/blob/efacf56dcf2f880b9db8eafa28d49a08d56e861e/src/library/tools/R/utils.R#L1316-L1389
