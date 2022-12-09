@@ -94,7 +94,8 @@ After navigating to a function with one of these methods, return to where you st
 As you add or modify functions defined in files below `R/`, you will naturally want to try them out.
 We want to reiterate our strong recommendation to use `devtools::load_all()` to make them available for interactive exploration instead of, for example, `source()`ing files below `R/`.
 The main coverage of `load_all()` is in @sec-load-all and `load_all()` also shows up as one of the natural development tasks in @sec-whole-game-load-all.
-The importance of `load_all()` in the testthat workflow is explained in @sec-testing-design-tension. Compared to the alternatives, `load_all()` helps you to iterate more quickly and provides an excellent approximation to the namespace regime of an installed package.
+The importance of `load_all()` in the testthat workflow is explained in @sec-testing-design-tension.
+Compared to the alternatives, `load_all()` helps you to iterate more quickly and provides an excellent approximation to the namespace regime of an installed package.
 
 ## Code style
 
@@ -442,13 +443,13 @@ Often you can't avoid these (because they're important!) but it's good practice 
 This also makes it easier for other people to repurpose your work for new uses.
 For example, if you separate data preparation and plotting into two functions, others can use your data prep work (which is often the hardest part!) to create new visualisations.
 
-### When you **do** need side-effects
+### When you **do** need side-effects {#sec-code-onLoad-onAttach}
 
 Occasionally, packages do need side-effects.
 This is most common if your package talks to an external system --- you might need to do some initial setup when the package loads.
 To do that, you can use two special functions: `.onLoad()` and `.onAttach()`.
 These are called when the package is loaded and attached.
-You'll learn about the distinction between the two in @sec-dependencies.
+You'll learn about the distinction between the two in @sec-dependencies-attach-vs-load.
 For now, you should always use `.onLoad()` unless explicitly directed otherwise.
 
 Some common uses of `.onLoad()` and `.onAttach()` are:
@@ -475,7 +476,7 @@ Some common uses of `.onLoad()` and `.onAttach()` are:
 
 <!-- TODO: I don't think the option setting example is so great anymore. I lean towards replacement. Other possible examples of `.onLoad()` usage: Register S3 methods. Detect capabilities of the system or of other packages. -->
 
--   To display an informative message when the package loads.
+-   To display an informative message when the package is attached.
     This might make usage conditions clear or display package capabilities based on current system conditions.
     Startup messages are one place where you should use `.onAttach()` instead of `.onLoad()`.
     To display startup messages, always use `packageStartupMessage()`, and not `message()`.
@@ -494,6 +495,11 @@ They give the path where the package is installed (the "library"), and the name 
 If you use `.onLoad()`, consider using `.onUnload()` to clean up any side effects.
 By convention, `.onLoad()` and friends are usually saved in a file called `R/zzz.R`.
 (Note that `.First.lib()` and `.Last.lib()` are old versions of `.onLoad()` and `.onUnload()` and should no longer be used.)
+
+One especially hairy thing to do in a function like `.onLoad()` or `.onAttach()` is to change the state of the random number generator.
+Once upon a time, ggplot2 used `sample()` when deciding whether to show a startup message, but only in interactive sessions.
+This, in turn, created a reproducibility puzzle for users who were using `set.seed()` for their own purposes, prior to attaching ggplot2 with `library(ggplot2)`, and running the code both interactively and noninteractively.
+The chosen solution was to wrap the offending startup code inside `withr::with_preserve_seed()`, which leaves the user's random seed as it found it.
 
 ## Constant health checks
 

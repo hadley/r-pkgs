@@ -1,7 +1,7 @@
 library(tidyverse)
 library(parsermd)
 
-file <- "vignettes.Rmd"
+file <- "dependencies-in-practice.Rmd"
 (rmd <- parse_rmd(file) |> 
     rmd_select(has_type("rmd_heading")))
 # parsermd doesn't know about callouts, so they erroneously appear as sec_h2
