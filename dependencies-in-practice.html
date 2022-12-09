@@ -394,7 +394,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   </ul>
 </li>
   <li><a href="#imports-and-exports-related-to-s3" id="toc-imports-and-exports-related-to-s3" class="nav-link" data-scroll-target="#imports-and-exports-related-to-s3"><span class="toc-section-number">12.10</span>  Imports and exports related to S3</a></li>
-  <li><a href="#cutting-room-floor-from-refactorting-this-part-of-the-book" id="toc-cutting-room-floor-from-refactorting-this-part-of-the-book" class="nav-link" data-scroll-target="#cutting-room-floor-from-refactorting-this-part-of-the-book"><span class="toc-section-number">12.11</span>  Cutting room floor from refactorting this part of the book</a></li>
   </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/dependencies-in-practice.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
@@ -437,8 +436,17 @@ Second edition
 <li><p><a href="dependencies-mindset-background.html#sec-dependencies-pros-cons"><span>Section&nbsp;11.2</span></a> provides a decision-making framework for dependencies.</p></li>
 <li><p>The technical details of package namespaces, the search path, and attaching vs.&nbsp;loading are laid out in <a href="dependencies-mindset-background.html#sec-dependencies-namespace"><span>Section&nbsp;11.3</span></a>, <a href="dependencies-mindset-background.html#sec-dependencies-search"><span>Section&nbsp;11.4</span></a>, and <a href="dependencies-mindset-background.html#sec-dependencies-attach-vs-load"><span>Section&nbsp;11.5</span></a>.</p></li>
 </ul>
-<p>We’re finally ready to talk about how to use different types of dependencies within the different parts of your package.</p>
-</section><section id="confusion-about-imports" class="level2" data-number="12.2"><h2 data-number="12.2" class="anchored" data-anchor-id="confusion-about-imports">
+<p>We’re finally ready to talk about how to use different types of dependencies within the different parts of your package:</p>
+<ul>
+<li>in your functions, below <code>R/</code>
+</li>
+<li>in your tests, below <code>tests/testthat/</code>
+</li>
+<li>in your examples, in the help topics below <code>man/</code>
+</li>
+<li>in your vignettes and articles, below <code>vignettes/</code>
+</li>
+</ul></section><section id="confusion-about-imports" class="level2" data-number="12.2"><h2 data-number="12.2" class="anchored" data-anchor-id="confusion-about-imports">
 <span class="header-section-number">12.2</span> Confusion about <code>Imports</code>
 </h2>
 <p>Let’s make this crystal clear:</p>
@@ -906,32 +914,6 @@ S3method(names,tbl_lazy)</code></pre>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The <code>s3_register()</code> function comes from the vctrs package. If you don’t have an organic need to depend on vctrs, it is common (and encouraged) to simply inline <a href="https://github.com/r-lib/vctrs/blob/main/R/register-s3.R">the <code>s3_register()</code> source</a> into your own package.</p>
-</section><section id="cutting-room-floor-from-refactorting-this-part-of-the-book" class="level2" data-number="12.11"><h2 data-number="12.11" class="anchored" data-anchor-id="cutting-room-floor-from-refactorting-this-part-of-the-book">
-<span class="header-section-number">12.11</span> Cutting room floor from refactorting this part of the book</h2>
-<p><em>random snippets of text that, in general, will probably just be deleted</em></p>
-<ul>
-<li>in your functions, below R/</li>
-<li>in your tests, below tests/</li>
-<li>in your help topics, below man/</li>
-<li>in your vignettes and articles, below vignettes/</li>
-</ul>
-<p><code>Depends</code> is just a convenience for the user: if your package is attached, it also attaches all packages listed in <code>Depends</code>. If your package is loaded, packages in <code>Depends</code> are loaded, but not attached, so you need to qualify function names with <code>::</code> or specifically import them.</p>
-<p>https://github.com/hadley/r-pkgs/issues/447 .onLoad(), .onAttach() what they are and advice to not touch the random number generator there</p>
-<p>https://github.com/hadley/r-pkgs/issues/485 why you don’t want Depends</p>
-<p>https://github.com/hadley/r-pkgs/issues/657 Decide what’s happening with S3, S4, R6, R7</p>
-<p>In this section, you’ll learn about the most important environments, starting with the package environments. Then you’ll see how the package and function environments interact to support namespaces, which ensure that a package always behaves the same way, regardless of what other packages the user has loaded.</p>
-<p>Note the difference between attached and loaded. A package is loaded automatically if you access one of its functions using <code>::</code>; it is only <strong>attached</strong> to the search path by <code><a href="https://rdrr.io/r/base/library.html">library()</a></code> or <code><a href="https://rdrr.io/r/base/library.html">require()</a></code>.</p>
-<ul>
-<li>Package developers should minimize name collisions with other packages, especially those that are likely to be attached at the same time. Be mindful of which functions you export and be intentional when naming functions.</li>
-</ul>
-<p>The goal of <strong>namespaces</strong> is to make sure that this does not happen, and that every package works the same way regardless of what packages are attached by the user.</p>
-<p>A package’s namespace makes it self-contained in two ways: the <strong>imports</strong> and the <strong>exports</strong>. The <strong>imports</strong> define how a function in one package finds a function in another. The <strong>exports</strong> specify the functions that your package makes available for external use.</p>
-<p>help you avoid conflicts with other packages by specifying which functions are available outside of your package (internal functions are available only within your package and can’t easily be used by another package).</p>
-<p>Generally, you want to export a minimal set of functions; the fewer you export, the smaller the chance of a conflict. While conflicts aren’t the end of the world because you can always use <code>::</code> to disambiguate, they’re best avoided where possible, because it makes the lives of your users easier.</p>
-<p>keeps each package encapsulated and self-contained. This</p>
-<p>Your package’s namespace is specified via its <code>NAMESPACE</code> file (<a href="dependencies-mindset-background.html#sec-dependencies-NAMESPACE-file"><span>Section&nbsp;11.3.2</span></a>), which lays out the functions (or other objects) that your package exports for use by others. The <code>NAMESPACE</code> file can also be used to import functions (or other objects) from your dependencies into your own namespace.</p>
-<p>onLoad set options, register S3 methods, generally initialize package state</p>
-<p>onAttach package startup message (tidyverse, ggplots), report version of an important embedded tool (credentials, gert),</p>
 
 
 </section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
