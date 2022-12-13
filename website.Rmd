@@ -7,6 +7,85 @@ status("drafting")
 
 ## Introduction
 
+At this point, we've discussed many ways to document your package:
+
+-   Function documentation or, more generally, help topics (@sec-man).
+
+-   Documentation of datasets (@sec-documenting-data).
+
+-   Vignettes (and articles) (@sec-vignettes).
+
+-   README and NEWS (@sec-other-markdown).
+
+Wouldn't it be divine if all of that somehow got bundled up together into a beautiful website for your package?
+The [pkgdown package](https://pkgdown.r-lib.org) is meant to provide exactly this magic and that is the topic of this chapter.
+
+## Initiate a site
+
+Assuming your package has a valid structure, pkgdown should be able to make a website for it!
+Obviously that website will be more substantial if your package has more of the documentation elements listed above.
+
+`usethis::use_pkgdown()` is a function you run once and it does the initial, minimal setup necessary to start using pkgdown:
+
+```{r}
+#| eval: false
+usethis::use_pkgdown
+```
+
+```{r}
+#| include: FALSE
+#| cache: FALSE
+temp_pkg <- fs::path_temp("mypackage")
+withr::with_options(
+  list(usethis.description = NULL),
+  usethis::create_package(
+    temp_pkg, open = FALSE, rstudio = TRUE, check_name = FALSE
+  )
+)
+```
+
+```{r}
+#| echo: false
+usethis::with_project(temp_pkg, code = usethis::use_pkgdown(), setwd = FALSE)
+```
+
+Here's what `use_pkgdown()` does:
+
+-   Creates `_pkgdown.yml`, which is the main configuration file for pkgdown.
+    Typically you'll be in an interactive session, in which case `_pkgdown.yml` is opened for inspection and editing.
+    But there's no immediate need to change or add anything here.
+
+-   Adds various patterns to `.Rbuildignore`, to keep pkgdown-specific files and directories from being included in your package bundle.
+
+-   Adds `docs`, the default destination for a rendered site, to `.gitignore`.
+    This is harmless for those who don't use Git.
+    For those who do, this opts you in to our recommended lifestyle, where the definitive source for your pkgdown site is built and deployed elsewhere (probably via GitHub Actions and Pages; more on this soon).
+    This means the rendered website at `docs/` just serves as a local preview.
+
+`pkgdown::build_site()` is a function you'll call repeatedly, to re-render your site locally.
+In an extremely barebones package, you'll see something like this:
+
+```{r}
+#| eval: false
+pkgdown::build_site()
+```
+
+```{r}
+#| echo: false
+usethis::with_project(temp_pkg, code = pkgdown::build_site(), setwd = TRUE)
+```
+
+You'll typically be in an interactive session when you do this, in which case your newly rendered site should appear in your default web browser.
+
+::: callout-tip
+## RStudio
+
+Another nice gesture to build your site is via *Addins \> pkgdown \> Build pkgdown*.
+:::
+
+You can look in the local `docs/` directory to see the files that constitute your package's website.
+To manually browse the site, open `docs/index.html` in your preferred browser.
+
 ## Logo
 
 Website is also a great way to show off your package logo.
