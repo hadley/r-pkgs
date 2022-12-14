@@ -195,7 +195,101 @@ Here are some resources to guide your logo efforts:
 Once you have your logo, the `usethis::use_logo()` function places an appropriately scaled copy of the image file at `man/figures/logo.png` and also provides a copy-paste-able markdown snippet to include your logo in your `README`.
 pkgdown will also discover a logo placed in the standard location and incorporate it into your site.
 
-## Customizing the reference index
+## Reference index
+
+pkgdown creates a function reference in `reference/` that includes one page for each `.Rd` help topic in `man/`.
+This is one of the first pages you should admire in your new site.
+As you look around, there are a few things to contemplate, which we review below.
+
+pkgdown executes all your examples (@sec-man-examples) and inserts the rendered results.
+We find this is a fantastic improvement over just showing the source code.
+This view of your examples can be eye-opening and often you'll notice things you want to add, omit, or change.
+If you're not satisfied with how your examples appear, this is a good time to review techniques for including code that is expected to error (@sec-man-examples-errors) or that can only be executed under certain conditions (@sec-man-examples-dependencies-conditional-execution).
+
+These help topics will be linked to from many locations within and, potentially, beyond your pkgdown site.
+This is what we are talking about in @sec-man-key-md-features when we recommend putting functions inside square brackets when mentioning them in a roxygen comment:
+
+```{r}
+#' I am a big fan of [thisfunction()] in my package. I
+#' also have something to say about [otherpkg::otherfunction()]
+#' in somebody else's package.
+```
+
+On pkgdown sites, those square-bracketed functions become hyperlinks to the relevant pages in your pkgdown site.
+This is automatic within your package.
+But links from *other* people's packages (and websites, etc.) require two things:
+
+-   Your DESCRIPTION file must include URLs for your pkgdown site and GitHub repo:
+
+    ``` yaml
+    URL: https://dplyr.tidyverse.org, https://github.com/tidyverse/dplyr
+    ```
+
+-   Your `_pkgdown.yml` file must include the URL for your site:
+
+    ``` yaml
+    url: https://dplyr.tidyverse.org
+    ```
+
+devtools takes every chance it gets to do this sort of configuration for you.
+But if you elect to do things manually, this is something you might overlook.
+A general resource on auto-linking in pkgdown is `vignette("linking", package = "pkgdown")`.
+
+By default, the reference index is just an alphabetically-ordered list of functions.
+For packages with more than a handful of functions, it's often worthwhile to curate the index and organize the functions into groups.
+For example, dplyr uses this technique: <https://dplyr.tidyverse.org/reference/index.html>.
+You achieve this by providing a `reference` field in `_pkgdown.yml`.
+Here's a redacted excerpt from dplyr's `_pkgdown.yml` file that gives you a sense of what's involved:
+
+``` yaml
+reference:
+- title: Data frame verbs
+
+- subtitle: Rows
+  desc: >
+    Verbs that principally operate on rows.
+  contents:
+  - arrange
+  - distinct
+  ...
+
+- subtitle: Columns
+  desc: >
+    Verbs that principally operate on columns.
+  contents:
+  - glimpse
+  - mutate
+  ...
+
+- title: Vector functions
+  desc: >
+    Unlike other dplyr functions, these functions work on individual vectors,
+    not data frames.
+  contents:
+  - between
+  - case_match
+  ...
+
+- title: Built in datasets
+  contents:
+  - band_members
+  - starwars
+  - storms
+
+...
+
+- title: Superseded
+  desc: >
+    Superseded functions have been replaced by new approaches that we believe
+    to be superior, but we don't want to force you to change until you're
+    ready, so the existing functions will stay around for several years.
+  contents:
+  - sample_frac
+  - top_n
+  ...
+```
+
+To learn more, see `?pkgdown::build_reference`.
 
 ## Non-vignette articles
 
