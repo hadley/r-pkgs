@@ -294,3 +294,68 @@ To learn more, see `?pkgdown::build_reference`.
 ## Non-vignette articles
 
 ## Development mode
+
+Every pkgdown site has a so-called [*development mode*](https://pkgdown.r-lib.org/reference/build_site.html#development-mode), which can be specified via the `development` field in `_pkgdown.yml`.
+If unspecified, the default is `mode: release`, which results in a single pkgdown site.
+Despite the name, this single site reflects the state of the current source package, which could be either a released state or a development state.
+The diagram below shows the evolution of a hypothetical package that is on CRAN and that has a pkgdown site in "release" mode.
+
+    ...
+     |
+     V
+    Tweaks before release     v0.1.9000
+     |
+     V
+    Increment version number  v0.2.0     <-- install.packages() gets this
+     |
+     V
+    Increment version number  v0.2.9000  
+     |
+     V
+    Improve error message     v0.2.9000  <-- site documents this
+     |
+     V
+    ...
+
+Users who install from CRAN get version 0.2.0.
+But the pkgdown site is built from the development version of the package.
+
+This creates the possibility that users will read about some new feature on the website that is not present in the package version that they have installed with `install.packages()`.
+We find that the simplicity of this setup outweighs the downsides, until a package has a broad user base, i.e. lots of users of varying levels of sophistication.
+It's probably safe to stay in "release" mode until you actually hear from a confused user.
+
+Packages with a substantial user base should use "auto" development mode:
+
+``` yaml
+development:
+  mode: auto
+```
+
+This directs pkgdown to generate a top-level site from the released version and to document the development version in a `dev/` subdirectory.
+We revisit the same hypothetical package as above, but assuming the pkdown site is in "auto" mode.
+
+    ...
+     |
+     V
+    Tweaks before release     v0.1.9000
+     |
+     V
+    Increment version number  v0.2.0     <-- install.packages() gets this
+     |                                       main site documents this
+     V
+    Increment version number  v0.2.9000  
+     |
+     V
+    Improve error message     v0.2.9000  <-- dev/ site documents this
+     |
+     V
+    ...
+
+All of the core tidyverse packages use "auto" mode.
+For example, consider the website of the readr package:
+
+-   [readr.tidyverse.org](https://readr.tidyverse.org) documents the released version, i.e. what `install.packages("readr")` delivers.
+
+-   [readr.tidyverse.org/dev/](https://readr.tidyverse.org/dev/) documents the dev version, i.e. what `install_github("tidyverse/readr")` delivers.
+
+Automatic development mode is recommended for packages with a broad user base, because it maximizes the chance that a user will read web-based documentation that reflects the package version that is locally installed.
