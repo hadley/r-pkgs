@@ -2,29 +2,39 @@
 
 ```{r, echo = FALSE}
 source("common.R")
-status("drafting")
+status("polishing")
 ```
 
 ## Introduction
 
-You now have a package that's ready to submit to CRAN.
-But before you do, there are two important files that you should update: `README.md` which describes what the package does, and `NEWS.md` which describes what's changed since the previous version.
-I recommend using Markdown for these files, because it's useful for them to be readable as both plain text (e.g. in emails) and HTML (e.g. on GitHub, in blog posts).
-The basic writing and formatting syntax is available at <https://help.github.com/articles/basic-writing-and-formatting-syntax/>.
+In this chapter we highlight two files that are conventionally used to provide some package-level documentation.
+These two are important, because they are featured on both the CRAN landing page and the pkgdown site for a package:
 
-## README {#sec-readme}
+-   `README.md`, which describes what the package does (@sec-readme).
+    The `README` plays an especially important role on GitHub or similar platforms.
 
-### README.md {#readme-md}
+-   `NEWS.md`, which describes how the package has changed over time (@sec-news).
 
-The goal of the `README.md` is to answer the following questions about your package:
+Even if your package is intended for a very limited audience and might not ever be released on CRAN, these files can be very useful.
+These two files don't have to be written in Markdown, but they can be.
+In keeping with our practices for help topics and vignettes, it's our strong recommendation and it's what we describe here.
+
+## `README` {#sec-readme}
+
+First, we'll talk about the role of the `README` file and we leave off the file extension, until we're ready to talk about mechanics.
+
+The goal of the `README` is to answer the following questions about your package:
 
 -   Why should I use it?
 -   How do I use it?
 -   How do I get it?
 
-On GitHub, the `README.md` will be rendered as HTML and displayed on the repository home page.
+The `README` file is a long-established convention in software, going back decades.
+Some of its traditional content is found elsewhere in an R package, for example, we use the `DESCRIPTION` file to document authorship and licensing.
 
-I normally structure my `README` as follows:
+When you write your `README`, try to put yourself in the shoes of someone who's come across your package and is trying to figure out if it solves a problem they have.
+If they decide that your package looks promising, the `README` should also show them how to install it and how to do one or two basic tasks.
+Here's a good template for `README`:
 
 1.  A paragraph that describes the high-level purpose of the package.
 
@@ -34,93 +44,208 @@ I normally structure my `README` as follows:
 
 4.  An overview that describes the main components of the package.
     For more complex packages, this will point to vignettes for more details.
+    This is also a good place to describe how your package fits into the ecosystem of its target domain.
 
-### README.Rmd {#readme-rmd}
+### `README.Rmd` and `README.md`
 
-If you include an example in your `README` (a good idea!) you may want to generate it with R Markdown.
-The easiest way to get started is to use `usethis::use_readme_rmd()`.
-This creates a template `README.Rmd` and adds it to `.Rbuildignore`.
-The template looks like:
+As mentioned above, we prefer to write `README` in Markdown, i.e. to have `README.md`.
+This will be rendered as HTML and displayed in several important contexts:
 
-    ---
-    output: github_document
-    ---
+-   The repository home page, if you maintain your package on GitHub (or a similar host).
 
-    <!-- README.md is generated from README.Rmd. Please edit that file -->
+    -   [https://github.com/tidyverse/dplyr](https://github.com/tidyverse/dplyr#readme)
 
-    ``` {r, include = FALSE}
-    knitr::opts_chunk$set(
-      collapse = TRUE,
-      comment = "#>",
-      fig.path = "man/figures/README-",
-      out.width = "100%"
-    )
-    ```
+-   On CRAN, if you release your package there.
 
-This:
+    -   <https://cran.r-project.org/web/packages/dplyr/index.html>
 
--   Outputs Github flavoured Markdown.
+        Notice the hyperlinked "README" under "Materials".
 
--   Includes a comment in `README.md` to remind you to edit `README.Rmd`, not `README.md`.
+-   As the home page of your pkgdown site, if you have one.
 
--   Sets up my recommended knitr options, including saving images to `man/figures/README-` which ensures that they're included in your built package (which is important so that your README works when it's displayed by CRAN).
+    -   <https://dplyr.tidyverse.org>
 
-You'll need to remember to re-knit `README.Rmd` each time you modify it.
-If you use git, `use_readme_rmd()` automatically adds the following "pre-commit" hook:
+Given that it's best to include a couple of examples in `README.md`, ideally you would generate it with R Markdown.
+That is, it works well to have `README.Rmd` as the main source file, which you then render to `README.md`.
 
-``` bash
-#!/bin/bash
-if [[ README.Rmd -nt README.md ]]; then
-  echo "README.md is out of date; please re-knit README.Rmd"
-  exit 1
-fi 
+The easiest way to get started is to use `usethis::use_readme_rmd()`.[^other-markdown-1]
+This creates a template `README.Rmd` and adds it to `.Rbuildignore`, since only `README.md` should be included in the package bundle.
+The template looks like this:
+
+[^other-markdown-1]: If it really doesn't make sense to include any executable code chunks, `usethis::use_readme_md()` is similar, except that it gives you a basic `README.md` file.
+
+````{verbatim, lang = "markdown"}
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
 ```
 
-This prevents `git commit` from succeeding unless `README.md` is more recent than `README.Rmd`.
-If you get a false positive, you can ignore the check with `git commit --no-verify`.
-Note that git commit hooks are not stored in the repository, so every time you clone the repo, you'll need to run `usethis::use_readme_rmd()` to set it up again.
+# somepackage
 
-### Development badges
+<!-- badges: start -->
 
-A number of usethis helpers automatically add development status badges to your readme so that readers can see:
+<!-- badges: end -->
 
--   The current version of your package on CRAN, `usethis::use_cran_badge()`.
--   The amount of code coverage, added by `use_coverage()`.
--   The R CMD check status of your development package, added by `use_github_action_check_standard()` and friends.
+The goal of somepackage is to ...
 
-## NEWS.md {#news}
+## Installation
 
-The `README.md` is aimed at new users.
-The `NEWS.md` is aimed at existing users: it should list all the API changes in each release.
-There are a number of formats you can use for package news, but I recommend `NEWS.md`.
-It's well supported by GitHub, permitted by CRAN, and is easy to re-purpose for other formats.
+You can install the development version of somepackage from [GitHub](https://github.com/) with:
 
-Organise your `NEWS.md` as follows:
+``` r
+# install.packages("devtools")
+devtools::install_github("jane/somepackage")
+```
 
--   Use a top-level heading for each version: e.g. `# mypackage 1.0`.
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+library(somepackage)
+## basic example code
+```
+
+What is special about using `README.Rmd` instead of just `README.md`?
+You can include R chunks like so:
+
+```{r cars}
+summary(cars)
+```
+
+You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date.
+`devtools::build_readme()` is handy for this.
+
+You can also embed plots, for example:
+
+```{r pressure, echo = FALSE}
+plot(pressure)
+```
+
+In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+````
+
+A few things to note about this starter `README.Rmd`:
+
+-   It renders to [GitHub Flavored Markdown](https://github.github.com/gfm/).
+
+-   It includes a comment to remind you to edit `README.Rmd`, not `README.md`.
+
+-   It sets up our recommended knitr options, including saving images to `man/figures/README-` which ensures that they're included in your built package.
+    This is important so that your `README` works when it's displayed by CRAN.
+
+-   It sets up a place for future badges, such as results from automatic continuous integration checks (@sec-ci).
+    Examples of functions that insert development badges:
+
+    -   `usethis::use_cran_badge()` reports the current version of your package on CRAN.
+
+    -   `usethis::use_coverage()` reports test coverage.
+
+    -   `use_github_actions()` and friends report the `R CMD check` status of your development package.
+
+-   It includes placeholders where you should provide code for package installation and for some basic usage.
+
+-   It reminds you of key facts about maintaining your `README`.
+
+You'll need to remember to re-render `README.Rmd` periodically and, most especially, before release.
+The best function to use for this is `devtools::build_readme()`, because it is guaranteed to render `README.Rmd` against the current source code of your package.
+
+The devtools ecosystem tries to help you keep `README.Rmd` up-to-date in two ways:
+
+-   If your package is also a Git repo, `use_readme_rmd()` automatically adds the following pre-commit hook:
+
+    ``` bash
+    #!/bin/bash
+    if [[ README.Rmd -nt README.md ]]; then
+      echo "README.md is out of date; please re-knit README.Rmd"
+      exit 1
+    fi 
+    ```
+
+    This prevents a `git commit` if `README.Rmd` is more recently modified than `README.md`.
+    If the hook is preventing a commit you really want to make, you can override it with `git commit --no-verify`.
+    Note that Git commit hooks are not stored in the repository, so this hook needs to be added to any fresh clone.
+    For example, you could re-run `usethis::use_readme_rmd()` and discard the changes to `README.Rmd`.
+
+-   The release checklist placed by `usethis::use_release_issue()` includes a reminder to call `devtools::build_readme()`.
+
+## NEWS.md {#sec-news}
+
+The `README` is aimed at new users, whereas the `NEWS` file is aimed at existing users: it should list all the changes in each release that a user might notice or want to learn more about.
+As with `README`, it's a well-established convention for open source software to have a `NEWS` file, which is also sometimes called a changelog.
+
+As with `README`, base R tooling does not *require* that NEWS be a Markdown file, but it does allow for that and it's our strong preference.
+A `NEWS.md` file is pleasant to read on GitHub, on your pkgdown site, and is reachable from your package's CRAN landing page.
+We demonstrate this again with dplyr:
+
+-   `NEWS.md` in dplyr's GitHub repo:
+
+    -   <https://github.com/tidyverse/dplyr/blob/main/NEWS.md>
+
+-   On CRAN, if you release your package there.
+
+    -   <https://cran.r-project.org/web/packages/dplyr/index.html>
+
+        Notice the hyperlinked "NEWS" under "Materials".
+
+-   On your package site, available as the "Changelog" from the "News" dropdown menu in the main navbar:
+
+    -   <https://dplyr.tidyverse.org/news/index.html>
+
+You can use `usethis::use_news_md()` to initiate the `NEWS.md` file; many other lifecycle- and release-related functions in the devtools ecosystem will make appropriate changes to `NEWS.md` as your package evolves.
+
+Here's a hypothetical `NEWS.md` file:
+
+``` markdown
+# foofy (development version)
+
+* Better error message when grooving an invalid grobble (#206).
+
+# foofy 1.0.0
+
+## Major changes
+
+* Can now work with all grooveable grobbles!
+
+## Minor improvements and bug fixes
+
+* Printing scrobbles no longer errors (@githubusername, #100).
+
+* Wibbles are now 55% less jibbly (#200).
+```
+
+The example above demonstrates some organizing principles for `NEWS.md`:
+
+-   Use a top-level heading for each version: e.g. `# somepackage 1.0.0`.
     The most recent version should go at the top.
-    (pkgdown supports a few other formats, see more at <https://pkgdown.r-lib.org/reference/build_news.html>)
+    Typically the top-most entry in `NEWS.md` of your source package will read `# somepackage (development version)`.[^other-markdown-2]
 
--   Each change should be included in a bulleted list.
-    If you have a lot of changes you might want to break them up using subheadings, `## Major changes`, `## Bug fixes` etc.
-    I usually stick with a simple list until just before releasing the package when I'll reorganise into sections, if needed.
+-   Each change should be part of a bulleted list.
+    If you have a lot of changes, you might want to break them up using subheadings, `## Major changes`, `## Bug fixes`, etc.
+
+    We usually stick with a simple list until we're close to a release, at which point we organize into sections and refine the text.
     It's hard to know in advance exactly what sections you'll need.
+    The release checklist placed by `usethis::use_release_issue()` includes a reminder to polish the `NEWS.md` file.
+    In that phase, it can be helpful to remember that `NEWS.md` is a user-facing record of change, in contrast to, e.g., commit messages, which are developer-facing.
 
 -   If an item is related to an issue in GitHub, include the issue number in parentheses, e.g. `(#​10)`.
     If an item is related to a pull request, include the pull request number and the author, e.g. `(#​101, @hadley)`.
-    Doing this makes it easy to navigate to the relevant issues on GitHub.
+    This helps an interested reader to find relevant context on GitHub and, in your pkgdown site, these issue and pull request numbers and usernames will be hyperlinks.
+    We generally omit the username if the contributor is already recorded in `DESCRIPTION`.
 
-The main challenge with `NEWS.md` is getting into the habit of noting a change as you make a change.
+[^other-markdown-2]: pkgdown supports a few other wording choices for these headings, see more at <https://pkgdown.r-lib.org/reference/build_news.html>.
 
-## Other GitHub files
-
-You'll also find a number of other files in the `.github` directory.
-These are mostly useful for GitHub but are also supported by pkgdown:
-
--   `LICENSE.md`: complete text of the license of your package. Discussed in ...
--   `cran-comments.md`: sent to CRAN when you submit a package. Discussed in ...
--   `SUPPORT.md`:
--   `CONTRIBUTING.md`:
--   `CODE_OF_CONDUCT.md`:
--   `ISSUE_TEMPLATE` and `PULL_REQUEST_TEMPLATE`
--   
+The main challenge with `NEWS.md` is getting into the habit of noting any user-visible change when you make it.
+It's especially easy to forget this when accepting external contributions.
+Before release, it can be useful to use your version control tooling to compare the source of the release candidate to the previous release.
+This often surfaces missing `NEWS` items.
