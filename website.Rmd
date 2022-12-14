@@ -2,7 +2,7 @@
 
 ```{r, echo = FALSE}
 source("common.R")
-status("drafting")
+status("polishing")
 ```
 
 ## Introduction
@@ -24,6 +24,7 @@ The [pkgdown package](https://pkgdown.r-lib.org) is meant to provide exactly thi
 
 Assuming your package has a valid structure, pkgdown should be able to make a website for it!
 Obviously that website will be more substantial if your package has more of the documentation elements listed above.
+But something reasonable should happen for any valid R package.
 
 `usethis::use_pkgdown()` is a function you run once and it does the initial, minimal setup necessary to start using pkgdown:
 
@@ -86,12 +87,104 @@ Another nice gesture to build your site is via *Addins \> pkgdown \> Build pkgdo
 You can look in the local `docs/` directory to see the files that constitute your package's website.
 To manually browse the site, open `docs/index.html` in your preferred browser.
 
+This is almost all you truly need to know about pkgdown.
+It's certainly a great start and, as your package and ambitions grow, the best place to learn more is the pkgdown-made website for the pkgdown package itself: <https://pkgdown.r-lib.org>.
+
+## Deployment
+
+Your next task is to deploy your pkgdown site somewhere on the web, so that your users can visit it.
+The path of least resistance looks like this:
+
+-   Use Git and host your package on GitHub.
+    The reasons to do this go well beyond offering a package website, but this will be one of the major benefits to adopting Git and GitHub, if you're on the fence.
+
+-   Use GitHub Actions (GHA) to build your website, i.e. to run `pkgdown::build_site()`.
+    GHA is a platform where you can configure certain actions to happen automatically when some event happens.
+    We'll use it to rebuild your website every time you push to GitHub.
+
+-   Use GitHub Pages to serve your website, i.e. the files you see below `docs/` locally.
+    GitHub Pages is a static website hosting service that creates a site from files found in a GitHub repo.
+
+The advice to use GitHub Action and Pages are implemented for you in the function `usethis::use_pkgdown_github_pages()`.
+It's not an especially difficult task, but there are several steps and it would be easy miss or flub one.
+The output of `use_pkgdown_github_pages()` should look something like this:
+
+```{r}
+#| eval: false
+usethis::use_pkgdown_github_pages()
+#> ✔ Initializing empty, orphan 'gh-pages' branch in GitHub repo 'jane/mypackage'
+#> ✔ GitHub Pages is publishing from:
+#> • URL: 'https://jane.github.io/mypackage/'
+#> • Branch: 'gh-pages'
+#> • Path: '/'
+#> ✔ Creating '.github/'
+#> ✔ Adding '^\\.github$' to '.Rbuildignore'
+#> ✔ Adding '*.html' to '.github/.gitignore'
+#> ✔ Creating '.github/workflows/'
+#> ✔ Saving 'r-lib/actions/examples/pkgdown.yaml@v2' to '.github/workflows/pkgdown.yaml'
+#> • Learn more at <https://github.com/r-lib/actions/blob/v2/examples/README.md>.
+#> ✔ Recording 'https://jane.github.io/mypackage/' as site's url in '_pkgdown.yml'
+#> ✔ Adding 'https://jane.github.io/mypackage/' to URL field in DESCRIPTION
+#> ✔ Setting 'https:/jane.github.io/mypackage/' as homepage of GitHub repo 'jane/mypackage'
+```
+
+Like `use_pkgdown()`, this is a function you basically call once, when setting up a new site.
+In fact, the first thing it does is to call `use_pkgdown()` (it's OK if you've already called `use_pkgdown()`), so we usually skip straight to `use_pkgdown_github_pages()` when setting up a new site.
+
+Let's walk through what `use_pkgdown_github_pages()` actually does:
+
+-   Initializes an empty, "orphan" branch in your GitHub repo, named `gh-pages` (for "GitHub Pages").
+    The `gh-pages` branch will only live on GitHub (there's no reason to fetch it to your local computer) and it represents a separate, parallel universe from your actual package source.
+    The only files tracked in `gh-pages` are those that constitute your package's website (the files that you see locally below `docs/`).
+
+-   Turns on GitHub Pages for your repo and tells it to serve a website from the files found in the `gh-pages` .
+
+-   Copies the configuration file for a GHA workflow that does pkgdown "build and deploy".
+    The file shows up in your package as `.github/workflows/pkgdown.yaml`.
+    If necessary, some related additions are made to `.gitignore` and `.Rbuildignore`.
+
+-   Adds the URL for your site as the homepage for your GitHub repo.
+
+-   Adds the URL for your site to `DESCRIPTION` and `_pkgdown.yml`.
+    The autolinking behaviour we've touted elsewhere relies on your package listing its URL in these two places, so this is a high-value piece of configuration.
+
+After successful execution of `use_pkgdown_github_pages()`, you should be able to visit your new site at the URL displayed in the output above.[^website-1]
+By default the URL has this general form: `https://USERNAME.github.io/REPONAME/`.
+
+[^website-1]: Sometimes there's a small delay, so give it up to a couple of minutes to deploy.
+
+## Now what?
+
+For a typical package, you could stop here --- after creating a basic pkgdown site and arranging for it to be re-built and deployed regularly --- and people using (or considering using) your package would benefit greatly.
+Everything beyond this point is a "nice to have".
+
+Overall, we recommend `vignette("pkgdown", package = "pkgdown")` as a good place to start, if you think you want to go beyond the basic defaults.
+
+In the sections below, we highlight a few areas that are connected to other topics in the book or customizations that are particularly rewarding.
+
 ## Logo
 
-Website is also a great way to show off your package logo.
+It's fun to have a package logo!
+In the R community, we have a strong tradition of hex stickers, so it can be nice to join in with a hex logo of your own.
+Keen R user Amelia McNamara [made herself a dress](https://www.amelia.mn/blog/misc/2019/08/17/Tidy-Dress.html) out of custom hex logo fabric and useR!
+2018 featured a [spectacular hex photo wall](https://www.mitchelloharawild.com/blog/hexwall/).
 
-`use_logo()`
+Here are some resources to guide your logo efforts:
 
-Include hexagon spec.
+-   The convention is to orient the logo with a vertex at the top and bottom, with flat vertical sides.
 
-Mention how to get as a sticker.
+-   If you think you might print stickers, make sure to comply with the de facto standard for sticker size.
+    [hexb.in](http://hexb.in/sticker.html) is a reliable source for the dimensions and also provides a list of potential vendors for printed stickers.
+
+-   The [hexSticker package](https://cran.r-project.org/package=hexSticker) helps you make your logo from within the comfort of R.
+
+Once you have your logo, the `usethis::use_logo()` function places an appropriately scaled copy of the image file at `man/figures/logo.png` and also provides a copy-paste-able markdown snippet to include your logo in your `README`.
+pkgdown will also discover a logo placed in the standard location and incorporate it into your site.
+
+## Customizing the reference index
+
+## Non-vignette articles
+
+## Auto-linking
+
+## Development mode
