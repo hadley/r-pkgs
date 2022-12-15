@@ -425,7 +425,7 @@ Tip
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="va"><a href="https://usethis.r-lib.org/reference/use_pkgdown.html">use_pkgdown</a></span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<pre><code>#&gt; ✔ Setting active project to '/tmp/RtmpRNVTEq/mypackage'
+<pre><code>#&gt; ✔ Setting active project to '/tmp/RtmpdGf7YT/mypackage'
 #&gt; ✔ Adding '^_pkgdown\\.yml$', '^docs$', '^pkgdown$' to '.Rbuildignore'
 #&gt; ✔ Adding 'docs' to '.gitignore'
 #&gt; ✔ Writing '_pkgdown.yml'
@@ -443,11 +443,11 @@ Tip
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">pkgdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgdown.r-lib.org/reference/build_site.html">build_site</a></span><span class="op">(</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<pre><code>#&gt; ✔ Setting active project to '/tmp/RtmpRNVTEq/mypackage'
+<pre><code>#&gt; ✔ Setting active project to '/tmp/RtmpdGf7YT/mypackage'
 #&gt; -- Installing package into temporary library -----------------------
 #&gt; == Building pkgdown site =======================================================
-#&gt; Reading from: '/tmp/RtmpRNVTEq/mypackage'
-#&gt; Writing to:   '/tmp/RtmpRNVTEq/mypackage/docs'
+#&gt; Reading from: '/tmp/RtmpdGf7YT/mypackage'
+#&gt; Writing to:   '/tmp/RtmpdGf7YT/mypackage/docs'
 #&gt; -- Initialising site -----------------------------------------------------------
 #&gt; Copying '../../../home/runner/work/_temp/Library/pkgdown/BS5/assets/link.svg' to 'link.svg'
 #&gt; Copying '../../../home/runner/work/_temp/Library/pkgdown/BS5/assets/pkgdown.js' to 'pkgdown.js'
@@ -612,6 +612,51 @@ RStudio
 <span class="header-section-number">20.7</span> Non-vignette articles</h2>
 </section><section id="development-mode" class="level2" data-number="20.8"><h2 data-number="20.8" class="anchored" data-anchor-id="development-mode">
 <span class="header-section-number">20.8</span> Development mode</h2>
+<p>Every pkgdown site has a so-called <a href="https://pkgdown.r-lib.org/reference/build_site.html#development-mode"><em>development mode</em></a>, which can be specified via the <code>development</code> field in <code>_pkgdown.yml</code>. If unspecified, the default is <code>mode: release</code>, which results in a single pkgdown site. Despite the name, this single site reflects the state of the current source package, which could be either a released state or a development state. The diagram below shows the evolution of a hypothetical package that is on CRAN and that has a pkgdown site in “release” mode.</p>
+<pre><code>...
+ |
+ V
+Tweaks before release     v0.1.9000
+ |
+ V
+Increment version number  v0.2.0     &lt;-- install.packages() gets this
+ |
+ V
+Increment version number  v0.2.9000  
+ |
+ V
+Improve error message     v0.2.9000  &lt;-- site documents this
+ |
+ V
+...</code></pre>
+<p>Users who install from CRAN get version 0.2.0. But the pkgdown site is built from the development version of the package.</p>
+<p>This creates the possibility that users will read about some new feature on the website that is not present in the package version that they have installed with <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages()</a></code>. We find that the simplicity of this setup outweighs the downsides, until a package has a broad user base, i.e.&nbsp;lots of users of varying levels of sophistication. It’s probably safe to stay in “release” mode until you actually hear from a confused user.</p>
+<p>Packages with a substantial user base should use “auto” development mode:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">development</span><span class="kw">:</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> auto</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This directs pkgdown to generate a top-level site from the released version and to document the development version in a <code>dev/</code> subdirectory. We revisit the same hypothetical package as above, but assuming the pkdown site is in “auto” mode.</p>
+<pre><code>...
+ |
+ V
+Tweaks before release     v0.1.9000
+ |
+ V
+Increment version number  v0.2.0     &lt;-- install.packages() gets this
+ |                                       main site documents this
+ V
+Increment version number  v0.2.9000  
+ |
+ V
+Improve error message     v0.2.9000  &lt;-- dev/ site documents this
+ |
+ V
+...</code></pre>
+<p>All of the core tidyverse packages use “auto” mode. For example, consider the website of the readr package:</p>
+<ul>
+<li><p><a href="https://readr.tidyverse.org">readr.tidyverse.org</a> documents the released version, i.e.&nbsp;what <code>install.packages("readr")</code> delivers.</p></li>
+<li><p><a href="https://readr.tidyverse.org/dev/">readr.tidyverse.org/dev/</a> documents the dev version, i.e.&nbsp;what <code>install_github("tidyverse/readr")</code> delivers.</p></li>
+</ul>
+<p>Automatic development mode is recommended for packages with a broad user base, because it maximizes the chance that a user will read web-based documentation that reflects the package version that is locally installed.</p>
 
 
 </section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
