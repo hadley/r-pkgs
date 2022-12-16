@@ -208,7 +208,7 @@ We find this is a fantastic improvement over just showing the source code.
 This view of your examples can be eye-opening and often you'll notice things you want to add, omit, or change.
 If you're not satisfied with how your examples appear, this is a good time to review techniques for including code that is expected to error (@sec-man-examples-errors) or that can only be executed under certain conditions (@sec-man-examples-dependencies-conditional-execution).
 
-### Linking
+### Linking {#sec-website-reference-linking}
 
 These help topics will be linked to from many locations within and, potentially, beyond your pkgdown site.
 This is what we are talking about in @sec-man-key-md-features when we recommend putting functions inside square brackets when mentioning them in a roxygen comment:
@@ -304,18 +304,59 @@ To learn more, see `?pkgdown::build_reference`.
 
 @sec-vignettes deals with vignettes, which are long-form guides for a package.
 They afford various opportunities beyond what's possible in function documentation.
-For example, it's much easier to work with code that produces an error, it's less cumbersome to work with suggested packages, and there are ways to shield the reader from setup and teardown that does not apply to authentic usage.
+For example, you have much more control over the integration of prose and code and over the presentation of code itself, e.g. code can be executed but not seen, seen but not executed, and so on.
+It's much easier to create the reading experience that best prepares your users for authentic usage of your package.
 
-A package's vignettes appear, in rendered form, in its website, in the "Articles" dropdown menu.
-This is a colloquial use of "articles" that encompasses both formal vignettes, which are included in the package bundle, and non-vignette articles, which are available only on the pkgdown website.
+A package's vignettes appear, in rendered form, in its website, in the *Articles* dropdown menu.
+"Vignette" feels like a technical term that we might not expect all R users to know, which is why pkgdown uses the term "articles" here.
+To be clear, the *Articles* menu lists your package's official vignettes (the ones that are included in your package bundle) and, optionally, other non-vignette articles (@sec-vignettes-article), which are only available on the website.
 
-In general, @sec-vignettes is our main source of advice on how to approach vignettes.
-In this section we offer some additional advice on how to work with non-vignette articles (@sec-vignettes-article).
+### Linking
+
+Like function documentation, vignettes can also be the target of automatic inbound links from within your package and, potentially, beyond.
+We've talked about this elsewhere in the book.
+In @sec-man-key-md-features, we introduced the idea of referring to a vignette with an inline call like `vignette("some-topic")`.
+The rationale behind this syntax is because the code literally be copied, pasted, and executed for local vignette viewing.
+So it "works" in any context, even without automatic links.
+But, in contexts where the auto-linking machinery is available, it knows to look for this exact syntax and turn it into a hyperlink to the associated vignette, within a pkgdown site.
+
+The need to specify the host package depends on the context:
+
+-   `vignette("some-topic")`: Use this form in your own roxygen comments, vignettes, and articles, to refer to a vignette in your package.
+    The host package is implied.
+
+-   `vignette("some-topic", package = "somepackage")`: Use this form to refer to a vignette in some other package.
+    The host package must be explicit.
+
+Note that this shorthand does **not** work for linking to non-vignette articles.
+Since the syntax leans so heavily on the `vignette()` function, it would be too confusing, i.e. evaluating the code in the console would fail because R won't be able to find such a vignette.
+Non-vignette articles must be linked like any other URL.
+
+When you refer to a function in your package, in your vignettes and articles, make sure to put it inside backticks and to include parentheses.
+Qualify functions from other packages with their namespace.
+Here's an example of prose in one of your own vignettes or articles:
+
+``` markdown
+I am a big fan of `thisfunction()` in my package. I also have something to day about `otherpkg::otherfunction()` in somebody else's package.
+```
+
+Remember that automatic inbound links from *other* people's packages (and websites, etc.) require that your package advertises the URL of its website in `DESCRIPTION` and `_pkgdown.yaml`, as configured by `usethis:: use_pkgdown_github_pages()` and as described in @sec-website-reference-linking.
+
+### Index organization
+
+As with the reference index, the default listing of the articles (broadly defined) in a package is alphabetical.
+But if your package has several articles, it can be worthwhile to provide additional organization.
+For example, you might feature the articles aimed at the typical user and tuck those meant for advanced users or developers behind "More articles ...".
+You can learn more about this in `?pkgdown::build_articles`.
+
+### Non-vignette articles
+
+In general, @sec-vignettes is our main source of advice on how to approach vignettes and that also includes some coverage of non-vignette articles (@sec-vignettes-article).
+Here we review some reasons to use a non-vignette article and give some examples.
 
 An article is morally like a vignette (e.g. it tells a story that involves multiple functions and is written with R markdown), except it does not ship with the package bundle.
 `usethis::use_article()` is the easiest way to create an article.
 The main reason to use an article is when you want to show code that is impossible or very painful to include in a vignette or official example.
-It's really a technicality.
 Possible root causes of this pain:
 
 -   Use of a package you don't want to formally depend on.
@@ -333,11 +374,6 @@ Possible root causes of this pain:
 -   An example that will produce a lot of figures, which cause your package to bump up against CRAN's size constraints.
 
     The ggplot2 package [presents several FAQs as articles](https://ggplot2.tidyverse.org/articles/index.html) for this reason.
-
-As with the reference index, there is a default listing of a package's articles (including vignettes).
-But if your package has several articles, it can be worthwhile to organize them into groups.
-For example, you might distinguish those that cover typical usage from those aimed at advanced users and developers.
-You can learn more about this in `?pkgdown::build_articles`.
 
 ## Development mode
 
