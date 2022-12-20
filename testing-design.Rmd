@@ -448,8 +448,37 @@ It might make sense to gather such helpers in a clearly marked file, such as one
         ├── ...
         ├── test-helpers.R
         ├── test-utils.R
+        ├── testthat.R
         ├── utils-testing.R
         └── ...
+
+For example, the dbplyr package uses [`R/testthat.R`](https://github.com/tidyverse/dbplyr/blob/e8bfa760a465cd7d8fa45cc53d4435ee1fbd2361/R/testthat.R) to define a couple of helpers to facilitate comparisons and expectations involving `tbl` objects, which is used to represent database tables.
+
+```{r}
+#| eval: false
+compare_tbl <- function(x, y, label = NULL, expected.label = NULL) {
+  testthat::expect_equal(
+    arrange(collect(x), dplyr::across(everything())),
+    arrange(collect(y), dplyr::across(everything())),
+    label = label,
+    expected.label = expected.label
+  )
+}
+
+expect_equal_tbls <- function(results, ref = NULL, ...) {
+  # code that gets things ready ...
+
+  for (i in seq_along(rest)) {
+    compare_tbl(
+      rest[[i]], ref,
+      label = names(rest)[[i]],
+      expected.label = ref_name
+    )
+  }
+
+  invisible(TRUE)
+}
+```
 
 ### `tests/testthat.R`
 
@@ -489,13 +518,22 @@ Here are examples of how such files might look:
         │   └── (more test files)
         └── testthat.R
 
-Many developers use helper files to define custom test helper functions, which we describe in detail below.
+Many developers use helper files to define custom test helper functions, which we describe in detail in @sec-testing-advanced.
 Compared to defining helpers below `R/`, some people find that `tests/testthat/helper.R` makes it more clear that these utilities are specifically for testing the package.
 This location also feels more natural if your helpers rely on testthat functions.
+For example, [usethis](https://github.com/r-lib/usethis/blob/main/tests/testthat/helper.R) and [vroom](https://github.com/tidyverse/vroom/blob/main/tests/testthat/helper.R) both have fairly extensive `tests/testthat/helper.R` files that define many custom test helpers.
+Here are two very simple usethis helpers that check that the currently active project (usually an ephemeral test project) has a specific file or folder:
+
+```{r}
+expect_proj_file <- function(...) expect_true(file_exists(proj_path(...)))
+expect_proj_dir <- function(...) expect_true(dir_exists(proj_path(...)))
+```
 
 A helper file is also a good location for setup code that is needed for its side effects.
 This is a case where `tests/testthat/helper.R` is clearly more appropriate than a file below `R/`.
-For example, in an API-wrapping package, `helper.R` is a good place to (attempt to) authenticate with the testing credentials.
+For example, in an API-wrapping package, `helper.R` is a good place to (attempt to) authenticate with the testing credentials[^testing-design-2].
+
+[^testing-design-2]: googledrive does this in <https://github.com/tidyverse/googledrive/blob/906680f84b2cec2e4553978c9711be8d42ba33f7/tests/testthat/helper.R#L1-L10>.
 
 ### Testthat setup files
 
@@ -520,11 +558,11 @@ A setup file is handled almost exactly like a helper file, but with two big diff
 Setup files are good for global test setup that is tailored for test execution in non-interactive or remote environments.
 For example, you might turn off behaviour that's aimed at an interactive user, such as messaging or writing to the clipboard.
 
-If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`[^testing-design-2].
+If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`[^testing-design-3].
 We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync.
 The artificial environment `teardown_env()` exists as a magical handle to use in `withr::defer()` and `withr::local_*()` / `withr::with_*()`.
 
-[^testing-design-2]: A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
+[^testing-design-3]: A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.
 
 Here's a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
 
