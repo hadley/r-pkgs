@@ -2,57 +2,10 @@
 
 ```{r, echo = FALSE}
 source("common.R")
-status("restructuring") 
+status("polishing") 
 ```
 
 ## Introduction
-
-An important part of the package development process is `R CMD check`.
-`R CMD check` automatically checks your code for common problems.
-It's essential if you're planning on submitting to CRAN, but it's useful even if you're not because it automatically detects many common problems that you'd otherwise discover the hard way.
-
-`R CMD check` will be frustrating the first time you run it - you'll discover many problems that need to be fixed.
-The key to making `R CMD check` less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix.
-The upper limit of this approach is to run `R CMD check` every time you make a change.
-If you use GitHub, you'll learn precisely how to do that in @sec-gha.
-
-## Workflow {#check-workflow}
-
-`R CMD check` is the name of the command you run from the terminal.
-I don't recommend calling it directly.
-Instead, run `devtools::check()`, or press Ctrl/Cmd + Shift + E in RStudio.
-In contrast to `R CMD check`, `devtools::check()`:
-
--   Ensures that the documentation is up-to-date by running `devtools::document()`.
-
--   Bundles the package before checking it.
-    This is the best practice for checking packages because it makes sure the check starts with a clean slate: because a package bundle doesn't contain any of the temporary files that can accumulate in your source package, e.g. artifacts like `.so` and `.o` files which accompany compiled code, you can avoid the spurious warnings such files will generate.
-
--   Sets the `NOT_CRAN` environment variable to `TRUE`.
-    This allows you to selectively skip tests on CRAN.
-    (See `?testthat::skip_on_cran` for details.)
-
-The workflow for checking a package is simple, but tedious:
-
-1.  Run `devtools::check()`, or press Ctrl/Cmd + Shift + E.
-
-2.  Fix the first problem.
-
-3.  Repeat until there are no more problems.
-
-`R CMD check` returns three types of messages:
-
--   `ERROR`s: Severe problems that you should fix regardless of whether or not you're submitting to CRAN.
-
--   `WARNING`s: Likely problems that you must fix if you're planning to submit to CRAN (and a good idea to look into even if you're not).
-
--   `NOTE`s: Mild problems.
-    If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives.
-    If you have no NOTEs, human intervention is not required, and the package submission process will be easier.
-    If it's not possible to eliminate a `NOTE`, you'll need describe why it's OK in your submission comments, as described in @sec-release-process.
-    If you're not submitting to CRAN, carefully read each NOTE, but don't go out of your way to fix things that you don't think are problems.
-
-## Checks {#sec-check-checks}
 
 `R CMD check` is composed of over 50 individual checks, described in the following sections.
 For each check, I briefly describe what it does, what the most common problems are, and how to fix them.
@@ -64,7 +17,7 @@ This list includes every check run in R 3.1.1.
 If you're using a more recent version, you may want to consult the most recent online version of this chapter: <https://r-pkgs.org/r-cmd-check.html>.
 Please [let me know](mailto:hadley@rstudio.com) if you encounter a problem that this chapter doesn't help with.
 
-### Check metadata
+## Check metadata
 
 `R CMD check` always starts by describing your current environment.
 I'm running R 3.1.1 on OS X with a UTF-8 charset:
@@ -82,7 +35,7 @@ Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird ve
 -   **Checking for file** 'httr/DESCRIPTION'
 -   **This is package** 'httr' **version** '0.5.0.9000'
 
-### Package structure
+## Package structure
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L257 -->
 
@@ -155,7 +108,7 @@ Here I'm checking httr version 0.5.0.9000 (you'll learn more about that weird ve
 
 -   **Checking for left-over files**. Remove any files listed here. They've been included in your package by accident.
 
-### Description
+## Description
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L597 -->
 
@@ -226,7 +179,7 @@ tools:::.check_package_CRAN_incoming
         CRAN prefers at most one submission per month.
         If you need to fix a major bug, be apologetic.
 
-### Namespace {#namespace}
+## Namespace {#namespace}
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L4433 -->
 
@@ -244,7 +197,7 @@ tools:::.check_package_CRAN_incoming
 
 -   **Checking whether the namespace can be loaded with stated dependencies**. Runs `loadNamespace(pkg)` with `R_DEFAULT_PACKAGES=NULL`. Failure usually indicates a problem with the namespace.
 
-### R code
+## R code
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L1226 -->
 
@@ -373,7 +326,7 @@ tools:::.check_package_CRAN_incoming
 
 -   **Checking loading without being on the library search path**. Calls `library(x, lib.loc = ...)`. Failure here indicates that you are making a false assumption in `.onLoad()` or `.onAttach()`.
 
-### Data
+## Data
 
 ```{=html}
 <!-- 
@@ -396,7 +349,7 @@ tools:::.check_package_compact_sysdata
 
     -   If you've used a sub-optimal compression algorithm for your data, re-compress with the suggested algorithm.
 
-### Documentation
+## Documentation
 
 You can run the most common of these outside `devtools::check()` with `devtools::check_man()` (which automatically calls `devtools::document()` for you).
 If you have documentation problems, it's best to iterate quickly with `check_man()`, rather than running the full check each time.
@@ -459,7 +412,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
 
 -   **Checking PDF version of manual**. Occassionally you'll get an error when building the PDF manual. This is usually because the pdf is built by latex and you've forgotten to escape something. Debugging this is painful - your best bet is to look up the latex logs and combined tex file and work back from there to `.Rd` files then back to a roxygen comment. I consider any such failure to be a bug in roxygen2, so please let me know.
 
-### Demos
+## Demos
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L877 -->
 
@@ -470,7 +423,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
         demo-name-without-extension  Demo description
         another-demo-name            Another description
 
-### Compiled code
+## Compiled code
 
 <!-- tools::checkFF -->
 
@@ -510,7 +463,7 @@ If you have documentation problems, it's best to iterate quickly with `check_man
     Occasionally you may have a problem where the tests pass when run interactively with `devtools::test()`, but fail when in `R CMD check`.
     This usually indicates that you've made a faulty assumption about the testing environment, and it's often hard to figure it out.
 
-### Vignettes {#vignettes}
+## Vignettes {#vignettes}
 
 <!-- https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L718 -->
 

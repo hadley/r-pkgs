@@ -1,4 +1,4 @@
-# Fundamental development workflows {#sec-workflows101}
+# Fundamental development workflows {#sec-workflow101}
 
 ```{r, echo = FALSE}
 source("common.R")
@@ -8,7 +8,7 @@ source("common.R")
 
 Having peeked under the hood of R packages and libraries in @sec-package-structure-state, here we provide the basic workflows for creating a package and moving it through the different states that come up during development.
 
-## Create a package
+## Create a package {#sec-workflow101-create-package}
 
 ### Survey the existing landscape
 
@@ -41,7 +41,7 @@ For example, there is a very active R community around spatial data analysis ([r
 In modeling, the [hardhat package](https://hardhat.tidymodels.org) provides scaffolding for creating a modeling package that plays well with the [tidymodels](https://www.tidymodels.org) ecosystem.
 Your package will get more usage and will need less documentation if it fits nicely into the surrounding landscape.
 
-### Name your package {#naming}
+### Name your package
 
 > "There are only two hard things in Computer Science: cache invalidation and naming things."
 >
@@ -163,7 +163,7 @@ It anticipates a different development process than we use here, so repairing th
 Use `create_package()`.
 :::
 
-### Where should you `create_package()`? {#sec-where-source-package}
+### Where should you `create_package()`?
 
 The main and only required argument to `create_package()` is the `path` where your new package will live:
 
@@ -185,7 +185,7 @@ An academic researcher might organize their files around individual publications
 There is no particular technical or traditional reason for one specific approach.
 As long as you keep a clear distinction between source and installed packages, just pick a strategy that works within your overall system for file organization, and use it consistently.
 
-## RStudio Projects {#sec-projects}
+## RStudio Projects {#sec-workflow101-rstudio-projects}
 
 devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users.
 To be clear, you can use devtools without using RStudio and you can develop packages in RStudio without using devtools.
@@ -355,7 +355,7 @@ There are two reasons why implicit paths are hard to get right:
 Path helpers like `testthat::test_path()`, `fs::path_package()`, and the [rprojroot package](https://rprojroot.r-lib.org) are extremely useful for building resilient paths that hold up across the whole range of situations that come up during development and usage.
 Another way to eliminate brittle paths is to be rigorous in your use of proper methods for storing data inside your package (@sec-data) and to target the session temp directory when appropriate, such as for ephemeral testing artefacts (@sec-testing-basics).
 
-## Test drive with `load_all()` {#sec-load-all}
+## Test drive with `load_all()` {#sec-workflow101-load-all}
 
 The `load_all()` function is arguably the most important part of the devtools workflow.
 
@@ -422,3 +422,50 @@ It is unlikely you will use `load_all()` programatically or inside another packa
 #| out-width: ~
 knitr::include_graphics("diagrams/loading.png")
 ```
+
+## `R CMD check` {#sec-workflow101-r-cmd-check}
+
+An important part of the package development process is `R CMD check`.
+`R CMD check` automatically checks your code for common problems.
+It's essential if you're planning on submitting to CRAN, but it's useful even if you're not because it automatically detects many common problems that you'd otherwise discover the hard way.
+
+`R CMD check` will be frustrating the first time you run it - you'll discover many problems that need to be fixed.
+The key to making `R CMD check` less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix.
+The upper limit of this approach is to run `R CMD check` every time you make a change.
+If you use GitHub, you'll learn precisely how to do that in @sec-gha.
+
+### Workflow {#check-workflow}
+
+`R CMD check` is the name of the command you run from the terminal.
+I don't recommend calling it directly.
+Instead, run `devtools::check()`, or press Ctrl/Cmd + Shift + E in RStudio.
+In contrast to `R CMD check`, `devtools::check()`:
+
+-   Ensures that the documentation is up-to-date by running `devtools::document()`.
+
+-   Bundles the package before checking it.
+    This is the best practice for checking packages because it makes sure the check starts with a clean slate: because a package bundle doesn't contain any of the temporary files that can accumulate in your source package, e.g. artifacts like `.so` and `.o` files which accompany compiled code, you can avoid the spurious warnings such files will generate.
+
+-   Sets the `NOT_CRAN` environment variable to `TRUE`.
+    This allows you to selectively skip tests on CRAN.
+    (See `?testthat::skip_on_cran` for details.)
+
+The workflow for checking a package is simple, but tedious:
+
+1.  Run `devtools::check()`, or press Ctrl/Cmd + Shift + E.
+
+2.  Fix the first problem.
+
+3.  Repeat until there are no more problems.
+
+`R CMD check` returns three types of messages:
+
+-   `ERROR`s: Severe problems that you should fix regardless of whether or not you're submitting to CRAN.
+
+-   `WARNING`s: Likely problems that you must fix if you're planning to submit to CRAN (and a good idea to look into even if you're not).
+
+-   `NOTE`s: Mild problems.
+    If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives.
+    If you have no NOTEs, human intervention is not required, and the package submission process will be easier.
+    If it's not possible to eliminate a `NOTE`, you'll need describe why it's OK in your submission comments, as described in @sec-release-process.
+    If you're not submitting to CRAN, carefully read each NOTE, but don't go out of your way to fix things that you don't think are problems.
