@@ -290,6 +290,56 @@ Debugging code that works on your computer but fails elsewhere is painful.
 If that happens to you, either install a virtualisation tool so that you can run another operating system locally, or find a friend to help you figure out the problem.
 Don't submit the package and hope CRAN will help you figure out the problem.
 
+### CRAN check flavors and related services {#sec-cran-flavors-services}
+
+*This section just got transplanted from elsewhere. Still needs integrating into its new home.*
+
+CRAN runs `R CMD check` on all contributed packages on a regular basis, on multiple platforms or what they call "flavors".
+This check includes, but is not limited to, your testthat tests.
+CRAN's check flavors almost certainly include platforms other than your preferred development environment(s), so you must proactively plan ahead if you want your tests to pass there.
+
+You can see CRAN's current check flavors here: <https://cran.r-project.org/web/checks/check_flavors.html>.
+There are various combinations of:
+
+-   Operating system and CPU: Windows, macOS (x86_64, arm64), Linux (various distributions)
+-   R version: r-devel, r-release, r-oldrel
+-   C, C++, FORTRAN compilers
+-   Locale, in the sense of the `LC_CTYPE` environment variable (this is about which human language is in use and character encoding)
+
+It would be impractical for individual package developers to personally maintain all of these testing platforms.
+Instead, we turn to various community- and CRAN-maintained resources to test our packages.
+In order of how often we use them:
+
+-   GitHub Actions (GHA).
+    Many R package developers host their source code on GitHub and use GHA to check their package, e.g., every time they push.
+
+    The usethis package offers several functions to help you configure GHA workflows for checking your package.
+    The most appropriate level of checking depends on the nature of your user base and how likely it is that your package could behave differently across the flavors (e.g. does it contain compiled code?)
+
+    -   `usethis::use_github_action_check_release()`: an entry-level, bare-minimum workflow that checks with the latest release of R on Linux.
+    -   `usethis::use_github_action_check_standard()`: Covers the three major operating systems and both the released and development versions of R. This is a good choice for a package that is (or aspires to be) on CRAN or Bioconductor.
+    -   The tidyverse/r-lib team uses an even more extensive check matrix, which would be overkill for most other packages. It's necessary in this case in order to meet our commitment to support the current version, the development version, and four previous versions of R.
+
+-   R-hub builder (R-hub).
+    This is a service supported by the R Consortium where package developers can submit their package for checks that replicate various CRAN check flavors.
+    This is useful when you're doing the due diligence leading up to a CRAN submission.
+
+    You can use R-hub via a web interface (<https://builder.r-hub.io>) or, as we recommend, through the [rhub R package](https://r-hub.github.io/rhub/).
+
+    The `rhub::check_for_cran()` function is morally similar to the GHA workflow configured by `usethis::use_github_action_check_standard()`, i.e. it's a good solution for a typical package heading to CRAN.
+    rhub has many other functions for accessing individual check flavors.
+
+-   Win-Builder is a service maintained by the CRAN personnel who build the Windows binaries for CRAN packages.
+    You use it in a similar way as R-hub, i.e. it's a good check to run when preparing a CRAN submission.
+    (Win-Builder is basically the inspiration for R-hub, i.e. Win-builder is such a convenient service that it makes sense to extend it for more flavors.)
+
+    The Win-Builder homepage (<https://win-builder.r-project.org>) explains how to upload a package via ftp, but we recommend using the convenience functions `devtools::check_win_devel()` and friends.
+
+-   macOS builder is a service maintained by the CRAN personnel who build the macOS binaries for CRAN packages.
+    This is a relatively new addition to the list and checks packages with "the same setup and available packages as the CRAN M1 build machine".
+
+    You can submit your package using the web interface (<https://mac.r-project.org/macbuilder/submit.html>) or with `devtools::check_mac_release()`.
+
 ### Check results {#release-check}
 
 You've already learned how to use `R CMD check` and why it's important in @sec-workflow101-r-cmd-check.

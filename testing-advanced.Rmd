@@ -418,65 +418,20 @@ Instead we refer you to the [Wrapping APIs](https://httr2.r-lib.org/articles/wra
 
 ## Special considerations for CRAN packages
 
-### CRAN check flavors and related services {#tests-cran-flavors-services}
-
-*This section will likely move to a different location, once we revise and expand the content elsewhere in the book on `R CMD check` and package release. But it can gestate here.*
-
-CRAN runs `R CMD check` on all contributed packages on a regular basis, on multiple platforms or what they call "flavors".
+CRAN runs `R CMD check` on all contributed packages, both upon submission and on a regular basis after acceptance.
 This check includes, but is not limited to, your testthat tests.
-CRAN's check flavors almost certainly include platforms other than your preferred development environment(s), so you must proactively plan ahead if you want your tests to pass there.
+We discuss the general challenge of preparing your package to face all of CRAN's check "flavors" in @sec-cran-flavors-services.
+Here we focus on CRAN-specific considerations for your test suite.
 
-You can see CRAN's current check flavors here: <https://cran.r-project.org/web/checks/check_flavors.html>.
-There are various combinations of:
-
--   Operating system and CPU: Windows, macOS (x86_64, arm64), Linux (various distributions)
--   R version: r-devel, r-release, r-oldrel
--   C, C++, FORTRAN compilers
--   Locale, in the sense of the `LC_CTYPE` environment variable (this is about which human language is in use and character encoding)
-
-It would be impractical for individual package developers to personally maintain all of these testing platforms.
-Instead, we turn to various community- and CRAN-maintained resources to test our packages.
-In order of how often we use them:
-
--   GitHub Actions (GHA).
-    Many R package developers host their source code on GitHub and use GHA to check their package, e.g., every time they push.
-
-    The usethis package offers several functions to help you configure GHA workflows for checking your package.
-    The most appropriate level of checking depends on the nature of your user base and how likely it is that your package could behave differently across the flavors (e.g. does it contain compiled code?)
-
-    -   `usethis::use_github_action_check_release()`: an entry-level, bare-minimum workflow that checks with the latest release of R on Linux.
-    -   `usethis::use_github_action_check_standard()`: Covers the three major operating systems and both the released and development versions of R. This is a good choice for a package that is (or aspires to be) on CRAN or Bioconductor.
-    -   The tidyverse/r-lib team uses an even more extensive check matrix, which would be overkill for most other packages. It's necessary in this case in order to meet our commitment to support the current version, the development version, and four previous versions of R.
-
--   R-hub builder (R-hub).
-    This is a service supported by the R Consortium where package developers can submit their package for checks that replicate various CRAN check flavors.
-    This is useful when you're doing the due diligence leading up to a CRAN submission.
-
-    You can use R-hub via a web interface (<https://builder.r-hub.io>) or, as we recommend, through the [rhub R package](https://r-hub.github.io/rhub/).
-
-    The `rhub::check_for_cran()` function is morally similar to the GHA workflow configured by `usethis::use_github_action_check_standard()`, i.e. it's a good solution for a typical package heading to CRAN.
-    rhub has many other functions for accessing individual check flavors.
-
--   Win-Builder is a service maintained by the CRAN personnel who build the Windows binaries for CRAN packages.
-    You use it in a similar way as R-hub, i.e. it's a good check to run when preparing a CRAN submission.
-    (Win-Builder is basically the inspiration for R-hub, i.e. Win-builder is such a convenient service that it makes sense to extend it for more flavors.)
-
-    The Win-Builder homepage (<https://win-builder.r-project.org>) explains how to upload a package via ftp, but we recommend using the convenience functions `devtools::check_win_devel()` and friends.
-
--   macOS builder is a service maintained by the CRAN personnel who build the macOS binaries for CRAN packages.
-    This is a relatively new addition to the list and checks packages with "the same setup and available packages as the CRAN M1 build machine".
-
-    You can submit your package using the web interface (<https://mac.r-project.org/macbuilder/submit.html>) or with `devtools::check_mac_release()`.
-
-### Testing on CRAN
-
-The need to pass tests on all of CRAN's flavors is not the only thing you need to think about.
-There are other considerations that will influence how you write your tests and how (or whether) they run on CRAN.
 When a package runs afoul of the CRAN Repository Policy (<https://cran.r-project.org/web/packages/policies.html>), the test suite is very often the culprit (although not always).
+If your package is destined for CRAN, this should influence how you write your tests and how (or whether) they will be run on CRAN.
+
+### Skip a test
 
 If a specific test simply isn't appropriate to be run by CRAN, include `skip_on_cran()` at the very start.
 
-```{r eval = FALSE}
+```{r}
+#| eval: false
 test_that("some long-running thing works", {
   skip_on_cran()
   # test code that can potentially take "a while" to run  
@@ -484,29 +439,27 @@ test_that("some long-running thing works", {
 ```
 
 Under the hood, `skip_on_cran()` consults the `NOT_CRAN` environment variable.
-Such tests will only run when `NOT_CRAN` has been explicitly defined as `"true"`.
+Such a test will only run when `NOT_CRAN` has been explicitly defined as `"true"`.
 This variable is set by devtools and testthat, allowing those tests to run in environments where you expect success (and where you can tolerate and troubleshoot occasional failure).
 
-In particular, the GitHub Actions workflows that we recommend elsewhere **will** run tests with `NOT_CRAN = "true"` call.
-For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GHA or an equivalent continuous integration service, are your best method of quality assurance.
+In particular, the GitHub Actions workflows that we recommend in @sec-gha **will** run tests with `NOT_CRAN = "true"` call.
+For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GitHub Actions or an equivalent continuous integration service, are your best method of quality assurance.
 
 There are even rare cases where it makes sense to maintain tests outside of your package altogether.
 The tidymodels team uses this strategy for integration-type tests of their whole ecosystem that would be impossible to host inside an individual CRAN package.
 
-The following subsections enumerate other thing to keep in mind for maximum success when testing on CRAN.
-
-#### Speed
+### Speed
 
 Your tests need to run relatively quickly - ideally, less than a minute, in total.
 Use `skip_on_cran()` in a test that is unavoidably long-running.
 
-#### Reproducibility
+### Reproducibility
 
 Be careful about testing things that are likely to be variable on CRAN machines.
 It's risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available).
 Numerical precision can also vary across platforms, so use `expect_equal()` unless you have a specific reason for using `expect_identical()`.
 
-#### Flaky tests
+### Flaky tests
 
 Due to the scale at which CRAN checks packages, there is basically no latitude for a test that's "just flaky", i.e. sometimes fails for incidental reasons.
 CRAN does not process your package's test results the way you do, where you can inspect each failure and exercise some human judgment about how concerning it is.
@@ -523,7 +476,7 @@ The CRAN Repository Policy says:
 Often making such a failure "graceful" would run counter to the behaviour you actually want in practice, i.e. you would want your user to get an error if their request fails.
 This is why it is usually more practical to test such functionality elsewhere.
 
-Recall that snapshot tests, by default, are also skipped on CRAN.
+Recall that snapshot tests (@sec-testing-basics), by default, are also skipped on CRAN.
 You typically use such tests to monitor, e.g., how various informational messages look.
 Slight changes in message formatting are something you want to be alerted to, but do not indicate a major defect in your package.
 This is the motivation for the default `skip_on_cran()` behaviour of snapshot tests.
@@ -532,7 +485,7 @@ Finally, flaky tests cause problems for the maintainers of your dependencies.
 When the packages you depend on are updated, CRAN runs `R CMD check` on all reverse dependencies, including your package.
 If your package has flaky tests, your package can be the reason another package does not clear CRAN's incoming checks and can delay its release.
 
-#### Process and file system hygiene
+### Process and file system hygiene
 
 In @sec-tests-files-where-write, we urged you to only write into the session temp directory and to clean up after yourself.
 This practice makes your test suite much more maintainable and predictable.
@@ -561,25 +514,3 @@ Because they make up such a big part of engineers’ lives, Google puts a lot of
 https://abseil.io/resources/swe-book/html/ch12.html
 -->
 ```
-````{=html}
-<!--
-Another important path-building function to know about is `fs::path_package()`.
-It is essentially `base::system.file()` with one very significant added feature:
-it produces the correct path for both an in-development or an installed package.
-
-```
-during development               after installation                             
-
-/path/to/local/package           /path/to/some/installed/package
-├── DESCRIPTION                  ├── DESCRIPTION
-├── ...                          ├── ...
-├── inst                         └── some-installed-file.txt
-│   └── some-installed-file.txt  
-└── ...
-```
-
-`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
-
-A common theme you've now encountered in multiple places is that devtools and related packages try to eliminate hard choices between having a smooth interactive development experience and arranging things correctly in your package.
--->
-````
