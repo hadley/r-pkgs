@@ -383,8 +383,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li>
 <a href="#special-considerations-for-cran-packages" id="toc-special-considerations-for-cran-packages" class="nav-link" data-scroll-target="#special-considerations-for-cran-packages"><span class="toc-section-number">16.4</span>  Special considerations for CRAN packages</a>
   <ul class="collapse">
-<li><a href="#tests-cran-flavors-services" id="toc-tests-cran-flavors-services" class="nav-link" data-scroll-target="#tests-cran-flavors-services"><span class="toc-section-number">16.4.1</span>  CRAN check flavors and related services</a></li>
-  <li><a href="#testing-on-cran" id="toc-testing-on-cran" class="nav-link" data-scroll-target="#testing-on-cran"><span class="toc-section-number">16.4.2</span>  Testing on CRAN</a></li>
+<li><a href="#skip-a-test" id="toc-skip-a-test" class="nav-link" data-scroll-target="#skip-a-test"><span class="toc-section-number">16.4.1</span>  Skip a test</a></li>
+  <li><a href="#speed" id="toc-speed" class="nav-link" data-scroll-target="#speed"><span class="toc-section-number">16.4.2</span>  Speed</a></li>
+  <li><a href="#reproducibility" id="toc-reproducibility" class="nav-link" data-scroll-target="#reproducibility"><span class="toc-section-number">16.4.3</span>  Reproducibility</a></li>
+  <li><a href="#flaky-tests" id="toc-flaky-tests" class="nav-link" data-scroll-target="#flaky-tests"><span class="toc-section-number">16.4.4</span>  Flaky tests</a></li>
+  <li><a href="#process-and-file-system-hygiene" id="toc-process-and-file-system-hygiene" class="nav-link" data-scroll-target="#process-and-file-system-hygiene"><span class="toc-section-number">16.4.5</span>  Process and file system hygiene</a></li>
   </ul>
 </li>
   </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/testing-advanced.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
@@ -724,46 +727,10 @@ num_colors <- local({
 <p>Of course, you will still want to be able to test your package against the actual service that it wraps, in environments that support secure environment variables. Since this is also a very specialized topic, we won’t go into more detail here. Instead we refer you to the <a href="https://httr2.r-lib.org/articles/wrapping-apis.html#secret-management">Wrapping APIs</a> vignette in the httr2 package, which offers substantial support for secret management.</p>
 </section></section><section id="special-considerations-for-cran-packages" class="level2" data-number="16.4"><h2 data-number="16.4" class="anchored" data-anchor-id="special-considerations-for-cran-packages">
 <span class="header-section-number">16.4</span> Special considerations for CRAN packages</h2>
-<section id="tests-cran-flavors-services" class="level3" data-number="16.4.1"><h3 data-number="16.4.1" class="anchored" data-anchor-id="tests-cran-flavors-services">
-<span class="header-section-number">16.4.1</span> CRAN check flavors and related services</h3>
-<p><em>This section will likely move to a different location, once we revise and expand the content elsewhere in the book on <code>R CMD check</code> and package release. But it can gestate here.</em></p>
-<p>CRAN runs <code>R CMD check</code> on all contributed packages on a regular basis, on multiple platforms or what they call “flavors”. This check includes, but is not limited to, your testthat tests. CRAN’s check flavors almost certainly include platforms other than your preferred development environment(s), so you must proactively plan ahead if you want your tests to pass there.</p>
-<p>You can see CRAN’s current check flavors here: <a href="https://cran.r-project.org/web/checks/check_flavors.html" class="uri">https://cran.r-project.org/web/checks/check_flavors.html</a>. There are various combinations of:</p>
-<ul>
-<li>Operating system and CPU: Windows, macOS (x86_64, arm64), Linux (various distributions)</li>
-<li>R version: r-devel, r-release, r-oldrel</li>
-<li>C, C++, FORTRAN compilers</li>
-<li>Locale, in the sense of the <code>LC_CTYPE</code> environment variable (this is about which human language is in use and character encoding)</li>
-</ul>
-<p>It would be impractical for individual package developers to personally maintain all of these testing platforms. Instead, we turn to various community- and CRAN-maintained resources to test our packages. In order of how often we use them:</p>
-<ul>
-<li>
-<p>GitHub Actions (GHA). Many R package developers host their source code on GitHub and use GHA to check their package, e.g., every time they push.</p>
-<p>The usethis package offers several functions to help you configure GHA workflows for checking your package. The most appropriate level of checking depends on the nature of your user base and how likely it is that your package could behave differently across the flavors (e.g.&nbsp;does it contain compiled code?)</p>
-<ul>
-<li>
-<code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_action_check_release()</a></code>: an entry-level, bare-minimum workflow that checks with the latest release of R on Linux.</li>
-<li>
-<code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_action_check_standard()</a></code>: Covers the three major operating systems and both the released and development versions of R. This is a good choice for a package that is (or aspires to be) on CRAN or Bioconductor.</li>
-<li>The tidyverse/r-lib team uses an even more extensive check matrix, which would be overkill for most other packages. It’s necessary in this case in order to meet our commitment to support the current version, the development version, and four previous versions of R.</li>
-</ul>
-</li>
-<li>
-<p>R-hub builder (R-hub). This is a service supported by the R Consortium where package developers can submit their package for checks that replicate various CRAN check flavors. This is useful when you’re doing the due diligence leading up to a CRAN submission.</p>
-<p>You can use R-hub via a web interface (<a href="https://builder.r-hub.io" class="uri">https://builder.r-hub.io</a>) or, as we recommend, through the <a href="https://r-hub.github.io/rhub/">rhub R package</a>.</p>
-<p>The <code>rhub::check_for_cran()</code> function is morally similar to the GHA workflow configured by <code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_action_check_standard()</a></code>, i.e.&nbsp;it’s a good solution for a typical package heading to CRAN. rhub has many other functions for accessing individual check flavors.</p>
-</li>
-<li>
-<p>Win-Builder is a service maintained by the CRAN personnel who build the Windows binaries for CRAN packages. You use it in a similar way as R-hub, i.e.&nbsp;it’s a good check to run when preparing a CRAN submission. (Win-Builder is basically the inspiration for R-hub, i.e.&nbsp;Win-builder is such a convenient service that it makes sense to extend it for more flavors.)</p>
-<p>The Win-Builder homepage (<a href="https://win-builder.r-project.org" class="uri">https://win-builder.r-project.org</a>) explains how to upload a package via ftp, but we recommend using the convenience functions <code><a href="https://devtools.r-lib.org/reference/check_win.html">devtools::check_win_devel()</a></code> and friends.</p>
-</li>
-<li>
-<p>macOS builder is a service maintained by the CRAN personnel who build the macOS binaries for CRAN packages. This is a relatively new addition to the list and checks packages with “the same setup and available packages as the CRAN M1 build machine”.</p>
-<p>You can submit your package using the web interface (<a href="https://mac.r-project.org/macbuilder/submit.html" class="uri">https://mac.r-project.org/macbuilder/submit.html</a>) or with <code><a href="https://devtools.r-lib.org/reference/check_mac_release.html">devtools::check_mac_release()</a></code>.</p>
-</li>
-</ul></section><section id="testing-on-cran" class="level3" data-number="16.4.2"><h3 data-number="16.4.2" class="anchored" data-anchor-id="testing-on-cran">
-<span class="header-section-number">16.4.2</span> Testing on CRAN</h3>
-<p>The need to pass tests on all of CRAN’s flavors is not the only thing you need to think about. There are other considerations that will influence how you write your tests and how (or whether) they run on CRAN. When a package runs afoul of the CRAN Repository Policy (<a href="https://cran.r-project.org/web/packages/policies.html" class="uri">https://cran.r-project.org/web/packages/policies.html</a>), the test suite is very often the culprit (although not always).</p>
+<p>CRAN runs <code>R CMD check</code> on all contributed packages, both upon submission and on a regular basis after acceptance. This check includes, but is not limited to, your testthat tests. We discuss the general challenge of preparing your package to face all of CRAN’s check “flavors” in <a href="lifecycle.html#sec-cran-flavors-services"><span>Section&nbsp;22.5.3</span></a>. Here we focus on CRAN-specific considerations for your test suite.</p>
+<p>When a package runs afoul of the CRAN Repository Policy (<a href="https://cran.r-project.org/web/packages/policies.html" class="uri">https://cran.r-project.org/web/packages/policies.html</a>), the test suite is very often the culprit (although not always). If your package is destined for CRAN, this should influence how you write your tests and how (or whether) they will be run on CRAN.</p>
+<section id="skip-a-test" class="level3" data-number="16.4.1"><h3 data-number="16.4.1" class="anchored" data-anchor-id="skip-a-test">
+<span class="header-section-number">16.4.1</span> Skip a test</h3>
 <p>If a specific test simply isn’t appropriate to be run by CRAN, include <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> at the very start.</p>
 <div class="cell">
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_that.html">test_that</a></span><span class="op">(</span><span class="st">"some long-running thing works"</span>, <span class="op">{</span></span>
@@ -771,18 +738,17 @@ num_colors <- local({
 <span>  <span class="co"># test code that can potentially take "a while" to run  </span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Under the hood, <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> consults the <code>NOT_CRAN</code> environment variable. Such tests will only run when <code>NOT_CRAN</code> has been explicitly defined as <code>"true"</code>. This variable is set by devtools and testthat, allowing those tests to run in environments where you expect success (and where you can tolerate and troubleshoot occasional failure).</p>
-<p>In particular, the GitHub Actions workflows that we recommend elsewhere <strong>will</strong> run tests with <code>NOT_CRAN = "true"</code> call. For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GHA or an equivalent continuous integration service, are your best method of quality assurance.</p>
+<p>Under the hood, <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> consults the <code>NOT_CRAN</code> environment variable. Such a test will only run when <code>NOT_CRAN</code> has been explicitly defined as <code>"true"</code>. This variable is set by devtools and testthat, allowing those tests to run in environments where you expect success (and where you can tolerate and troubleshoot occasional failure).</p>
+<p>In particular, the GitHub Actions workflows that we recommend in <a href="software-development-practices.html#sec-gha"><span>Section&nbsp;21.4</span></a> <strong>will</strong> run tests with <code>NOT_CRAN = "true"</code> call. For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GitHub Actions or an equivalent continuous integration service, are your best method of quality assurance.</p>
 <p>There are even rare cases where it makes sense to maintain tests outside of your package altogether. The tidymodels team uses this strategy for integration-type tests of their whole ecosystem that would be impossible to host inside an individual CRAN package.</p>
-<p>The following subsections enumerate other thing to keep in mind for maximum success when testing on CRAN.</p>
-<section id="speed" class="level4" data-number="16.4.2.1"><h4 data-number="16.4.2.1" class="anchored" data-anchor-id="speed">
-<span class="header-section-number">16.4.2.1</span> Speed</h4>
+</section><section id="speed" class="level3" data-number="16.4.2"><h3 data-number="16.4.2" class="anchored" data-anchor-id="speed">
+<span class="header-section-number">16.4.2</span> Speed</h3>
 <p>Your tests need to run relatively quickly - ideally, less than a minute, in total. Use <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> in a test that is unavoidably long-running.</p>
-</section><section id="reproducibility" class="level4" data-number="16.4.2.2"><h4 data-number="16.4.2.2" class="anchored" data-anchor-id="reproducibility">
-<span class="header-section-number">16.4.2.2</span> Reproducibility</h4>
+</section><section id="reproducibility" class="level3" data-number="16.4.3"><h3 data-number="16.4.3" class="anchored" data-anchor-id="reproducibility">
+<span class="header-section-number">16.4.3</span> Reproducibility</h3>
 <p>Be careful about testing things that are likely to be variable on CRAN machines. It’s risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available). Numerical precision can also vary across platforms, so use <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_equal()</a></code> unless you have a specific reason for using <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html">expect_identical()</a></code>.</p>
-</section><section id="flaky-tests" class="level4" data-number="16.4.2.3"><h4 data-number="16.4.2.3" class="anchored" data-anchor-id="flaky-tests">
-<span class="header-section-number">16.4.2.3</span> Flaky tests</h4>
+</section><section id="flaky-tests" class="level3" data-number="16.4.4"><h3 data-number="16.4.4" class="anchored" data-anchor-id="flaky-tests">
+<span class="header-section-number">16.4.4</span> Flaky tests</h3>
 <p>Due to the scale at which CRAN checks packages, there is basically no latitude for a test that’s “just flaky”, i.e.&nbsp;sometimes fails for incidental reasons. CRAN does not process your package’s test results the way you do, where you can inspect each failure and exercise some human judgment about how concerning it is.</p>
 <p>It’s probably a good idea to eliminate flaky tests, just for your own sake! But if you have valuable, well-written tests that are prone to occasional nuisance failure, definitely put <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> at the start.</p>
 <p>The classic example is any test that accesses a website or web API. Given that any web resource in the world will experience occasional downtime, it’s best to not let such tests run on CRAN. The CRAN Repository Policy says:</p>
@@ -790,10 +756,10 @@ num_colors <- local({
 <p>Packages which use Internet resources should fail gracefully with an informative message if the resource is not available or has changed (and not give a check warning nor error).</p>
 </blockquote>
 <p>Often making such a failure “graceful” would run counter to the behaviour you actually want in practice, i.e.&nbsp;you would want your user to get an error if their request fails. This is why it is usually more practical to test such functionality elsewhere.</p>
-<p>Recall that snapshot tests, by default, are also skipped on CRAN. You typically use such tests to monitor, e.g., how various informational messages look. Slight changes in message formatting are something you want to be alerted to, but do not indicate a major defect in your package. This is the motivation for the default <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> behaviour of snapshot tests.</p>
+<p>Recall that snapshot tests (<a href="testing-basics.html"><span>Chapter&nbsp;14</span></a>), by default, are also skipped on CRAN. You typically use such tests to monitor, e.g., how various informational messages look. Slight changes in message formatting are something you want to be alerted to, but do not indicate a major defect in your package. This is the motivation for the default <code><a href="https://testthat.r-lib.org/reference/skip.html">skip_on_cran()</a></code> behaviour of snapshot tests.</p>
 <p>Finally, flaky tests cause problems for the maintainers of your dependencies. When the packages you depend on are updated, CRAN runs <code>R CMD check</code> on all reverse dependencies, including your package. If your package has flaky tests, your package can be the reason another package does not clear CRAN’s incoming checks and can delay its release.</p>
-</section><section id="process-and-file-system-hygiene" class="level4" data-number="16.4.2.4"><h4 data-number="16.4.2.4" class="anchored" data-anchor-id="process-and-file-system-hygiene">
-<span class="header-section-number">16.4.2.4</span> Process and file system hygiene</h4>
+</section><section id="process-and-file-system-hygiene" class="level3" data-number="16.4.5"><h3 data-number="16.4.5" class="anchored" data-anchor-id="process-and-file-system-hygiene">
+<span class="header-section-number">16.4.5</span> Process and file system hygiene</h3>
 <p>In <a href="testing-design.html#sec-tests-files-where-write"><span>Section&nbsp;15.3.7</span></a>, we urged you to only write into the session temp directory and to clean up after yourself. This practice makes your test suite much more maintainable and predictable. For packages that are (or aspire to be) on CRAN, this is absolutely required per the CRAN repository policy:</p>
 <blockquote class="blockquote">
 <p>Packages should not write in the user’s home filespace (including clipboards), nor anywhere else on the file system apart from the R session’s temporary directory (or during installation in the location pointed to by TMPDIR: and such usage should be cleaned up)…. Limited exceptions may be allowed in interactive sessions if the package obtains confirmation from the user.</p>
@@ -814,31 +780,9 @@ Because they make up such a big part of engineers’ lives, Google puts a lot of
 
 https://abseil.io/resources/swe-book/html/ch12.html
 -->
-<!--
-Another important path-building function to know about is `fs::path_package()`.
-It is essentially `base::system.file()` with one very significant added feature:
-it produces the correct path for both an in-development or an installed package.
-
-```
 
 
-during development               after installation                             
-
-/path/to/local/package           /path/to/some/installed/package
-├── DESCRIPTION                  ├── DESCRIPTION
-├── ...                          ├── ...
-├── inst                         └── some-installed-file.txt
-│   └── some-installed-file.txt  
-└── ...
-```
-
-`fs::path_package("some-installed_file.txt")` builds the correct path in both cases.
-
-A common theme you've now encountered in multiple places is that devtools and related packages try to eliminate hard choices between having a smooth interactive development experience and arranging things correctly in your package.
--->
-
-
-</section></section></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
+</section></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
     const mode = bsSheetEl.getAttribute("data-mode");
