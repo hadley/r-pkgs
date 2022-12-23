@@ -423,32 +423,54 @@ It is unlikely you will use `load_all()` programatically or inside another packa
 knitr::include_graphics("diagrams/loading.png")
 ```
 
-## `R CMD check` {#sec-workflow101-r-cmd-check}
+## `check()` and `R CMD check` {#sec-workflow101-r-cmd-check}
 
-An important part of the package development process is `R CMD check`.
-`R CMD check` automatically checks your code for common problems.
-It's essential if you're planning on submitting to CRAN, but it's useful even if you're not because it automatically detects many common problems that you'd otherwise discover the hard way.
+Base R provides various command line tools and `R CMD check` is the official method for checking that an R package is valid.
+It is essential to pass `R CMD check` if you plan to submit your package to CRAN, but we **highly recommend** holding yourself to this standard even if you don't intend to release your package on CRAN.
+`R CMD check` detects many common problems that you'd otherwise discover the hard way.
 
-`R CMD check` will be frustrating the first time you run it - you'll discover many problems that need to be fixed.
-The key to making `R CMD check` less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix.
+Our recommended way to run `R CMD check` is in the R console via devtools:
+
+```{r}
+#| eval: false
+devtools::check()
+```
+
+We recommend this because it allows you to run `R CMD check` from within R, which dramatically reduces friction and increases the likelihood that you will `check()` early and often!
+This emphasis on fluidity and fast feedback is exactly the same motivation as given for `load_all()`.
+In the case of `check()`, it really is executing `R CMD check` for you.
+It's not just a high fidelity simulation, which is the case for `load_all()`.
+
+::: callout-tip
+## RStudio
+
+RStudio exposes `check()` in the *Build* menu, in the *Build* pane via *Check*, and in keyboard shortcuts Ctrl + Shift + E (Windows & Linux) or Cmd + Shift + E (macOS).
+:::
+
+A rookie mistake that we see often in new package developers is to do too much work on their package before running `R CMD check`.
+Then, when they do finally run it, it's typical to discover many problems, which can be very demoralizing.
+It's counter-intuitive but the key to minimizing this pain is to run `R CMD check` more often: the sooner you find a problem, the easier it is to fix[^workflow101-4].
+We model this behaviour very intentionally in @sec-whole-game.
+
+[^workflow101-4]: A great blog post advocating for "if it hurts, do it more often" is [FrequencyReducesDifficulty](https://martinfowler.com/bliki/FrequencyReducesDifficulty.html) by Martin Fowler.
+
 The upper limit of this approach is to run `R CMD check` every time you make a change.
-If you use GitHub, you'll learn precisely how to do that in @sec-gha.
+We don't run `check()` manually quite that often, but when we're actively working on a package, it's typical to `check()` multiple times per day.
+Don't tinker with your package for days, weeks, or months, waiting for some special milestone to finally run `R CMD check`.
+If you use GitHub (@sec-sw-dev-practices-git-github), we'll show you how to set things up so that R CMD check runs automatically every time you push (@sec-gha).
 
 ### Workflow {#check-workflow}
 
-`R CMD check` is the name of the command you run from the terminal.
-I don't recommend calling it directly.
-Instead, run `devtools::check()`, or press Ctrl/Cmd + Shift + E in RStudio.
-In contrast to `R CMD check`, `devtools::check()`:
+Here's what happens inside `devtools::check()`:
 
 -   Ensures that the documentation is up-to-date by running `devtools::document()`.
 
--   Bundles the package before checking it.
+-   Bundles the package before checking it (@sec-bundled-package).
     This is the best practice for checking packages because it makes sure the check starts with a clean slate: because a package bundle doesn't contain any of the temporary files that can accumulate in your source package, e.g. artifacts like `.so` and `.o` files which accompany compiled code, you can avoid the spurious warnings such files will generate.
 
--   Sets the `NOT_CRAN` environment variable to `TRUE`.
+-   Sets the `NOT_CRAN` environment variable to `"true"`.
     This allows you to selectively skip tests on CRAN.
-    (See `?testthat::skip_on_cran` for details.)
+    See `?testthat::skip_on_cran` and @sec-testing-advanced-skip-on-cran for details.
 
 The workflow for checking a package is simple, but tedious:
 
@@ -464,8 +486,33 @@ The workflow for checking a package is simple, but tedious:
 
 -   `WARNING`s: Likely problems that you must fix if you're planning to submit to CRAN (and a good idea to look into even if you're not).
 
--   `NOTE`s: Mild problems.
+-   `NOTE`s: Mild problems or, in a few cases, just an observation.
     If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives.
     If you have no NOTEs, human intervention is not required, and the package submission process will be easier.
     If it's not possible to eliminate a `NOTE`, you'll need describe why it's OK in your submission comments, as described in @sec-release-process.
-    If you're not submitting to CRAN, carefully read each NOTE, but don't go out of your way to fix things that you don't think are problems.
+    If you're not submitting to CRAN, carefully read each NOTE.
+    If it's easy to eliminate the NOTEs, it's worth it, so that you can continue to strive for a totally clean result.
+    But if eliminating a NOTE will have a net negative impact on your package, it is reasonable to just tolerate it.
+    Make sure that doesn't lead to you ignoring other issues that really should be addressed.
+
+`R CMD check` consists of dozens of individual checks and it would be overwhelming to enumerate them here.
+Instead we explore them in detail in @sec-r-cmd-check.
+
+### Background on `R CMD check`
+
+As you accumulate package development experience, you might want to access `R CMD check` directly at some point.
+Remember that `R CMD check` is something you must run in the terminal, not in the R console.
+You can see its documentation like so:
+
+``` bash
+R CMD check --help
+```
+
+`R CMD check` can be run on a directory that holds an R package in source form (@sec-source-package) or, preferably, on a package bundle (@sec-bundled-package):
+
+``` bash
+R CMD build somepackage
+R CMD check somepackage_0.0.0.9000.tar.gz  
+```
+
+To learn more, see the [Checking packages](https://cran.r-project.org/doc/manuals/R-exts.html#Checking-packages) section of [Writing R Extensions](https://cran.r-project.org/doc/manuals/R-exts.html).
