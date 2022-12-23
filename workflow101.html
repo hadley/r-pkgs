@@ -405,9 +405,10 @@ div.csl-indent {
   </ul>
 </li>
   <li>
-<a href="#sec-workflow101-r-cmd-check" id="toc-sec-workflow101-r-cmd-check" class="nav-link" data-scroll-target="#sec-workflow101-r-cmd-check"><span class="toc-section-number">5.6</span>  <code>R CMD check</code></a>
+<a href="#sec-workflow101-r-cmd-check" id="toc-sec-workflow101-r-cmd-check" class="nav-link" data-scroll-target="#sec-workflow101-r-cmd-check"><span class="toc-section-number">5.6</span>  <code>check()</code> and <code>R CMD check</code></a>
   <ul class="collapse">
 <li><a href="#check-workflow" id="toc-check-workflow" class="nav-link" data-scroll-target="#check-workflow"><span class="toc-section-number">5.6.1</span>  Workflow</a></li>
+  <li><a href="#background-on-r-cmd-check" id="toc-background-on-r-cmd-check" class="nav-link" data-scroll-target="#background-on-r-cmd-check"><span class="toc-section-number">5.6.2</span>  Background on <code>R CMD check</code></a></li>
   </ul>
 </li>
   </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/workflow101.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
@@ -763,17 +764,36 @@ PackageRoxygenize: rd,collate,namespace</code></pre>
 </div>
 </div>
 </section></section><section id="sec-workflow101-r-cmd-check" class="level2" data-number="5.6"><h2 data-number="5.6" class="anchored" data-anchor-id="sec-workflow101-r-cmd-check">
-<span class="header-section-number">5.6</span> <code>R CMD check</code>
+<span class="header-section-number">5.6</span> <code>check()</code> and <code>R CMD check</code>
 </h2>
-<p>An important part of the package development process is <code>R CMD check</code>. <code>R CMD check</code> automatically checks your code for common problems. It’s essential if you’re planning on submitting to CRAN, but it’s useful even if you’re not because it automatically detects many common problems that you’d otherwise discover the hard way.</p>
-<p><code>R CMD check</code> will be frustrating the first time you run it - you’ll discover many problems that need to be fixed. The key to making <code>R CMD check</code> less frustrating is to actually run it more often: the sooner you find a problem, the easier it is to fix. The upper limit of this approach is to run <code>R CMD check</code> every time you make a change. If you use GitHub, you’ll learn precisely how to do that in <a href="software-development-practices.html#sec-gha"><span>Section&nbsp;21.4</span></a>.</p>
+<p>Base R provides various command line tools and <code>R CMD check</code> is the official method for checking that an R package is valid. It is essential to pass <code>R CMD check</code> if you plan to submit your package to CRAN, but we <strong>highly recommend</strong> holding yourself to this standard even if you don’t intend to release your package on CRAN. <code>R CMD check</code> detects many common problems that you’d otherwise discover the hard way.</p>
+<p>Our recommended way to run <code>R CMD check</code> is in the R console via devtools:</p>
+<div class="cell">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/check.html">check</a></span><span class="op">(</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We recommend this because it allows you to run <code>R CMD check</code> from within R, which dramatically reduces friction and increases the likelihood that you will <code>check()</code> early and often! This emphasis on fluidity and fast feedback is exactly the same motivation as given for <code>load_all()</code>. In the case of <code>check()</code>, it really is executing <code>R CMD check</code> for you. It’s not just a high fidelity simulation, which is the case for <code>load_all()</code>.</p>
+<div class="callout-tip callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+RStudio
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>RStudio exposes <code>check()</code> in the <em>Build</em> menu, in the <em>Build</em> pane via <em>Check</em>, and in keyboard shortcuts Ctrl + Shift + E (Windows &amp; Linux) or Cmd + Shift + E (macOS).</p>
+</div>
+</div>
+<p>A rookie mistake that we see often in new package developers is to do too much work on their package before running <code>R CMD check</code>. Then, when they do finally run it, it’s typical to discover many problems, which can be very demoralizing. It’s counter-intuitive but the key to minimizing this pain is to run <code>R CMD check</code> more often: the sooner you find a problem, the easier it is to fix<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. We model this behaviour very intentionally in <a href="whole-game.html"><span>Chapter&nbsp;2</span></a>.</p>
+<p>The upper limit of this approach is to run <code>R CMD check</code> every time you make a change. We don’t run <code>check()</code> manually quite that often, but when we’re actively working on a package, it’s typical to <code>check()</code> multiple times per day. Don’t tinker with your package for days, weeks, or months, waiting for some special milestone to finally run <code>R CMD check</code>. If you use GitHub (<a href="software-development-practices.html#sec-sw-dev-practices-git-github"><span>Section&nbsp;21.2</span></a>), we’ll show you how to set things up so that R CMD check runs automatically every time you push (<a href="software-development-practices.html#sec-gha"><span>Section&nbsp;21.4</span></a>).</p>
 <section id="check-workflow" class="level3" data-number="5.6.1"><h3 data-number="5.6.1" class="anchored" data-anchor-id="check-workflow">
 <span class="header-section-number">5.6.1</span> Workflow</h3>
-<p><code>R CMD check</code> is the name of the command you run from the terminal. I don’t recommend calling it directly. Instead, run <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>, or press Ctrl/Cmd + Shift + E in RStudio. In contrast to <code>R CMD check</code>, <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>:</p>
+<p>Here’s what happens inside <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>:</p>
 <ul>
 <li><p>Ensures that the documentation is up-to-date by running <code><a href="https://devtools.r-lib.org/reference/document.html">devtools::document()</a></code>.</p></li>
-<li><p>Bundles the package before checking it. This is the best practice for checking packages because it makes sure the check starts with a clean slate: because a package bundle doesn’t contain any of the temporary files that can accumulate in your source package, e.g.&nbsp;artifacts like <code>.so</code> and <code>.o</code> files which accompany compiled code, you can avoid the spurious warnings such files will generate.</p></li>
-<li><p>Sets the <code>NOT_CRAN</code> environment variable to <code>TRUE</code>. This allows you to selectively skip tests on CRAN. (See <code><a href="https://testthat.r-lib.org/reference/skip.html">?testthat::skip_on_cran</a></code> for details.)</p></li>
+<li><p>Bundles the package before checking it (<a href="structure.html#sec-bundled-package"><span>Section&nbsp;4.4</span></a>). This is the best practice for checking packages because it makes sure the check starts with a clean slate: because a package bundle doesn’t contain any of the temporary files that can accumulate in your source package, e.g.&nbsp;artifacts like <code>.so</code> and <code>.o</code> files which accompany compiled code, you can avoid the spurious warnings such files will generate.</p></li>
+<li><p>Sets the <code>NOT_CRAN</code> environment variable to <code>"true"</code>. This allows you to selectively skip tests on CRAN. See <code><a href="https://testthat.r-lib.org/reference/skip.html">?testthat::skip_on_cran</a></code> and <a href="testing-advanced.html#sec-testing-advanced-skip-on-cran"><span>Section&nbsp;16.4.1</span></a> for details.</p></li>
 </ul>
 <p>The workflow for checking a package is simple, but tedious:</p>
 <ol type="1">
@@ -785,8 +805,18 @@ PackageRoxygenize: rd,collate,namespace</code></pre>
 <ul>
 <li><p><code>ERROR</code>s: Severe problems that you should fix regardless of whether or not you’re submitting to CRAN.</p></li>
 <li><p><code>WARNING</code>s: Likely problems that you must fix if you’re planning to submit to CRAN (and a good idea to look into even if you’re not).</p></li>
-<li><p><code>NOTE</code>s: Mild problems. If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives. If you have no NOTEs, human intervention is not required, and the package submission process will be easier. If it’s not possible to eliminate a <code>NOTE</code>, you’ll need describe why it’s OK in your submission comments, as described in <a href="lifecycle.html#sec-release-process"><span>Section&nbsp;22.5.1</span></a>. If you’re not submitting to CRAN, carefully read each NOTE, but don’t go out of your way to fix things that you don’t think are problems.</p></li>
+<li><p><code>NOTE</code>s: Mild problems or, in a few cases, just an observation. If you are submitting to CRAN, you should strive to eliminate all NOTEs, even if they are false positives. If you have no NOTEs, human intervention is not required, and the package submission process will be easier. If it’s not possible to eliminate a <code>NOTE</code>, you’ll need describe why it’s OK in your submission comments, as described in <a href="lifecycle.html#sec-release-process"><span>Section&nbsp;22.5.1</span></a>. If you’re not submitting to CRAN, carefully read each NOTE. If it’s easy to eliminate the NOTEs, it’s worth it, so that you can continue to strive for a totally clean result. But if eliminating a NOTE will have a net negative impact on your package, it is reasonable to just tolerate it. Make sure that doesn’t lead to you ignoring other issues that really should be addressed.</p></li>
 </ul>
+<p><code>R CMD check</code> consists of dozens of individual checks and it would be overwhelming to enumerate them here. Instead we explore them in detail in <a href="R-CMD-check.html"><span>Appendix&nbsp;A</span></a>.</p>
+</section><section id="background-on-r-cmd-check" class="level3" data-number="5.6.2"><h3 data-number="5.6.2" class="anchored" data-anchor-id="background-on-r-cmd-check">
+<span class="header-section-number">5.6.2</span> Background on <code>R CMD check</code>
+</h3>
+<p>As you accumulate package development experience, you might want to access <code>R CMD check</code> directly at some point. Remember that <code>R CMD check</code> is something you must run in the terminal, not in the R console. You can see its documentation like so:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD check <span class="at">--help</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>R CMD check</code> can be run on a directory that holds an R package in source form (<a href="structure.html#sec-source-package"><span>Section&nbsp;4.3</span></a>) or, preferably, on a package bundle (<a href="structure.html#sec-bundled-package"><span>Section&nbsp;4.4</span></a>):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD build somepackage</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">R</span> CMD check somepackage_0.0.0.9000.tar.gz  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To learn more, see the <a href="https://cran.r-project.org/doc/manuals/R-exts.html#Checking-packages">Checking packages</a> section of <a href="https://cran.r-project.org/doc/manuals/R-exts.html">Writing R Extensions</a>.</p>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
@@ -807,6 +837,7 @@ Silge, Julia, John C. Nash, and Spencer Graves. 2018. <span>“<span class="noca
 </div>
 <a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a>
 </li>
+<li id="fn4"><p>A great blog post advocating for “if it hurts, do it more often” is <a href="https://martinfowler.com/bliki/FrequencyReducesDifficulty.html">FrequencyReducesDifficulty</a> by Martin Fowler.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol></section></main><!-- /main --><script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
