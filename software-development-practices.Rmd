@@ -28,7 +28,7 @@ You will notice that we recommend using certain tools:
     We strongly recommend syncing your local Git repositories to a hosted service and, at this point in time, GitHub is the or, at least, "an" obvious choice.
     This the topic of ??.
 
--   Continuous integration and deployment, a.k.a. CI/CD (or just CI).
+-   Continuous integration and deployment, a.k.a. CI/CD (or even just CI).
     This terminology comes from the general software engineering world and can sound somewhat grandiose or intimidating when applied to your personal R package.
     All this really means is that you set up specific package development tasks to happen automatically when you push new work to your hosted repository.
     Typically you'll want to run `R CMD check` and to re-build and deploy your package website.
@@ -40,11 +40,80 @@ While we don't recommend forcing yourself to do everything above on day one of y
 
 The main reason is that these tools make it so much easier to do the right thing, e.g. to experiment, document, test, check, and collaborate.
 By adopting a shared toolkit, part-time and newer package developers gain access to the same workflows used by experts.
+This requires a certain amount of faith and upfront investment, but we believe this pays off.
 
 ## Git and GitHub {#sec-sw-dev-practices-git-github}
 
-Planned content: general pep talk on the value of using version control and that, in 2022, Git is the obvious choice.
-Once you're using Git, it makes sense to use a hosting service and, in 2022 in the R community, GitHub is the most popular choice and what the devtools ecosystem supports.
+[Git](https://git-scm.com) is a version control system that was originally built to coordinate the work of a global group of developers working on the Linux kernel.
+Git manages the evolution of a set of files --- called a repository --- in a highly structured way and we recommend that every R package should also be a Git repository (and also, probably, an RStudio Project; @sec-workflow101-rstudio-projects).
+
+A solo developer, working on a single computer, will benefit from adopting version control.
+But, for most of us, that benefit is not nearly large enough to make up for the pain of installing and using Git.
+In our opinion, for most folks, the pros of Git only outweigh the cons once you take the additional step of hooking your local repository up to a remote host like [GitHub](https://github.com).
+The joint use of Git and GitHub offers many benefits that more than justify the learning curve.
+
+### Standard practice
+
+This recommendation is well aligned with the current, general practices in software development.
+Here are a few relevant facts from the [2022 Stack Overflow developer survey](https://survey.stackoverflow.co/2022/#overview), which is based on about 70K responses.
+
+-   94% report using Git.
+    The second-most used version control system was SVN, used by 5% of respondents.
+
+-   For personal projects, 87% of respondents report using GitHub, followed by GitLab (21%) and Bitbucket (11%).
+    The ranking is the same albeit less skewed for professional work: GitHub still dominates with 56%, followed by GitLab (29%) and Bitbucket (18%).
+
+We can even learn a bit about the habits of R package developers, based on the URLs found in the `DESCRIPTION` files of CRAN packages.
+As of December 2022, there are about 18K packages on CRAN, of which about 55% have a non-empty `URL` field (over 10K).
+Of those, 80% have a GitHub URL (over 8K), followed by GitLab (just over 1%) and Bitbucket (around 0.5%).
+
+```{r}
+#| eval: false
+#| include: false
+library(tidyverse)
+
+db <- tools::CRAN_package_db() |> 
+  as_tibble() |> 
+  select(package = Package, URL)
+db
+
+db |> 
+  count(has_URL = !is.na(URL)) |> 
+  mutate(prop = n / sum(n))
+db |> 
+  filter(!is.na(URL)) |> 
+  mutate(
+    github = str_detect(URL, "github"),
+    gitlab = str_detect(URL, "gitlab"),
+    bitbucket = str_detect(URL, "bitbucket")
+  ) |> 
+  count(
+    github, gitlab, bitbucket
+  ) |> 
+  mutate(prop = n / sum(n))
+```
+
+The prevalence of Git/GitHub, both within the R community and beyond, should help you feel confident that adoption will have tangible benefits.
+Furthermore, the sheer popularity of these tools means there are lots of resources available for learning how to use Git and GitHub and for getting unstuck[^software-development-practices-1].
+
+[^software-development-practices-1]: We feature GitHub here, for hosted version control, because it's what we use and what has the best support in devtools.
+    However, all the big-picture principles and even some details hold up for alternative platforms, such as Gitlab and Bitbucket.
+
+Two specific resources that address the intersection of Git/GitHub and the R world are the website [Happy Git and GitHub for the useR](https://happygitwithr.com/index.html) and the article "Excuse me, do you have a moment to talk about version control?" [@bryan2018-tas].
+
+We conclude this section with a few examples of why Git/GitHub can be valuable specifically for R package development:
+
+-   Communication with users: GitHub Issues are well-suited for taking bug reports and feature requests.
+    Unlike email sent to the maintainer, these conversations are accessible to others and searchable.
+
+-   Collaboration: GitHub pull requests are a very low-friction way for outside contributors to help fix bugs and add features.
+
+-   Distribution: Functions like `devtools::install_github("r-lib/devtools")` and `pak::pkg_install("r-lib/devtools")` allow people to easily install the development version of your package, based on a source repository.
+    More generally, anyone can install your package from any valid Git ref, such as a branch, specific SHA, pull request, or tag.
+
+-   Website: GitHub Pages is one of the easiest ways to offer a website for your package (@sec-website-deployment).
+
+-   Continuous integration: This is actually the topic of the next section, so read on for more.
 
 ## Continuous integration {#sec-ci}
 
