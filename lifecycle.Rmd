@@ -43,7 +43,7 @@ This level of granularity is really only of interest to developers.
 But the package states accessible via the Git history are genuinely useful for the maintainer, so if you needed any encouragement to be more intentional with your commits, let this be it.
 
 The primary user-facing signal of meaningful change is the package version number.
-Recall that this important piece of metadata lives in `Version` field of the `DESCRIPTION` file:
+Recall that this important piece of metadata lives in the `Version` field of the `DESCRIPTION` file:
 
 ``` yaml
 Package: usethis
@@ -66,8 +66,7 @@ cran_package_history("usethis") |>
 ```
 
 This is the type of package evolution we're going to address in this chapter.
-In section ??,
-we'll delve into the world of software version numbers, which is a richer topic than you might expect.
+In section @sec-lifecycle-version-number, we'll delve into the world of software version numbers, which is a richer topic than you might expect.
 R also has some specific rules and tools around package version numbers.
 Finally, we'll explain the conventions we use for the version numbers of tidyverse packages.
 
@@ -83,7 +82,7 @@ Furthermore, you can browse the state of all the package's source files at any s
 [^lifecycle-1]: It's unusual for an initial release to be version 1.0.0, but remember that usethis was basically carved out of a very mature package (devtools).
 
 This information is technically available from the repository where usethis is actually developed (<https://github.com/r-lib/usethis>).
-But you have to work much harder to zoom out to the level of CRAN releases, as opposed to the small incremental steps in which development actually unfolds.
+But you have to work much harder to zoom out to the level of CRAN releases, amid the clutter of the small incremental steps in which development actually unfolds.
 These three different views of usethis's evolution are all useful for different purposes:
 
 -   <https://cran.r-project.org/src/contrib/Archive/usethis/>
@@ -177,6 +176,8 @@ Here is our recommended framework for managing the package version number:
     Increment the development version, e.g. from `9000` to `9001`, if you've added an important feature and you (or others) need to be able to detect or require the presence of this feature.
     For example, this can happen when two packages are developing in tandem.
     This is generally the only reason that we bother to increment the development version.
+    This makes in-development versions special and, in some sense, degenerate.
+    Since we don't increment the development component with each Git commit, the same package version number is associated with many different states of the package source, in between releases.
 
 The advice above is inspired in part by [Semantic Versioning](https://semver.org) and by the [X.Org](https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
 Read them if you'd like to understand more about the standards of versioning used by many open source projects.
@@ -199,7 +200,7 @@ A change that is not backward compatible is often described as a *breaking* chan
 In section @sec-lifecycle-backward-compatibility, we'll revisit the topic of backward compatibility.
 Similar to the issue of package dependencies (@sec-dependencies-pros-cons), it's a question of trade-offs.
 
-In practice, backward compatibility is not clearcut distinction.
+In practice, backward compatibility is not a clear-cut distinction.
 It is typical to assess the impact of a change from a few angles:
 
 -   Degree of change in behaviour.
@@ -265,18 +266,43 @@ usethis::use_version()
 
 ## Backward compatibility {#sec-lifecycle-backward-compatibility}
 
-The big difference between major and minor versions is whether or not the code is backward compatible.
-This difference is a bit academic in the R community because the way most people update packages is by running `update.packages()`, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code.
-While more R users are becoming familiar with tools like [packrat](https://rstudio.github.io/packrat/), which capture package versions on a per-project basis, you do need to be a little cautious when making big backward incompatible changes, regardless of what you do with the version number.
+The big difference between major and minor releases is whether or not the code is backward compatible.
+This difference is a bit academic in the R community, because of the way most users manage package installation.
+If we're being honest, most R users don't manage package versions in a very intentional way.
+Given the way `update.packages()` and `install.packages()` work, it's quite easy to upgrade a package to a new major version without really meaning to, especially for dependencies of the target package.
+This, in turn, can lead to unexpected exposure to breaking changes in code that previously worked.
+This unpleasantness has implications both for users and for maintainers.
 
-The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time for your users' time.
+If it's important to protect a data product against change in its R package dependencies, we recommend the use of a project-specific package library.
+In particular, we like to implement this approach using the [renv package](https://rstudio.github.io/renv/).
+This supports a lifestyle where a user's default package library is managed in the usual, somewhat haphazard way.
+But any project that has a specific, higher requirement for reproducibility is managed with renv.
+This keeps package updates triggered by work in project A from breaking the code in project B and also helps with collaboration and deployment.
+
+We suspect that package-specific libraries and tools like renv are currently under-utilized in the R world.
+That is, lots of R users still use just one package library.
+Therefore, package maintainers still need to exercise considerable caution and care when they introduce breaking changes, regardless of what's happening with the version number.
+In section ??,
+we describe how tidyverse packages approach this, supported by tools in the lifecycle package.
+
+As with dependencies (@sec-dependencies-pros-cons), we find that extremism isn't a very productive stance.
+Extreme resistance to breaking change puts a significant drag on ongoing development and maintenance.
+Backward compatible code tends to be harder to work with because of the need to maintain multiple paths to support functionality from previous versions.
 The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes.
-Backward compatible code also tends to be harder to read because of the need to maintain multiple paths to support functionality from previous versions.
+This, in turn, can discourage adoption by new users and can make it harder to recruit new contributors.
 Be concerned about backward compatibility, but don't let it paralyse you.
 
-There are good reasons to make backward incompatible changes - if you made a design mistake that makes your package harder to use it's better to fix it sooner rather than later.
+The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time and pain for that of your users.
+There are good reasons to make backward incompatible changes.
+Once you've decided it's necessary, your main priority is to use a humane process that is respectful of your users.
+
+## Lifecycle stages and tools and package
+
+*obviously the name of this section need to change*
+
 If you do need to make a backward incompatible change, it's best to do it gradually.
 Provide interim version(s) between where are you now and where you'd like to be, and provide advice about what's going to change.
+
 Depending on what you're changing, use one of the following techniques to let your users know what's happening:
 
 -   Don't immediately remove a function.
