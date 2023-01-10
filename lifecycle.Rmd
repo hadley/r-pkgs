@@ -42,7 +42,7 @@ This represents a specific state of the source package that can be talked about,
 This level of granularity is really only of interest to developers.
 But the package states accessible via the Git history are genuinely useful for the maintainer, so if you needed any encouragement to be more intentional with your commits, let this be it.
 
-The primary user-facing signal of change is the package version number.
+The primary user-facing signal of meaningful change is the package version number.
 Recall that this important piece of metadata lives in `Version` field of the `DESCRIPTION` file:
 
 ``` yaml
@@ -52,34 +52,38 @@ Version: 2.1.6
 ...
 ```
 
-If you visit the CRAN landing page for usethis, you can access its history via *Downloads \> Old sources \> usethis archive*.
-That links to a folder of package bundles, reflecting usethis's source for each version released on CRAN:
+If you visit the CRAN landing page for usethis, you can access its history via *Downloads \> Old sources \> [usethis archive](https://cran.r-project.org/src/contrib/Archive/usethis/)*.
+That links to a folder of package bundles (@sec-bundled-package), reflecting usethis's source for each version released on CRAN:
 
 ```{r}
-#| echo: false
+#| R.options = list(tidyverse.quiet = TRUE),
+#| echo = FALSE
 library(tidyverse)
 library(pkgsearch)
 cran_package_history("usethis") |> 
-  select(Version, `Date/Publication`)
+  select(Version, Date = `Date/Publication`) |> 
+  knitr::kable(row.names = FALSE)
 ```
 
 This is the type of package evolution we're going to address in this chapter.
 In section ??,
 we'll delve into the world of software version numbers, which is a richer topic than you might expect.
-Then we'll go over specific rules and tools around version numbers for R packages.
+R also has some specific rules and tools around package version numbers.
 Finally, we'll explain the conventions we use for the version numbers of tidyverse packages.
 
-But first, this is a good time to revisit a resource we first pointed out in ??,
-when introducing the different states of an R package.
+But first, this is a good time to revisit a resource we first pointed out in @sec-source-package, when introducing the different states of an R package.
 Recall that the (unofficial) `cran` organization on GitHub provides a read-only history of all CRAN packages.
 For example, you can get a different view of usethis's released versions at <https://github.com/cran/usethis/>.
 
 The archive provided by CRAN itself allows you to download older versions of usethis as `.tar.gz` files, which is useful if you truly want to get your hands on the source of an older version.
 However, if you just want to quickly check something about a version or compare two versions of usethis, the read-only GitHub mirror is much more useful.
 Each commit in this repo's history represents a CRAN release, which makes it easy to see exactly what changed: <https://github.com/cran/usethis/commits/HEAD>.
+Furthermore, you can browse the state of all the package's source files at any specific version, such as [usethis's initial release at version 1.0.0](https://github.com/cran/usethis/tree/1.0.0)[^lifecycle-1].
+
+[^lifecycle-1]: It's unusual for an initial release to be version 1.0.0, but remember that usethis was basically carved out of a very mature package (devtools).
 
 This information is technically available from the repository where usethis is actually developed (<https://github.com/r-lib/usethis>).
-But you would have to work much harder to zoom out to the level of CRAN releases, as opposed to the small incremental steps in which development actually unfolds.
+But you have to work much harder to zoom out to the level of CRAN releases, as opposed to the small incremental steps in which development actually unfolds.
 These three different views of usethis's evolution are all useful for different purposes:
 
 -   <https://cran.r-project.org/src/contrib/Archive/usethis/>
@@ -88,50 +92,165 @@ These three different views of usethis's evolution are all useful for different 
 
 -   <https://github.com/r-lib/usethis/commits/HEAD>
 
-## Version
+## Package version number {#sec-lifecycle-version-number}
 
 Formally, an R package version is a sequence of at least two integers separated by either `.` or `-`.
 For example, `1.0` and `0.9.1-10` are valid versions, but `1` and `1.0-devel` are not.
-You can parse a version number with `numeric_version()`.
+Base R offers the `utils::package_version()`[^lifecycle-2] function to parse a package version string into a proper S3 class by the same name.
+This class makes it easier to do things like compare versions.
+
+[^lifecycle-2]: We can call `package_version()` directly here, but in package code, you should use the `utils::package_version()` form and list the utils package in `Imports`.
 
 ```{r}
-numeric_version("1.9") == numeric_version("1.9.0")
-numeric_version("1.9.0") < numeric_version("1.10.0")
+#| error: true
+package_version(c("1.0", "0.9.1-10"))
+class(package_version("1.0"))
+
+# these versions are not allowed for an R package
+package_version("1")
+package_version("1.0-devel")
+
+# comparing package versions
+package_version("1.9") == package_version("1.9.0")
+package_version("1.9") < package_version("1.9.2")
+package_version(c("1.9", "1.9.2")) < package_version("1.10")
 ```
 
-For example, a package might have a version 1.9.
-This version number is considered by R to be the same as 1.9.0, less than version 1.9.2, and all of these are less than version 1.10 (which is version "one point ten", not "one point one zero").
-R uses version numbers to determine whether package dependencies are satisfied.
-A package might, for example, import package `devtools (>= 1.9.2)`, in which case version 1.9 or 1.9.0 wouldn't work.
+The last examples above make it clear that R considers version `1.9` to be equal to `1.9.0` and to be less than `1.9.2`.
+And both `1.9` and `1.9.2` are less than `1.10`, which you should think of as version "one point ten", not "one point one zero".
 
+If you're skeptical that the `package_version` class is really necessary, check out this example:
+
+```{r}
+"2.0" > "10.0"
+package_version("2.0") > package_version("10.0")
+```
+
+The string `2.0` is considered to be greater than the string `10.0`, because the character `2` comes after the character `1`.
+By parsing version strings into proper `package_version` objects, we get the correct comparison, i.e. that version `2.0` is less than version `10.0`.
+
+R offers this support for working with package versions, because it's necessary, for example, to determine whether package dependencies are satisfied (@sec-description-imports-suggests-minium-version).
+Under-the-hood, this tooling is used to enforce minimum versions recorded like this in `DESCRIPTION`:
+
+``` yaml
+Imports:
+    dplyr (>= 1.0.0),
+    tidyr (>= 1.1.0)
+```
+
+In your own code, if you need to determine which version of a package is installed, use `utils::packageVersion()`[^lifecycle-3]:
+
+[^lifecycle-3]: As with `package_version()`, in package code, you should use the `utils::packageVersion()` form and list the utils package in `Imports`.
+
+```{r}
+packageVersion("usethis")
+str(packageVersion("usethis"))
+
+packageVersion("usethis") > package_version("10.0")
+packageVersion("usethis") > "10.0"
+```
+
+The return value of `packageVersion()` has the `package_version` class and is therefore ready for comparison to other version numbers.
+Note the last example where we seem to be comparing a version number to a string.
+How can we get the correct result without explicitly converting `10.0` to a package version?
+It turns out this conversion is automatic as long as one of the comparators has the `package_version` class.
+
+## Tidyverse package version conventions
+
+R considers `0.9.1-10` to be a valid package version, but you'll never see a version number like that for a tidyverse package.
 Here is our recommended framework for managing the package version number:
 
 -   Always use `.` as the separator, never `-`.
 
 -   A released version number consists of three numbers, `<major>.<minor>.<patch>`.
-    For version number 1.9.2, 1 is the major number, 9 is the minor number, and 2 is the patch number.
-    Never use versions like `1.0`, instead always spell out the three components, `1.0.0`.
+    For version number `1.9.2`, `1` is the major number, `9` is the minor number, and `2` is the patch number.
+    Never use versions like `1.0`.
+    Always spell out the three components, `1.0.0`.
 
 -   An in-development package has a fourth component: the development version.
     This should start at 9000.
-    For example, the first version of the package should be `0.0.0.9000`.
-    There are two reasons for this recommendation: First, it makes it easy to see if a package is released or in-development.
-    Also, the use of the fourth place means that you're not limited to what the next version will be.
+    The number 9000 is arbitrary, but provides a clear signal that there's something different about this version number.
+    There are two reasons for this practice: First, the presence of a fourth component makes it easy to tell if you're dealing with a released or in-development version.
+    Also, the use of the fourth place means that you're not limited to what the next released version will be.
     `0.0.1`, `0.1.0`, and `1.0.0` are all greater than `0.0.0.9000`.
 
-    Increment the development version, e.g. from `9000` to `9001`, if you've added an important feature that another development package needs to depend on.
+    Increment the development version, e.g. from `9000` to `9001`, if you've added an important feature and you (or others) need to be able to detect or require the presence of this feature.
+    For example, this can happen when two packages are developing in tandem.
+    This is generally the only reason that we bother to increment the development version.
 
 The advice above is inspired in part by [Semantic Versioning](https://semver.org) and by the [X.Org](https://www.x.org/releases/X11R7.7/doc/xorg-docs/Versions.html) versioning schemes.
 Read them if you'd like to understand more about the standards of versioning used by many open source projects.
+But we should underscore that our practices our inspired by these schemes and are somewhat less regimented.
 Finally, know that other maintainers follow different philosophies on how to manage the package version number.
 
-The version number of your package increases with subsequent releases of a package, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about what kind of changes are in the package.
-We discuss this and more in @sec-release-version.
-For now, just remember that the first version of your package should be `0.0.0.9000`.
-`usethis::create_package()` does this, by default.
-`usethis::use_version()` increments the package version; when called interactively, with no argument, it presents a helpful menu:
+## Major vs. minor vs. patch release
 
-```{r, eval = FALSE}
+The version number of your package is always increasing, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about the nature of the changes.
+The transition from 0.3.1 to 0.3.2, which is a patch release, has a very different vibe from the transition from 0.3.2 to 1.0.0, which is a major release.
+A package version number can also convey information about where the package is in its lifecycle.
+For example, the version 1.0.0 often signals that the public interface of a package is considered stable.
+
+How do you decide which type of release to make, i.e. which component(s) of the version should you increment?
+A key concept is whether the associated changes are backward compatible, meaning that pre-existing code will still "work" with the new version.
+We put "work" in quotes, because this designation is open to a certain amount of interpretation.
+A hardliner might take this to mean "the code works in exactly the same way, in all contexts, for all inputs".
+A more pragmatic interpretation is that "the code still works, but could produce a different result in some edge cases".
+A change that is not backward compatible is often described as a *breaking* change.
+In section @sec-lifecycle-backward-compatibility, we'll revisit the topic of backward compatibility.
+Similar to the issue of package dependencies (@sec-dependencies-pros-cons), it's a question of trade-offs.
+
+In practice, backward compatibility is not clearcut distinction.
+It is typical to assess the impact of a change from a few angles:
+
+-   Degree of change in behaviour.
+    The most extreme is to make something that used to be possible into an error, i.e. impossible.
+    In contrast, changes to a print method are much less significant.
+
+-   How the changes fit into the design of the package.
+    A change to low-level infrastructure, such as a utility that gets called in all user-facing functions, is more fraught than a change that only affects one parameter of a single function.
+
+-   How much existing usage is affected.
+    This is a combination of how many of your users will perceive the change and how many existing users there are to begin with.
+
+Recall that a version number will have one of these forms, if you're following our conventions:
+
+``` default
+<major>.<minor>.<patch>        # released version
+<major>.<minor>.<patch>.<dev>  # in-development version
+```
+
+If the current package version is `0.8.1.9000`, here's our advice on how to pick the version number for the next release:
+
+-   Increment `patch`, e.g. `0.8.2` for a **patch release**: you've fixed bugs, but you haven't added any significant new features.
+    For example, if we discover a show-stopping bug shortly after a release, we would make a quick patch release with the fix.
+    Most releases will have a patch number of 0.
+
+-   Increment `minor`, e.g. `0.9.0`, for a **minor release**.
+    A minor release can include bug fixes, new features, and changes that are backward compatible[^lifecycle-4].
+    This is the most common type of release.
+    It's perfectly fine to have so many minor releases that you need to use two (or even three!) digits, e.g. `1.17.0`.
+
+-   Increment `major`, e.g. `1.0.0`, for a **major release**.
+    This is best reserved for changes that are not backward compatible and that are likely to affect many users.
+    The `1.0.0` release has special significance and typically indicates that your package is feature complete with a stable API.
+
+[^lifecycle-4]: For some suitably pragmatic definition of "backward compatible".
+
+The trickiest decision you are likely to face is whether a change is "breaking" enough to deserve a major release.
+For example, if you make an API-incompatible change to a rarely-used part of your code, it may not make sense to increase the major number.
+But if you fix a bug that many people depend on (it happens!), it will feel like a breaking change to those folks.
+It's conceivable that such a bug fix could merit a major release.
+
+### Package version mechanics
+
+Your package should start with version number `0.0.0.9000`.
+`usethis::create_package()` starts with this version, by default.
+
+From that point on, you can use `usethis::use_version()` to increment the package version.
+When called interactively, with no argument, it presents a helpful menu:
+
+```{r}
+#| eval: false
 usethis::use_version()
 #> Current version is 0.1.
 #> What should the new version be? (0 to exit) 
@@ -144,33 +263,7 @@ usethis::use_version()
 #> Selection: 
 ```
 
-## Version number {#sec-release-version}
-
-If you've been following our advice, the version number of your in-development package will have four components, `major.minor.patch.dev`, where `dev` is at least 9000.
-The number 9000 is arbitrary, but provides a strong visual signal there's something different about this version number.
-Released packages don't have a `dev` component, so now you need to drop that and pick a version number based on the changes you've made.
-For example, if the current version is `0.8.1.9000` will the next CRAN version be `0.8.2`, `0.9.0` or `1.0.0`?
-Use this advice to decide:
-
--   Increment `patch`, e.g. `0.8.2` for a **patch**: you've fixed bugs without adding any significant new features.
-    I'll often do a patch release if, after release, I discover a show-stopping bug that needs to be fixed ASAP.
-    Most releases will have a patch number of 0.
-
--   Increment `minor`, e.g. `0.9.0`, for a **minor release**.
-    A minor release can include bug fixes, new features and changes in backward compatibility.
-    This is the most common type of release.
-    It's perfectly fine to have so many minor releases that you need to use two (or even three!) digits, e.g. `1.17.0`.
-
--   Increment `major`, e.g. `1.0.0`, for a **major release**.
-    This is best reserved for changes that are not backward compatible and that are likely to affect many users.
-    Going from `0.b.c` to `1.0.0` typically indicates that your package is feature complete with a stable API.
-
-    In practice, backward compatibility is not an all-or-nothing threshold.
-    For example, if you make an API-incompatible change to a rarely-used part of your code, it may not deserve a major number change.
-    But if you fix a bug that many people depend on, it will feel like an API breaking change.
-    Use your best judgement.
-
-## Backward compatibility {#compatibility}
+## Backward compatibility {#sec-lifecycle-backward-compatibility}
 
 The big difference between major and minor versions is whether or not the code is backward compatible.
 This difference is a bit academic in the R community because the way most people update packages is by running `update.packages()`, which always updates to the latest version of the package, even if the major version has changed, potentially breaking code.

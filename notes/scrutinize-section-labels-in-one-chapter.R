@@ -1,7 +1,7 @@
 library(tidyverse)
 library(parsermd)
 
-file <- "website.Rmd"
+file <- "description.Rmd"
 (rmd <- parse_rmd(file) |> 
     rmd_select(has_type("rmd_heading")))
 
