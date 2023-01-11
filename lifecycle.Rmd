@@ -18,8 +18,8 @@ The trickiest part of managing change is balancing the interests of various stak
 -   The future users, which hopefully includes the existing users, but could potentially include many more people.
 
 It's impossible to optimize for all of these folks, all of the time, all at once.
-So we'll describe how we think about various tradeoffs.
-Even if your priorities differ from ours, this chapter should still help you identify issues you want to think about.
+So we'll describe how we think about various trade-offs.
+Even if your priorities differ from ours, this chapter should still help you identify issues you want to consider.
 
 It's helpful to have a framework for talking about the different phases a package or a function goes through, such as "experimental" or "stable".
 In ??
@@ -290,7 +290,7 @@ Extreme resistance to breaking change puts a significant drag on ongoing develop
 Backward compatible code tends to be harder to work with because of the need to maintain multiple paths to support functionality from previous versions.
 The harder you strive to maintain backward compatibility, the harder it is to develop new features or fix old mistakes.
 This, in turn, can discourage adoption by new users and can make it harder to recruit new contributors.
-Be concerned about backward compatibility, but don't let it paralyse you.
+Be concerned about backward compatibility, but don't let it paralyze you.
 
 The importance of backward compatibility is directly proportional to the number of people using your package: you are trading your time and pain for that of your users.
 There are good reasons to make backward incompatible changes.
@@ -300,41 +300,157 @@ Once you've decided it's necessary, your main priority is to use a humane proces
 
 *obviously the name of this section need to change*
 
-If you do need to make a backward incompatible change, it's best to do it gradually.
-Provide interim version(s) between where are you now and where you'd like to be, and provide advice about what's going to change.
+The tidyverse team's approach to package evolution has become more structured and deliberate over the years.
+The system relies on two major components:
 
-Depending on what you're changing, use one of the following techniques to let your users know what's happening:
+-   Lifecycle stages, which can be applied at different levels, i.e. to an individual argument or function or to an entire package.
 
--   Don't immediately remove a function.
-    First deprecate it.
-    For example, imagine your package is version `0.5.0` and you want to remove `fun()`.
-    In version, `0.6.0`, you'd use `.Deprecated()` to display a warning message whenever someone uses the function:
+-   Deprecation tools and conventions, which we use when transitioning a function from one lifecycle stage to another.
 
-    ```{r}
-    # 0.6.0
-    fun <- function(x, y, z) {
-      .Deprecated("sum")
-      x + y + z
-    }
+The lifecycle package is the primary home for these tools and its documentation is a great place to learn more ([lifecycle.r-lib.org](https://lifecycle.r-lib.org/index.html)).
+We won't duplicate too much of those details here.
+Instead, we highlight the general principles of lifecycle management and present some specific examples of successful lifecycle "moves".
 
-    fun(1, 2, 3)
-    ```
+### Lifecycle stages and badges
 
-    Then, remove the function once you got to `0.7.0` (or if you are being very strict, once you got to `1.0.0` since it's a backward incompatible change).
+The four lifecycle stages are:
 
--   Similarly, if you're removing a function argument, first warn about it:
+-   Stable.
+    This is the default stage and signals that users should feel comfortable relying on a function or package.
+    Breaking changes should be rare and should happen gradually, giving users sufficient time and guidance to adapt their usage.
 
-    ```{r}
-    bar <- function(x, y, z) {
-      if (!missing(y)) {
-        warning("argument y is deprecated; please use z instead.", 
-          call. = FALSE)
-        z <- y
-      }
-    }
+-   Experimental.
+    This is appropriate when a function is first introduced and the maintainer reserves the right to change it without much of a deprecation process.
 
-    bar(1, 2, 3)
-    ```
+-   Deprecated.
+    This applies to functionality that is slated for removal.
+    Initially, it still works, but triggers a deprecation warning with information about preferred alternatives.
+    After a suitable amount of time and with an appropriate version change, such functions are typically removed.
+
+-   Superseded.
+    This is a softer version of deprecated, where legacy functionality is preserved as if in a time capsule.
+    Superseded functions receive only minimal maintenance, such as critical bug fixes.
+
+You can get much more detail in `vignette("stages", package = "lifecycle")`.
+
+The lifecycle stage is most often communicated through a badge.
+If you'd like to use lifecycle badges, call `usethis::use_lifecycle()` to do some one-time setup:
+
+```{r}
+#| include: false
+#| cache: false
+temp_pkg <- fs::path_temp("somepackage")
+withr::with_options(
+  list(usethis.description = NULL),
+  usethis::create_package(
+    temp_pkg, open = FALSE, rstudio = TRUE, check_name = FALSE
+  )
+)
+op <- usethis::proj_get()
+usethis::proj_set(temp_pkg)
+usethis::use_package_doc(open = FALSE)
+```
+
+```{r}
+usethis::use_lifecycle()
+```
+
+```{r}
+#| include: false
+usethis::proj_set(op)
+unlink(temp_pkg)
+```
+
+This leaves you in a position to use lifecycle badges in help topics (and to use lifecycle functions, which we discuss in ??).
+For a function, include the badge in its `@description` block.
+Here's how we indicate that `dplyr::top_n()` is "superseded":
+
+```{r}
+#' Select top (or bottom) n rows (by value)
+#'
+#' @description
+#' `r lifecycle::badge("superseded")`
+#' `top_n()` has been superseded in favour of [slice_min()]/[slice_max()]....
+```
+
+For a function argument, include the badge in the `@param` tag.
+Here's how the deprecation of `readr::write_file(path =)` is indicated:
+
+```{r}
+#' @param path `r lifecycle::badge("deprecated")` Use the `file` argument
+#'   instead.
+```
+
+Call `usethis::use_lifecycle_badge()` if you want to use a badge in README to indicate the lifecycle of an entire package.
+
+If the lifecycle of a package is "stable", we might not bother with a badge, as "stable" is the assumed default.
+Similarly, we typically only use a badge for a function or argument if its stage differs from the overall stage of the package.
+
+### Deprecating a function or argument
+
+If you're going to remove a function or argument, it's usually best to do so in phases.
+Deprecation is a general term for the situation where something is explicitly discouraged, but it has not yet been removed.
+
+The `lifecycle::deprecate_warn()` function can be used inside a function to inform your user that they're using a deprecated feature and, ideally, to let them know about the preferred alternative.
+
+```{r R.options = list("lifecycle:::calling_package" = "somepackage", "lifecycle_verbosity" = "warning")}
+# new function
+add3 <- function(x, y, z) {
+  x + y + z
+}
+
+# old function
+plus3 <- function(x, y, z) {
+  lifecycle::deprecate_warn("1.0.0", "plus3()", "add3()")
+  add3(x, y, z)
+}
+
+plus3(1, 2, 3)
+```
+
+At this point, a user who calls `plus3()` sees a warning explaining that the function has a new name, but we go ahead and call `add3()` with their inputs.
+Pre-existing code still "works".
+In some future major release, `plus3()` could be removed entirely.
+
+When you're deprecating an argument, you can also use `lifecycle::deprecate()` as its default value.
+Here we continue an example from above, i.e. the switch from `path` to `file` in `readr::write_file()`:
+
+```{r}
+#| eval: false
+write_file <- function(x,
+                       file,
+                       append = FALSE,
+                       path = deprecated()) {
+  if (is_present(path)) {
+    deprecate_warn("1.4.0", "write_file(path = )", "write_file(file = )")
+    file <- path
+  }
+  ...
+}
+```
+
+TODO: Say more about `deprecated()`.
+What's the point?
+Visual signal to the user + works with `lifecycle::is_present()`.
+Why we think it's OK to call it as `deprecated()` and not `lifecycle::deprecated()`.
+
+Here's a hypothetical blueprint for removing a function `fun()`:
+
+-   Package version `0.5.0`: `fun()` exists.
+    The lifecycle stage of the package is "experimental", as indicated by the pre-`1.0.0` version number and, perhaps, a package-level badge.
+    The lifecycle stage of `fun()` is also "experimental", by extension.
+
+-   Package version `0.6.0`: The deprecation process of `fun()` begins.
+    We insert `r lifecycle::badge("deprecated")` in its `@description` to place a badge in its help topic.
+    In the body of `fun()`, we add a call to `lifecycle::deprecate_warn()` to inform users about the situation.
+
+-   Package version `0.7.0` or `1.0.0`: `fun()` is removed.
+    Whether this happens in a minor or major release will depend on the context, i.e. how widely used this package and function are.
+
+TODO: mention `.Deprecated()` as the base way.
+Also maybe mention `!missing(x)` as a base alternative to `deprecated()` + `is_present()`.
+
+TODO: update everything after this point.
 
 -   If you're deprecating a lot of code, it can be useful to add a helper function.
     For example, ggplot2 has `gg_dep` which automatically displays a message, warning or error, depending on how much the version number has changed.
