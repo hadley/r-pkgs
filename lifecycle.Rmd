@@ -2,7 +2,7 @@
 
 ```{r, echo = FALSE}
 source("common.R")
-status("drafting")
+status("polishing")
 ```
 
 ## Introduction
@@ -317,22 +317,35 @@ The importance of backward compatibility is directly proportional to the number 
 There are good reasons to make backward incompatible changes.
 Once you've decided it's necessary, your main priority is to use a humane process that is respectful of your users.
 
-## Lifecycle stages and tools and package
-
-*obviously the name of this section need to change*
+## Lifecycle stages and supporting tools
 
 The tidyverse team's approach to package evolution has become more structured and deliberate over the years.
-The system relies on two major components:
+The associated tooling and documentation lives in the lifecycle package ([lifecycle.r-lib.org](https://lifecycle.r-lib.org/index.html)).
+The approach relies on two major components:
 
 -   Lifecycle stages, which can be applied at different levels, i.e. to an individual argument or function or to an entire package.
 
--   Deprecation tools and conventions, which we use when transitioning a function from one lifecycle stage to another.
+-   Conventions and functions to use when transitioning a function from one lifecycle stage to another.
+    The deprecation process is the one that demands the most care.
 
-The lifecycle package is the primary home for these tools and its documentation is a great place to learn more ([lifecycle.r-lib.org](https://lifecycle.r-lib.org/index.html)).
-We won't duplicate too much of those details here.
-Instead, we highlight the general principles of lifecycle management and present some specific examples of successful lifecycle "moves".
+We won't duplicate too much of the lifecycle documentation here.
+Instead, we highlight the general principles of lifecycle management and present specific examples of successful lifecycle "moves".
 
 ### Lifecycle stages and badges
+
+```{r}
+#| label: fig-lifecycle-stages
+#| echo: false
+#| out.width: 75%
+#| fig.cap: >
+#|   The four primary stages of the tidyverse lifecycle: stable, deprecated,
+#|   superseded, and experimental.
+#| fig-alt: >
+#|   A diagram showing the transitions between the four main stages:
+#|   experimental can become stable and stable can become deprecated or
+#|   superseded.
+knitr::include_graphics("diagrams/lifecycle.svg")
+```
 
 The four lifecycle stages are:
 
@@ -342,6 +355,7 @@ The four lifecycle stages are:
 
 -   Experimental.
     This is appropriate when a function is first introduced and the maintainer reserves the right to change it without much of a deprecation process.
+    This is the implied stage for any package with a major version of `0`, i.e. that hasn't has a `1.0.0` release yet.
 
 -   Deprecated.
     This applies to functionality that is slated for removal.
@@ -354,7 +368,7 @@ The four lifecycle stages are:
 
 You can get much more detail in `vignette("stages", package = "lifecycle")`.
 
-The lifecycle stage is most often communicated through a badge.
+The lifecycle stage is often communicated through a badge.
 If you'd like to use lifecycle badges, call `usethis::use_lifecycle()` to do some one-time setup:
 
 ```{r}
@@ -382,35 +396,38 @@ usethis::proj_set(op)
 unlink(temp_pkg)
 ```
 
-This leaves you in a position to use lifecycle badges in help topics (and to use lifecycle functions, which we discuss in ??).
+This leaves you in a position to use lifecycle badges in help topics and to use lifecycle functions, as described in the remainder of this section.
+
 For a function, include the badge in its `@description` block.
-Here's how we indicate that `dplyr::top_n()` is "superseded":
+Here's how we indicate that `dplyr::top_n()` is superseded:
 
 ```{r}
 #' Select top (or bottom) n rows (by value)
 #'
 #' @description
 #' `r lifecycle::badge("superseded")`
-#' `top_n()` has been superseded in favour of [slice_min()]/[slice_max()]....
+#' `top_n()` has been superseded in favour of ...
 ```
 
 For a function argument, include the badge in the `@param` tag.
-Here's how the deprecation of `readr::write_file(path =)` is indicated:
+Here's how the deprecation of `readr::write_file(path =)` is documented:
 
 ```{r}
 #' @param path `r lifecycle::badge("deprecated")` Use the `file` argument
 #'   instead.
 ```
 
-Call `usethis::use_lifecycle_badge()` if you want to use a badge in README to indicate the lifecycle of an entire package.
+Call `usethis::use_lifecycle_badge()` if you want to use a badge in `README` to indicate the lifecycle of an entire package (@sec-readme).
 
-If the lifecycle of a package is "stable", we might not bother with a badge, as "stable" is the assumed default.
-Similarly, we typically only use a badge for a function or argument if its stage differs from the overall stage of the package.
+If the lifecycle of a package is stable, it's not really necessary to use a badge, since that is the assumed default stage.
+Similarly, we typically only use a badge for a function if its stage differs from that of the associated package and likewise for an argument and the associated function.
 
-### Deprecating a function or argument
+### Deprecating a function
 
 If you're going to remove a function or argument, it's usually best to do so in phases.
 Deprecation is a general term for the situation where something is explicitly discouraged, but it has not yet been removed.
+
+-   Significant changes to an existing function requires planning, including making gradual changes over multiple versions. Try and develop a sequence of transformations where each change can be accompanied by an informative error message.
 
 The `lifecycle::deprecate_warn()` function can be used inside a function to inform your user that they're using a deprecated feature and, ideally, to let them know about the preferred alternative.
 
@@ -432,6 +449,8 @@ plus3(1, 2, 3)
 At this point, a user who calls `plus3()` sees a warning explaining that the function has a new name, but we go ahead and call `add3()` with their inputs.
 Pre-existing code still "works".
 In some future major release, `plus3()` could be removed entirely.
+
+### Deprecating an argument
 
 When you're deprecating an argument, you can also use `lifecycle::deprecate()` as its default value.
 Here we continue an example from above, i.e. the switch from `path` to `file` in `readr::write_file()`:
@@ -471,61 +490,122 @@ Here's a hypothetical blueprint for removing a function `fun()`:
 TODO: mention `.Deprecated()` as the base way.
 Also maybe mention `!missing(x)` as a base alternative to `deprecated()` + `is_present()`.
 
-TODO: update everything after this point.
+### Deprecation helpers
 
--   If you're deprecating a lot of code, it can be useful to add a helper function.
-    For example, ggplot2 has `gg_dep` which automatically displays a message, warning or error, depending on how much the version number has changed.
+Sometimes a deprecation affects code in multiple places and it's clunky to inline the full logic everywhere.
+In this case, you might create an internal helper to centralize the deprecation logic.
 
-    ```{r}
-    gg_dep <- function(version, msg) {
-      v <- as.package_version(version)
-      cv <- packageVersion("ggplot2")
+This happened in googledrive, when we changed how to control the package's verbosity.
+The original design let the user specify this in every single function, via the `verbose = TRUE/FALSE` argument.
+Later, we decided it made more sense to use a global option to control verbosity at the package level.
+This is a case of (eventually) removing an argument, but it affects practically every single function in the package.
+Here's what a typical function looks like after starting the deprecation process:
 
-      # If current major number is greater than last-good major number, or if
-      # current minor number is more than 1 greater than last-good minor number,
-      # return an error.
-      if (cv[[1,1]] > v[[1,1]]  ||  cv[[1,2]] > v[[1,2]] + 1) {
-        stop(msg, " (Defunct; last used in version ", version, ")",
-          call. = FALSE)
+```{r}
+#| eval: false
+drive_publish <- function(file, ..., verbose = deprecated()) {
+  warn_for_verbose(verbose)
+  # rest of the function ...
+}
+```
 
-      # If minor number differs by one, give a warning
-      } else if (cv[[1,2]] > v[[1,2]]) {
-        warning(msg, " (Deprecated; last used in version ", version, ")",
-          call. = FALSE)
+Note the use of `verbose = deprecated()`.
+Here's what `warn_for_verbose()` looks like (slightly simplified for this example):
 
-      # If only subminor number is greater, provide a message
-      } else if (cv[[1,3]] > v[[1,3]]) {
-        message(msg, " (Deprecated; last used in version ", version, ")")
-      }
+```{r}
+#| eval: false
+warn_for_verbose <- function(verbose = TRUE,
+                             env = caller_env(),
+                             user_env = caller_env(2)) {
+  # This function is not meant to be called directly, so don't worry about its
+  # default of `verbose = TRUE`.
+  # In authentic, indirect usage of this helper, this picks up on whether
+  # `verbose` was present in the **user's** call to the calling function.
+  if (!lifecycle::is_present(verbose) || isTRUE(verbose)) {
+    return(invisible())
+  }
 
-      invisible()
-    }
-    ```
+  lifecycle::deprecate_warn(
+    when = "2.0.0",
+    what = I("The `verbose` argument"),
+    details = c(
+      "Set `options(googledrive_quiet = TRUE)` to suppress all googledrive messages.",
+      "For finer control, use `local_drive_quiet()` or `with_drive_quiet()`.",
+      "googledrive's `verbose` argument will be removed in the future."
+    ),
+    user_env = user_env,
+    id = "googledrive_verbose"
+  )
+  # only set the option during authentic, indirect usage
+  if (!identical(env, global_env())) {
+    local_drive_quiet(env = env)
+  }
+  invisible()
+}
+```
 
--   Significant changes to an existing function requires planning, including making gradual changes over multiple versions.
-    Try and develop a sequence of transformations where each change can be accompanied by an informative error message.
+`warn_for_verbose()` does nothing if the user leaves `verbose` unspecified or if they request `verbose = TRUE` (default behaviour).
+But if the user explicitly asks for `verbose = FALSE`, we throw a warning with advice on the preferred way to suppress googledrive's messaging.
+We also go ahead and honour their wishes for the time being, via the call to `local_drive_quiet()`.
+In the next major release, the `verbose` argument can be removed everywhere and this helper can be deleted.
 
--   If you want to use functionality in a new version of another package, don't make it a hard install-time dependency in the `DESCRIPTION` (forcing your users to upgrade that package might break other code).
-    Instead check for the version at run-time:
+### Dealing with change in a dependency
 
-    ```{r, eval = FALSE}
-    if (packageVersion("ggplot2") < "1.0.0") {
-      stop("ggplot2 >= 1.0.0 needed for this function.", call. = FALSE)
-    }
-    ```
+What if you want to use functionality in a new version of another package?
+Or the less happy version: what if changes in another package are going to break your package?
+There are a few possible scenarios, depending on whether the other package has been released and the experience you want for your users.
+We'll start with the simple, happier case of using features newly available in a dependency.
 
-    This is also useful if you're responding to changes in one of your dependencies - you'll want to have a version that will work both before and after the change.
-    This will allow you to submit it to CRAN at any time, even before the other package.
-    Doing this may generate some `R CMD check` notes.
-    For example:
+If the other package has already been released, you could bump the minimum version you declare for it in `DESCRIPTION` and use the new functionality unconditionally.
+This also means that users who update your package will be forced to update the other package, which you should at least contemplate.
+Note, also, that this only works for a dependency in `Imports`.
+While it's a good idea to record a minimum version for a suggested package, it's not generally enforced the same as for `Imports`.
 
-    ```{r, eval = FALSE}
-    if (packageVersion("foo") > "1.0.0") {
-      foo::baz()
-    } else {
-      foo::bar()
-    }
-    ```
+If you don't want to require your users to update this other package, you could make your package work with both new and old versions.
+This means you'll check its version at run-time and proceed accordingly.
+Here are examples of how that might look:
 
-    If `baz` doesn't exist in foo version 1.0.0, you'll get a note that it doesn't exist in foo's namespace.
-    Just explain that you're working around a difference between versions in your submission to CRAN.
+```{r}
+#| eval: false
+your_new_function <- function(...) {
+  if (packageVersion("otherpkg") < "1.0.0") {
+    stop("otherpkg >= 1.0.0 needed for this function.")
+  }
+  # the rest of the function
+}
+
+your_existing_function <- function(..., cool_new_feature = FALSE) {
+  if (isTRUE(cool_new_feature) && packageVersion("otherpkg") < "1.0.0") {
+    message("otherpkg >= 1.0.0 is needed for cool_new_feature")
+    cool_new_feature <- FALSE
+  }
+  # the rest of the function
+}
+```
+
+This approach can also be adapted if you're responding to not-yet-released changes that are coming soon in one of your dependencies.
+It's helpful to have a version of your package that works both before and after the change.
+This allows you to release your package at any time, even before the other package.
+
+Sometimes you can refactor your code to make it work with either version of the other package, in which case you don't need to condition on the other package's version at all.
+But sometimes the nature of your usage makes thing trickier.
+Consider this example:
+
+```{r}
+#| eval: false
+your_function <- function(...) {
+  if (packageVersion("otherpkg") > "1.0.0") {
+    otherpkg::their_new_function()
+  } else {
+    otherpkg::their_old_function()
+  }
+  # the rest of the function
+}
+```
+
+If `their_new_function()` doesn't exist in the latest release of otherpkg, you'll get a note from `R CMD check` stating that `their_new_function()` doesn't exist in otherpkg's namespace.
+If you're submitting such a version to CRAN, you can explain that you're doing this for the sake of backward and forward compatibility with otherpkg and they are likely to be satisfied.
+
+### Superseding a function
+
+talk about preserving legacy behaviour to make it easier for users to apply a quick bandaid
