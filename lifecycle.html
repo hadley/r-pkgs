@@ -730,11 +730,8 @@ Second edition
 <p>If the lifecycle of a package is stable, it’s not really necessary to use a badge, since that is the assumed default stage. Similarly, we typically only use a badge for a function if its stage differs from that of the associated package and likewise for an argument and the associated function.</p>
 </section><section id="deprecating-a-function" class="level3" data-number="22.8.2"><h3 data-number="22.8.2" class="anchored" data-anchor-id="deprecating-a-function">
 <span class="header-section-number">22.8.2</span> Deprecating a function</h3>
-<p>If you’re going to remove a function or argument, it’s usually best to do so in phases. Deprecation is a general term for the situation where something is explicitly discouraged, but it has not yet been removed.</p>
-<ul>
-<li>Significant changes to an existing function requires planning, including making gradual changes over multiple versions. Try and develop a sequence of transformations where each change can be accompanied by an informative error message.</li>
-</ul>
-<p>The <code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html">lifecycle::deprecate_warn()</a></code> function can be used inside a function to inform your user that they’re using a deprecated feature and, ideally, to let them know about the preferred alternative.</p>
+<p>If you’re going to remove or make significant changes to a function, it’s usually best to do so in phases. Deprecation is a general term for the situation where something is explicitly discouraged, but it has not yet been removed. Various deprecation scenarios are explored in <code><a href="https://lifecycle.r-lib.org/articles/communicate.html">vignette("communicate", package = "lifecycle")</a></code>; we’re just going to cover the main idea here.</p>
+<p>The <code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html">lifecycle::deprecate_warn()</a></code> function can be used inside a function to inform your user that they’re using a deprecated feature and, ideally, to let them know about the preferred alternative. In this example, the <code>add3()</code> function is going to be replaced with <code>plus3()</code>:</p>
 <div class="cell" data-r.options="{&quot;lifecycle:::calling_package&quot;:&quot;somepackage&quot;,&quot;lifecycle_verbosity&quot;:&quot;warning&quot;}">
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># new function</span></span>
 <span><span class="va">add3</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">z</span><span class="op">)</span> <span class="op">{</span></span>
@@ -753,29 +750,37 @@ Second edition
 <span><span class="co">#&gt; [1] 6</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>At this point, a user who calls <code>plus3()</code> sees a warning explaining that the function has a new name, but we go ahead and call <code>add3()</code> with their inputs. Pre-existing code still “works”. In some future major release, <code>plus3()</code> could be removed entirely.</p>
+<p><code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html">lifecycle::deprecate_warn()</a></code> has a few features that are worth highlighting:</p>
+<ul>
+<li><p>The warning message is built up from inputs like <code>when</code>, <code>what</code>, <code>with</code>, and <code>details</code>, which gives deprecation warnings a predictable form across different functions, packages, and time. The intent is to reduce the cognitive load for users who may already be somewhat stressed.</p></li>
+<li><p>By default, a specific warning is only issued once every 8 hours, in an effort to cause just the right amount of aggravation. The goal is to be just annoying enough to motivate the user to update their code before the function or argument goes away, but not so annoying that they fling their computer into the sea. Near the end of the deprecation process, the <code>always</code> argument can be set to <code>TRUE</code> to warn on every call.</p></li>
+<li><p>A warning is only issued if the person reading it is the one who can actually do something about it, i.e.&nbsp;update the code. If a user calls a deprecated function indirectly, i.e.&nbsp;because they are using a package that’s using a deprecated function, by default that user doesn’t get a warning. (But the maintainer of the guilty package will see these warnings in their test results.)</p></li>
+</ul>
+<p>If you’re using base R only, the <code><a href="https://rdrr.io/r/base/Deprecated.html">.Deprecated()</a></code> and <code><a href="https://rdrr.io/r/base/Defunct.html">.Defunct()</a></code> functions are the closest substitutes for <code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html">lifecycle::deprecate_warn()</a></code> and friends.</p>
 </section><section id="deprecating-an-argument" class="level3" data-number="22.8.3"><h3 data-number="22.8.3" class="anchored" data-anchor-id="deprecating-an-argument">
 <span class="header-section-number">22.8.3</span> Deprecating an argument</h3>
-<p>When you’re deprecating an argument, you can also use <code>lifecycle::deprecate()</code> as its default value. Here we continue an example from above, i.e.&nbsp;the switch from <code>path</code> to <code>file</code> in <code><a href="https://readr.tidyverse.org/reference/read_file.html">readr::write_file()</a></code>:</p>
+<p><code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html">lifecycle::deprecate_warn()</a></code> is also useful when deprecating an argument. In this case, it’s also handy to use <code>lifecycle::deprecate()</code> as the default value for the deprecated argument. Here we continue an example from above, i.e.&nbsp;the switch from <code>path</code> to <code>file</code> in <code><a href="https://readr.tidyverse.org/reference/read_file.html">readr::write_file()</a></code>:</p>
 <div class="cell">
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">write_file</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>,</span>
 <span>                       <span class="va">file</span>,</span>
 <span>                       <span class="va">append</span> <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                       <span class="va">path</span> <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="fu">is_present</span><span class="op">(</span><span class="va">path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu">deprecate_warn</span><span class="op">(</span><span class="st">"1.4.0"</span>, <span class="st">"write_file(path = )"</span>, <span class="st">"write_file(file = )"</span><span class="op">)</span></span>
+<span>    <span class="fu">deprecate_warn</span><span class="op">(</span><span class="st">"1.4.0"</span>, <span class="st">"write_file(path)"</span>, <span class="st">"write_file(file)"</span><span class="op">)</span></span>
 <span>    <span class="va">file</span> <span class="op">&lt;-</span> <span class="va">path</span></span>
 <span>  <span class="op">}</span></span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>TODO: Say more about <code>deprecated()</code>. What’s the point? Visual signal to the user + works with <code><a href="https://lifecycle.r-lib.org/reference/deprecated.html">lifecycle::is_present()</a></code>. Why we think it’s OK to call it as <code>deprecated()</code> and not <code><a href="https://lifecycle.r-lib.org/reference/deprecated.html">lifecycle::deprecated()</a></code>.</p>
+<p>The use of <code>deprecated()</code> as the default accomplishes two things. First, if the user reads the documentation, this is a strong signal that an argument is deprecated. But <code>deprecated()</code> also has benefits for the package maintainer. Inside the affected function, you can use <code><a href="https://lifecycle.r-lib.org/reference/deprecated.html">lifecycle::is_present()</a></code> to determine if the user has specified the deprecated argument and proceed accordingly, as shown above.</p>
+<p>somewhat similar to deprecating function, in that is the most useful function. For detailed coverage, see <code><a href="https://lifecycle.r-lib.org/articles/communicate.html">vignette("communicate", package = "lifecycle")</a></code>. When you’re deprecating an argument, you can also use . TODO: Say more about <code>deprecated()</code>. What’s the point? Visual signal to the user + works with <code><a href="https://lifecycle.r-lib.org/reference/deprecated.html">lifecycle::is_present()</a></code>. Why we think it’s OK to call it as <code>deprecated()</code> and not <code><a href="https://lifecycle.r-lib.org/reference/deprecated.html">lifecycle::deprecated()</a></code>.</p>
 <p>Here’s a hypothetical blueprint for removing a function <code>fun()</code>:</p>
 <ul>
 <li><p>Package version <code>0.5.0</code>: <code>fun()</code> exists. The lifecycle stage of the package is “experimental”, as indicated by the pre-<code>1.0.0</code> version number and, perhaps, a package-level badge. The lifecycle stage of <code>fun()</code> is also “experimental”, by extension.</p></li>
 <li><p>Package version <code>0.6.0</code>: The deprecation process of <code>fun()</code> begins. We insert in its <code>@description</code> to place a badge in its help topic. In the body of <code>fun()</code>, we add a call to <code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html">lifecycle::deprecate_warn()</a></code> to inform users about the situation.</p></li>
 <li><p>Package version <code>0.7.0</code> or <code>1.0.0</code>: <code>fun()</code> is removed. Whether this happens in a minor or major release will depend on the context, i.e.&nbsp;how widely used this package and function are.</p></li>
 </ul>
-<p>TODO: mention <code><a href="https://rdrr.io/r/base/Deprecated.html">.Deprecated()</a></code> as the base way. Also maybe mention <code>!missing(x)</code> as a base alternative to <code>deprecated()</code> + <code>is_present()</code>.</p>
+<p>If you’re using base R only, the <code><a href="https://rdrr.io/r/base/missing.html">missing()</a></code> function has substantial overlap with <code><a href="https://lifecycle.r-lib.org/reference/deprecated.html">lifecycle::is_present()</a></code>, although it can be trickier to finesse issues around default values.</p>
 </section><section id="deprecation-helpers" class="level3" data-number="22.8.4"><h3 data-number="22.8.4" class="anchored" data-anchor-id="deprecation-helpers">
 <span class="header-section-number">22.8.4</span> Deprecation helpers</h3>
 <p>Sometimes a deprecation affects code in multiple places and it’s clunky to inline the full logic everywhere. In this case, you might create an internal helper to centralize the deprecation logic.</p>
@@ -807,8 +812,7 @@ Second edition
 <span>      <span class="st">"For finer control, use `local_drive_quiet()` or `with_drive_quiet()`."</span>,</span>
 <span>      <span class="st">"googledrive's `verbose` argument will be removed in the future."</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>    user_env <span class="op">=</span> <span class="va">user_env</span>,</span>
-<span>    id <span class="op">=</span> <span class="st">"googledrive_verbose"</span></span>
+<span>    user_env <span class="op">=</span> <span class="va">user_env</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="co"># only set the option during authentic, indirect usage</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">env</span>, <span class="fu">global_env</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
