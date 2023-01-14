@@ -204,7 +204,7 @@ Read them if you'd like to understand more about the standards of versioning use
 But we should underscore that our practices our inspired by these schemes and are somewhat less regimented.
 Finally, know that other maintainers follow different philosophies on how to manage the package version number.
 
-## Backward compatibility and breaking change
+## Backward compatibility and breaking change {#sec-lifecycle-breaking-change-definition}
 
 The version number of your package is always increasing, but it's more than just an incrementing counter -- the way the number changes with each release can convey information about the nature of the changes.
 The transition from 0.3.1 to 0.3.2, which is a patch release, has a very different vibe from the transition from 0.3.2 to 1.0.0, which is a major release.
@@ -217,20 +217,61 @@ We put "work" in quotes, because this designation is open to a certain amount of
 A hardliner might take this to mean "the code works in exactly the same way, in all contexts, for all inputs".
 A more pragmatic interpretation is that "the code still works, but could produce a different result in some edge cases".
 A change that is not backward compatible is often described as a *breaking* change.
-Here we're going to talk about how to assess whether a change is breaking and in section @sec-lifecycle-backward-compatibility we'll talk about how to decide if a breaking change is worth it.
+Here we're going to talk about how to assess whether a change is breaking.
+In @sec-lifecycle-breaking-change-pros-cons we'll talk about how to decide if a breaking change is worth it.
 
 In practice, backward compatibility is not a clear-cut distinction.
 It is typical to assess the impact of a change from a few angles:
 
 -   Degree of change in behaviour.
     The most extreme is to make something that used to be possible into an error, i.e. impossible.
-    In contrast, changes to a print method are much less significant.
 
 -   How the changes fit into the design of the package.
     A change to low-level infrastructure, such as a utility that gets called in all user-facing functions, is more fraught than a change that only affects one parameter of a single function.
 
 -   How much existing usage is affected.
     This is a combination of how many of your users will perceive the change and how many existing users there are to begin with.
+
+Here are some concrete examples of breaking change:
+
+-   Removing a function
+
+-   Removing an argument
+
+-   Narrowing the set of valid inputs to a function
+
+Conversely, these are usually not considered breaking:
+
+-   Adding a function.
+    Caveat: there's a small chance this could introduce a conflict in user code.
+
+-   Adding an argument.
+    Caveat: this could be breaking for some usage, e.g. if a user is relying on position-based argument matching.
+    This also requires some care in a function that accepts `…`.
+
+-   Increasing the set of valid inputs.
+
+-   Changing the text of a print method or error.
+    Caveat: This can be breaking if other packages depend on yours in regrettable ways, such as having a test that fails if you tweak an error message in your package.
+
+-   Fixing a bug.
+    Caveat: It really can happen that users write code that "depends" on a bug.
+    Sometimes such code was flawed from the beginning, but the problem went undetected until you fixed your bug.
+    Other times this surfaces code that uses your package in an unexpected way, i.e. it's not necessarily *wrong*, but neither is it *right*.
+
+If reasoning about code was a reliable way to assess how it will work in real life, the world wouldn't have so much buggy software.
+Therefore you should take every opportunity you get to collect actual data on the consequences of a change in your package.
+The tidyverse team has a fairly extensive set of tools for running so-called reverse dependency checks (@release-deps), where we run `R CMD check` on all the packages that depend on ours.
+
+Sometimes we use this to study the impact of a potential change, i.e. we use reverse dependency checks to guide development, not only as a last-minute, pre-release check.
+This leads to yet another, deeply pragmatic definition of a breaking change:
+
+> A change is breaking if it causes a CRAN package that was previously passing `R CMD check` to now fail AND the package's original usage and behavior is correct.
+
+This is obviously a narrow and incomplete definition of breaking change, but at least it's relatively easy to get solid data.
+
+Hopefully we've made the point that backward compatibility is not always a clearcut distinction.
+But hopefully we've also provided plenty of concrete criteria to consider when thinking about whether a change could break someone else's code.
 
 ## Major vs minor vs patch release
 
@@ -285,10 +326,12 @@ usethis::use_version()
 #> Selection: 
 ```
 
-## Backward compatibility {#sec-lifecycle-backward-compatibility}
+## Pros and cons of breaking change {#sec-lifecycle-breaking-change-pros-cons}
 
 The big difference between major and minor releases is whether or not the code is backward compatible.
-This difference is a bit academic in the R community, because of the way most users manage package installation.
+In the general software world, the idea is that a major release signals to users that it may contain breaking changes and they should only upgrade when they have the capacity to deal with any issues that emerge.
+
+Reality is a bit different in the R community, because of the way most users manage package installation.
 If we're being honest, most R users don't manage package versions in a very intentional way.
 Given the way `update.packages()` and `install.packages()` work, it's quite easy to upgrade a package to a new major version without really meaning to, especially for dependencies of the target package.
 This, in turn, can lead to unexpected exposure to breaking changes in code that previously worked.
