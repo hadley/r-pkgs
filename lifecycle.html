@@ -365,7 +365,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="toc-section-number">22.1</span>  Introduction</a></li>
   <li><a href="#sec-lifecycle-evolution" id="toc-sec-lifecycle-evolution" class="nav-link" data-scroll-target="#sec-lifecycle-evolution"><span class="toc-section-number">22.2</span>  Package evolution</a></li>
   <li><a href="#sec-lifecycle-version-number" id="toc-sec-lifecycle-version-number" class="nav-link" data-scroll-target="#sec-lifecycle-version-number"><span class="toc-section-number">22.3</span>  Package version number</a></li>
-  <li><a href="#tidyverse-package-version-conventions" id="toc-tidyverse-package-version-conventions" class="nav-link" data-scroll-target="#tidyverse-package-version-conventions"><span class="toc-section-number">22.4</span>  Tidyverse package version conventions</a></li>
+  <li><a href="#sec-lifecycle-version-number-tidyverse" id="toc-sec-lifecycle-version-number-tidyverse" class="nav-link" data-scroll-target="#sec-lifecycle-version-number-tidyverse"><span class="toc-section-number">22.4</span>  Tidyverse package version conventions</a></li>
   <li><a href="#sec-lifecycle-breaking-change-definition" id="toc-sec-lifecycle-breaking-change-definition" class="nav-link" data-scroll-target="#sec-lifecycle-breaking-change-definition"><span class="toc-section-number">22.5</span>  Backward compatibility and breaking change</a></li>
   <li>
 <a href="#major-vs-minor-vs-patch-release" id="toc-major-vs-minor-vs-patch-release" class="nav-link" data-scroll-target="#major-vs-minor-vs-patch-release"><span class="toc-section-number">22.6</span>  Major vs minor vs patch release</a>
@@ -421,8 +421,7 @@ Second edition
 </div>
 <section id="introduction" class="level2" data-number="22.1"><h2 data-number="22.1" class="anchored" data-anchor-id="introduction">
 <span class="header-section-number">22.1</span> Introduction</h2>
-<p>The closing chapter of the book is about managing the evolution of your package and, perhaps eventually, distributing it through CRAN.</p>
-<p>The trickiest part of managing change is balancing the interests of various stakeholders:</p>
+<p>This chapter is about managing the evolution of your package. The trickiest part of managing change is balancing the interests of various stakeholders:</p>
 <ul>
 <li><p>The maintainer(s), which includes you and possibly others, especially in the future.</p></li>
 <li><p>The existing users, which could be just you or a small group of colleagues or it could be tens or hundreds of thousands of people.</p></li>
@@ -430,7 +429,7 @@ Second edition
 </ul>
 <p>It’s impossible to optimize for all of these folks, all of the time, all at once. So we’ll describe how we think about various trade-offs. Even if your priorities differ from those of the tidyverse team, this chapter should still help you identify issues you want to consider.</p>
 <p>Very few users complain when a package gains features or gets a bug fix. Instead, we’re mostly going to talk about so-called breaking changes, such as removing a function or narrowing the acceptable inputs for a function.</p>
-<p>In ??, we explore how to determine whether something is a breaking change or, more realistically, to gauge where it lies on a spectrum of “breakingness”. Even though it can be painful, sometimes a breaking change is beneficial for the long-term health of a package.</p>
+<p>In <a href="#sec-lifecycle-breaking-change-definition"><span>Section&nbsp;22.5</span></a>, we explore how to determine whether something is a breaking change or, more realistically, to gauge where it lies on a spectrum of “breakingness”. Even though it can be painful, sometimes a breaking change is beneficial for the long-term health of a package (<a href="#sec-lifecycle-breaking-change-pros-cons"><span>Section&nbsp;22.7</span></a>).</p>
 <p>Since change is inevitable, the kindest thing you can do for your users to communicate clearly and help them adapt to change. Several practices work together to achieve this:</p>
 <ul>
 <li><p>Package version number: be intentional about what sort of changes are appropriate in, e.g., a patch release versus a major release (<a href="#sec-lifecycle-evolution"><span>Section&nbsp;22.2</span></a>, <a href="#sec-lifecycle-version-number"><span>Section&nbsp;22.3</span></a>).</p></li>
@@ -439,7 +438,6 @@ Second edition
 </ul>
 <p>The main form of user-facing change is a package release () and one of the most overt signals about the nature of change is the version number (). Having established the meaning of a breaking change and the mechanics of version numbers, we can lay out our conventions for different types of releases in ??. There we describe what sort of change is considered appropriate for a major versus minor versus patch release.</p>
 <p>The last piece of lifecycle infrastructure we’ll cover is the concept of lifecycle stages: experimental, stable, superseded, and deprecated. These stages can apply to a function or an argument or even a whole package. The tidyverse team maintains various helpful utilities in the lifecycle package, such as badges that can be used in documentation and specialized functions for communicating lifecycle changes to users. We can then discuss how specific lifecycle transitions connect back to our conventions about different types of releases.</p>
-<p>(TODO: I suspect this will split off into its own chapter, again.) Finally, in ?? we delve into the specifics of releasing a package on CRAN and the ongoing work required to keep it safely on CRAN. We’ve been calling out CRAN-specific concerns throughout the book. So ?? is where we underscore some of the most crucial points and, most importantly, can take a holistic look at blah blah CRAN.</p>
 </section><section id="sec-lifecycle-evolution" class="level2" data-number="22.2"><h2 data-number="22.2" class="anchored" data-anchor-id="sec-lifecycle-evolution">
 <span class="header-section-number">22.2</span> Package evolution</h2>
 <p>First we should establish a working definition of what it means for your package to change. Technically, you could say that the package has changed every time any file in its source changes. This level of pedantry isn’t terribly useful, though. The smallest increment of change that’s meaningful is probably a Git commit. This represents a specific state of the source package that can be talked about, installed from, compared to, subjected to <code>R CMD check</code>, reverted to, and so on. This level of granularity is really only of interest to developers. But the package states accessible via the Git history are genuinely useful for the maintainer, so if you needed any encouragement to be more intentional with your commits, let this be it.</p>
@@ -587,7 +585,7 @@ Second edition
 <span><span class="co">#&gt; [1] FALSE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The return value of <code><a href="https://rdrr.io/r/utils/packageDescription.html">packageVersion()</a></code> has the <code>package_version</code> class and is therefore ready for comparison to other version numbers. Note the last example where we seem to be comparing a version number to a string. How can we get the correct result without explicitly converting <code>10.0</code> to a package version? It turns out this conversion is automatic as long as one of the comparators has the <code>package_version</code> class.</p>
-</section><section id="tidyverse-package-version-conventions" class="level2" data-number="22.4"><h2 data-number="22.4" class="anchored" data-anchor-id="tidyverse-package-version-conventions">
+</section><section id="sec-lifecycle-version-number-tidyverse" class="level2" data-number="22.4"><h2 data-number="22.4" class="anchored" data-anchor-id="sec-lifecycle-version-number-tidyverse">
 <span class="header-section-number">22.4</span> Tidyverse package version conventions</h2>
 <p>R considers <code>0.9.1-10</code> to be a valid package version, but you’ll never see a version number like that for a tidyverse package. Here is our recommended framework for managing the package version number:</p>
 <ul>
@@ -620,11 +618,10 @@ Second edition
 <li><p>Adding a function. Caveat: there’s a small chance this could introduce a conflict in user code.</p></li>
 <li><p>Adding an argument. Caveat: this could be breaking for some usage, e.g.&nbsp;if a user is relying on position-based argument matching. This also requires some care in a function that accepts <code>…</code>.</p></li>
 <li><p>Increasing the set of valid inputs.</p></li>
-<li><p>Changing the text of a print method or error. Caveat: This can be breaking if other packages depend on yours in regrettable ways, such as having a test that fails if you tweak an error message in your package.</p></li>
+<li><p>Changing the text of a print method or error. Caveat: This can be breaking if other packages depend on yours in fragile ways, such as having a test that fails if you tweak an error message in your package.</p></li>
 <li><p>Fixing a bug. Caveat: It really can happen that users write code that “depends” on a bug. Sometimes such code was flawed from the beginning, but the problem went undetected until you fixed your bug. Other times this surfaces code that uses your package in an unexpected way, i.e.&nbsp;it’s not necessarily <em>wrong</em>, but neither is it <em>right</em>.</p></li>
 </ul>
-<p>If reasoning about code was a reliable way to assess how it will work in real life, the world wouldn’t have so much buggy software. Therefore you should take every opportunity you get to collect actual data on the consequences of a change in your package. The tidyverse team has a fairly extensive set of tools for running so-called reverse dependency checks (<span class="citation" data-cites="release-deps">(<a href="references.html#ref-release-deps" role="doc-biblioref"><strong>release-deps?</strong></a>)</span>), where we run <code>R CMD check</code> on all the packages that depend on ours.</p>
-<p>Sometimes we use this to study the impact of a potential change, i.e.&nbsp;we use reverse dependency checks to guide development, not only as a last-minute, pre-release check. This leads to yet another, deeply pragmatic definition of a breaking change:</p>
+<p>If reasoning about code was a reliable way to assess how it will work in real life, the world wouldn’t have so much buggy software. Therefore you should take every opportunity you get to collect actual data on the consequences of a change in your package. The tidyverse team has a fairly extensive set of tools for running so-called reverse dependency checks (<a href="release.html#sec-release-revdepcheck"><span>Section&nbsp;23.2.3</span></a>), where we run <code>R CMD check</code> on all the packages that depend on ours. Sometimes we use this to study the impact of a potential change, i.e.&nbsp;reverse dependency checks can be used to guide development, not only as a last-minute, pre-release check. This leads to yet another, deeply pragmatic definition of a breaking change:</p>
 <blockquote class="blockquote">
 <p>A change is breaking if it causes a CRAN package that was previously passing <code>R CMD check</code> to now fail AND the package’s original usage and behavior is correct.</p>
 </blockquote>
@@ -632,16 +629,23 @@ Second edition
 <p>Hopefully we’ve made the point that backward compatibility is not always a clearcut distinction. But hopefully we’ve also provided plenty of concrete criteria to consider when thinking about whether a change could break someone else’s code.</p>
 </section><section id="major-vs-minor-vs-patch-release" class="level2" data-number="22.6"><h2 data-number="22.6" class="anchored" data-anchor-id="major-vs-minor-vs-patch-release">
 <span class="header-section-number">22.6</span> Major vs minor vs patch release</h2>
-<p>Recall that a version number will have one of these forms, if you’re following our conventions:</p>
+<p>Recall that a version number will have one of these forms, if you’re following the conventions described in <a href="#sec-lifecycle-version-number-tidyverse"><span>Section&nbsp;22.4</span></a>:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;        # released version</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;.&lt;dev&gt;  # in-development version</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If the current package version is <code>0.8.1.9000</code>, here’s our advice on how to pick the version number for the next release:</p>
 <ul>
-<li><p>Increment <code>patch</code>, e.g.&nbsp;<code>0.8.2</code> for a <strong>patch release</strong>: you’ve fixed bugs, but you haven’t added any significant new features. For example, if we discover a show-stopping bug shortly after a release, we would make a quick patch release with the fix. Most releases will have a patch number of 0.</p></li>
+<li><p>Increment <code>patch</code>, e.g.&nbsp;<code>0.8.2</code> for a <strong>patch release</strong>: you’ve fixed bugs, but you haven’t added any significant new features and there are no breaking changes. For example, if we discover a show-stopping bug shortly after a release, we would make a quick patch release with the fix. Most releases will have a patch number of 0.</p></li>
 <li><p>Increment <code>minor</code>, e.g.&nbsp;<code>0.9.0</code>, for a <strong>minor release</strong>. A minor release can include bug fixes, new features, and changes that are backward compatible<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. This is the most common type of release. It’s perfectly fine to have so many minor releases that you need to use two (or even three!) digits, e.g.&nbsp;<code>1.17.0</code>.</p></li>
-<li><p>Increment <code>major</code>, e.g.&nbsp;<code>1.0.0</code>, for a <strong>major release</strong>. This is best reserved for changes that are not backward compatible and that are likely to affect many users. The <code>1.0.0</code> release has special significance and typically indicates that your package is feature complete with a stable API.</p></li>
+<li><p>Increment <code>major</code>, e.g.&nbsp;<code>1.0.0</code>, for a <strong>major release</strong>. This is the most appropriate time to make changes that are not backward compatible and that are likely to affect many users. The <code>1.0.0</code> release has special significance and typically indicates that your package is feature complete with a stable API.</p></li>
 </ul>
 <p>The trickiest decision you are likely to face is whether a change is “breaking” enough to deserve a major release. For example, if you make an API-incompatible change to a rarely-used part of your code, it may not make sense to increase the major number. But if you fix a bug that many people depend on (it happens!), it will feel like a breaking change to those folks. It’s conceivable that such a bug fix could merit a major release.</p>
+<p>We’re mostly dwelling on breaking change, but let’s not forget that sometimes you also add exciting new features to your package. From a marketing perspective, you probably want to save these for a major release, because your users are more likely to learn about the new goodies.</p>
+<p>Here are a few blog posts that have accompanied different types of release for tidyverse packages:</p>
+<ul>
+<li><p>Major release: <a href="https://www.tidyverse.org/blog/2020/06/dplyr-1-0-0/">dplyr 1.0.0</a>, <a href="https://www.tidyverse.org/blog/2022/12/purrr-1-0-0/">purrr 1.0.0</a>, <a href="https://www.tidyverse.org/blog/2021/12/pkgdown-2-0-0/">pkgdown 2.0.0</a>, <a href="https://www.tidyverse.org/blog/2021/07/readr-2-0-0/">readr 2.0.0</a></p></li>
+<li><p>Minor release: <a href="https://www.tidyverse.org/blog/2022/12/stringr-1-5-0/">stringr 1.5.0</a>, <a href="https://www.tidyverse.org/blog/2022/11/ggplot2-3-4-0/">ggplot2 3.4.0</a></p></li>
+<li><p>Patch release: These are usually not considered worthy of a blog post.</p></li>
+</ul>
 <section id="package-version-mechanics" class="level3" data-number="22.6.1"><h3 data-number="22.6.1" class="anchored" data-anchor-id="package-version-mechanics">
 <span class="header-section-number">22.6.1</span> Package version mechanics</h3>
 <p>Your package should start with version number <code>0.0.0.9000</code>. <code><a href="https://usethis.r-lib.org/reference/create_package.html">usethis::create_package()</a></code> starts with this version, by default.</p>
@@ -658,6 +662,7 @@ Second edition
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Selection: </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>In addition to incrementing <code>Version</code> in <code>DESCRIPTION</code> (<a href="description.html"><span>Chapter&nbsp;10</span></a>), <code>use_version()</code> also adds a new heading in <code>NEWS.md</code> (<a href="other-markdown.html#sec-news"><span>Section&nbsp;19.3</span></a>).</p>
 </section></section><section id="sec-lifecycle-breaking-change-pros-cons" class="level2" data-number="22.7"><h2 data-number="22.7" class="anchored" data-anchor-id="sec-lifecycle-breaking-change-pros-cons">
 <span class="header-section-number">22.7</span> Pros and cons of breaking change</h2>
 <p>The big difference between major and minor releases is whether or not the code is backward compatible. In the general software world, the idea is that a major release signals to users that it may contain breaking changes and they should only upgrade when they have the capacity to deal with any issues that emerge.</p>
@@ -781,11 +786,11 @@ Second edition
 <span>  <span class="co"># rest of the function ...</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Note the use of <code>verbose = deprecated()</code>. Here’s what <code>warn_for_verbose()</code> looks like (slightly simplified for this example):</p>
+<p>Note the use of <code>verbose = deprecated()</code>. Here’s a slightly simplified version of <code>warn_for_verbose()</code>:</p>
 <div class="cell">
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">warn_for_verbose</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">verbose</span> <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                             <span class="va">env</span> <span class="op">=</span> <span class="fu">caller_env</span><span class="op">(</span><span class="op">)</span>,</span>
-<span>                             <span class="va">user_env</span> <span class="op">=</span> <span class="fu">caller_env</span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>                             <span class="va">env</span> <span class="op">=</span> <span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/stack.html">caller_env</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>                             <span class="va">user_env</span> <span class="op">=</span> <span class="fu">rlang</span><span class="fu">::</span><span class="fu"><a href="https://rlang.r-lib.org/reference/stack.html">caller_env</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># This function is not meant to be called directly, so don't worry about its</span></span>
 <span>  <span class="co"># default of `verbose = TRUE`.</span></span>
 <span>  <span class="co"># In authentic, indirect usage of this helper, this picks up on whether</span></span>
@@ -812,7 +817,7 @@ Second edition
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p><code>warn_for_verbose()</code> does nothing if the user leaves <code>verbose</code> unspecified or if they request <code>verbose = TRUE</code> (default behaviour). But if the user explicitly asks for <code>verbose = FALSE</code>, we throw a warning with advice on the preferred way to suppress googledrive’s messaging. We also go ahead and honour their wishes for the time being, via the call to <code>local_drive_quiet()</code>. In the next major release, the <code>verbose</code> argument can be removed everywhere and this helper can be deleted.</p>
+<p>The user calls a function, such as <code>drive_publish()</code>, which then calls <code>warn_for_verbose()</code>. If the user leaves <code>verbose</code> unspecified or if they request <code>verbose = TRUE</code> (default behavior), <code>warn_for_verbose()</code> does nothing. But if they explicitly ask for <code>verbose = FALSE</code>, we throw a warning with advice on the preferred way to suppress googledrive’s messaging. We also go ahead and honor their wishes for the time being, via the call to <code><a href="https://googledrive.tidyverse.org/reference/googledrive-configuration.html">googledrive::local_drive_quiet()</a></code>. In the next major release, the <code>verbose</code> argument can be removed everywhere and this helper can be deleted.</p>
 </section><section id="dealing-with-change-in-a-dependency" class="level3" data-number="22.8.5"><h3 data-number="22.8.5" class="anchored" data-anchor-id="dealing-with-change-in-a-dependency">
 <span class="header-section-number">22.8.5</span> Dealing with change in a dependency</h3>
 <p>What if you want to use functionality in a new version of another package? Or the less happy version: what if changes in another package are going to break your package? There are a few possible scenarios, depending on whether the other package has been released and the experience you want for your users. We’ll start with the simple, happier case of using features newly available in a dependency.</p>
