@@ -7,8 +7,7 @@ status("polishing")
 
 ## Introduction
 
-The closing chapter of the book is about managing the evolution of your package and, perhaps eventually, distributing it through CRAN.
-
+This chapter is about managing the evolution of your package.
 The trickiest part of managing change is balancing the interests of various stakeholders:
 
 -   The maintainer(s), which includes you and possibly others, especially in the future.
@@ -24,9 +23,8 @@ Even if your priorities differ from those of the tidyverse team, this chapter sh
 Very few users complain when a package gains features or gets a bug fix.
 Instead, we're mostly going to talk about so-called breaking changes, such as removing a function or narrowing the acceptable inputs for a function.
 
-In ??,
-we explore how to determine whether something is a breaking change or, more realistically, to gauge where it lies on a spectrum of "breakingness".
-Even though it can be painful, sometimes a breaking change is beneficial for the long-term health of a package.
+In @sec-lifecycle-breaking-change-definition, we explore how to determine whether something is a breaking change or, more realistically, to gauge where it lies on a spectrum of "breakingness".
+Even though it can be painful, sometimes a breaking change is beneficial for the long-term health of a package (@sec-lifecycle-breaking-change-pros-cons).
 
 Since change is inevitable, the kindest thing you can do for your users to communicate clearly and help them adapt to change.
 Several practices work together to achieve this:
@@ -45,12 +43,6 @@ The last piece of lifecycle infrastructure we'll cover is the concept of lifecyc
 These stages can apply to a function or an argument or even a whole package.
 The tidyverse team maintains various helpful utilities in the lifecycle package, such as badges that can be used in documentation and specialized functions for communicating lifecycle changes to users.
 We can then discuss how specific lifecycle transitions connect back to our conventions about different types of releases.
-
-(TODO: I suspect this will split off into its own chapter, again.) Finally, in ??
-we delve into the specifics of releasing a package on CRAN and the ongoing work required to keep it safely on CRAN.
-We've been calling out CRAN-specific concerns throughout the book.
-So ??
-is where we underscore some of the most crucial points and, most importantly, can take a holistic look at blah blah CRAN.
 
 ## Package evolution {#sec-lifecycle-evolution}
 
@@ -174,7 +166,7 @@ Note the last example where we seem to be comparing a version number to a string
 How can we get the correct result without explicitly converting `10.0` to a package version?
 It turns out this conversion is automatic as long as one of the comparators has the `package_version` class.
 
-## Tidyverse package version conventions
+## Tidyverse package version conventions {#sec-lifecycle-version-number-tidyverse}
 
 R considers `0.9.1-10` to be a valid package version, but you'll never see a version number like that for a tidyverse package.
 Here is our recommended framework for managing the package version number:
@@ -252,7 +244,7 @@ Conversely, these are usually not considered breaking:
 -   Increasing the set of valid inputs.
 
 -   Changing the text of a print method or error.
-    Caveat: This can be breaking if other packages depend on yours in regrettable ways, such as having a test that fails if you tweak an error message in your package.
+    Caveat: This can be breaking if other packages depend on yours in fragile ways, such as having a test that fails if you tweak an error message in your package.
 
 -   Fixing a bug.
     Caveat: It really can happen that users write code that "depends" on a bug.
@@ -261,9 +253,8 @@ Conversely, these are usually not considered breaking:
 
 If reasoning about code was a reliable way to assess how it will work in real life, the world wouldn't have so much buggy software.
 Therefore you should take every opportunity you get to collect actual data on the consequences of a change in your package.
-The tidyverse team has a fairly extensive set of tools for running so-called reverse dependency checks (@release-deps), where we run `R CMD check` on all the packages that depend on ours.
-
-Sometimes we use this to study the impact of a potential change, i.e. we use reverse dependency checks to guide development, not only as a last-minute, pre-release check.
+The tidyverse team has a fairly extensive set of tools for running so-called reverse dependency checks (@sec-release-revdepcheck), where we run `R CMD check` on all the packages that depend on ours.
+Sometimes we use this to study the impact of a potential change, i.e. reverse dependency checks can be used to guide development, not only as a last-minute, pre-release check.
 This leads to yet another, deeply pragmatic definition of a breaking change:
 
 > A change is breaking if it causes a CRAN package that was previously passing `R CMD check` to now fail AND the package's original usage and behavior is correct.
@@ -275,7 +266,7 @@ But hopefully we've also provided plenty of concrete criteria to consider when t
 
 ## Major vs minor vs patch release
 
-Recall that a version number will have one of these forms, if you're following our conventions:
+Recall that a version number will have one of these forms, if you're following the conventions described in @sec-lifecycle-version-number-tidyverse:
 
 ``` default
 <major>.<minor>.<patch>        # released version
@@ -284,7 +275,7 @@ Recall that a version number will have one of these forms, if you're following o
 
 If the current package version is `0.8.1.9000`, here's our advice on how to pick the version number for the next release:
 
--   Increment `patch`, e.g. `0.8.2` for a **patch release**: you've fixed bugs, but you haven't added any significant new features.
+-   Increment `patch`, e.g. `0.8.2` for a **patch release**: you've fixed bugs, but you haven't added any significant new features and there are no breaking changes.
     For example, if we discover a show-stopping bug shortly after a release, we would make a quick patch release with the fix.
     Most releases will have a patch number of 0.
 
@@ -294,7 +285,7 @@ If the current package version is `0.8.1.9000`, here's our advice on how to pick
     It's perfectly fine to have so many minor releases that you need to use two (or even three!) digits, e.g. `1.17.0`.
 
 -   Increment `major`, e.g. `1.0.0`, for a **major release**.
-    This is best reserved for changes that are not backward compatible and that are likely to affect many users.
+    This is the most appropriate time to make changes that are not backward compatible and that are likely to affect many users.
     The `1.0.0` release has special significance and typically indicates that your package is feature complete with a stable API.
 
 [^lifecycle-4]: For some suitably pragmatic definition of "backward compatible".
@@ -303,6 +294,17 @@ The trickiest decision you are likely to face is whether a change is "breaking" 
 For example, if you make an API-incompatible change to a rarely-used part of your code, it may not make sense to increase the major number.
 But if you fix a bug that many people depend on (it happens!), it will feel like a breaking change to those folks.
 It's conceivable that such a bug fix could merit a major release.
+
+We're mostly dwelling on breaking change, but let's not forget that sometimes you also add exciting new features to your package.
+From a marketing perspective, you probably want to save these for a major release, because your users are more likely to learn about the new goodies.
+
+Here are a few blog posts that have accompanied different types of release for tidyverse packages:
+
+-   Major release: [dplyr 1.0.0](https://www.tidyverse.org/blog/2020/06/dplyr-1-0-0/), [purrr 1.0.0](https://www.tidyverse.org/blog/2022/12/purrr-1-0-0/), [pkgdown 2.0.0](https://www.tidyverse.org/blog/2021/12/pkgdown-2-0-0/), [readr 2.0.0](https://www.tidyverse.org/blog/2021/07/readr-2-0-0/)
+
+-   Minor release: [stringr 1.5.0](https://www.tidyverse.org/blog/2022/12/stringr-1-5-0/), [ggplot2 3.4.0](https://www.tidyverse.org/blog/2022/11/ggplot2-3-4-0/)
+
+-   Patch release: These are usually not considered worthy of a blog post.
 
 ### Package version mechanics
 
@@ -325,6 +327,8 @@ usethis::use_version()
 #> 
 #> Selection: 
 ```
+
+In addition to incrementing `Version` in `DESCRIPTION` (@sec-description), `use_version()` also adds a new heading in `NEWS.md` (@sec-news).
 
 ## Pros and cons of breaking change {#sec-lifecycle-breaking-change-pros-cons}
 
@@ -553,13 +557,13 @@ drive_publish <- function(file, ..., verbose = deprecated()) {
 ```
 
 Note the use of `verbose = deprecated()`.
-Here's what `warn_for_verbose()` looks like (slightly simplified for this example):
+Here's a slightly simplified version of `warn_for_verbose()`:
 
 ```{r}
 #| eval: false
 warn_for_verbose <- function(verbose = TRUE,
-                             env = caller_env(),
-                             user_env = caller_env(2)) {
+                             env = rlang::caller_env(),
+                             user_env = rlang::caller_env(2)) {
   # This function is not meant to be called directly, so don't worry about its
   # default of `verbose = TRUE`.
   # In authentic, indirect usage of this helper, this picks up on whether
@@ -587,9 +591,10 @@ warn_for_verbose <- function(verbose = TRUE,
 }
 ```
 
-`warn_for_verbose()` does nothing if the user leaves `verbose` unspecified or if they request `verbose = TRUE` (default behaviour).
-But if the user explicitly asks for `verbose = FALSE`, we throw a warning with advice on the preferred way to suppress googledrive's messaging.
-We also go ahead and honour their wishes for the time being, via the call to `local_drive_quiet()`.
+The user calls a function, such as `drive_publish()`, which then calls `warn_for_verbose()`.
+If the user leaves `verbose` unspecified or if they request `verbose = TRUE` (default behavior), `warn_for_verbose()` does nothing.
+But if they explicitly ask for `verbose = FALSE`, we throw a warning with advice on the preferred way to suppress googledrive's messaging.
+We also go ahead and honor their wishes for the time being, via the call to `googledrive::local_drive_quiet()`.
 In the next major release, the `verbose` argument can be removed everywhere and this helper can be deleted.
 
 ### Dealing with change in a dependency
