@@ -472,12 +472,12 @@ Similarly, we typically only use a badge for a function if its stage differs fro
 
 ### Deprecating a function
 
-If you're going to remove a function or argument, it's usually best to do so in phases.
+If you're going to remove or make significant changes to a function, it's usually best to do so in phases.
 Deprecation is a general term for the situation where something is explicitly discouraged, but it has not yet been removed.
-
--   Significant changes to an existing function requires planning, including making gradual changes over multiple versions. Try and develop a sequence of transformations where each change can be accompanied by an informative error message.
+Various deprecation scenarios are explored in `vignette("communicate", package = "lifecycle")`; we're just going to cover the main idea here.
 
 The `lifecycle::deprecate_warn()` function can be used inside a function to inform your user that they're using a deprecated feature and, ideally, to let them know about the preferred alternative.
+In this example, the `add3()` function is going to be replaced with `plus3()`:
 
 ```{r R.options = list("lifecycle:::calling_package" = "somepackage", "lifecycle_verbosity" = "warning")}
 # new function
@@ -498,9 +498,25 @@ At this point, a user who calls `plus3()` sees a warning explaining that the fun
 Pre-existing code still "works".
 In some future major release, `plus3()` could be removed entirely.
 
+`lifecycle::deprecate_warn()` has a few features that are worth highlighting:
+
+-   The warning message is built up from inputs like `when`, `what`, `with`, and `details`, which gives deprecation warnings a predictable form across different functions, packages, and time.
+    The intent is to reduce the cognitive load for users who may already be somewhat stressed.
+
+-   By default, a specific warning is only issued once every 8 hours, in an effort to cause just the right amount of aggravation.
+    The goal is to be just annoying enough to motivate the user to update their code before the function or argument goes away, but not so annoying that they fling their computer into the sea.
+    Near the end of the deprecation process, the `always` argument can be set to `TRUE` to warn on every call.
+
+-   A warning is only issued if the person reading it is the one who can actually do something about it, i.e. update the code.
+    If a user calls a deprecated function indirectly, i.e. because they are using a package that's using a deprecated function, by default that user doesn't get a warning.
+    (But the maintainer of the guilty package will see these warnings in their test results.)
+
+If you're using base R only, the `.Deprecated()` and `.Defunct()` functions are the closest substitutes for `lifecycle::deprecate_warn()` and friends.
+
 ### Deprecating an argument
 
-When you're deprecating an argument, you can also use `lifecycle::deprecate()` as its default value.
+`lifecycle::deprecate_warn()` is also useful when deprecating an argument.
+In this case, it's also handy to use `lifecycle::deprecate()` as the default value for the deprecated argument.
 Here we continue an example from above, i.e. the switch from `path` to `file` in `readr::write_file()`:
 
 ```{r}
@@ -510,13 +526,21 @@ write_file <- function(x,
                        append = FALSE,
                        path = deprecated()) {
   if (is_present(path)) {
-    deprecate_warn("1.4.0", "write_file(path = )", "write_file(file = )")
+    deprecate_warn("1.4.0", "write_file(path)", "write_file(file)")
     file <- path
   }
   ...
 }
 ```
 
+The use of `deprecated()` as the default accomplishes two things.
+First, if the user reads the documentation, this is a strong signal that an argument is deprecated.
+But `deprecated()` also has benefits for the package maintainer.
+Inside the affected function, you can use `lifecycle::is_present()` to determine if the user has specified the deprecated argument and proceed accordingly, as shown above.
+
+somewhat similar to deprecating function, in that is the most useful function.
+For detailed coverage, see `vignette("communicate", package = "lifecycle")`.
+When you're deprecating an argument, you can also use .
 TODO: Say more about `deprecated()`.
 What's the point?
 Visual signal to the user + works with `lifecycle::is_present()`.
@@ -535,8 +559,7 @@ Here's a hypothetical blueprint for removing a function `fun()`:
 -   Package version `0.7.0` or `1.0.0`: `fun()` is removed.
     Whether this happens in a minor or major release will depend on the context, i.e. how widely used this package and function are.
 
-TODO: mention `.Deprecated()` as the base way.
-Also maybe mention `!missing(x)` as a base alternative to `deprecated()` + `is_present()`.
+If you're using base R only, the `missing()` function has substantial overlap with `lifecycle::is_present()`, although it can be trickier to finesse issues around default values.
 
 ### Deprecation helpers
 
@@ -581,8 +604,7 @@ warn_for_verbose <- function(verbose = TRUE,
       "For finer control, use `local_drive_quiet()` or `with_drive_quiet()`.",
       "googledrive's `verbose` argument will be removed in the future."
     ),
-    user_env = user_env,
-    id = "googledrive_verbose"
+    user_env = user_env
   )
   # only set the option during authentic, indirect usage
   if (!identical(env, global_env())) {
