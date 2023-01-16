@@ -244,7 +244,7 @@ Conversely, these are usually not considered breaking:
 -   Increasing the set of valid inputs.
 
 -   Changing the text of a print method or error.
-    Caveat: This can be breaking if other packages depend on yours in fragile ways, such as having a test that fails if you tweak an error message in your package.
+    Caveat: This can be breaking if other packages depend on yours in fragile ways, such as building logic or a test that relies on an error message from your package.
 
 -   Fixing a bug.
     Caveat: It really can happen that users write code that "depends" on a bug.
@@ -252,9 +252,10 @@ Conversely, these are usually not considered breaking:
     Other times this surfaces code that uses your package in an unexpected way, i.e. it's not necessarily *wrong*, but neither is it *right*.
 
 If reasoning about code was a reliable way to assess how it will work in real life, the world wouldn't have so much buggy software.
-Therefore you should take every opportunity you get to collect actual data on the consequences of a change in your package.
+The best way to gauge the consequences of a change in your package is to try it and see what happens.
+In addition to running your own tests, you can also run the tests of your reverse dependencies and see if your proposed change breaks anything.
 The tidyverse team has a fairly extensive set of tools for running so-called reverse dependency checks (@sec-release-revdepcheck), where we run `R CMD check` on all the packages that depend on ours.
-Sometimes we use this to study the impact of a potential change, i.e. reverse dependency checks can be used to guide development, not only as a last-minute, pre-release check.
+Sometimes we use this infrastructure to study the impact of a potential change, i.e. reverse dependency checks can be used to guide development, not only as a last-minute, pre-release check.
 This leads to yet another, deeply pragmatic definition of a breaking change:
 
 > A change is breaking if it causes a CRAN package that was previously passing `R CMD check` to now fail AND the package's original usage and behavior is correct.
@@ -296,9 +297,9 @@ But if you fix a bug that many people depend on (it happens!), it will feel like
 It's conceivable that such a bug fix could merit a major release.
 
 We're mostly dwelling on breaking change, but let's not forget that sometimes you also add exciting new features to your package.
-From a marketing perspective, you probably want to save these for a major release, because your users are more likely to learn about the new goodies.
+From a marketing perspective, you probably want to save these for a major release, because your users are more likely to learn about the new goodies, from reading a blog post or `NEWS`.
 
-Here are a few blog posts that have accompanied different types of release for tidyverse packages:
+Here are a few tidyverse blog posts that have accompanied different types of package releases:
 
 -   Major release: [dplyr 1.0.0](https://www.tidyverse.org/blog/2020/06/dplyr-1-0-0/), [purrr 1.0.0](https://www.tidyverse.org/blog/2022/12/purrr-1-0-0/), [pkgdown 2.0.0](https://www.tidyverse.org/blog/2021/12/pkgdown-2-0-0/), [readr 2.0.0](https://www.tidyverse.org/blog/2021/07/readr-2-0-0/)
 
@@ -507,9 +508,23 @@ In some future major release, `plus3()` could be removed entirely.
     The goal is to be just annoying enough to motivate the user to update their code before the function or argument goes away, but not so annoying that they fling their computer into the sea.
     Near the end of the deprecation process, the `always` argument can be set to `TRUE` to warn on every call.
 
--   A warning is only issued if the person reading it is the one who can actually do something about it, i.e. update the code.
+-   A warning is only issued if the person reading it is the one who can actually do something about it, i.e. update the offending code.
     If a user calls a deprecated function indirectly, i.e. because they are using a package that's using a deprecated function, by default that user doesn't get a warning.
     (But the maintainer of the guilty package will see these warnings in their test results.)
+
+Here's a hypothetical schedule for removing a function `fun()`:
+
+-   Package version `0.5.0`: `fun()` exists.
+    The lifecycle stage of the package is experimental, as indicated by the pre-`1.0.0` version number and, perhaps, a package-level badge.
+    The lifecycle stage of `fun()` is also experimental, by extension.
+
+-   Package version `0.6.0`: The deprecation process of `fun()` begins.
+    We insert `r lifecycle::badge("deprecated")` in its `@description` to place a badge in its help topic.
+    In the body of `fun()`, we add a call to `lifecycle::deprecate_warn()` to inform users about the situation.
+    Otherwise, `fun()` still works as it always has.
+
+-   Package version `0.7.0` or `1.0.0`: `fun()` is removed.
+    Whether this happens in a minor or major release will depend on the context, i.e. how widely used this package and function are.
 
 If you're using base R only, the `.Deprecated()` and `.Defunct()` functions are the closest substitutes for `lifecycle::deprecate_warn()` and friends.
 
@@ -533,31 +548,16 @@ write_file <- function(x,
 }
 ```
 
+Here's what a user sees if they use the deprecated argument:
+
+```{r}
+readr::write_file("hi", path = tempfile("lifecycle-demo-"))
+```
+
 The use of `deprecated()` as the default accomplishes two things.
 First, if the user reads the documentation, this is a strong signal that an argument is deprecated.
 But `deprecated()` also has benefits for the package maintainer.
 Inside the affected function, you can use `lifecycle::is_present()` to determine if the user has specified the deprecated argument and proceed accordingly, as shown above.
-
-somewhat similar to deprecating function, in that is the most useful function.
-For detailed coverage, see `vignette("communicate", package = "lifecycle")`.
-When you're deprecating an argument, you can also use .
-TODO: Say more about `deprecated()`.
-What's the point?
-Visual signal to the user + works with `lifecycle::is_present()`.
-Why we think it's OK to call it as `deprecated()` and not `lifecycle::deprecated()`.
-
-Here's a hypothetical blueprint for removing a function `fun()`:
-
--   Package version `0.5.0`: `fun()` exists.
-    The lifecycle stage of the package is "experimental", as indicated by the pre-`1.0.0` version number and, perhaps, a package-level badge.
-    The lifecycle stage of `fun()` is also "experimental", by extension.
-
--   Package version `0.6.0`: The deprecation process of `fun()` begins.
-    We insert `r lifecycle::badge("deprecated")` in its `@description` to place a badge in its help topic.
-    In the body of `fun()`, we add a call to `lifecycle::deprecate_warn()` to inform users about the situation.
-
--   Package version `0.7.0` or `1.0.0`: `fun()` is removed.
-    Whether this happens in a minor or major release will depend on the context, i.e. how widely used this package and function are.
 
 If you're using base R only, the `missing()` function has substantial overlap with `lifecycle::is_present()`, although it can be trickier to finesse issues around default values.
 
@@ -634,17 +634,10 @@ While it's a good idea to record a minimum version for a suggested package, it's
 
 If you don't want to require your users to update this other package, you could make your package work with both new and old versions.
 This means you'll check its version at run-time and proceed accordingly.
-Here are examples of how that might look:
+Here is a sketch of how that might look in the context of an existing or new function:
 
 ```{r}
 #| eval: false
-your_new_function <- function(...) {
-  if (packageVersion("otherpkg") < "1.0.0") {
-    stop("otherpkg >= 1.0.0 needed for this function.")
-  }
-  # the rest of the function
-}
-
 your_existing_function <- function(..., cool_new_feature = FALSE) {
   if (isTRUE(cool_new_feature) && packageVersion("otherpkg") < "1.0.0") {
     message("otherpkg >= 1.0.0 is needed for cool_new_feature")
@@ -652,12 +645,20 @@ your_existing_function <- function(..., cool_new_feature = FALSE) {
   }
   # the rest of the function
 }
+
+your_new_function <- function(...) {
+  if (packageVersion("otherpkg") < "1.0.0") {
+    stop("otherpkg >= 1.0.0 needed for this function.")
+  }
+  # the rest of the function
+}
 ```
+
+Alternatively, this would also be a great place to use `rlang::is_installed()` and `rlang::check_installed()` with the `version` argument (see examples of usage in @sec-dependencies-in-suggests-r-code).
 
 This approach can also be adapted if you're responding to not-yet-released changes that are coming soon in one of your dependencies.
 It's helpful to have a version of your package that works both before and after the change.
 This allows you to release your package at any time, even before the other package.
-
 Sometimes you can refactor your code to make it work with either version of the other package, in which case you don't need to condition on the other package's version at all.
 But sometimes the nature of your usage makes thing trickier.
 Consider this example:
