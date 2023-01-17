@@ -650,13 +650,13 @@ This approach can also be adapted if you're responding to not-yet-released chang
 It's helpful to have a version of your package that works both before and after the change.
 This allows you to release your package at any time, even before the other package.
 Sometimes you can refactor your code to make it work with either version of the other package, in which case you don't need to condition on the other package's version at all.
-But sometimes the nature of your usage makes thing trickier.
+But sometimes you might really need different code for the two versions.
 Consider this example:
 
 ```{r}
 #| eval: false
 your_function <- function(...) {
-  if (packageVersion("otherpkg") > "1.0.0") {
+  if (packageVersion("otherpkg") >= "1.3.9000") {
     otherpkg::their_new_function()
   } else {
     otherpkg::their_old_function()
@@ -665,7 +665,8 @@ your_function <- function(...) {
 }
 ```
 
-If `their_new_function()` doesn't exist in the latest release of otherpkg, you'll get a note from `R CMD check` stating that `their_new_function()` doesn't exist in otherpkg's namespace.
+The hypothetical minimum version of `1.3.9000` suggests a case where the development version of otherpkg already has the change you're responding to, which is a new function in this case.
+Assuming `their_new_function()` doesn't exist in the latest release of otherpkg, you'll get a note from `R CMD check` stating that `their_new_function()` doesn't exist in otherpkg's namespace.
 If you're submitting such a version to CRAN, you can explain that you're doing this for the sake of backward and forward compatibility with otherpkg and they are likely to be satisfied.
 
 ### Superseding a function
