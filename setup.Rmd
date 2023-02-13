@@ -15,8 +15,8 @@ install.packages(c("devtools", "roxygen2", "testthat", "knitr"))
 Make sure you have a recent version of the RStudio integrated development environment (IDE).
 New versions are released regularly, so we recommend updating often to get access to the latest and greatest features.
 
--   Released version: <https://posit.co/download/rstudio-desktop/>
-    -   Most readers can use the free, open source version of RStudio Desktop.
+Download the current version of RStudio Desktop here: <https://posit.co/download/rstudio-desktop/>.
+Most readers can use the free, open source version of RStudio Desktop.
 
 ## devtools, usethis, and you {#sec-setup-usage}
 
@@ -24,38 +24,25 @@ New versions are released regularly, so we recommend updating often to get acces
 >
 > --- Walt Whitman, Song of Myself
 
-After 7 years of development, devtools had grown into a rather unwieldy package, making maintenance difficult.
-Version 2.0.0, released in late 2018, marked the [conscious uncoupling](https://www.tidyverse.org/articles/2018/10/devtools-2-0-0/) of devtools, with most functionality moving into seven smaller packages.
-Through various means, devtools continues to expose all its usual functionality, although it is mostly maintained elsewhere.
+As mentioned in @sec-intro-phil, devtools is a 'meta-package', encompassing and exposing functionality maintained in seven smaller packages[^setup-1].
 For example, devtools might provide a wrapper function in order to set user-friendly defaults, introduce helpful interactive behaviour, or to combine functionality from multiple sub-packages.
+In some cases it simply re-exports a function from another package to make it easily available when devtools is loaded.
+
+[^setup-1]: [remotes](https://remotes.r-lib.org/), [pkgbuild](https://github.com/r-lib/pkgbuild), [pkgload](https://github.com/r-lib/pkgload), [rcmdcheck](https://github.com/r-lib/rcmdcheck), [revdepcheck](https://github.com/r-lib/revdepcheck), [sessioninfo](https://github.com/r-lib/sessioninfo), [usethis](https://usethis.r-lib.org/)
 
 What's our recommended approach to devtools and its constituent packages?
-It varies, depending on whether you're working in useR or developeR mode:
+It varies, depending on your intentions when using the functions:
 
--   For interactive use, useRs should attach devtools and think of it as the provider of your favorite functions for package development.
--   For programmatic use, such as inside another package, developeRs should NOT depend on devtools, but should instead access functions via the package that is their primary home.
-    -   devtools should rarely appear in the role of `pkg` in a qualified call of the form `pkg::fcn()`. Instead, `pkg` should be the package where `fcn()` is defined.
-    -   An exception to this is that we continue to feature `devtools::install_github()` as the way to install the development version of a package in its README, even though `install_github()` actually lives in the remotes package. That's because this piece of advice pertains to interactive use, where we prefer to emphasize devtools.
--   Try to report bugs on the package that is a function's primary home. The help for `devtools::fcn()` usually states when devtools is re-exporting a function from another package.
-
-Example of how to simulate installing and loading a package, during interactive development:
-
-```{r eval = FALSE}
-library(devtools)
-load_all()
-```
-
-If that same functionality is used inside an R package, this is the preferred call:
-
-```{r eval = FALSE}
-pkgload::load_all()
-```
+-   If you are using the functions interactively to help you develop your package, you should think of devtools as the provider of your favorite functions for package development. In this case you should attach devtools and call the functions without qualification (e.g., `load_all()`).
+-   If you are using functions from devtools and friends within the package code you are writing, you should NOT depend on devtools, but should instead access functions via the package that is their primary home.
+    -   devtools should rarely appear in the role of `pkg` in a qualified call of the form `pkg::fcn()`. Instead, `pkg` should be the package where `fcn()` is defined. For example, if you are creating a function in your package in which you need to query the state of the user's R session, use `sessioninfo::session_info()` in your package instead of `devtools::session_info()`.
+-   If you find bugs, try to report them on the package that is a function's primary home. The help for `devtools::fcn()` usually states when devtools is re-exporting a function from another package.
 
 The usethis package is the one constituent package that more people may be aware of and that they may use directly.
-It now holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package.
-All functions in usethis are made available by devtools.
-So, once you attach devtools, you can use any function in usethis without qualification, i.e. just call `use_testthat()`.
-If you choose to specify the namespace, such as when working in a more programmatic style, then access usethis functions directly: do `usethis::use_testthat()` instead of `devtools::use_testthat()`.
+It holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package.
+devtools makes it easy to access usethis functions interactively, as when when you call `library(devtools)`, usethis is also attached.
+Then you can use any function in usethis without qualification, e.g., just call `use_testthat()`.
+If you choose to specify the namespace, such as when working in a more programmatic style, then make sure you qualify the call with usethis, e.g., `usethis::use_testthat()`.
 
 ### Personal startup configuration
 
@@ -105,45 +92,6 @@ The following code installs the development versions of devtools and usethis, wh
 devtools::install_github("r-lib/devtools")
 devtools::install_github("r-lib/usethis")
 ```
-
-## R build toolchain {#setup-tools}
-
-To be fully capable of building R packages from source, you'll also need a compiler and a few other command line tools.
-This may not be strictly necessary until you want to build packages containing C or C++ code.
-Especially if you are using RStudio, you can set this aside for now.
-The IDE will alert you and provide support once you try to do something that requires you to setup your development environment.
-Read on for advice on doing this yourself.
-
-### Windows
-
-On Windows the collection of tools needed for building packages from source is called Rtools.
-
-Rtools is NOT an R package.
-It is NOT installed with `install.packages()`.
-Instead, download it from <https://cran.r-project.org/bin/windows/Rtools/> and run the installer.
-
-During the Rtools installation you may see a window asking you to "Select Additional Tasks".
-
--   Do *not* select the box for "Edit the system PATH". devtools and RStudio should put Rtools on the `PATH` automatically when it is needed.
--   Do select the box for "Save version information to registry". It should be selected by default.
-
-### macOS
-
-You need to install the Xcode command line tools, which requires that you [register as an Apple developer](https://developer.apple.com/programs/register/) (don't worry, it's free).
-
-Then, in the shell, do:
-
-``` shell
-xcode-select --install
-```
-
-Alternatively, you can install the current release of full [Xcode from the Mac App Store](https://itunes.apple.com/ca/app/xcode/id497799835?mt=12).
-This includes a very great deal that you do not need, but it offers the advantage of App Store convenience.
-
-### Linux
-
-Make sure you've installed not only R, but also the R development tools.
-For example, on Ubuntu (and Debian) you need to install the `r-base-dev` package.
 
 ### Verify system prep
 
