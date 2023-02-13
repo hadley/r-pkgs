@@ -63,6 +63,89 @@ To get your package ready to release, follow these steps:
 6.  Prepare for the next version by updating version numbers.
 7.  Publicise the new version.
 
+## Decide the release type
+
+When you call `use_release_issue()`, you'll be asked which type of release you intend to make (@sec-lifecycle-release-type).
+
+```{r}
+#| eval: false
+> use_release_issue()
+✔ Setting active project to '/Users/jenny/rrr/usethis'
+Current version is 2.1.6.9000.
+What should the release version be? (0 to exit) 
+
+1: major --> 3.0.0
+2: minor --> 2.2.0
+3: patch --> 2.1.7
+4:   dev --> 2.1.6.9001
+
+Selection: 
+```
+
+This really boils down to which component of the version number is going to be incremented.
+In our workflow, this planned version number is recorded in the GitHub issue that holds the release checklist, but we don't actually increment the version in `DESCRIPTION` until later in the process.
+
+## Initial CRAN release: Special considerations
+
+Every new package receives a higher level of scrutiny from CRAN.
+In addition to the usual automated checks, new packages are also reviewed by a human, which inevitably introduces a certain amount of subjectivity and randomness.
+There are many packages on CRAN that would not be accepted in their current form, if submitted today as a completely new package.
+This isn't meant to discourage you.
+But you should be aware that, just because you see some practice in an established package (or even in base R), that doesn't mean you can do the same in your new package.
+There's a reason the community maintains lists of common "gotchas" for new packages; we have all learned the hard way.
+
+```{r}
+#| eval: false
+usethis:::release_checklist("0.0.1", on_cran = FALSE)
+```
+
+If your package is not yet on CRAN, the checklist begins with a special section that looks something like this:
+
+First release
+
+-   [ ] `usethis::use_cran_comments()`
+-   [ ] Update (aspirational) install instructions in `README`
+-   [ ] Proofread `Title:` and `Description:`
+-   [ ] Check that all exported functions have `@returns` and `@examples`
+-   [ ] Check that `Authors@R:` includes a copyright holder (role 'cph')
+-   [ ] Check licensing of included files
+-   [ ] Review <https://github.com/DavisVaughan/extrachecks>
+
+`usethis::use_cran_comments()` initiates a file to hold submission comments for your package.
+It's very barebones at first, e.g.:
+
+    ## R CMD check results
+
+    0 errors | 0 warnings | 1 note
+
+    * This is a new release.
+
+In subsequent releases, this file becomes less pointless; for example, it is where we report the results of reverse dependency checks.
+This is not a place to wax on with long explanations about your submission.
+In general, you should eliminate the need for such explanations, especially for an initial submission.
+
+We highly recommend that your package have a README file (@sec-readme).
+If it does, this is a good time to check the installation instructions provided there.
+You may need to switch from instructions to install it from GitHub, in favor of installing from CRAN, in anticipation of your package's acceptance.
+
+The `Title` and `Description` fields of `DESCRIPTION` are real hotspots for nitpicking during CRAN's human review.
+Carefully review the advice given in @sec-description-title-and-description.
+Also check that `Authors@R` includes a copyright holder, indicated by the 'cph' role.
+The two most common scenarios are that you add 'cph' to your other roles (probably 'cre' and 'aut') or that you add your employer to `Authors@R:` with the 'cph' and, perhaps, 'fnd' role.
+
+Double check that each of your exported functions is documented and, in particular, that it documents its return value (with the `@returns` tag, @sec-man-returns) and has an `@examples` section (@sec-man-examples).
+If you have examples that cannot be run on CRAN, you absolutely must use the techniques in @sec-man-examples-dependencies-conditional-execution to express the relevant pre-conditions properly.
+Do not take shortcuts, such as having no examples, commenting out your examples, or putting all of your examples inside `\dontrun{}`.
+
+If you have embedded third party code in your package, check that you are correctly abiding by and declaring its license (@sec-code-you-bundle).
+
+Finally, take advantage of any list of *ad hoc* checks that other package developers have recently experienced with CRAN.
+At the time of writing, <https://github.com/DavisVaughan/extrachecks> is a good place to find such first-hand reports.
+Reading such a list and preemptively modifying your package can often make the difference between a smooth acceptance and a frustrating process requiring multiple attempts.
+
+These were just the items specific to an initial CRAN release.
+The rest of the checklist applies equally to new packages and those that are already on CRAN.
+
 ## The submission process {#sec-release-process}
 
 To manually submit your package to CRAN, you create a package bundle (with `devtools::build()`) then upload it to <https://cran.r-project.org/submit.html>, along with some comments which describe the process you followed.
