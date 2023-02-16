@@ -143,8 +143,76 @@ Finally, take advantage of any list of *ad hoc* checks that other package develo
 At the time of writing, <https://github.com/DavisVaughan/extrachecks> is a good place to find such first-hand reports.
 Reading such a list and preemptively modifying your package can often make the difference between a smooth acceptance and a frustrating process requiring multiple attempts.
 
-These were just the items specific to an initial CRAN release.
-The rest of the checklist applies equally to new packages and those that are already on CRAN.
+## Prepare for release
+
+```{r}
+#| eval: false
+usethis:::release_checklist("0.0.1", on_cran = TRUE)
+usethis:::release_checklist("0.1.0", on_cran = TRUE)
+usethis:::release_checklist("1.0.0", on_cran = TRUE)
+```
+
+Now we'll review the main checklist items for a minor or major release of a package that is already on CRAN.
+Many of these items also appear in the checklist for a patch or initial release.
+
+### Keeping up with change
+
+-   [ ] Check current CRAN check results
+-   [ ] Check if any deprecation processes should be advanced, as described in [Gradual deprecation](https://lifecycle.r-lib.org/articles/communicate.html#gradual-deprecation)
+-   [ ] [Polish NEWS](https://style.tidyverse.org/news.html#news-release)
+-   [ ] `urlchecker::url_check()`
+
+These first few items confirm that your package is keeping up with its surroundings and with itself.
+The first item, "Check current CRAN check results", will be a hyperlink to the CRAN check results for version of the package that is currently on CRAN.
+If there are any WARNINGs or ERRORs (or even NOTEs) there, you should investigate and determine what's going on.
+Occasionally there can be an intermittent hiccup at CRAN, but generally speaking, any result other than "OK" is something you should address with the release you are preparing.
+You may discover your package is in a dysfunctional state due to changes in base R, CRAN policies, CRAN tooling, or packages you depend on.
+
+If you are in the process of deprecating a function or an argument, a minor or major release is a good time to consider moving that process along as described in @sec-lifecycle-stages-and-package.
+This is also a good time to look at all the `NEWS` bullets that have accumulated since the last release ("Polish NEWS").
+Even if you've been diligent about jotting down all the news-worthy changes, chances are these bullets will benefit from some re-organization and editing for consistency and clarity (@sec-news).
+
+Another very important check is to run `urlchecker::url_check()`.
+CRAN's URL checks are described at <https://cran.r-project.org/web/packages/URL_checks.html> and are implemented by code that ships with R itself.
+However, these checks are not exposed in a very usable way.
+The urlchecker package was created to address this and exposes CRAN's URL-checking logic in the `url_check()` function.
+The main problems that surface tend to be URLs that don't work anymore or URLs that use redirection.
+Obviously, you should update or remove any URL that no longer exists.
+Redirection, however, is trickier.
+If the status code is "301 Moved Permanently", CRAN's view is that your package should use the redirected URL.
+The problem is that many folks don't follow [RFC7231](https://www.rfc-editor.org/rfc/rfc7231#section-6.4.2) to the letter and use this sort of redirect even when they have a different intent, i.e. their intent is to publicize a provide a stable, user-friendly URL than then redirects to something less user-friendly or more volatile.
+If a legitimate URL you want to use runs afoul of CRAN's checks, you'll have to choose between a couple of less-than-appealing options.
+You could try to explain the situation to CRAN, but this requires human review.
+Or you can convert such URLs into non-hyperlinked, verbatim text.
+Note also that even though urlchecker is using the same *code* as CRAN, your local results may still differ from CRAN's, due to differences in other ambient conditions, such as environment variables and system capabilities.
+
+### Double and triple `R CMD check`ing
+
+-   [ ] `devtools::check(remote = TRUE, manual = TRUE)`
+-   [ ] `devtools::check_win_devel()`
+-   [ ] `rhub::check_for_cran()`
+
+Next comes a series of items related to `R CMD check`.
+Remember that this should not be the first time you've run `R CMD check` since the previous release!
+Hopefully, you are running `R CMD check` often during local development and are using a continuous integration service, like GitHub Actions.
+This is a last-minute, final reminder to re-check your package:
+
+-   Locally, presumably with the current version of R
+
+-   On CRAN's win-builder service, against a development version of R
+
+-   On r-hub, with its default list of CRAN platforms
+
+Note that this list implicitly reflects that most of the tidyverse team develops primarily on macOS, i.e. that operating system is well-covered with our local checks.
+If your primary development machine is not macOS, you may also want to use `devtools::check_mac_release()` to cover that platform.
+
+If a package has compiled code (literally, if it has a `src/` directory), the checklist includes some additional checks on R-hub, such as checking with sanitizers (not shown).
+
+TODO
+
+-   [ ] `revdepcheck::revdep_check(num_workers = 4)`
+
+-   [ ] Update `cran-comments.md`
 
 ## The submission process {#sec-release-process}
 
