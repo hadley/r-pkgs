@@ -208,9 +208,142 @@ If your primary development machine is not macOS, you may also want to use `devt
 
 If a package has compiled code (literally, if it has a `src/` directory), the checklist includes some additional checks on R-hub, such as checking with sanitizers (not shown).
 
-TODO
+### Reverse dependency checks {#sec-release-revdep-checks}
 
 -   [ ] `revdepcheck::revdep_check(num_workers = 4)`
+
+This innocuous checklist item can actually represent a considerable amount of effort.
+At a high-level, checking your reverse dependencies ("revdeps") breaks down into:
+
+-   Form a list of your reverse dependencies.
+
+-   Run `R CMD check` on each one.
+
+-   Make sure you haven't broken someone else's package with the planned changes in your package.
+
+Each of these steps can require considerable work and judgment.
+So, if you have no reverse dependencies, you should rejoice that you can skip this step.
+If you only have a couple of reverse dependencies, you can probably do this "by hand", i.e. download each package's source and run `R CMD check`.
+
+Here we explain ways to do reverse dependency checks at scale, which is the problem we face.
+Some of the packages maintained by our team have thousands of reverse dependencies and even some of the lower-level packages have hundreds.
+We have to approach this in an automated fashion and this section will be most useful to other maintainers in the same boat.
+
+All of our reverse dependency tooling is concentrated in the revdepcheck package (<https://revdepcheck.r-lib.org/>).
+Do this when you're ready to do revdep checks for the first time:
+
+```{r}
+#| eval: false
+usethis::use_revdep()
+```
+
+This does some one-time setup in your package's `.gitignore` and `.Rbuildignore` files.
+You will also see this reminder to actually perform revdep checks like so, as the checklist item suggests:
+
+```{r}
+#| eval: false
+revdepcheck::revdep_check(num_workers = 4)
+```
+
+This runs `⁠R CMD check⁠` on all of your reverse dependencies, with our recommendation to use 4 parallel workers to speed things along.
+The output looks something like this:
+
+    > revdepcheck::revdep_check(num_workers = 4)
+    ── INIT ───────────────────────────────────── Computing revdeps ──
+    ── INSTALL ───────────────────────────────────────── 2 versions ──
+    Installing CRAN version of cellranger
+    also installing the dependencies 'cli', 'glue', 'utf8', 'fansi', 'lifecycle', 'magrittr', 'pillar', 'pkgconfig', 'rlang', 'vctrs', 'rematch', 'tibble'
+
+    Installing DEV version of cellranger
+    Installing 13 packages: rlang, lifecycle, glue, cli, vctrs, utf8, fansi, pkgconfig, pillar, magrittr, tibble, rematch2, rematch
+    ── CHECK ─────────────────────────────────────────── 8 packages ──
+    ✔ AOV1R 0.1.0                     ── E: 0     | W: 0     | N: 0
+    ✔ mschart 0.4.0                   ── E: 0     | W: 0     | N: 0
+    ✔ googlesheets4 1.0.1             ── E: 0     | W: 0     | N: 1
+    ✔ readODS 1.8.0                   ── E: 0     | W: 0     | N: 0
+    ✔ readxl 1.4.2                    ── E: 0     | W: 0     | N: 0
+    ✔ readxlsb 0.1.6                  ── E: 0     | W: 0     | N: 0
+    ✔ unpivotr 0.6.3                  ── E: 0     | W: 0     | N: 0
+    ✔ tidyxl 1.0.8                    ── E: 0     | W: 0     | N: 0                  
+    OK: 8                                                                                 
+    BROKEN: 0
+    Total time: 6 min
+    ── REPORT ────────────────────────────────────────────────────────
+    Writing summary to 'revdep/README.md'
+    Writing problems to 'revdep/problems.md'
+    Writing failures to 'revdep/failures.md'
+    Writing CRAN report to 'revdep/cran.md'
+
+To avoid false positives, `revdep_check()` runs `⁠R CMD check⁠` twice per revdep: once with the released version of your package currently on CRAN and again with the local development version, i.e. with your release candidate.
+Why two checks?
+Because sometimes the revdep is already failing `R CMD check` and it would be incorrect to blame your planned release for the breakage.
+`revdep_check()` reports the packages that can't be checked and, most importantly, those where there are so-called "changes to the worse", i.e. where your release candidate is associated with new problems.
+
+::: callout-note
+## tidyverse team
+
+We actually use a different function for our reverse dependency checks: `revdepcheck::cloud_check()`.
+This runs the checks in the cloud, massively in parallel, making it possible to run revdep checks for packages like testthat (with \>10,000 revdeps) in just a few hours!
+
+`cloud_check()` has been a gamechanger for us, allowing us to run revdep checks more often.
+For example, we even do this now when assessing the impact of a potential change to a package (@sec-lifecycle-breaking-change-definition), instead of only right before a release.
+
+At the time of writing, `cloud_check()` is only available package maintainers at Posit, but we hope to offer this service for the broader R community in the future.
+:::
+
+In addition to some interactive messages, the revdep check results are written to the `revdep/` folder:
+
+-   `revdep/README.md`: This is a high-level summary aimed at maintainers. The filename and Markdown format are very intentional, in order to create a nice landing page for the `revdep/` folder on GitHub.
+-   `revdep/problems.md`: This lists the revdeps that appear to be broken by your release candidate.
+-   `revdep/failures.md`: This lists the revdeps that could not be checked, usually because of an installation failure, either of the revdep itself or one of its dependencies.
+-   `revdep/cran.md`: This is a high-level summary aimed at CRAN. You should copy and paste this into `cran-comments.md` (TODO: forward reference to next section).
+-   Other files and folders, such as `checks.noindex`, `data.sqlite`, and `library.noindex`. These are for revdepcheck's internal use and we won't discuss them further.
+
+The easiest way to get a feel for these different files is to look around at the latest revdep results for some tidyverse packages, such as [dplyr](https://github.com/tidyverse/dplyr/tree/main/revdep) or [tidyr](https://github.com/tidyverse/tidyr/tree/main/revdep).
+
+The revdep check results -- local, cloud, or CRAN -- are not perfect, because this is not a simple task.
+There are various reasons why a result might be missing, incorrect, or contradictory in different runs.
+
+-   False positives: sometimes revdepcheck reports a package has been broken, but things are actually fine (or, at least, no worse than before).
+    This most commonly happens because of flaky tests that fail randomly (@sec-testing-advanced-skip-on-cran), such as HTTP requests.
+    This can also happen because the instance runs out of disk space or other resources, so the first check using the CRAN version succeeds and the second check using the dev version fails.
+    Sometimes it's obvious that the problem is not related to your package.
+
+-   False negatives: sometimes a package has been broken, but you don't detect that.
+    For us, this usually happens when `cloud_check()` can't check a revdep because it can't be installed, typically because of a missing system requirement (e.g. Java).
+    These are separately reported as "failed to test" but are still included in `problems.md`, because this could still be direct breakage caused by your package.
+    For example, if you remove an exported function that's used by another package, installation will fail.
+
+Generally these differences are less of a worry now that CRAN's own revdep checks are well automated so new failures typically don't involve a human.
+
+### Revdeps and breaking changes
+
+If the revdep check reveals breakages, you need to examine each failure and determine if it's:
+
+-   A false positive.
+
+-   A non-breaking change, i.e. a failure caused by off-label usage of your package.
+
+-   A bug in your package that you need to fix.
+
+-   A deliberate breaking change.
+
+If your update will break another package (regardless of why), you need to inform the author so they hear it first from you, rather than CRAN.
+The nicest way to do so is with a pull request (PR) that fixes the problem.
+This can be a decent amount of work, but we think it's generally good practice because it forces you to confront the pain that a breaking change causes.
+If you decide to do this, make a new checklist in the release issue that lists all the packages that you need to fix.
+As you create the PRs, add links to those as well.
+As the revdep maintainers merge the PRs, check them off in your list.
+You should let the maintainers know when you plan to submit to CRAN, so they can submit their updated version before that.
+But their submission is up to them - you can submit to CRAN knowing that you've done your due diligence.
+If you explain to CRAN that you gave advance notice and provided patches, they will accept your update, even if it breaks some other packages.
+
+If your update breaks so many packages that it's not feasible to provide PRs for all of them, you need to seriously reconsider whether the benefit of the change is worth it.
+If it affects that many packages, it's likely to also affect a lot of code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps.
+If you still decide to go ahead (presumably because the change is *really* compelling), you can use `revdepcheck::revdep_email()` (or, in our case, `revdepcheck::cloud_email()`) to notify maintainers *en masse*.
+Make sure the email includes a link to documentation that describes the most common breaking changes and how to fix them.
+
+### Update comments for CRAN
 
 -   [ ] Update `cran-comments.md`
 
