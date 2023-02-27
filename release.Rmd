@@ -340,21 +340,26 @@ If the revdep check reveals breakages, you need to examine each failure and dete
 -   A deliberate breaking change.
 
 If your update will break another package (regardless of why), you need to inform the maintainer, so they hear it first from you, rather than CRAN.
-The nicest way to do so is with a pull request (PR) that fixes the problem.
-This can be a decent amount of work, but we think it's generally good practice because it forces you to confront the pain that a breaking change causes.
-For the tidyverse team specifically, it also feels appropriate for us as full-time package maintainers to meet other maintainers more than halfway.
-If you decide to do this, make a new issue or a new checklist in the release issue that lists all the packages that you need to fix.
-For example, [here](https://github.com/tidyverse/dplyr/issues/6262) is the issue where dplyr maintainers tracked hundreds of PRs in the build-up to releasing dplyr v1.1.0.
-As you create the PRs, add links to those as well.
-As the revdep maintainers merge the PRs, check them off in your list.
-You should let the maintainers know when you plan to submit to CRAN, so they can submit their updated version before that.
-But their submission is up to them - you can submit to CRAN knowing that you've done your due diligence.
-If you explain to CRAN that you gave advance notice and provided patches, they will accept your update, even if it breaks some other packages.
+The nicest way to do this is with a patch that updates their package to play nicely with yours, perhaps in the form of a pull request.
+This can be a decent amount of work and is certainly not feasible for all maintainers.
+But working through a few of these can be a good way to confront the pain that breaking change causes and to reconsider whether the benefits outweigh the costs.
+In most cases, a change that affects revdeps is also likely to also break a lot of code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps.
 
-If your update breaks so many packages that it's not feasible to provide PRs for all of them, you need to seriously reconsider whether the benefit of the change is worth it.
-If it affects that many packages, it's likely to also affect a lot of code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps.
-If you still decide to go ahead (presumably because the change is *really* compelling), you can use `revdepcheck::revdep_email()` (or, in our case, `revdepcheck::cloud_email()`) to notify maintainers *en masse*.
+If you decide to proceed, you can use `revdepcheck::revdep_email()` to notify revdep maintainers *en masse*.
 Make sure the email includes a link to documentation that describes the most common breaking changes and how to fix them.
+You should let the maintainers know when you plan to submit to CRAN (we recommend giving at least two weeks notice), so they can submit their updated version before that.
+But their submission is up to them - you can submit to CRAN knowing that you've done your due diligence.
+If you explain to CRAN that you gave advanced notice, they will accept your update, even if it breaks some other packages.
+
+::: callout-note
+## tidyverse team
+
+Lately the tidyverse team is trying to meet revdep maintainers more than halfway in terms of dealing with breaking changes.
+For example, [here](https://github.com/tidyverse/dplyr/issues/6262) is the issue where dplyr maintainers tracked hundreds of pull requests in the build-up to releasing dplyr v1.1.0.
+As the PRs are created, it's helpful to add links to those as well.
+As the revdep maintainers merge the PRs, they can be checked off as resolved.
+If some PRs are still in-flight when the announced submission date rolls around, the situation can summarized in `cran-comments.md`, as was true in the case of [dplyr v1.1.0](https://github.com/tidyverse/dplyr/blob/c7e9cd72fd86309d72f2c522157cfac38f45453b/cran-comments.md).
+:::
 
 ### Update comments for CRAN
 
@@ -367,44 +372,60 @@ When you're ready to submit, `devtools::submit_cran()` (TODO: forward reference)
 
 The target audience for these comments is the CRAN personnel, although there is no guarantee that they will read the comments (or when in the submission process they read them).
 For example, if your package breaks other packages, you will likely receive an automated email about that, even if you've explained that in the comments.
-Sometimes a human at CRAN then reads the comments, is satisfied, and accepts your package anyway.
+Sometimes a human at CRAN then reads the comments, is satisfied, and accepts your package anyway, without further action from you.
 At other times, your package may be stuck in the queue until you copy `cran-comments.md` and paste it into an email exchange to move things along.
-In any case, it's worth keeping these comments in its own, version-controlled file.
+In either case, it's worth keeping these comments in their own, version-controlled file.
 
-Here are the `cran-comments.md` from a recent version of httr: TODO: update this, what's a good current example?
+Here is a fairly typical `cran-comments.md` from a recent release of forcats.
+Note that the `R CMD check` results are clean, i.e. there is nothing that needs to be explained or justified, and there is a concise summary of the revdep process.
 
 ``` md
 ## R CMD check results
-There were no ERRORs or WARNINGs. 
 
-There was 1 NOTE:
+0 errors | 0 warnings | 0 notes
 
-* checking dependencies in R code ... NOTE
-  Namespace in Imports field not imported from: 'R6'
+## revdepcheck results
 
-  R6 is a build-time dependency.
+We checked 231 reverse dependencies (228 from CRAN + 3 from Bioconductor), comparing R CMD check results across CRAN and dev versions of this package.
 
-## Downstream dependencies
-I have also run R CMD check on downstream dependencies of httr 
-(https://github.com/wch/checkresults/blob/master/httr/r-release). 
-All packages that I could install passed except:
+We saw 2 new problems:
 
-* Ecoengine: this appears to be a failure related to config on 
-  that machine. I couldn't reproduce it locally, and it doesn't 
-  seem to be related to changes in httr (the same problem exists 
-  with httr 0.4).
+* epikit
+* stevemisc
+
+Both maintainers were notified on Jan 12 (~2 week ago) and supplied with patches.
+
+We failed to check 3 packages
+
+* genekitr     (NA)
+* OlinkAnalyze (NA)
+* SCpubr       (NA)
 ```
 
 This layout is designed to be easy to skim, and easy to match up to the `R CMD check` results seen by CRAN maintainers.
 It includes two sections:
 
-1.  Check results: I always state that there were no errors or warnings.
-    Any `NOTE`s go in a bulleted list.
-    For each `NOTE`, I include the message from `R CMD check` and a brief description of why I think it's OK.
-    If there were no `NOTE`s, I'd say "There were no ERRORs, WARNINGs or NOTEs"
+1.  Check results: We always state that there were no errors or warnings (and we make sure that's true!).
+    Ideally we can also say there were no notes.
+    But if not, any `NOTE`s are presented in a bulleted list.
+    For each `NOTE`, we include the message from `R CMD check` and a brief description of why we think it's OK.
 
-2.  Downstream dependencies: If there are downstream dependencies, I run `R CMD check` on each package and summarise the results.
-    If there are no downstream dependencies, keep this section, but say: "There are currently no downstream dependencies for this package".
+    Here is how a `NOTE` is explained for the nycflights13 data package:
+
+    ``` md
+    ## R CMD check results
+
+    0 errors | 0 warnings | 1 note
+
+    * Checking installed package size:
+      installed size is  6.9Mb
+      sub-directories of 1Mb or more:
+        data   6.9Mb
+
+      This is a data package that will be rarely updated.
+    ```
+
+2.  Reverse dependencies: If there are revdeps, this is where we paste the contents of `revdep/cran.md` (@sec-release-revdep-checks). If there are no revdeps, we recommend that you keep this section, but say something like: "There are currently no downstream dependencies for this package".
 
 ## The submission process {#sec-release-process}
 
