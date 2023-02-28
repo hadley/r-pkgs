@@ -650,8 +650,21 @@ tidyverse team
 <li><p>A bug in your package that you need to fix.</p></li>
 <li><p>A deliberate breaking change.</p></li>
 </ul>
-<p>If your update will break another package (regardless of why), you need to inform the maintainer, so they hear it first from you, rather than CRAN. The nicest way to do so is with a pull request (PR) that fixes the problem. This can be a decent amount of work, but we think it’s generally good practice because it forces you to confront the pain that a breaking change causes. For the tidyverse team specifically, it also feels appropriate for us as full-time package maintainers to meet other maintainers more than halfway. If you decide to do this, make a new issue or a new checklist in the release issue that lists all the packages that you need to fix. For example, <a href="https://github.com/tidyverse/dplyr/issues/6262">here</a> is the issue where dplyr maintainers tracked hundreds of PRs in the build-up to releasing dplyr v1.1.0. As you create the PRs, add links to those as well. As the revdep maintainers merge the PRs, check them off in your list. You should let the maintainers know when you plan to submit to CRAN, so they can submit their updated version before that. But their submission is up to them - you can submit to CRAN knowing that you’ve done your due diligence. If you explain to CRAN that you gave advance notice and provided patches, they will accept your update, even if it breaks some other packages.</p>
-<p>If your update breaks so many packages that it’s not feasible to provide PRs for all of them, you need to seriously reconsider whether the benefit of the change is worth it. If it affects that many packages, it’s likely to also affect a lot of code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps. If you still decide to go ahead (presumably because the change is <em>really</em> compelling), you can use <code>revdepcheck::revdep_email()</code> (or, in our case, <code>revdepcheck::cloud_email()</code>) to notify maintainers <em>en masse</em>. Make sure the email includes a link to documentation that describes the most common breaking changes and how to fix them.</p>
+<p>If your update will break another package (regardless of why), you need to inform the maintainer, so they hear it first from you, rather than CRAN. The nicest way to do this is with a patch that updates their package to play nicely with yours, perhaps in the form of a pull request. This can be a decent amount of work and is certainly not feasible for all maintainers. But working through a few of these can be a good way to confront the pain that breaking change causes and to reconsider whether the benefits outweigh the costs. In most cases, a change that affects revdeps is also likely to also break a lot of code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps.</p>
+<p>If you decide to proceed, you can use <code>revdepcheck::revdep_email()</code> to notify revdep maintainers <em>en masse</em>. Make sure the email includes a link to documentation that describes the most common breaking changes and how to fix them. You should let the maintainers know when you plan to submit to CRAN (we recommend giving at least two weeks notice), so they can submit their updated version before that. But their submission is up to them - you can submit to CRAN knowing that you’ve done your due diligence. If you explain to CRAN that you gave advanced notice, they will accept your update, even if it breaks some other packages.</p>
+<div class="callout-note callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+tidyverse team
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lately the tidyverse team is trying to meet revdep maintainers more than halfway in terms of dealing with breaking changes. For example, <a href="https://github.com/tidyverse/dplyr/issues/6262">here</a> is the issue where dplyr maintainers tracked hundreds of pull requests in the build-up to releasing dplyr v1.1.0. As the PRs are created, it’s helpful to add links to those as well. As the revdep maintainers merge the PRs, they can be checked off as resolved. If some PRs are still in-flight when the announced submission date rolls around, the situation can summarized in <code>cran-comments.md</code>, as was true in the case of <a href="https://github.com/tidyverse/dplyr/blob/c7e9cd72fd86309d72f2c522157cfac38f45453b/cran-comments.md">dplyr v1.1.0</a>.</p>
+</div>
+</div>
 </section><section id="update-comments-for-cran" class="level3" data-number="23.4.5"><h3 data-number="23.4.5" class="anchored" data-anchor-id="update-comments-for-cran">
 <span class="header-section-number">23.4.5</span> Update comments for CRAN</h3>
 <ul class="task-list">
@@ -660,31 +673,45 @@ tidyverse team
 </li>
 </ul>
 <p>We use the <code>cran-comments.md</code> file to record comments about a submission, mainly just the results from <code>R CMD check</code> and revdep checks. We like to track this file in Git, so we can see how it changes over time. It should also be listed in <code>.Rbuildignore</code>, since it should not appear in your package bundle. When you’re ready to submit, <code><a href="https://devtools.r-lib.org/reference/submit_cran.html">devtools::submit_cran()</a></code> (TODO: forward reference) incorporates the contents of <code>cran-comments.md</code> when it uploads your submission.</p>
-<p>The target audience for these comments is the CRAN personnel, although there is no guarantee that they will read the comments (or when in the submission process they read them). For example, if your package breaks other packages, you will likely receive an automated email about that, even if you’ve explained that in the comments. Sometimes a human at CRAN then reads the comments, is satisfied, and accepts your package anyway. At other times, your package may be stuck in the queue until you copy <code>cran-comments.md</code> and paste it into an email exchange to move things along. In any case, it’s worth keeping these comments in its own, version-controlled file.</p>
-<p>Here are the <code>cran-comments.md</code> from a recent version of httr: TODO: update this, what’s a good current example?</p>
+<p>The target audience for these comments is the CRAN personnel, although there is no guarantee that they will read the comments (or when in the submission process they read them). For example, if your package breaks other packages, you will likely receive an automated email about that, even if you’ve explained that in the comments. Sometimes a human at CRAN then reads the comments, is satisfied, and accepts your package anyway, without further action from you. At other times, your package may be stuck in the queue until you copy <code>cran-comments.md</code> and paste it into an email exchange to move things along. In either case, it’s worth keeping these comments in their own, version-controlled file.</p>
+<p>Here is a fairly typical <code>cran-comments.md</code> from a recent release of forcats. Note that the <code>R CMD check</code> results are clean, i.e.&nbsp;there is nothing that needs to be explained or justified, and there is a concise summary of the revdep process.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode md code-with-copy"><code class="sourceCode markdown"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## R CMD check results</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>There were no ERRORs or WARNINGs. </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>There was 1 NOTE:</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>checking dependencies in R code ... NOTE</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  Namespace in Imports field not imported from: 'R6'</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>0 errors | 0 warnings | 0 notes</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## revdepcheck results</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>We checked 231 reverse dependencies (228 from CRAN + 3 from Bioconductor), comparing R CMD check results across CRAN and dev versions of this package.</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  R6 is a build-time dependency.</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>We saw 2 new problems:</span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## Downstream dependencies</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>I have also run R CMD check on downstream dependencies of httr </span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>(https://github.com/wch/checkresults/blob/master/httr/r-release). </span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>All packages that I could install passed except:</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>epikit</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>stevemisc</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>Both maintainers were notified on Jan 12 (~2 week ago) and supplied with patches.</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Ecoengine: this appears to be a failure related to config on </span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  that machine. I couldn't reproduce it locally, and it doesn't </span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  seem to be related to changes in httr (the same problem exists </span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  with httr 0.4).</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>We failed to check 3 packages</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>genekitr     (NA)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>OlinkAnalyze (NA)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>SCpubr       (NA)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This layout is designed to be easy to skim, and easy to match up to the <code>R CMD check</code> results seen by CRAN maintainers. It includes two sections:</p>
 <ol type="1">
-<li><p>Check results: I always state that there were no errors or warnings. Any <code>NOTE</code>s go in a bulleted list. For each <code>NOTE</code>, I include the message from <code>R CMD check</code> and a brief description of why I think it’s OK. If there were no <code>NOTE</code>s, I’d say “There were no ERRORs, WARNINGs or NOTEs”</p></li>
-<li><p>Downstream dependencies: If there are downstream dependencies, I run <code>R CMD check</code> on each package and summarise the results. If there are no downstream dependencies, keep this section, but say: “There are currently no downstream dependencies for this package”.</p></li>
+<li>
+<p>Check results: We always state that there were no errors or warnings (and we make sure that’s true!). Ideally we can also say there were no notes. But if not, any <code>NOTE</code>s are presented in a bulleted list. For each <code>NOTE</code>, we include the message from <code>R CMD check</code> and a brief description of why we think it’s OK.</p>
+<p>Here is how a <code>NOTE</code> is explained for the nycflights13 data package:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode md code-with-copy"><code class="sourceCode markdown"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## R CMD check results</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>0 errors | 0 warnings | 1 note</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Checking installed package size:</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  installed size is  6.9Mb</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  sub-directories of 1Mb or more:</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    data   6.9Mb</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  This is a data package that will be rarely updated.</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</li>
+<li><p>Reverse dependencies: If there are revdeps, this is where we paste the contents of <code>revdep/cran.md</code> (<a href="#sec-release-revdep-checks"><span>Section&nbsp;23.4.3</span></a>). If there are no revdeps, we recommend that you keep this section, but say something like: “There are currently no downstream dependencies for this package”.</p></li>
 </ol></section></section><section id="sec-release-process" class="level2" data-number="23.5"><h2 data-number="23.5" class="anchored" data-anchor-id="sec-release-process">
 <span class="header-section-number">23.5</span> The submission process</h2>
 <p>To manually submit your package to CRAN, you create a package bundle (with <code><a href="https://devtools.r-lib.org/reference/build.html">devtools::build()</a></code>) then upload it to <a href="https://cran.r-project.org/submit.html" class="uri">https://cran.r-project.org/submit.html</a>, along with some comments which describe the process you followed. This section shows you how to make submission as easy as possible by providing a standard structure for those comments. Later, in <a href="#sec-release-submission"><span>Section&nbsp;23.7</span></a>, you’ll see how to actually submit the package with <code><a href="https://devtools.r-lib.org/reference/release.html">devtools::release()</a></code>.</p>
@@ -761,7 +788,7 @@ https://github.com/wch/checkresults/tree/master/dplyr/r-release);
 <li>
 <p>Allows you to add your own questions to the check process by including an unexported <code>release_questions()</code> function in your package. This should return a character vector of questions to ask. For example, httr has:</p>
 <div class="cell">
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">release_questions</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">release_questions</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span></span>
 <span>    <span class="st">"Have you run all the OAuth demos?"</span>,</span>
 <span>    <span class="st">"Is inst/cacert.pem up to date?"</span></span>
@@ -786,13 +813,13 @@ https://github.com/wch/checkresults/tree/master/dplyr/r-release);
 <li><p>Fix the identified problems and make recommended changes. Re-run <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code> to make sure you didn’t accidentally introduce any new problems.</p></li>
 <li>
 <p>Add a “Resubmission” section at the top of <code>cran-comments.md</code>. This should clearly identify that the package is a resubmission, and list the changes that you made.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode md code-with-copy"><code class="sourceCode markdown"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## Resubmission</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>This is a resubmission. In this version I have:</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Converted the DESCRIPTION title to title case.</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>More clearly identified the copyright holders in the DESCRIPTION</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  and LICENSE files.</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode md code-with-copy"><code class="sourceCode markdown"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## Resubmission</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>This is a resubmission. In this version I have:</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>Converted the DESCRIPTION title to title case.</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>More clearly identified the copyright holders in the DESCRIPTION</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  and LICENSE files.</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </li>
 <li><p>If necessary, update the check results and downstream dependencies sections.</p></li>
 <li><p>Run <code><a href="https://devtools.r-lib.org/reference/submit_cran.html">devtools::submit_cran()</a></code> to re-submit the package without working through all the <code>release()</code> questions a second time.</p></li>
