@@ -196,24 +196,78 @@ Note also that even though urlchecker is using the same *code* as CRAN, your loc
 
 ## Double `R CMD check`ing
 
--   [ ] `devtools::check(remote = TRUE, manual = TRUE)`
--   [ ] `devtools::check_win_devel()`
-
-Next comes a couple of items related to `R CMD check`.
+Next come a couple of items related to `R CMD check`.
 Remember that this should not be the first time you've run `R CMD check` since the previous release!
 Hopefully, you are running `R CMD check` often during local development and are using a continuous integration service, like GitHub Actions.
-This is just a last-minute, final reminder to re-check your package:
+This is meant to be a last-minute, final reminder to double-check that all is well with your package:
 
--   Locally, presumably with the current version of R, and with some extra checks that are usually turned off to make day-to-day development faster.
+-   [ ] `devtools::check(remote = TRUE, manual = TRUE)`.
+    This happens on your primary development machine, presumably with the current version of R, and with some extra checks that are usually turned off to make day-to-day development faster.
 
--   On CRAN's win-builder service, against a development version of R
+-   [ ] `devtools::check_win_devel()`.
+    This sends your package off to be checked with CRAN's win-builder service, against the latest development version of R (a.k.a. r-devel).
+    You should receive an e-mail within about 30 minutes with a link to the check results.
+    It's a good idea to check your package with r-devel, because base R and `R CMD check` are constantly evolving.
+    Checking with r-devel is required by CRAN policy and it will be done as part of CRAN's incoming checks.
+    There is no point in skipping this step and hoping for the best.
 
-Note that this list implicitly reflects that tidyverse packages are checked after every push via GitHub Actions, across multiple operating systems and versions of R, and that most of the tidyverse team develops primarily on macOS.
-If your development process looks different from ours, here are more functions you might want to run before release:
+Note that the brevity of this list implicitly reflects that tidyverse packages are checked after every push via GitHub Actions, across multiple operating systems and versions of R (including the development version), and that most of the tidyverse team develops primarily on macOS.
+CRAN expects you to "make all reasonable efforts" to get your package working across all of the major R platforms and packages that don't work on at least two will typically not be accepted.
 
--   `rhub::check_for_cran()`: Especially important if you are not using GitHub Actions to check regularly on the major CRAN platforms. Currently covers Windows and Linux.
--   `devtools::check_mac_release()`: Recommended if your primary development machine is not macOS.
--   `rhub::check_with_sanitizers()` and friends: Helpful for additional checks relevant to packages with compiled code.
+The next subsection (@sec-cran-flavors-services) is optional reading with more details on the all the platforms that CRAN cares about and how you can access them.
+If your ongoing checks are more limited than ours, you may want to make up for that with more extensive pre-submission checks.
+You may also need this knowledge to troubleshoot a concrete problem that surfaces in CRAN's checks, either for an incoming submission or for a package that's already on CRAN.
+
+When running `R CMD check` for a CRAN submission, you have to address any problems that show up:
+
+-   You must fix all `ERROR`s and `WARNING`s.
+    A package that contains any errors or warnings will not be accepted by CRAN.
+
+-   Eliminate as many `NOTE`s as possible.
+    Each `NOTE` requires human oversight, which creates friction for both you and CRAN.
+    If there are notes that you do not believe are important, it is almost always easier to fix them (even if the fix is a bit of a hack) than to persuade CRAN that they're OK.
+    See @sec-r-cmd-check for details on how to fix individual problems.
+
+-   If you can't eliminate a `NOTE`, address it in `cran-comments.md`, exlaining why you think it is spurious.
+    We discuss this file further in @sec-release-cran-comments.
+
+    Note that there will always be one `NOTE` when you first submit your package.
+    This reminds CRAN that this is a new submission and that they'll need to do some extra checks.
+    You can't eliminate this `NOTE`, so just mention in `cran-comments.md` that this is your first submission.
+
+### CRAN check flavors and related services {#sec-cran-flavors-services}
+
+CRAN runs `R CMD check` on all contributed packages upon submission and on a regular basis, on multiple platforms or what they call "flavors".
+You can see CRAN's current check flavors here: <https://cran.r-project.org/web/checks/check_flavors.html>.
+There are various combinations of:
+
+-   Operating system and CPU: Windows, macOS (x86_64, arm64), Linux (various distributions)
+-   R version: r-devel, r-release, r-oldrel
+-   C, C++, FORTRAN compilers
+-   Locale, in the sense of the `LC_CTYPE` environment variable (this is about which human language is in use and character encoding)
+
+CRAN's check flavors almost certainly include platforms other than your preferred development environment(s), so you will eventually need to make an explicit effort to check and, perhaps, troubleshoot your package on these other flavors.
+
+It would be impractical for individual package developers to personally maintain all of these testing platforms.
+Instead, we turn to various community- and CRAN-maintained resources for this.
+Here is a selection, in order of how central they are to our current practices:
+
+-   GitHub Actions (GHA), as covered in @sec-sw-dev-practices-gha.
+
+-   R-hub builder (R-hub).
+    This is a service supported by the R Consortium where package developers can submit their package for checks that replicate various CRAN check flavors.
+
+    You can use R-hub via a web interface (<https://builder.r-hub.io>) or, as we recommend, through the [rhub R package](https://r-hub.github.io/rhub/).
+
+    `rhub::check_for_cran()` is a good option for a typical CRAN package and is morally similar to the GHA workflow configured by `usethis::use_github_action("check-standard")`.
+    However, unlike GHA, R-hub currently does not cover macOS, only Windows and Linux.
+
+    rhub also helps you access some of the more exotic check flavors and offers specialized checks relevant to packages with compiled code, such as `rhub::check_with_sanitizers()`.
+
+-   macOS builder is a service maintained by the CRAN personnel who build the macOS binaries for CRAN packages.
+    This is a relatively new addition to the list and checks packages with "the same setup and available packages as the CRAN M1 build machine".
+
+    You can submit your package using the web interface (<https://mac.r-project.org/macbuilder/submit.html>) or with `devtools::check_mac_release()`.
 
 ## Reverse dependency checks {#sec-release-revdep-checks}
 
@@ -324,7 +378,7 @@ There are various reasons why a result might be missing, incorrect, or contradic
     These are separately reported as "failed to test" but are still included in `problems.md`, because this could still be direct breakage caused by your package.
     For example, if you remove an exported function that's used by another package, installation will fail.
 
-Generally these differences are less of a worry now that CRAN's own revdep checks are well automated so new failures typically don't involve a human.
+Generally these differences are less of a worry now that CRAN's own revdep checks are well automated, so new failures typically don't involve a human.
 
 ### Revdeps and breaking changes
 
@@ -360,7 +414,7 @@ As the revdep maintainers merge the PRs, they can be checked off as resolved.
 If some PRs are still in-flight when the announced submission date rolls around, the situation can summarized in `cran-comments.md`, as was true in the case of [dplyr v1.1.0](https://github.com/tidyverse/dplyr/blob/c7e9cd72fd86309d72f2c522157cfac38f45453b/cran-comments.md).
 :::
 
-## Update comments for CRAN
+## Update comments for CRAN {#sec-release-cran-comments}
 
 -   [ ] Update `cran-comments.md`
 
@@ -437,60 +491,6 @@ When submitting to CRAN, remember that CRAN is staffed by volunteers, all of who
 A typical week has over 100 submissions and only three volunteers to process them all.
 The less work you make for them the more likely you are to have a pleasant submission experience.
 
-### Test environments {#release-test-env}
-
-When checking your package you need to make sure that it passed with the current development version of R and it works on at least two platforms.
-`R CMD check` is continuously evolving, so it's a good idea to check your package with the latest development version, **R-devel**.
-You can install R-devel on your own machine:
-
--   Mac: install from <https://mac.r-project.org/>.
-
--   Windows: install from <https://cran.r-project.org/bin/windows/base/rdevel.html>
-
--   Linux: either build it from source, or better, learn about Docker containers and run the R-devel container from <https://github.com/rocker-org/rocker>.
-
-It's painful to manage multiple R versions, especially since you'll need to reinstall all your packages.
-Instead, you can run `R CMD check` on CRAN's servers with the `devtools::check_win_*()` family of functions.
-They build your package and submit it to the CRAN win-builder.
-10-20 minutes after submission, you'll receive an e-mail telling you the check results.
-
-CRAN runs on multiple platforms: Windows, Mac OS X, Linux, and Solaris.
-You don't need to run `R CMD check` on every one of these platforms, but it's a really good idea to do it on at least two.
-This increases your chances of spotting code that relies on the idiosyncrasies of specific platform.
-There are two easy ways to check on different platforms:
-
--   `rhub::check()` which lets you manually run `R CMD check` on the platform of your choosing.
-
--   `usethis::use_github_action_check_standard()` which helps you set up GitHub actions to automatically run `R CMD check` every time you push to GitHub.
-
-Debugging code that works on your computer but fails elsewhere is painful.
-If that happens to you, either install a virtualisation tool so that you can run another operating system locally, or find a friend to help you figure out the problem.
-Don't submit the package and hope CRAN will help you figure out the problem.
-
-### Check results {#release-check}
-
-You've already learned how to use `R CMD check` and why it's important in @sec-workflow101-r-cmd-check.
-Compared to running `R CMD check` locally, there are a few important differences when running it for a CRAN submission:
-
--   You must fix all `ERROR`s and `WARNING`s.
-    A package that contains any errors or warnings will not be accepted by CRAN.
-
--   Eliminate as many `NOTE`s as possible.
-    Each `NOTE` requires human oversight, which is a precious commodity.
-    If there are notes that you do not believe are important, it is almost always easier to fix them (even if the fix is a bit of a hack) than to persuade CRAN that they're OK.
-    See @sec-r-cmd-check for details on how to fix individual problems.
-
-    If you have no `NOTE`s it is less likely that your package will be flagged for additional human checks.
-    These are time consuming for both you and CRAN, so are best avoided if possible.
-
--   If you can't eliminate a `NOTE`, document it in `cran-comments.md`, describing why you think it is spurious.
-    Your comments should be easy to scan, and easy to match up with `R CMD check`.
-    Provide the CRAN maintainers with everything they need in one place, even if it means repeating yourself.
-
-    NB: There will always be one `NOTE` when you first submit your package.
-    This reminds CRAN that this is a new submission and that they'll need to do some extra checks.
-    You can't eliminate this, so just mention in `cran-comments.md` that this is your first submission.
-
 ### Reverse dependencies {#sec-release-revdepcheck}
 
 Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work.
@@ -538,9 +538,6 @@ I've summarised the most common problems below:
 
 -   You must have clearly identified the copyright holders in `DESCRIPTION`: if you have included external source code, you must ensure that the license is compatible.
     See @sec-license for more details.
-
--   You must "make all reasonable efforts" to get your package working across multiple platforms.
-    Packages that don't work on at least two will not normally be considered.
 
 -   Do not make external changes without explicit user permission.
     Don't write to the file system, change options, install packages, quit R, send information over the internet, open external software, etc.
