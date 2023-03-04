@@ -489,48 +489,36 @@ It includes two sections:
 
 ## The submission process {#sec-release-process}
 
-To manually submit your package to CRAN, you create a package bundle (with `devtools::build()`) then upload it to <https://cran.r-project.org/submit.html>, along with some comments which describe the process you followed.
-This section shows you how to make submission as easy as possible by providing a standard structure for those comments.
-Later, in @sec-release-submission, you'll see how to actually submit the package with `devtools::release()`.
+-   [ ] `usethis::use_version('minor')` (or 'patch' or 'major')
+-   [ ] `devtools::submit_cran()`
+-   [ ] Approve email
 
-When submitting to CRAN, remember that CRAN is staffed by volunteers, all of whom have other full-time jobs.
-A typical week has over 100 submissions and only three volunteers to process them all.
-The less work you make for them the more likely you are to have a pleasant submission experience.
+When you're truly ready to submit, it's time to actually bump the version number in DESCRIPTION.
+This checklist item will reflect the type of release declared at the start of this process (patch, minor, or major), in the initial call to `use_release_issue()`.
 
-### Reverse dependencies {#sec-release-revdepcheck}
+We recommend that you submit your package to CRAN by calling `devtools::submit_cran()`.
+This convenience function wraps up a few steps:
 
-Finally, if you're releasing a new version of an existing package, it's your responsibility to check that downstream dependencies (i.e. all packages that list your package in the `Depends`, `Imports`, `Suggests` or `LinkingTo` fields) continue to work.
-To help you do this, ~~devtools provides `devtools::revdep_check()`~~.
-*This section is slated for revision for the 2nd edition. In the meantime, know that this functionality is now provided by the [revdepcheck](https://r-lib.github.io/revdepcheck/) package.* This:
+-   Creates the package bundle (@sec-bundled-package) with `pkgbuild::build(manual = TRUE)`, which ultimately calls `R CMD build`.
 
-1.  Sets up a temporary library so it doesn't clobber any existing packages you have installed.
+-   Posts the resulting `*.tar.gz` file to CRAN's official submission form (<https://cran.r-project.org/submit.html>), populating your name and email from `DESCRIPTION` and your submission comments from `cran-comments.md`.
 
-2.  Installs all of the dependencies of the downstream dependencies.
+-   Confirms that the submission was successful and reminds you to check your email for the confirmation link.
 
-3.  Runs `R CMD check` on each package.
+-   Writes submission details to a local `CRAN-SUBMISSION` file, which records the package version, SHA, and time of submission.
+    This information is used later by `usethis::use_github_release()` to create a GitHub release once your package has been accepted.
+    `CRAN-SUBMISSION` will be added to `.Rbuildignore`.
+    We generally do not gitignore this file, but neither do we commit it.
+    It's an ephemeral note that exists during the interval between submission and (hopefully) acceptance.
 
-4.  Summarises the results in a single file.
+After a successful upload, you should receive an email from CRAN within a few minutes.
+This email notifies you, as maintainer, of the submission and provides a confirmation link.
+Part of what this does is confirm that the maintainer's email address is correct.
+At the confirmation link, you are required to re-confirm that you've followed CRAN's policies and that you want to submit the package.
+If you fail to complete this step, your package is not actually submitted to CRAN!
 
-Run `usethis::use_revdep()` to set up your package with a useful template.
-
-If any packages fail `R CMD check`, you should give package authors at least two weeks to fix the problem before you submit your package to CRAN (you can easily get all maintainer e-mail addresses with `revdep_maintainers()`).
-After the two weeks is up, re-run the checks, and list any remaining failures in `cran-comments.md`.
-Each package should be accompanied by a brief explanation that either tells CRAN that it's a false positive in `R CMD check` (e.g. you couldn't install a dependency locally) or that it's a legitimate change in the API (which the maintainer hasn't fixed yet).
-
-Inform CRAN of your release process: "I advised all downstream package maintainers of these problems two weeks ago".
-Here's an example from a recent release of dplyr:
-
-    Important reverse dependency check notes (full details at 
-    https://github.com/wch/checkresults/tree/master/dplyr/r-release);
-
-    * COPASutils, freqweights, qdap, simPH: fail for various reasons. All package 
-      authors were informed of the upcoming release and shown R CMD check issues 
-      over two weeks ago.
-
-    * ggvis: You'll be receiving a submission that fixes these issues very shortly
-      from Winston.
-
-    * repra, rPref: uses a deprecated function.
+Once your package enters CRAN's system it is automatically checked on Windows and Linux, probably against both the released and development versions of R.
+You will get another email with links to these check results, usually within a matter of hours.
 
 ## CRAN policies {#cran-policies}
 
@@ -553,37 +541,6 @@ I've summarised the most common problems below:
 
 I recommend following the [CRAN Policy Watch](https://twitter.com/CRANPolicyWatch) Twitter account which tweets whenever there's a policy change.
 You can also look at the GitHub repository that powers it: <https://github.com/eddelbuettel/crp/commits/master/texi>.
-
-## Release {#sec-release-submission}
-
-You're now ready to submit your package to CRAN.
-The easiest way to do this is to run `devtools::release()`.
-This:
-
--   Builds the package and runs `R CMD check` one last time.
-
--   Asks you a number of yes/no questions to verify that you followed the most common best practices.
-
--   Allows you to add your own questions to the check process by including an unexported `release_questions()` function in your package.
-    This should return a character vector of questions to ask.
-    For example, httr has:
-
-    ```{r}
-    release_questions <- function() {
-      c(
-        "Have you run all the OAuth demos?",
-        "Is inst/cacert.pem up to date?"
-      )
-    }
-    ```
-
-    This is useful for reminding you to do any manual tasks that can't otherwise be automated.
-
--   Uploads the package bundle to the [CRAN submission form](https://cran.r-project.org/submit.html) including the comments in `cran-comments.md`.
-
-Within the next few minutes, you'll receive an email notifying you of the submission and asking you to approve it (this confirms that the maintainer address is correct).
-Next the CRAN maintainers will run their checks and get back to you with the results.
-This normally takes around 24 hours, but occasionally can take up to 5 days.
 
 ### On failure
 
