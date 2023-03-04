@@ -199,7 +199,7 @@ Note also that even though urlchecker is using the same *code* as CRAN, your loc
 Next come a couple of items related to `R CMD check`.
 Remember that this should not be the first time you've run `R CMD check` since the previous release!
 Hopefully, you are running `R CMD check` often during local development and are using a continuous integration service, like GitHub Actions.
-This is meant to be a last-minute, final reminder to double-check that all is well with your package:
+This is meant to be a last-minute, final reminder to double-check that all is still well:
 
 -   [ ] `devtools::check(remote = TRUE, manual = TRUE)`.
     This happens on your primary development machine, presumably with the current version of R, and with some extra checks that are usually turned off to make day-to-day development faster.
@@ -228,7 +228,7 @@ When running `R CMD check` for a CRAN submission, you have to address any proble
     If there are notes that you do not believe are important, it is almost always easier to fix them (even if the fix is a bit of a hack) than to persuade CRAN that they're OK.
     See @sec-r-cmd-check for details on how to fix individual problems.
 
--   If you can't eliminate a `NOTE`, address it in `cran-comments.md`, exlaining why you think it is spurious.
+-   If you can't eliminate a `NOTE`, list it in `cran-comments.md` and explain why you think it is spurious.
     We discuss this file further in @sec-release-cran-comments.
 
     Note that there will always be one `NOTE` when you first submit your package.
@@ -252,7 +252,7 @@ It would be impractical for individual package developers to personally maintain
 Instead, we turn to various community- and CRAN-maintained resources for this.
 Here is a selection, in order of how central they are to our current practices:
 
--   GitHub Actions (GHA), as covered in @sec-sw-dev-practices-gha.
+-   GitHub Actions (GHA) is our primary means of testing packages on multiple flavors, as covered in @sec-sw-dev-practices-gha.
 
 -   R-hub builder (R-hub).
     This is a service supported by the R Consortium where package developers can submit their package for checks that replicate various CRAN check flavors.
@@ -271,15 +271,13 @@ Here is a selection, in order of how central they are to our current practices:
 
 ## Reverse dependency checks {#sec-release-revdep-checks}
 
--   [ ] `revdepcheck::revdep_check(num_workers = 4)`[^release-2]
-
-[^release-2]: Note that, at least at the time of writing, the revdepcheck package is not on CRAN.
-    You can install it from Github via `devtools::install_github("r-lib/revdepcheck")` or `pak::pak("r-lib/revdepcheck")`.
+-   [ ] `revdepcheck::revdep_check(num_workers = 4)`
 
 This innocuous checklist item can actually represent a considerable amount of effort.
 At a high-level, checking your reverse dependencies ("revdeps") breaks down into:
 
 -   Form a list of your reverse dependencies.
+    These are CRAN packages that list your package in their `Depends`, `Imports`, `Suggests` or `LinkingTo` fields.
 
 -   Run `R CMD check` on each one.
 
@@ -294,6 +292,9 @@ Some of the packages maintained by our team have thousands of reverse dependenci
 We have to approach this in an automated fashion and this section will be most useful to other maintainers in the same boat.
 
 All of our reverse dependency tooling is concentrated in the revdepcheck package (<https://revdepcheck.r-lib.org/>).
+Note that, at least at the time of writing, the revdepcheck package is not on CRAN.
+You can install it from Github via `devtools::install_github("r-lib/revdepcheck")` or `pak::pak("r-lib/revdepcheck")`.
+
 Do this when you're ready to do revdep checks for the first time:
 
 ```{r}
@@ -302,6 +303,7 @@ usethis::use_revdep()
 ```
 
 This does some one-time setup in your package's `.gitignore` and `.Rbuildignore` files.
+Revdep checking will create some rather large folders below `revdep/`, so you definitely want to configure these ignore files.
 You will also see this reminder to actually perform revdep checks like so, as the checklist item suggests:
 
 ```{r}
@@ -342,6 +344,7 @@ To minimize false positives, `revdep_check()` runs `⁠R CMD check⁠` twice per
 Why two checks?
 Because sometimes the revdep is already failing `R CMD check` and it would be incorrect to blame your planned release for the breakage.
 `revdep_check()` reports the packages that can't be checked and, most importantly, those where there are so-called "changes to the worse", i.e. where your release candidate is associated with new problems.
+Note also that `revdep_check()` always works with a temporary, self-contained package library, i.e. it won't modify your default user or system library.
 
 ::: callout-note
 ## tidyverse team
@@ -396,19 +399,21 @@ If your update will break another package (regardless of why), you need to infor
 The nicest way to do this is with a patch that updates their package to play nicely with yours, perhaps in the form of a pull request.
 This can be a decent amount of work and is certainly not feasible for all maintainers.
 But working through a few of these can be a good way to confront the pain that breaking change causes and to reconsider whether the benefits outweigh the costs.
-In most cases, a change that affects revdeps is also likely to also break a lot of code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps.
+In most cases, a change that affects revdeps is likely to also break less visible code that lives outside of CRAN packages, such as scripts, reports, and Shiny apps.
 
-If you decide to proceed, you can use `revdepcheck::revdep_email()` to notify revdep maintainers *en masse*.
+If you decide to proceed, functions such as `revdepcheck::revdep_maintainers()` and `revdepcheck::revdep_email()` can help you notify revdep maintainers *en masse*.
 Make sure the email includes a link to documentation that describes the most common breaking changes and how to fix them.
 You should let the maintainers know when you plan to submit to CRAN (we recommend giving at least two weeks notice), so they can submit their updated version before that.
-But their submission is up to them - you can submit to CRAN knowing that you've done your due diligence.
-If you explain to CRAN that you gave advanced notice, they will accept your update, even if it breaks some other packages.
+When your release date rolls around, re-run your checks to see how many problems have been resolved.
+Explain any remaining failures in `cran-comments.md` as demonstrated in @sec-release-cran-comments.
+The two most common cases are that you are unable to check a package because you aren't able to install it locally or a legitimate change in the API which the maintainer hasn't addressed yet.
+As long as you have given sufficient advanced notice, CRAN will accept your update, even if it breaks some other packages.
 
 ::: callout-note
 ## tidyverse team
 
 Lately the tidyverse team is trying to meet revdep maintainers more than halfway in terms of dealing with breaking changes.
-For example, [here](https://github.com/tidyverse/dplyr/issues/6262) is the issue where dplyr maintainers tracked hundreds of pull requests in the build-up to releasing dplyr v1.1.0.
+For example, in GitHub issue [tidyverse/dplyr#6262](https://github.com/tidyverse/dplyr/issues/6262), the dplyr maintainers tracked hundreds of pull requests in the build-up to the release of dplyr v1.1.0.
 As the PRs are created, it's helpful to add links to those as well.
 As the revdep maintainers merge the PRs, they can be checked off as resolved.
 If some PRs are still in-flight when the announced submission date rolls around, the situation can summarized in `cran-comments.md`, as was true in the case of [dplyr v1.1.0](https://github.com/tidyverse/dplyr/blob/c7e9cd72fd86309d72f2c522157cfac38f45453b/cran-comments.md).
@@ -419,9 +424,10 @@ If some PRs are still in-flight when the announced submission date rolls around,
 -   [ ] Update `cran-comments.md`
 
 We use the `cran-comments.md` file to record comments about a submission, mainly just the results from `R CMD check` and revdep checks.
+If you are making a specific change at CRAN's request, possibly under a deadline, that would also make sense to mention.
 We like to track this file in Git, so we can see how it changes over time.
 It should also be listed in `.Rbuildignore`, since it should not appear in your package bundle.
-When you're ready to submit, `devtools::submit_cran()` (TODO: forward reference) incorporates the contents of `cran-comments.md` when it uploads your submission.
+When you're ready to submit, `devtools::submit_cran()` (@sec-release-process) incorporates the contents of `cran-comments.md` when it uploads your submission.
 
 The target audience for these comments is the CRAN personnel, although there is no guarantee that they will read the comments (or when in the submission process they read them).
 For example, if your package breaks other packages, you will likely receive an automated email about that, even if you've explained that in the comments.
