@@ -84,7 +84,7 @@ Selection:
 The immediate question feels quite mechanical: which component of the version number do you want to increment?
 But remember that we discussed the substantive differences in release types in @sec-lifecycle-release-type.
 
-In our workflow, this planned version number is recorded in the GitHub issue that holds the release checklist, but we don't actually increment the version in `DESCRIPTION` until later in the process.
+In our workflow, this planned version number is recorded in the GitHub issue that holds the release checklist, but we don't actually increment the version in `DESCRIPTION` until later in the process (@sec-release-process).
 However, it's important to declare the release type up front, because the process (and, therefore, the checklist) looks different for, e.g., a patch release versus a major release.
 
 ## Initial CRAN release: Special considerations {#sec-release-initial}
@@ -589,29 +589,59 @@ Now we move into the happiest section of the check list.
 -   [ ] Finish blog post, share on social media, etc.
 -   [ ] Add link to blog post in pkgdown news menu
 
+CRAN will notify you by email once your package is accepted.
 This is when we first push to GitHub with the new version number, i.e. we wait until it's certain that this version will actually be released on CRAN.
 Next we create a GitHub release corresponding to this CRAN release, using `usethis::use_github_release()`.
 A GitHub release is basically a glorified Git tag.
 The only aspect of GitHub releases that we regularly take advantage of is the release notes.
 `usethis::use_github_release()` creates release notes from the `NEWS` bullets relevant to the current release.
-Note that `usethis::use_github_release()` depends crucially on the `CRAN-SUBMISSION` file that was written by `devtools::submit_cran()` and, after the successful creation of the GitHub release, it deletes this temporary file.
+Note that `usethis::use_github_release()` depends crucially on the `CRAN-SUBMISSION` file that was written by `devtools::submit_cran()`: that's how it knows which SHA to tag.
+After the successful creation of the GitHub release, `use_github_release()` deletes this temporary file.
 
 Now we prepare for the next release by incrementing the version number yet again, this time to a development version using `usethis::use_dev_version()`.
 It makes sense to immediately push this state to GitHub so that, for example, any new branches or pull requests clearly have a development version as their base.
 
-Now you're ready for the fun part: publicizing your package.
+After the package has been accepted by CRAN, binaries are built for macOS and Windows.
+It will also be checked across the panel of CRAN check flavours.
+These processes unfold over a few days, post-acceptance, and sometimes they uncover errors that weren't detected by the less comprehensive incoming checks.
+It's a good idea to visit your package's CRAN landing page a few days after release and just make sure that all still seems to be well.
+
+```{r}
+#| echo: false
+#| out-width: ~
+knitr::include_graphics("images/cran-checks.png")
+```
+
+If there is a problem, prepare a patch release to address it and submit using the same process as before.
+If this means you are making a second submission less than a week after the previous, explain the situation in `cran-comments.md`.
+
+Once your package's binaries are built and it has passed checks across CRAN's flavors, it's time for the fun part: publicizing your package.
 This takes different forms, depending on the type of release.
 If this is your initial release (or, at least, the first release for which you really want to attract users), it's especially important to spread the word.
 No one will use your helpful new package if they don't know that it exists.
-There are a number of places to announce your package.
-If you have a blog, post about it there.
+There are a number of places to announce your package, such as Twitter, Mastodon, LinkedIn, Slack communities, etc.
+Make sure to use any relevant tags, such as the #rstats hashtag.
+If you have a blog, it's a great idea to write a post about your release.
 
 When introducing a package, the vibe should be fairly similar to writing your `README` or a "Getting Started" vignette.
 Make sure to describe what the package does, so that people who haven't used it before can understand why they should even care.
 For existing packages, we tend to write blog posts for minor and major releases, but not for a patch release.
 In all cases, we find that these blog posts are most effective when they include lots of examples, i.e. "show, don't tell".
-For package updates, remember that the existence of `NEWS.md` frees you from the need to describe every last change in your blog post.
+For package updates, remember that the existence of a comprehensive `NEWS` file frees you from the need to list every last change in your blog post.
 Instead, you can focus on the most important changes and link to the full release notes, for those who want the gory details.
-Finally, it's a good idea to share the announcement via social media, such as on Twitter or Mastodon, using the #rstats hashtag.
 
-TO DO: adding the blog post to pkgdown
+If you do blog about your package, it's good to capture this as yet another piece of documentation in your pkgdown website.
+A typical pkgdown site has a "News" item in the top navbar, linking to a "Changelog" which is built from `NEWS.md`.
+This drop-down menu is a common place to insert links to any blog posts about the package.
+You can accomplish this by having YAML like this in your `_pkgdown.yml` configuration file:
+
+``` yaml
+news:
+  releases:
+  - text: "Renaming the default branch (usethis >= 2.1.2)"
+    href: https://www.tidyverse.org/blog/2021/10/renaming-default-branch/
+  - text: "usethis 2.0.0"
+    href: https://www.tidyverse.org/blog/2020/12/usethis-2-0-0/
+  - text: "usethis 1.6.0"
+    href: https://www.tidyverse.org/blog/2020/04/usethis-1-6-0/
+```
