@@ -10,7 +10,7 @@ status("polishing")
 We've been calling out CRAN-specific concerns throughout the book, on our journey through the various parts of a package, such as tests and examples.
 In this chapter, we focus on the actual process of releasing a package to CRAN, for the first time or as an update.
 
-The most concrete expression of our release process is the checklist produced by `usethis::use_release_issue()`.
+The most concrete expression of our release process is the checklist produced by `usethis::use_release_issue()`, which opens a GitHub issue containing a list of todo's.
 This checklist is constantly-evolving and is responsive to a few characteristics of the package, so don't be shocked if you see something a bit different than what we show here.
 The main concerns are fairly timeless and we'll use this checklist to help structure this chapter.
 
@@ -23,6 +23,7 @@ This advice is extremely relevant here:
 [^release-1]: Fowler's blog post "FrequencyReducesDifficulty" is a great read on this topic, <https://martinfowler.com/bliki/FrequencyReducesDifficulty.html>.
 
 In the current context, interpret this to mean that you should be running `R CMD check` regularly, preferably on multiple platforms, and promptly addressing any issues that surface.
+Recall that our preferred way to do this is via `devtools::check()`.
 
 Why would you want to do something that is painful more often?
 Because it leads to less pain overall.
@@ -49,19 +50,18 @@ There are two big realizations that often come with a CRAN release process:
     You should even eliminate as many NOTEs as possible.
 
 -   Even if your package passes `R CMD check` cleanly on your machine, it can be eye-opening when it leaves these cozy, familiar surroundings and is, instead, checked on a remote server, configured by someone else, running an entirely different operating system.
-    This is why it is so valuable to use a continuous integration service like GitHub Actions to regularly check your package on macOS, Windows, and Linux.
+    This is why it is so valuable to use a continuous integration service like GitHub Actions (@sec-sw-dev-practices-gha) to regularly check your package on macOS, Windows, and Linux.
 
-*TODO: update this list once the rest of the chapter has been revised.*
+These are the major steps in the release process:
 
-To get your package ready to release, follow these steps:
-
-1.  Pick a version number.
-2.  Run and document `R CMD check`.
-3.  Check that you're aligned with CRAN policies.
-4.  Update `README.md` and `NEWS.md`.
-5.  Submit the package to CRAN.
-6.  Prepare for the next version by updating version numbers.
-7.  Publicise the new version.
+1.  Determine the release type, which dictates the version number.
+2.  If the package is already on CRAN: Do due diligence on existing CRAN results. If this is a first release: confirm you are in compliance with CRAN policies.
+3.  Freshen up documentation files, such as `README.md` and `NEWS.md`.
+4.  Double `check()` that your package is passing cleanly on multiple operating systems and on the released and development version of R.
+5.  Perform reverse dependency checks, if other packages depend on yours.
+6.  Submit the package to CRAN and wait for acceptance.
+7.  Create a GitHub release and prepare for the next version by incrementing the version number.
+8.  Publicize the new version.
 
 ## Decide the release type
 
@@ -187,6 +187,7 @@ Many of these items also appear in the checklist for a patch or initial release.
 -   [ ] Check if any deprecation processes should be advanced, as described in [Gradual deprecation](https://lifecycle.r-lib.org/articles/communicate.html#gradual-deprecation)
 -   [ ] [Polish NEWS](https://style.tidyverse.org/news.html#news-release)
 -   [ ] `urlchecker::url_check()`
+-   [ ] `devtools::build_readme()`
 
 These first few items confirm that your package is keeping up with its surroundings and with itself.
 The first item, "Check current CRAN check results", will be a hyperlink to the CRAN check results for version of the package that is currently on CRAN.
@@ -211,6 +212,9 @@ If a legitimate URL you want to use runs afoul of CRAN's checks, you'll have to 
 You could try to explain the situation to CRAN, but this requires human review, and thus is not recommended.
 Or you can convert such URLs into non-hyperlinked, verbatim text.
 Note also that even though urlchecker is using the same *code* as CRAN, your local results may still differ from CRAN's, due to differences in other ambient conditions, such as environment variables and system capabilities.
+
+If you have a `README.Rmd` file, you will also want to re-build the static `README.md` file with the current version of your package.
+The best function to use for this is [`devtools::build_readme()`](https://devtools.r-lib.org/reference/build_rmd.html), because it is guaranteed to render `README.Rmd` against the current source code of your package.
 
 ## Double `R CMD check`ing
 
@@ -381,7 +385,7 @@ In addition to some interactive messages, the revdep check results are written t
 -   `revdep/README.md`: This is a high-level summary aimed at maintainers. The filename and Markdown format are very intentional, in order to create a nice landing page for the `revdep/` folder on GitHub.
 -   `revdep/problems.md`: This lists the revdeps that appear to be broken by your release candidate.
 -   `revdep/failures.md`: This lists the revdeps that could not be checked, usually because of an installation failure, either of the revdep itself or one of its dependencies.
--   `revdep/cran.md`: This is a high-level summary aimed at CRAN. You should copy and paste this into `cran-comments.md` (TODO: forward reference to next section).
+-   `revdep/cran.md`: This is a high-level summary aimed at CRAN. You should copy and paste this into `cran-comments.md` (@sec-release-cran-comments).
 -   Other files and folders, such as `checks.noindex`, `data.sqlite`, and `library.noindex`. These are for revdepcheck's internal use and we won't discuss them further.
 
 The easiest way to get a feel for these different files is to look around at the latest revdep results for some tidyverse packages, such as [dplyr](https://github.com/tidyverse/dplyr/tree/main/revdep) or [tidyr](https://github.com/tidyverse/tidyr/tree/main/revdep).
@@ -593,7 +597,7 @@ For us, this scenario mostly comes up with respect to revdep checks.
 It's extremely rare for us to see failure for CRAN's initial `R CMD check` runs and, when it happens, it's often legitimate.
 On the other hand, for packages with a large number of revdeps, it's inevitable that a subset of these packages have some flaky tests or brittle examples.
 Therefore it's quite common to see revdep failures that have nothing to do with the proposed package update.
-In this case, it is appropriate to send a reply email to CRAN explaining why you think these are false positive.
+In this case, it is appropriate to send a reply email to CRAN explaining why you think these are false positives.
 
 ## Celebrating success {#sec-release-post-acceptance}
 
