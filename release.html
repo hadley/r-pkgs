@@ -424,29 +424,29 @@ Second edition
 <section id="introduction" class="level2" data-number="23.1"><h2 data-number="23.1" class="anchored" data-anchor-id="introduction">
 <span class="header-section-number">23.1</span> Introduction</h2>
 <p>We’ve been calling out CRAN-specific concerns throughout the book, on our journey through the various parts of a package, such as tests and examples. In this chapter, we focus on the actual process of releasing a package to CRAN, for the first time or as an update.</p>
-<p>The most concrete expression of our release process is the checklist produced by <code><a href="https://usethis.r-lib.org/reference/use_release_issue.html">usethis::use_release_issue()</a></code>. This checklist is constantly-evolving and is responsive to a few characteristics of the package, so don’t be shocked if you see something a bit different than what we show here. The main concerns are fairly timeless and we’ll use this checklist to help structure this chapter.</p>
+<p>The most concrete expression of our release process is the checklist produced by <code><a href="https://usethis.r-lib.org/reference/use_release_issue.html">usethis::use_release_issue()</a></code>, which opens a GitHub issue containing a list of todo’s. This checklist is constantly-evolving and is responsive to a few characteristics of the package, so don’t be shocked if you see something a bit different than what we show here. The main concerns are fairly timeless and we’ll use this checklist to help structure this chapter.</p>
 <p>But first: note that you will have deep regrets if you approach preparing your package for CRAN as a separate activity that you do <em>after</em> completing the planned development for a release. This advice is extremely relevant here:</p>
 <blockquote class="blockquote">
 <p>If it hurts, do it more often. – Martin Fowler<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 </blockquote>
-<p>In the current context, interpret this to mean that you should be running <code>R CMD check</code> regularly, preferably on multiple platforms, and promptly addressing any issues that surface.</p>
+<p>In the current context, interpret this to mean that you should be running <code>R CMD check</code> regularly, preferably on multiple platforms, and promptly addressing any issues that surface. Recall that our preferred way to do this is via <code><a href="https://devtools.r-lib.org/reference/check.html">devtools::check()</a></code>.</p>
 <p>Why would you want to do something that is painful more often? Because it leads to less pain overall. First, solving 5 problems is more than 5 times as hard as solving 1. It’s demoralizing to be blocked by several errors and the potential for unsavory interactions between them makes each one harder to isolate and fix. Second, fast feedback tends to reduce your total number of mistakes. Once you learn some lesson the hard way, you are unlikely to make that same mistake dozens of times elsewhere in your package. Finally, practice makes perfect! With greater exposure, you will get better at interpreting and responding to <code>R CMD check</code> results.</p>
 <p>Another natural reaction is: why don’t I eliminate this pain completely by not releasing my package on CRAN at all? For certain types of packages, this may be the right call. One such example is a personal package of helper functions. Another example is a package that supports a specific organization, coupled with a reasonable method of distributing that package to its users. The main reason to have your package on CRAN is to give your package greater reach. The vast majority of R users only install packages from CRAN, either due to personal or company policy or just from a lack of awareness about alternatives. CRAN provides discoverability, ease of installation, and a stamp of authenticity. The CRAN submission process can be frustrating, but it has many payoffs, and this chapter aims to make it as painless as possible.</p>
 <p>The release process we describe here is best used as a pre-flight checklist, that complements your ongoing efforts to keep your package passing <code>R CMD check</code> cleanly and CRAN-compliant. There are two big realizations that often come with a CRAN release process:</p>
 <ul>
 <li><p>If you’ve been turning a blind eye to WARNINGs and ERRORs from <code>R CMD check</code>, you really do have to study and eliminate those now. You should even eliminate as many NOTEs as possible.</p></li>
-<li><p>Even if your package passes <code>R CMD check</code> cleanly on your machine, it can be eye-opening when it leaves these cozy, familiar surroundings and is, instead, checked on a remote server, configured by someone else, running an entirely different operating system. This is why it is so valuable to use a continuous integration service like GitHub Actions to regularly check your package on macOS, Windows, and Linux.</p></li>
+<li><p>Even if your package passes <code>R CMD check</code> cleanly on your machine, it can be eye-opening when it leaves these cozy, familiar surroundings and is, instead, checked on a remote server, configured by someone else, running an entirely different operating system. This is why it is so valuable to use a continuous integration service like GitHub Actions (<a href="software-development-practices.html#sec-sw-dev-practices-gha"><span>Section&nbsp;21.3.1</span></a>) to regularly check your package on macOS, Windows, and Linux.</p></li>
 </ul>
-<p><em>TODO: update this list once the rest of the chapter has been revised.</em></p>
-<p>To get your package ready to release, follow these steps:</p>
+<p>These are the major steps in the release process:</p>
 <ol type="1">
-<li>Pick a version number.</li>
-<li>Run and document <code>R CMD check</code>.</li>
-<li>Check that you’re aligned with CRAN policies.</li>
-<li>Update <code>README.md</code> and <code>NEWS.md</code>.</li>
-<li>Submit the package to CRAN.</li>
-<li>Prepare for the next version by updating version numbers.</li>
-<li>Publicise the new version.</li>
+<li>Determine the release type, which dictates the version number.</li>
+<li>If the package is already on CRAN: Do due diligence on existing CRAN results. If this is a first release: confirm you are in compliance with CRAN policies.</li>
+<li>Freshen up documentation files, such as <code>README.md</code> and <code>NEWS.md</code>.</li>
+<li>Double <code>check()</code> that your package is passing cleanly on multiple operating systems and on the released and development version of R.</li>
+<li>Perform reverse dependency checks, if other packages depend on yours.</li>
+<li>Submit the package to CRAN and wait for acceptance.</li>
+<li>Create a GitHub release and prepare for the next version by incrementing the version number.</li>
+<li>Publicize the new version.</li>
 </ol></section><section id="decide-the-release-type" class="level2" data-number="23.2"><h2 data-number="23.2" class="anchored" data-anchor-id="decide-the-release-type">
 <span class="header-section-number">23.2</span> Decide the release type</h2>
 <p>When you call <code>use_release_issue()</code>, you’ll be asked which type of release you intend to make.</p>
@@ -526,10 +526,14 @@ Second edition
 <li>
 <input type="checkbox" disabled=""><code><a href="https://rdrr.io/pkg/urlchecker/man/url_check.html">urlchecker::url_check()</a></code>
 </li>
+<li>
+<input type="checkbox" disabled=""><code><a href="https://devtools.r-lib.org/reference/build_rmd.html">devtools::build_readme()</a></code>
+</li>
 </ul>
 <p>These first few items confirm that your package is keeping up with its surroundings and with itself. The first item, “Check current CRAN check results”, will be a hyperlink to the CRAN check results for version of the package that is currently on CRAN. If there are any WARNINGs or ERRORs or NOTEs there, you should investigate and determine what’s going on. Occasionally there can be an intermittent hiccup at CRAN, but generally speaking, any result other than “OK” is something you should address with the release you are preparing. You may discover your package is in a dysfunctional state due to changes in base R, CRAN policies, CRAN tooling, or packages you depend on.</p>
 <p>If you are in the process of deprecating a function or an argument, a minor or major release is a good time to consider moving that process along as described in <a href="lifecycle.html#sec-lifecycle-stages-and-package"><span>Section&nbsp;22.8</span></a>. This is also a good time to look at all the <code>NEWS</code> bullets that have accumulated since the last release (“Polish NEWS”). Even if you’ve been diligent about jotting down all the news-worthy changes, chances are these bullets will benefit from some re-organization and editing for consistency and clarity (<a href="other-markdown.html#sec-news"><span>Section&nbsp;19.3</span></a>).</p>
 <p>Another very important check is to run <code><a href="https://rdrr.io/pkg/urlchecker/man/url_check.html">urlchecker::url_check()</a></code>. CRAN’s URL checks are described at <a href="https://cran.r-project.org/web/packages/URL_checks.html" class="uri">https://cran.r-project.org/web/packages/URL_checks.html</a> and are implemented by code that ships with R itself. However, these checks are not exposed in a very usable way. The urlchecker package was created to address this and exposes CRAN’s URL-checking logic in the <code>url_check()</code> function. The main problems that surface tend to be URLs that don’t work anymore or URLs that use redirection. Obviously, you should update or remove any URL that no longer exists. Redirection, however, is trickier. If the status code is “301 Moved Permanently”, CRAN’s view is that your package should use the redirected URL. The problem is that many folks don’t follow <a href="https://www.rfc-editor.org/rfc/rfc7231#section-6.4.2">RFC7231</a> to the letter and use this sort of redirect even when they have a different intent, i.e.&nbsp;their intent is to publicize a provide a stable, user-friendly URL than then redirects to something less user-friendly or more volatile. If a legitimate URL you want to use runs afoul of CRAN’s checks, you’ll have to choose between a couple of less-than-appealing options. You could try to explain the situation to CRAN, but this requires human review, and thus is not recommended. Or you can convert such URLs into non-hyperlinked, verbatim text. Note also that even though urlchecker is using the same <em>code</em> as CRAN, your local results may still differ from CRAN’s, due to differences in other ambient conditions, such as environment variables and system capabilities.</p>
+<p>If you have a <code>README.Rmd</code> file, you will also want to re-build the static <code>README.md</code> file with the current version of your package. The best function to use for this is <a href="https://devtools.r-lib.org/reference/build_rmd.html"><code>devtools::build_readme()</code></a>, because it is guaranteed to render <code>README.Rmd</code> against the current source code of your package.</p>
 </section><section id="double-r-cmd-checking" class="level2" data-number="23.5"><h2 data-number="23.5" class="anchored" data-anchor-id="double-r-cmd-checking">
 <span class="header-section-number">23.5</span> Double <code>R CMD check</code>ing</h2>
 <p>Next come a couple of items related to <code>R CMD check</code>. Remember that this should not be the first time you’ve run <code>R CMD check</code> since the previous release! Hopefully, you are running <code>R CMD check</code> often during local development and are using a continuous integration service, like GitHub Actions. This is meant to be a last-minute, final reminder to double-check that all is still well:</p>
@@ -646,7 +650,7 @@ tidyverse team
 <li>
 <code>revdep/failures.md</code>: This lists the revdeps that could not be checked, usually because of an installation failure, either of the revdep itself or one of its dependencies.</li>
 <li>
-<code>revdep/cran.md</code>: This is a high-level summary aimed at CRAN. You should copy and paste this into <code>cran-comments.md</code> (TODO: forward reference to next section).</li>
+<code>revdep/cran.md</code>: This is a high-level summary aimed at CRAN. You should copy and paste this into <code>cran-comments.md</code> (<a href="#sec-release-cran-comments"><span>Section&nbsp;23.7</span></a>).</li>
 <li>Other files and folders, such as <code>checks.noindex</code>, <code>data.sqlite</code>, and <code>library.noindex</code>. These are for revdepcheck’s internal use and we won’t discuss them further.</li>
 </ul>
 <p>The easiest way to get a feel for these different files is to look around at the latest revdep results for some tidyverse packages, such as <a href="https://github.com/tidyverse/dplyr/tree/main/revdep">dplyr</a> or <a href="https://github.com/tidyverse/tidyr/tree/main/revdep">tidyr</a>.</p>
@@ -774,7 +778,7 @@ tidyverse team
 <li><p>If necessary, update the check results and revep sections.</p></li>
 <li><p>Run <code><a href="https://devtools.r-lib.org/reference/submit_cran.html">devtools::submit_cran()</a></code> to re-submit the package.</p></li>
 </ul>
-<p>If your analysis indicates that the initial failure was a false positive, reply to CRAN’s email with a concise explanation. For us, this scenario mostly comes up with respect to revdep checks. It’s extremely rare for us to see failure for CRAN’s initial <code>R CMD check</code> runs and, when it happens, it’s often legitimate. On the other hand, for packages with a large number of revdeps, it’s inevitable that a subset of these packages have some flaky tests or brittle examples. Therefore it’s quite common to see revdep failures that have nothing to do with the proposed package update. In this case, it is appropriate to send a reply email to CRAN explaining why you think these are false positive.</p>
+<p>If your analysis indicates that the initial failure was a false positive, reply to CRAN’s email with a concise explanation. For us, this scenario mostly comes up with respect to revdep checks. It’s extremely rare for us to see failure for CRAN’s initial <code>R CMD check</code> runs and, when it happens, it’s often legitimate. On the other hand, for packages with a large number of revdeps, it’s inevitable that a subset of these packages have some flaky tests or brittle examples. Therefore it’s quite common to see revdep failures that have nothing to do with the proposed package update. In this case, it is appropriate to send a reply email to CRAN explaining why you think these are false positives.</p>
 </section><section id="sec-release-post-acceptance" class="level2" data-number="23.10"><h2 data-number="23.10" class="anchored" data-anchor-id="sec-release-post-acceptance">
 <span class="header-section-number">23.10</span> Celebrating success</h2>
 <p>Now we move into the happiest section of the check list.</p>
