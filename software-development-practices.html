@@ -453,7 +453,7 @@ Second edition
 <li><p>94% report using Git. The second-most used version control system was SVN, used by 5% of respondents.</p></li>
 <li><p>For personal projects, 87% of respondents report using GitHub, followed by GitLab (21%) and Bitbucket (11%). The ranking is the same albeit less skewed for professional work: GitHub still dominates with 56%, followed by GitLab (29%) and Bitbucket (18%).</p></li>
 </ul>
-<p>We can even learn a bit about the habits of R package developers, based on the URLs found in the <code>DESCRIPTION</code> files of CRAN packages. As of December 2022, there are about 18K packages on CRAN, of which about 55% have a non-empty <code>URL</code> field (over 10K). Of those, 80% have a GitHub URL (over 8K), followed by GitLab (just over 1%) and Bitbucket (around 0.5%).</p>
+<p>We can even learn a bit about the habits of R package developers, based on the URLs found in the <code>DESCRIPTION</code> files of CRAN packages. As of March 2023, there are about 19K packages on CRAN, of which about 55% have a non-empty <code>URL</code> field (over 10K). Of those, 80% have a GitHub URL (over 8K), followed by GitLab (just over 1%) and Bitbucket (around 0.5%).</p>
 <p>The prevalence of Git/GitHub, both within the R community and beyond, should help you feel confident that adoption will have tangible benefits. Furthermore, the sheer popularity of these tools means there are lots of resources available for learning how to use Git and GitHub and for getting unstuck<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
 <p>Two specific resources that address the intersection of Git/GitHub and the R world are the website <a href="https://happygitwithr.com/index.html">Happy Git and GitHub for the useR</a> and the article “Excuse me, do you have a moment to talk about version control?” <span class="citation" data-cites="bryan2018-tas">(<a href="references.html#ref-bryan2018-tas" role="doc-biblioref">Bryan 2018</a>)</span>.</p>
 <p>We conclude this section with a few examples of why Git/GitHub can be valuable specifically for R package development:</p>
@@ -477,28 +477,29 @@ Second edition
 <p>The easiest way to start using CI is to host your package on GitHub and use its companion service, GitHub Actions (GHA). Then you can use various functions from usethis to configure so-called GHA workflows. usethis copies workflow configuration files from <a href="https://github.com/r-lib/actions/#readme"><code>r-lib/actions</code></a>, which is where the tidyverse team maintains GHA infrastructure useful to the R community.</p>
 </section><section id="r-cmd-check-via-gha" class="level3" data-number="21.3.2"><h3 data-number="21.3.2" class="anchored" data-anchor-id="r-cmd-check-via-gha">
 <span class="header-section-number">21.3.2</span> <code>R CMD check</code> via GHA</h3>
-<p>If you only use CI for one thing, it should be to run <code>R CMD check</code>. If your package has a very limited audience, this will configure an entry-level solution:</p>
+<p>If you only use CI for one thing, it should be to run <code>R CMD check</code>. If you call <code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_action()</a></code> with no arguments, you can choose from a few of the most useful workflows. Here’s what that menu looks like at the time of writing:</p>
 <div class="cell">
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># for a package with a limited audience</span></span>
-<span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/github_actions.html">use_github_actions</a></span><span class="op">(</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">use_github_action</span>()</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>Which action do you want to add? (<span class="dv">0</span> to exit)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>(See <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>github.com<span class="sc">/</span>r<span class="sc">-</span>lib<span class="sc">/</span>actions<span class="sc">/</span>tree<span class="sc">/</span>v2<span class="sc">/</span>examples<span class="sc">&gt;</span> <span class="cf">for</span> other options) </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="sc">:</span> check<span class="sc">-</span>standard<span class="sc">:</span> Run <span class="st">`</span><span class="at">R CMD check</span><span class="st">`</span> on Linux, macOS, and Windows</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="sc">:</span> test<span class="sc">-</span>coverage<span class="sc">:</span> Compute test coverage and report to https<span class="sc">:</span><span class="er">//</span>about.codecov.io</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span><span class="sc">:</span> pr<span class="sc">-</span>commands<span class="sc">:</span> Add <span class="sc">/</span>document and <span class="sc">/</span>style commands <span class="cf">for</span> pull requests</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Selection<span class="sc">:</span> </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>However, most packages will benefit from more rigorous checks, i.e.&nbsp;checking on Linux, macOS, and Windows. This increases your chances of quickly detecting code that relies on the idiosyncrasies of a specific platform, while it’s still easy to make the code more portable. Here’s how to configure that:</p>
-<div class="cell">
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/github_actions.html">use_github_action_check_standard</a></span><span class="op">(</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>You will see some messages along these lines:</p>
-<div class="cell">
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/github_actions.html">use_github_action_check_standard</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ✔ Creating '.github/'</span></span>
+<p><code>check-standard</code> is highly recommended, especially for any package that is (or aspires to be) on CRAN. It runs <code>R CMD check</code> across a few combinations of operating system and R version. This increases your chances of quickly detecting code that relies on the idiosyncrasies of a specific platform, while it’s still easy to make the code more portable.</p>
+<p>After making that selection, you will see some messages along these lines:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#&gt; ✔ Creating '.github/'</span></span>
 <span><span class="co">#&gt; ✔ Adding '*.html' to '.github/.gitignore'</span></span>
 <span><span class="co">#&gt; ✔ Creating '.github/workflows/'</span></span>
 <span><span class="co">#&gt; ✔ Saving 'r-lib/actions/examples/check-standard.yaml@v2' to .github/workflows/R-CMD-check.yaml'</span></span>
 <span><span class="co">#&gt; • Learn more at &lt;https://github.com/r-lib/actions/blob/v2/examples/README.md&gt;.</span></span>
 <span><span class="co">#&gt; ✔ Adding R-CMD-check badge to 'README.md'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>The key things that happen here are:</p>
 <ul>
-<li><p>A new GHA workflow file is written below <code>.github/workflows/</code>. GHA workflows are specified via YAML files. The message reveals the source of the YAML and gives a link to learn more.</p></li>
+<li><p>A new GHA workflow file is written to <code>.github/workflows/R-CMD-check.yaml</code>. GHA workflows are specified via YAML files. The message reveals the source of the YAML and gives a link to learn more.</p></li>
 <li><p>Some helpful additions may be made to various “ignore” files.</p></li>
 <li><p>A badge reporting the <code>R CMD check</code> result is added to your README, if it has been created with usethis and has an identifiable badge “parking area”. Otherwise, you’ll be given some text you can copy and paste.</p></li>
 </ul>
@@ -506,13 +507,17 @@ Second edition
 <p>Congratulations! Your package will now benefit from even more regular checks.</p>
 </section><section id="other-uses-for-gha" class="level3" data-number="21.3.3"><h3 data-number="21.3.3" class="anchored" data-anchor-id="other-uses-for-gha">
 <span class="header-section-number">21.3.3</span> Other uses for GHA</h3>
+<p>As suggested by the interactive menu, <code><a href="https://usethis.r-lib.org/reference/github_actions.html">usethis::use_github_action()</a></code> gives you access to pre-made workflows other than <code>R CMD check</code>. In addition to the featured choices, you can use it to configure any of the example workflows in <a href="https://github.com/r-lib/actions/tree/v2-branch/examples#readme"><code>r-lib/actions</code></a> by passing the workflow’s name. For example:</p>
+<ul>
+<li>
+<code>use_github_action("test-coverage")</code> configures a workflow to track the test coverage of your package, as described in <a href="testing-design.html#sec-testing-design-coverage"><span>Section&nbsp;15.1.1</span></a>.</li>
+</ul>
 <p>Since GHA allows you to run arbitrary code, there are many other things that you can use it for:</p>
 <ul>
 <li><p>Building your package’s website and deploying the rendered site to GitHub Pages, as described in <a href="website.html#sec-website-deployment"><span>Section&nbsp;20.3</span></a>. See also <code>?usethis::use_pkgdown_github_pages()</code>.</p></li>
-<li><p>Tracking the test coverage of your package, as described in <a href="testing-design.html#sec-testing-design-coverage"><span>Section&nbsp;15.1.1</span></a>. This can be set up with <code>use_github_action("test-coverage")</code>.</p></li>
 <li><p>Re-publishing a book website every time you make a change to the source. (Like we do for this book!).</p></li>
 </ul>
-<p>Remember that <a href="https://github.com/r-lib/actions/#readme"><code>r-lib/actions</code></a> is a great place to learn more about using GHA for various R-related tasks. In addition to the pre-configured examples featured here, this repository also contains the lower-level building blocks that you could use to build your own custom workflows, such as actions to install R or to install all of the dependencies indicated in a <code>DESCRIPTION</code> file.</p>
+<p>If the example workflows don’t cover your exact use case, you can also develop your own workflow. Even in this case, the example workflows are often useful as inspiration. The <a href="https://github.com/r-lib/actions/#readme"><code>r-lib/actions</code></a> repository also contains important lower-level building blocks, such as actions to install R or to install all of the dependencies indicated in a <code>DESCRIPTION</code> file.</p>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
