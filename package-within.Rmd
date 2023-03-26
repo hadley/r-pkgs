@@ -463,9 +463,7 @@ Extensions’ manual.
 ```
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
-We could add either of these lines to any file below `R/` to eliminate this note[^package-within-4]:
-
-[^package-within-4]: For more details, see the [Programming with dplyr vignette](https://dplyr.tidyverse.org/articles/programming.html#eliminating-r-cmd-check-notes).
+We could add either of these lines to any file below `R/` to eliminate this note:
 
 ```{r, eval = FALSE}
 # option 1 (then you should also put utils in Imports)
@@ -474,6 +472,12 @@ utils::globalVariables(c("english", "temp"))
 # option 2
 english <- temp <- NULL
 ```
+
+We're seeing that it can be tricky to program around a package like dplyr, which makes heavy use of nonstandard evaluation.
+Behind the scenes, that is the technique that allows dplyr's end users to use bare (not quoted) variable names.
+Packages like dplyr prioritize the experience of the typical end user, at the expense of making them trickier to depend on.
+The two options shown above for suppressing the "no visible binding" note, represent entry-level solutions.
+For a more sophisticated treatment of these issues, see `vignette("programming", package = "dplyr")`.
 
 The warning about missing documentation is because we haven't properly documented our exported functions.
 This is a valid concern and something you should absolutely address in a real package.
@@ -569,18 +573,18 @@ There are some types of sloppiness that are fairly harmless when a function is d
 
 The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.
-The heart of the timestamp strategy is this format string[^package-within-5]:
+The heart of the timestamp strategy is this format string[^package-within-4]:
 
-[^package-within-5]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
+[^package-within-4]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
     Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
 ```{r}
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 
-This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-6].
+This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-5].
 
-[^package-within-6]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
+[^package-within-5]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
 
 Here's such a timestamp produced by a few hypothetical colleagues cleaning some data at exactly the same instant in time.
 
