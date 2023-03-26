@@ -346,15 +346,17 @@ This will quickly alert you to many problems that simple installation and usage 
 
 Indeed, `R CMD check` fails for this package and we see this:
 
-     * installing *source* package ‘delta’ ...
-     ** using staged installation
-     ** R
-     ** byte-compile and prepare package for lazy loading
-     Error in library(tidyverse) : there is no package called ‘tidyverse’
-     Error: unable to load R code in package ‘delta’
-     Execution halted
-     ERROR: lazy loading failed for package ‘delta’
-     * removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
+```         
+ * installing *source* package ‘delta’ ...
+ ** using staged installation
+ ** R
+ ** byte-compile and prepare package for lazy loading
+ Error in library(tidyverse) : there is no package called ‘tidyverse’
+ Error: unable to load R code in package ‘delta’
+ Execution halted
+ ERROR: lazy loading failed for package ‘delta’
+ * removing ‘/Users/jenny/rrr/delta.Rcheck/delta’
+```
 
 What do you mean "there is no package called 'tidyverse'"?!?
 We're using it, with no problems, in our main script!
@@ -430,10 +432,12 @@ In this case, our package only uses dplyr.
 
 The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
 
-    Package: echo
-    (... other lines omitted ...)
-    Imports: 
-        dplyr
+```         
+Package: echo
+(... other lines omitted ...)
+Imports: 
+    dplyr
+```
 
 This, together with our use of namespace-qualified calls, like `dplyr::left_join()`, constitutes a valid way to use another package within ours.
 The metadata conveyed via DESCRIPTION is covered in @sec-description.
@@ -443,18 +447,20 @@ Note that `f_to_c()` is currently only used internally, inside `celsify_temp()`,
 
 This version of the package can be installed, used, AND it technically passes `R CMD check`, though with 1 note and 1 warning.
 
-    * checking R code for possible problems ... NOTE
-    celsify_temp: no visible binding for global variable ‘english’
-    celsify_temp: no visible binding for global variable ‘temp’
-    Undefined global functions or variables:
-      english temp
+```         
+* checking R code for possible problems ... NOTE
+celsify_temp: no visible binding for global variable ‘english’
+celsify_temp: no visible binding for global variable ‘temp’
+Undefined global functions or variables:
+  english temp
 
-    * checking for missing documentation entries ... WARNING
-    Undocumented code objects:
-      ‘celsify_temp’ ‘localize_beach’ ‘outfile_path’
-    All user-level objects in a package should have documentation entries.
-    See chapter ‘Writing R documentation files’ in the ‘Writing R
-    Extensions’ manual.
+* checking for missing documentation entries ... WARNING
+Undocumented code objects:
+  ‘celsify_temp’ ‘localize_beach’ ‘outfile_path’
+All user-level objects in a package should have documentation entries.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+```
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
 We could add either of these lines to any file below `R/` to eliminate this note[^package-within-4]:
