@@ -410,11 +410,11 @@ Therefore, we won't discuss this further here.
 
 ## Foxtrot: build time vs. run time {#sec-package-within-build-time-run-time}
 
-The package works, which is great, but group members notice something odd about the timestamps:
+The echo package works, which is great, but group members notice something odd about the timestamps:
 
 ```{r, eval = FALSE}
 Sys.time()
-#> [1] "2022-02-24 20:49:59 PST"
+#> [1] "2023-03-26 22:48:48 PDT"
 
 outfile_path("INFILE.csv")
 #> [1] "2020-September-03_11-06-33_INFILE_clean.csv"
@@ -436,19 +436,21 @@ outfile_path <- function(infile) {
 
 The fact that we capture `now <- Sys.time()` outside of the definition of `outfile_path()` has probably been vexing some readers for a while.
 `now` reflects the instant in time when we execute `now <- Sys.time()`.
-In the initial approach, that happened when we `source()`d `cleaning-helpers.R`.
+In the initial approach, `now` was assigned when we `source()`d `cleaning-helpers.R`.
 That's not ideal, but it was probably a pretty harmless mistake, because the helper file would be `source()`d shortly before we wrote the outfile.
 
 But this approach is quite devastating in the context of a package.
-`now <- Sys.time()` is executed **when the package is built**.
+`now <- Sys.time()` is executed **when the package is built**[^package-within-4].
 And never again.
-It is very easy to subconsciously assume your package code is re-evaluated when the package is installed, attached, or used.
+It is very easy to subconsciously assume your package code is re-evaluated when the package is attached or used.
 But it is not.
 Yes, the code *inside your functions* is absolutely run whenever they are called.
 But your functions -- and any other objects created in top-level code below `R/` -- are defined exactly once, at build time.
 
+[^package-within-4]: Here we're referring to when the package code is compiled, which could be either when the binary is made (for macOS or Windows; @sec-structure-binary) or when the package is installed from source (\@sec-installed-package).
+
 By defining `now` with top-level code below `R/`, we've doomed our package to timestamp all of its output files with the same (wrong) time.
-The fix is to make sure the `Sys.time()` call happens at runtime.
+The fix is to make sure the `Sys.time()` call happens at run time.
 
 Let's look again at parts of `R/cleaning-helpers.R`:
 
