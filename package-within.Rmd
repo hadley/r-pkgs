@@ -322,39 +322,25 @@ To review, copying `cleaning-helpers.R` to `R/cleaning-helpers.R`, without furth
 
 We're ready to make the most minimal version of this package that actually works.
 
+```{r eval = FALSE, include = FALSE}
+create_package("package-within-files/echo", open = FALSE)
+# say yes to the scary nested project question
+fs::file_copy(
+  "package-within-files/echo-cleaning-helpers.R",
+  "package-within-files/echo/R/cleaning-helpers.R"
+)
+with_project("package-within-files/echo", use_package("dplyr"))
+with_project("package-within-files/echo", use_mit_license())
+install("package-within-files/echo")
+check("package-within-files/echo")
+```
+
 Here is the new version of `R/cleaning-helpers.R`[^package-within-2]:
 
 [^package-within-2]: Putting everything in one file, with this name, is not ideal, but it is technically allowed.
     We discuss organising and naming the files below `R/` in @sec-code-organising.
 
-```{cat, engine.opts = list(file = "Package-within-files/echo-cleaning-helpers.R"), class.source = "R"}
-lookup_table <- dplyr::tribble(
-      ~where, ~english,
-     "beach",     "US",
-     "coast",     "US",
-  "seashore",     "UK",
-   "seaside",     "UK"
-)
-
-#' @export
-localize_beach <- function(dat) {
-  dplyr::left_join(dat, lookup_table)
-}
-
-f_to_c <- function(x) (x - 32) * 5/9
-
-#' @export
-celsify_temp <- function(dat) {
-  dplyr::mutate(dat, temp = dplyr::if_else(english == "US", f_to_c(temp), temp))
-}
-
-now <- Sys.time()
-timestamp <- function(time) format(time, "%Y-%B-%d_%H-%M-%S")
-
-#' @export
-outfile_path <- function(infile) {
-  paste0(timestamp(now), "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile))
-}
+```{r, file = "package-within-files/echo/R/cleaning-helpers.R", eval = FALSE}
 ```
 
 We've gone back to defining the `lookup_table` with R code, since our initial attempt to read it from CSV created some sort of filepath snafu.
@@ -368,7 +354,7 @@ In this case, our package only uses dplyr.
 
 [^package-within-3]: The blog post [The tidyverse is for EDA, not packages](https://www.tidyverse.org/blog/2018/06/tidyverse-not-for-packages/) elaborates on this.
 
-The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the Imports field of `DESCRIPTION`:
+The `library(tidyverse)` call is gone and instead we declare our use of dplyr in the `Imports` field of `DESCRIPTION`:
 
 ```         
 Package: echo
@@ -378,26 +364,26 @@ Imports:
 ```
 
 This, together with our use of namespace-qualified calls, like `dplyr::left_join()`, constitutes a valid way to use another package within ours.
-The metadata conveyed via DESCRIPTION is covered in @sec-description.
+The metadata conveyed via `DESCRIPTION` is covered in @sec-description.
 
 All of the user-facing functions have an `@export` tag in their roxygen comment, which means that `devtools::document()` adds them correctly to the `NAMESPACE` file.
 Note that `f_to_c()` is currently only used internally, inside `celsify_temp()`, so we have not exported it (likewise for `timestamp()`).
 
-This version of the package can be installed, used, AND it technically passes `R CMD check`, though with 1 note and 1 warning.
+This version of the package can be installed, used, AND it technically passes `R CMD check`, though with 1 warning and 1 note.
 
 ```         
-* checking R code for possible problems ... NOTE
-celsify_temp: no visible binding for global variable ‘english’
-celsify_temp: no visible binding for global variable ‘temp’
-Undefined global functions or variables:
-  english temp
-
 * checking for missing documentation entries ... WARNING
 Undocumented code objects:
   ‘celsify_temp’ ‘localize_beach’ ‘outfile_path’
 All user-level objects in a package should have documentation entries.
 See chapter ‘Writing R documentation files’ in the ‘Writing R
 Extensions’ manual.
+
+* checking R code for possible problems ... NOTE
+celsify_temp: no visible binding for global variable ‘english’
+celsify_temp: no visible binding for global variable ‘temp’
+Undefined global functions or variables:
+  english temp
 ```
 
 The "no visible binding" note is a peculiarity of using dplyr and unquoted variable names inside a package, where the use of bare variable names (`english` and `temp`) looks suspicious.
@@ -419,7 +405,7 @@ For a more sophisticated treatment of these issues, see `vignette("in-packages",
 
 The warning about missing documentation is because we haven't properly documented our exported functions.
 This is a valid concern and something you should absolutely address in a real package.
-You've already seen how to create help files with roxygen comments in [the whole game chapter](whole-game-document) and we cover this topic thoroughly in @sec-man.
+You've already seen how to create help files with roxygen comments in @sec-whole-game-document and we cover this topic thoroughly in @sec-man.
 Therefore, we won't discuss this further here.
 
 ## Foxtrot: build time vs. run time {#sec-package-within-build-time-run-time}
