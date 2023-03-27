@@ -34,23 +34,30 @@ We make a few rookie mistakes along the way, in order to highlight special consi
 
 ## Alfa: a script that works
 
-Here is a fictional data analysis script `data-cleaning.R` for a group that collects reports from people who went for a swim:
+```{=html}
+<!--
+There's quite a bit of ugliness and awkwardness around paths here. But I'm not convinced it's worth it to do this properly, whatever that would even mean here.
+-->
+```
+Let's consider `data-cleaning.R`, a fictional data analysis script for a group that collects reports from people who went for a swim:
 
 > Where did you swim and how hot was it outside?
 
-Their data usually comes as a CSV file, which they read into a data frame.
+Their data usually comes as a CSV file, such as `swim.csv`:
 
-```{cat, engine.opts = list(file = "swim.csv")}
-name,where,temp
-Adam,beach,95
-Bess,coast,91
-Cora,seashore,28
-Dale,beach,85
-Evan,seaside,31
+```{r echo = FALSE, comment = ''}
+writeLines(readLines("package-within-files/alfa/swim.csv"))
 ```
 
-```{r}
+`data-cleaning.R` begins by reading `swim.csv` into a data frame:
+
+```{r eval = FALSE}
 infile <- "swim.csv"
+(dat <- read.csv(infile))
+```
+
+```{r echo = FALSE}
+infile <- "package-within-files/alfa/swim.csv"
 (dat <- read.csv(infile))
 ```
 
@@ -78,6 +85,12 @@ They like to capture a timestamp in the filename when they do this[^package-with
 [^package-within-1]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
     Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
+```{r include = FALSE}
+# the code that constructs `outfile` is super simple and assumes `infile` is
+# just a filename
+infile <- "swim.csv"
+```
+
 ```{r}
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
@@ -86,7 +99,19 @@ write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ```
 
 ```{r include = FALSE}
-cleanup()
+# move and rename the csv of clean data
+outfile <- fs::dir_ls(glob = "*swim_clean.csv")
+fs::file_move(outfile, "package-within-files/alfa/swim_clean.csv")
+```
+
+Here is `data-cleaning.R` in its entirety:
+
+```{=html}
+<!--
+Any edits to the code shown above must be manually transferred to this file.
+-->
+```
+```{r, file = "package-within-files/alfa/data-cleaning.R", eval = FALSE}
 ```
 
 Even if your typical analytical tasks are quite different, hopefully you see a few familiar patterns here.
