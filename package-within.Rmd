@@ -170,24 +170,27 @@ Concretely, we do this:
 -   Copy `cleaning-helpers.R` into the new package, specifically, to `R/cleaning-helpers.R`.
     -   This is morally correct, but mechanically wrong in several ways, as we will soon see.
 -   Copy `beach-lookup-table.csv` into the new package. But where? Let's try the top-level of the source package.
-    -   This is not going to end well. Shipping data in a package is a special topic, which is covered in @sec-data.
+    -   This is not going to end well. Shipping data files in a package is a special topic, which is covered in @sec-data.
 -   Install this package.
     -   Despite all of the problems identified above, this actually works! Which is interesting, because we can (try to) use it and see what happens.
 
-Here's the version of the script that you hope will run after successfully installing this package.
+```{r eval = FALSE, include = FALSE}
+create_package("package-within-files/delta", open = FALSE)
+# say yes to the scary nested project question
+fs::file_copy(
+  "package-within-files/charlie/cleaning-helpers.R",
+  "package-within-files/delta/R/cleaning-helpers.R"
+)
+fs::file_copy(
+  "package-within-files/charlie/beach-lookup-table.csv",
+  "package-within-files/delta/beach-lookup-table.csv"
+)
+install("package-within-files/delta")
+```
 
-```{cat, engine.opts = list(file = "Package-within-files/delta-main.R"), class.source = "R"}
-library(tidyverse)
-library(delta)
+Here is the next version of the data cleaning script that you hope will run after successfully installing this package (which we're calling "delta").
 
-infile <- "swim.csv"
-dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
-
-dat <- dat %>% 
-  localize_beach() %>% 
-  celsify_temp()
-
-write_csv(dat, outfile_path(infile))
+```{r, file = "package-within-files/delta-data-cleaning.R", eval = FALSE}
 ```
 
 The only change from our previous script is that
@@ -202,7 +205,7 @@ has been replaced by
 library(delta)
 ```
 
-Here's what actually happens when we try to run this:
+Here's what actually happens when we try to run the data cleaning script:
 
 ```{r eval = FALSE}
 library(tidyverse)
@@ -224,7 +227,7 @@ None of our helper functions are actually available for use, even though we call
 In contrast to `source()`ing a file of helper functions, attaching a package does not dump its functions into the global workspace.
 By default, functions in a package are only for internal use.
 We need to export `localize_beach()`, `celsify_temp()`, and `outfile_path()` so our users can call them.
-In this book, we achieve this by putting `@export` in the special roxygen comment above each function (namespace management is covered in @sec-dependencies-NAMESPACE-workflow).
+In this book, we achieve this by putting `@export` in the special roxygen comment above each function (namespace management is covered in @sec-dependencies-NAMESPACE-workflow), like so:
 
 ```{r eval = FALSE}
 #' @export
@@ -233,26 +236,41 @@ celsify_temp <- function(dat) {
 }
 ```
 
-Let's say we do that, run `devtools::document()` to (re)generate a `NAMESPACE` file, and re-install the package.
-Now when we execute our script, it works!
+Let's say that we add the `@export` tag to `localize_beach()`, `celsify_temp()`, and `outfile_path()` and run `devtools::document()` to (re)generate the `NAMESPACE` file, and re-install the delta package.
+Now when we re-execute our script, it works!
 
-Correction: it works *sometimes*.
+```{r eval = FALSE, include = FALSE}
+lines <- readLines("package-within-files/delta/R/cleaning-helpers.R")
+funs <- c("localize_beach", "celsify_temp", "outfile_path")
+fun_locs <- vapply(paste0("^", funs), \(x) grep(x, lines), 1L)
+insert <- function(x, value, locs) {
+  n <- length(locs)
+  ret <- character(length(x) + n)
+  j <- 0
+  for (i in seq_along(x)) {
+    if (j < n && i == locs[j + 1]) {
+      ret[i + j] <- value
+      j <- j + 1
+    }
+    ret[i + j] <- x[i]
+  }
+  ret
+}
+new_lines <- insert(lines, value = "#' @export", locs = fun_locs)
+writeLines(new_lines, "package-within-files/delta/R/cleaning-helpers.R")
+document("package-within-files/delta")
+install("package-within-files/delta")
+```
+
+Correction: it *sort of* works *sometimes*.
 Specifically, it works if and only if the working directory is set to the top-level of the source package.
 From any other working directory, we still get an error:
 
 ```{r eval = FALSE}
-library(tidyverse)
-library(delta)
-
-infile <- "swim.csv"
-dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
-
 dat <- dat %>% 
   localize_beach() %>% 
   celsify_temp()
 #> Error: 'beach-lookup-table.csv' does not exist in current working directory ('/Users/jenny/tmp').
-
-write_csv(dat, outfile_path(infile))
 ```
 
 The lookup table consulted inside `localize_beach()` cannot be found.
@@ -260,11 +278,11 @@ One does not simply dump CSV files into the source of an R package and expect th
 We will fix this in our next iteration of the package (@sec-data has full coverage of how to include data in a package).
 
 Before we abandon this initial experiment, let's also marvel at the fact that we were able to install, attach, and, to a certain extent, use a fundamentally broken package.
-`load_all()` works fine, too!
-This is a sobering reminder that you should be running `R CMD check`, probably via `check()`, very often during development.
+`devtools::load_all()` works fine, too!
+This is a sobering reminder that you should be running `R CMD check`, probably via `devtools::check()`, very often during development.
 This will quickly alert you to many problems that simple installation and usage does not reveal.
 
-Indeed, `R CMD check` fails for this package and we see this:
+Indeed, `check()` fails for this package and we see this:
 
 ```         
  * installing *source* package ‘delta’ ...
