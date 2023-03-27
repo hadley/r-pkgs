@@ -15,7 +15,11 @@ We start with a data analysis script and show how to find the package that lurks
 We isolate and then extract reusable data and logic from the script, put this into an R package, and then use that package in a much simplified script.
 We make a few rookie mistakes along the way, in order to highlight special considerations for the R code inside a package.
 
-*The section headers incorporate the NATO phonetic alphabet and have no specific meaning. They are just a convenient way to mark our progress towards a working package.*
+Note that the section headers incorporate the NATO phonetic alphabet (alfa, bravo, etc.) and have no specific meaning.
+They are just a convenient way to mark our progress towards a working package.
+It is fine to follow along just by reading and this chapter is completely self-contained, i.e. it's not a prerequisite for material later in the book.
+But if you wish to see the state of specific files along the way, they can be found in the source files for the book.
+*TODO: come back and make this a link.*
 
 ## Alfa: a script that works
 
@@ -171,7 +175,7 @@ Concretely, we do this:
     -   This is morally correct, but mechanically wrong in several ways, as we will soon see.
 -   Copy `beach-lookup-table.csv` into the new package. But where? Let's try the top-level of the source package.
     -   This is not going to end well. Shipping data files in a package is a special topic, which is covered in @sec-data.
--   Install this package.
+-   Install this package, perhaps using `devtools::install()` or via Ctrl + Shift + B (Windows & Linux) or Cmd + Shift + B in RStudio.
     -   Despite all of the problems identified above, this actually works! Which is interesting, because we can (try to) use it and see what happens.
 
 ```{r eval = FALSE, include = FALSE}
@@ -499,22 +503,24 @@ There are some types of sloppiness that are fairly harmless when a function is d
 
 The timestamps now reflect the current time, but the group raises a new concern.
 As it stands, the timestamps reflect who has done the data cleaning and which part of the world they're in.
-The heart of the timestamp strategy is this format string[^package-within-4]:
+The heart of the timestamp strategy is this format string[^package-within-5]:
 
-[^package-within-4]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
+[^package-within-5]: `Sys.time()` returns an object of class `POSIXct`, therefore when we call `format()` on it, we are actually using `format.POSIXct()`.
     Read the help for [`?format.POSIXct`](https://rdrr.io/r/base/strptime.html) if you're not familiar with such format strings.
 
 ```{r}
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ```
 
-This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-5].
+This formats `Sys.time()` in such a way that it includes the month *name* (not number) and the local time[^package-within-6].
 
-[^package-within-5]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
+[^package-within-6]: It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.
 
 Here's such a timestamp produced by a few hypothetical colleagues cleaning some data at exactly the same instant in time.
 
 ```{r, include = FALSE}
+library(tidyverse)
+
 as_if <- function(time = Sys.time(), LC_TIME = NULL, tz = NULL, ...) {
   if (!is.null(LC_TIME)) {
     withr::local_locale(c("LC_TIME" = LC_TIME))
@@ -525,7 +531,7 @@ as_if <- function(time = Sys.time(), LC_TIME = NULL, tz = NULL, ...) {
   format(time, "%Y-%B-%d_%H-%M-%S")
 }
 
-colleagues <- tibble::tribble(
+colleagues <- tribble(
   ~location, ~LC_TIME, ~tz, 
   "Rome, Italy", "it_IT.UTF-8", "Europe/Rome",
   "Warsaw, Poland",  "pl_PL.UTF-8", "Europe/Warsaw",
@@ -543,8 +549,10 @@ colleagues <- tibble::tribble(
 # I want a specific, fixed instant, with no explicit tzone
 instant <- as.POSIXct(1599258600, origin = "1970-01-01")
 
-colleagues <- colleagues %>%
-  mutate(timestamp = pmap_chr(., as_if, time = instant), .after = location)
+colleagues <- colleagues |> 
+  mutate(timestamp = pmap_chr(
+    pick(everything()), as_if, time = instant
+  ), .after = location)
 ```
 
 ```{r, echo = FALSE, results = "asis"}
@@ -634,15 +642,47 @@ A good rule of thumb is to make the scope of such changes as narrow as is possib
 The `tz` argument of `format()` is the most surgical way to deal with the timezone, but nothing similar exists for LC_TIME.
 We make the temporary locale modification using the withr package, which provides a very flexible toolkit for temporary state changes.
 This (and `base::on.exit()`) are discussed further in @sec-code-r-landscape.
-Note that if you use withr as we do above, you would need to list it in `Imports` (@sec-dependencies-in-practice, @sec-dependencies-tidyverse).
+Note that if you use withr as we do above, you would need to list it in `DESCRIPTION` in `Imports` (@sec-dependencies-in-practice, @sec-dependencies-tidyverse).
 
 This underscores a point from the previous section: you need to adopt a different mindset when defining functions inside a package.
 Try to avoid making any changes to the user's overall state.
 If such changes are unavoidable, make sure to reverse them (if possible) or to document them explicitly (if related to the function's primary purpose).
 
-```{r include = FALSE}
-fs::file_delete(c("beach-lookup-table.csv", "swim.csv"))
-```
+## Concluding thoughts
+
+Finally, after several iterations, we have successfully extracted the repetitive data cleaning code for the swimming survey into an R package.
+This example concludes the first part of book and marks the transition into more detailed reference material on specific package components.
+Before we move on, let's review the lessons learned in this chapter.
+
+### Script vs.package
+
+When you first hear that expert R users often put their code into packages, you might wonder exactly what that means.
+Specifically, what happens to your existing R scripts, R Markdown reports, and Shiny apps?
+Does all of that code somehow get put into a package?
+The answer is "no", in most contexts.
+
+Typically, you identify certain recurring operations that occur across multiple projects and this is what you extract into an R package.
+You will still have R scripts, R Markdown reports, and Shiny apps, but by moving specific pieces of code into a formal package, your data products tend to become more concise and easier to maintain.
+
+### Finding the package within
+
+Although the example in this chapter is rather simple, it still captures the typical process of developing an R package for personal or organizational use.
+You typically start with a collection of idiosyncratic and related R scripts, scattered across different projects.
+Over time, you begin to notice that certain needs come up over and over again.
+
+Each time you revisit a similar analysis, you might try to elevate your game a bit, compared to the previous iteration.
+You refactor copy/paste-style code using more robust patterns and start to encapsulate key "moves" in helper functions, which might eventually migrate into their own file.
+Once you reach this stage, you're in a great position to take the next step and create a package.
+
+### Package code is different
+
+Writing package code is a bit different from writing R scripts and it's natural to feel some discomfort when making this adjustment.
+Here are the most common gotchas that trip many of us up at first:
+
+-   Package code requires new ways of working with functions in other packages. The `DESCRIPTION` file is the principle way to declare dependencies; we don't do this via `library(somepackage)`.
+-   If you want data or files to be persistently available, there are package-specific methods of storage and retrieval. You can't just put files in the package and hope for the best.
+-   It's necessary to be completely explicit about which functions are user-facing and which are internal helpers. By default, functions are not exported for use by others.
+-   A new level of discipline is required to ensure that code runs at the intended time (build time vs. run time) and that there are no accidental side effects.
 
 ```{=html}
 <!--
