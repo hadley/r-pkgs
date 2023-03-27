@@ -113,51 +113,16 @@ At the same time, we introduce the use of some add-on packages, for several reas
 First, we would actually use the tidyverse for this sort of data wrangling.
 Second, many people use add-on packages in their scripts, so it is good to see how add-on packages are handled as we create this package.
 
-Here's the next version of the script.
+Here's the new and improved version of the script.
 
-```{cat, engine.opts = list(file = "Package-within-files/bravo-data-cleaning.R")}
-library(tidyverse)
-
-infile <- "swim.csv"
-dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
-
-lookup_table <- tribble(
-      ~where, ~english,
-     "beach",     "US",
-     "coast",     "US",
-  "seashore",     "UK",
-   "seaside",     "UK"
-)
-
-dat <- dat %>% 
-  left_join(lookup_table)
-
-f_to_c <- function(x) (x - 32) * 5/9
-
-dat <- dat %>% 
-  mutate(temp = if_else(english == "US", f_to_c(temp), temp))
-dat
-
-now <- Sys.time()
-timestamp <- function(time) format(time, "%Y-%B-%d_%H-%M-%S")
-outfile_path <- function(infile) {
-  paste0(timestamp(now), "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile))
-}
-write_csv(dat, outfile_path(infile))
+```{r, file = "package-within-files/bravo/data-cleaning.R", eval = FALSE}
 ```
 
-```{r, code = readLines("Package-within-files/bravo-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
-```
+The key changes to note are:
 
-```{r include = FALSE}
-cleanup()
-```
-
-The key features to note are:
-
--   We are using functions from tidyverse packages (specifically from readr and dplyr).
--   The map between different "beach" words and whether they are considered to be US or UK English is now isolated in a lookup table, which lets us create the `english` column in one go with a `left_join()`. This also makes it easier to add new words in the future
--   The `f_to_c()`, `timestamp()`, and `outfile_path()` functions now hold the logic for converting temperatures and forming the timestamped output file name.
+-   We are using functions from tidyverse packages (specifically from readr and dplyr) and we make them available with `library(tidyverse)`.
+-   The map between different "beach" words and whether they are considered to be US or UK English is now isolated in a lookup table, which lets us create the `english` column in one go with a `left_join()`. This lookup table makes the mapping easier to comprehend and would be much easier to extend in the future with new "beach" words.
+-   `f_to_c()`, `timestamp()`, and `outfile_path()` are new helper functions that hold the logic for converting temperatures and forming the timestamped output file name.
 
 It's getting easier to recognize the reusable bits of this script, i.e. the bits that have nothing to do with a specific input file, like `swim.csv`.
 This sort of refactoring often happens naturally on the way to creating your own package, but if it does not, it's a good idea to do this intentionally.
