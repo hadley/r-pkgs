@@ -127,82 +127,27 @@ The key changes to note are:
 It's getting easier to recognize the reusable bits of this script, i.e. the bits that have nothing to do with a specific input file, like `swim.csv`.
 This sort of refactoring often happens naturally on the way to creating your own package, but if it does not, it's a good idea to do this intentionally.
 
-## Charlie: external helpers
+## Charlie: a separate file for helper functions
 
 A typical next step is to move reusable data and logic out of the analysis script and into one or more separate files.
 This is a conventional opening move, if you want to use these same helper files in multiple analyses.
 
 Here is the content of `beach-lookup-table.csv`:
 
-```{cat, engine.opts = list(file = "beach-lookup-table.csv")}
-where,english
-beach,US
-coast,US
-seashore,UK
-seaside,UK
-```
-
-```{r comment = "", echo = FALSE}
-writeLines(readLines("beach-lookup-table.csv"))
+```{r echo = FALSE, comment = ''}
+writeLines(readLines("package-within-files/charlie/beach-lookup-table.csv"))
 ```
 
 Here is the content of `cleaning-helpers.R`:
 
-```{cat, engine.opts = list(file = "Package-within-files/charlie-cleaning-helpers.R"), class.source = "R"}
-library(tidyverse)
-
-localize_beach <- function(dat) {
-  lookup_table <- read_csv(
-    "beach-lookup-table.csv",
-    col_types = cols(where = "c", english = "c")
-  )
-  left_join(dat, lookup_table)
-}
-
-f_to_c <- function(x) (x - 32) * 5/9
-
-celsify_temp <- function(dat) {
-  mutate(dat, temp = if_else(english == "US", f_to_c(temp), temp))
-}
-
-now <- Sys.time()
-timestamp <- function(time) format(time, "%Y-%B-%d_%H-%M-%S")
-outfile_path <- function(infile) {
-  paste0(timestamp(now), "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile))
-}
+```{r, file = "package-within-files/charlie/cleaning-helpers.R", eval = FALSE}
 ```
 
 We've added some high-level helper functions, `localize_beach()` and `celsify_temp()`, to the pre-existing helpers (`f_to_c()`, `timestamp()`, and `outfile_path()`).
 
 Here is the next version of the data cleaning script, now that we've pulled out the helper functions (and lookup table).
 
-```{r, include = FALSE}
-fs::file_copy(
-  "Package-within-files/charlie-cleaning-helpers.R",
-  "cleaning-helpers.R"
-)
-```
-
-```{cat, engine.opts = list(file = "Package-within-files/charlie-data-cleaning.R")}
-library(tidyverse)
-source("cleaning-helpers.R")
-
-infile <- "swim.csv"
-dat <- read_csv(infile, col_types = cols(name = "c", where = "c", temp = "d"))
-
-(dat <- dat %>% 
-    localize_beach() %>% 
-    celsify_temp())
-
-write_csv(dat, outfile_path(infile))
-```
-
-```{r, code = readLines("Package-within-files/charlie-data-cleaning.R"), R.options = list(tidyverse.quiet = TRUE)}
-```
-
-```{r include = FALSE}
-cleanup()
-fs::file_delete("cleaning-helpers.R")
+```{r, file = "package-within-files/charlie/data-cleaning.R", eval = FALSE}
 ```
 
 You'll notice that the script is getting shorter and, hopefully, easier to read and modify, because repetitive and fussy clutter has been moved out of sight.
