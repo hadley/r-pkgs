@@ -70,9 +70,9 @@ In the rare case that you need to make a bundle from a package you're developing
 Under the hood, this calls `pkgbuild::build()` and, ultimately, `R CMD build`, which is described further in the [Building package tarballs](https://cran.r-project.org/doc/manuals/R-exts.html#Building-package-tarballs) section of [Writing R Extensions](https://cran.r-project.org/doc/manuals/R-exts.html).
 
 This should tip you off that a package bundle or "source tarball" is not simply the result of making a tar archive of the source files, then compressing with gzip.
-By convention, in the R world, a few more operations are carried out when making the `.tar.gz` file and this is why we've elected to refer to this as a package bundle.
+By convention, in the R world, a few more operations are carried out when making the `.tar.gz` file and this is why we've elected to refer to this form as a package **bundle**, in this book.
 
-Every CRAN package is available in bundled form, via the "Package source" field of individual landing pages.
+Every CRAN package is available in bundled form, via the "Package source" field of its landing page.
 Continuing our examples from above, you could download the bundles `forcats_0.4.0.tar.gz` and `readxl_1.3.1.tar.gz` (or whatever the current versions may be).
 You could unpack such a bundle in the shell (not the R console) like so:
 
@@ -81,7 +81,9 @@ tar xvf forcats_0.4.0.tar.gz
 ```
 
 If you decompress a bundle, you'll see it looks almost the same as a source package.
-This diagram summarizes the files present in the top-level directory for source, bundled, and binary versions of a fictional package named "zzzpackage" that uses most of the package parts discussed in this book.
+@fig-package-files shows the files present in the source, bundled, and binary forms of a fictional package named zzzpackage.
+We've deliberately crafted this example to include most of the package parts covered in this book.
+Not every package will include every file seen here, nor does this diagram include every possible file that might appear in a package.
 
 ```{r}
 #| label: fig-package-files
@@ -112,7 +114,7 @@ The main differences between a source package and an uncompressed bundle are:
 You won't need to contemplate the exact structure of package `.tar.gz` files very often, but you do need to understand the `.Rbuildignore` file.
 It controls which files from the source package make it into the downstream forms.
 
-Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package [^structure-1].
+Each line of `.Rbuildignore` is a Perl-compatible regular expression that is matched, without regard to case, against the path to each file in the source package[^structure-1].
 If the regular expression matches, that file or directory is excluded.
 Note there are some default exclusions implemented by R itself, mostly relating to classic version control systems and editors, such as SVN, Git, and Emacs.
 
@@ -124,17 +126,17 @@ For example, to exclude a directory called "notes", the `.Rbuildignore` entry mu
 `R/notes.R`, `man/important-notes.R`, `data/endnotes.Rdata`, etc.
 We find that `use_build_ignore()` helps us get more of our `.Rbuildignore` entries right the first time.
 
-`.Rbuildignore` is a way to resolve some of the tension between the practices that support your development process and CRAN's requirements for submission and distribution.
+`.Rbuildignore` is a way to resolve some of the tension between the practices that support your development process and CRAN's requirements for submission and distribution (@sec-release).
 Even if you aren't planning to release on CRAN, following these conventions will allow you to make the best use of R's built-in tooling for package checking and installation.
-The affected files fall into two broad, semi-overlapping classes:
+The files you should `.Rbuildignore` fall into two broad, semi-overlapping classes:
 
 -   Files that help you generate package contents programmatically. Examples:
     -   Using `README.Rmd` to generate an informative and current `README.md` (@sec-readme).
     -   Storing `.R` scripts to create and update internal or exported data (@sec-data-data-raw).
 -   Files that drive package development, checking, and documentation, outside of CRAN's purview. Examples:
-    -   Files relating to the RStudio IDE.
+    -   Files relating to the RStudio IDE (@sec-workflow101-rstudio-projects).
     -   Using the [pkgdown package](https://pkgdown.r-lib.org) to generate a website (@sec-website).
-    -   Configuration files related to continuous integration/deployment and monitoring test coverage.
+    -   Configuration files related to continuous integration/deployment (@sec-sw-dev-practices-ci).
 
 Here is a non-exhaustive list of typical entries in the `.Rbuildignore` file for a package in the tidyverse:
 
@@ -147,7 +149,7 @@ Here is a non-exhaustive list of typical entries in the `.Rbuildignore` file for
 ^data-raw$          # Code used to create data included in the package
 ^pkgdown$           # Resources used for the package website
 ^_pkgdown\.yml$     # Configuration info for the package website
-^\.github$          # Contributing guidelines, CoC, issue templates, etc.
+^\.github$          # GitHub Actions workflows
 ```
 
 Note that the comments above must not appear in an actual `.Rbuildignore` file; they are included here only for exposition.
@@ -170,8 +172,7 @@ Unlike a bundled package, a binary package is platform specific and there are tw
 Binary packages for macOS are stored as `.tgz`, whereas Windows binary packages end in `.zip`.
 If you need to make a binary package, use `devtools::build(binary = TRUE)` on the relevant operating system.
 Under the hood, this calls `pkgbuild::build(binary = TRUE)` and, ultimately, `R CMD INSTALL --build`, which is described further in the [Building binary packages](https://cran.r-project.org/doc/manuals/R-exts.html#Building-binary-packages) section of [Writing R Extensions](https://cran.r-project.org/doc/manuals/R-exts.html).
-
-You submit a package bundle and CRAN makes and distributes the package binaries.
+If you choose to release your package on CRAN (@sec-release), you submit your package in bundled form, then CRAN creates and distributes the package binaries.
 
 CRAN packages are usually available in binary form, for both macOS and Windows, for the current, previous, and (possibly) development versions of R.
 Continuing our examples from above, you could download binary packages such as:
@@ -182,7 +183,7 @@ Continuing our examples from above, you could download binary packages such as:
 and this is, indeed, part of what's usually going on behind the scenes when you call `install.packages()`.
 
 If you uncompress a binary package, you'll see that the internal structure is rather different from a source or bundled package.
-@fig-package-files includes this comparison.
+@fig-package-files includes this comparison, so this is a good time to revisit that diagram.
 Here are some of the most notable differences:
 
 -   There are no `.R` files in the `R/` directory - instead there are three files that store the parsed functions in an efficient file format.
@@ -197,46 +198,36 @@ Here are some of the most notable differences:
 -   The actual help content appears in `help/` and `html/` (no longer in `man/`).
 
 -   If you had any code in the `src/` directory, there will now be a `libs/` directory that contains the results of compiling the code.
-    On Windows, there are subdirectories for 32 bit (`i386/`) and 64 bit (`x64/`) environments.
 
 -   If you had any objects in `data/`, they have now been converted into a more efficient form.
 
 -   The contents of `inst/` are moved to the top-level directory.
     For example, vignette files are now in `doc/`.
 
--   Some files and folders have been dropped, such as `README`, `build/`, `tests/`, and `vignettes/`.
+-   Some files and folders have been dropped, such as `README.md`, `build/`, `tests/`, and `vignettes/`.
 
 ## Installed package {#sec-installed-package}
 
 An **installed** package is a binary package that's been decompressed into a package library (described in @sec-library).
-The following diagram illustrates the many ways a package can be installed, along with a few other functions for converting a package from one state to another.
+@fig-installation illustrates the many ways a package can be installed, along with a few other functions for converting a package from one state to another.
 This diagram is complicated!
 In an ideal world, installing a package would involve stringing together a set of simple steps: source -\> bundle, bundle -\> binary, binary -\> installed.
 In the real world, it's not this simple because there are often (faster) shortcuts available.
 
-```{=html}
-<!-- TODO: update this figure.
-For example, hopefully we'll be ready to recommend pak over install_github() before publication. -->
-```
 ```{r}
 #| label: fig-installation
 #| echo: false
 #| out-width: ~
 #| fig-cap: Many methods for converting between package states.
 #| fig-alt: > 
-#|   A flow chart showing different routes that package installation can take: 
-#|   1. 'R CMD install' can take either a package source, bundle, or binary and
-#|      install it into the library;
-#|   2. install.packages installs a package from CRAN from either binary or 
-#|      source form. Binary packages are downloaded from CRAN and installed
-#|      directly into the library using 'R CMD install'. If 'type = "source"' is
-#|      specified, the package bundle is downloaded and installed via 'R CMD
-#|      install', bypassing the binary state;
-#|   3. devtools::install installs a source package via 'R CMD install', 
-#|      bypassing bundle and binary states;
-#|   4. devtools::install_github takes a package source that is on GitHub,
-#|      downloads it and builds it into a bundle with devtools::build, then uses
-#|      'R CMD install' to install from the bundle.
+#|   A chart showing different ways to go from one package state to another:
+#|   1. library() puts an installed package into memory.
+#|   2. Functions such as install.packages(),
+#|      devtools::install_github(), and devtools::install()
+#|      can install a package starting variously in the source,
+#|      bundle, or binary forms.
+#|   3. devtools::build() can create a bundle or a binary.
+#|   4. devtools::load_all() puts a source package into memory.
 knitr::include_graphics("diagrams/install-load.png")
 ```
 
@@ -244,6 +235,12 @@ The built-in command line tool `R CMD INSTALL` powers all package installation.
 It can install a package from source files, a bundle (a.k.a. a source tarball), or a binary package.
 Details are available in the [Installing packages section](https://cran.r-project.org/doc/manuals/R-admin.html#Installing-packages) of [R Installation and Administration](https://cran.r-project.org/doc/manuals/R-admin.html).
 Just like with `devtools::build()`, devtools provides a wrapper function, `devtools::install()`, that makes this tool available from within an R session.
+
+::: callout-tip
+## RStudio
+
+RStudio can also help you install your in-development package via the *Install* and *More* drop-downs in the *Build* pane and with *Install Package* in the *Build* menu.
+:::
 
 Most useRs understandably like to install packages from the comfort of an R session and directly from CRAN.
 The built-in function `install.packages()` meets this need.
@@ -255,8 +252,17 @@ This actually works most of the time, but sometimes it does not, especially when
 Due to how file handles are locked on Windows, an attempt to install a new version of a package that's in use can result in a corrupt installation where the package's R code has been updated, but its compiled code has not.
 When troubleshooting, Windows users should strive to install packages in a clean R session, with as few packages loaded as possible.
 
-devtools exposes a family of `install_*()` functions to address some needs beyond the reach of `install.packages()` or to make existing capabilities easier to access.
+The pak package (<https://pak.r-lib.org/>) is a relative newcomer (at the time of writing) and provides a promising alternative to `install.packages()`, as well as other more specialized functions such as `devtools::install_github()`.
+It's too early to make a blanket recommendation for using pak for all of your package installation needs, but we are certainly using it more and more in our personal workflows.
+One of pak's flagship features is that it nicely solves the "locked DLL" problem described above, i.e. updating a package with compiled code on Windows.
+As you get deeper into package development, you will find yourself doing a whole new set of tasks, such as installing a dependency from an in-development branch or scrutinizing package dependency trees.
+pak provides a rich toolkit for this and many other related tasks.
+We predict that pak will soon become our official recommendation for how to install packages (and more).
+
+However, in the meantime, we describe the *status quo*.
+devtools has long offered a family of `install_*()` functions to address some needs beyond the reach of `install.packages()` or to make existing capabilities easier to access.
 These functions are actually maintained in the [remotes package](https://remotes.r-lib.org) and are re-exported by devtools.
+(Given what we said above, it is likely that remotes will essentially become superseded, in favor of pak, but we're not quite there yet.)
 
 ```{r}
 library(remotes)
@@ -265,12 +271,9 @@ funs <- as.character(lsf.str("package:remotes"))
 grep("^install_.+", funs, value = TRUE)
 ```
 
-`install_github()` is the flagship example of a sub-family of functions that can download a package from a remote location that is not CRAN and do whatever is necessary to install it.
+`install_github()` is the most useful of these functions and is also featured in @fig-installation.
+It is the flagship example of a family of functions that can download a package from a remote location that is not CRAN and do whatever is necessary to install it and its dependencies.
 The rest of the devtools/remotes `install_*()` functions are aimed at making things that are technically possible with base tooling a bit easier or more explicit, such as `install_version()` which installs a specific version of a CRAN package.
-
-*2022-09-01 note: The pak package ([https://pak.r-lib.org)](https://pak.r-lib.org.) is gradually becoming our recommended tool for package installation and, most especially, for installing packages directly from GitHub. I.e. it is replacing `remotes::install_github()` It is likely that this recommendation will become official before the second edition of R Packages is published.*
-
-<!-- TODO: Revisit this section with respect to pak. -->
 
 Analogous to `.Rbuildignore`, described in section @sec-rbuildignore, `.Rinstignore` lets you keep files present in a package bundle out of the installed package.
 However, in contrast to `.Rbuildignore`, this is rather obscure and rarely needed.
