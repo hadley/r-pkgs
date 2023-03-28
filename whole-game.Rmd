@@ -299,11 +299,13 @@ To learn more about that take a look at the [Functions chapter](https://r4ds.had
 The name of `strsplit1()` is a nod to the very handy `paste0()`, which first appeared in R 2.15.0 in 2012.
 `paste0()` was created to address the extremely common use case of `paste()`-ing strings together *without* a separator.
 `paste0()` has been lovingly described as ["statistical computing's most influential contribution of the 21st century"](https://simplystatistics.org/posts/2013-01-31-paste0-is-statistical-computings-most-influential-contribution-of-the-21st-century/).
+
+The `strsplit1()` function was so inspiring that it's now a real function in the stringr package: `stringr::str_split_1()`!
 :::
 
 ## `use_r()`
 
-Where should you define `strsplit1()`?
+Where should you put the definition of `strsplit1()`?
 Save it in a `.R` file, in the `R/` subdirectory of your package.
 A reasonable starting position is to make a new `.R` file for each user-facing function in your package and name the file after the function.
 As you add more functions, you'll want to relax this and begin to group related functions together.
@@ -329,7 +331,6 @@ How do we test drive `strsplit1()`?
 If this were a regular R script, we might use RStudio to send the function definition to the R Console and define `strsplit1()` in the global environment.
 Or maybe we'd call `source("R/strsplit1.R")`.
 For package development, however, devtools offers a more robust approach.
-See @sec-workflow101-load-all for more.
 
 Call `load_all()` to make `strsplit1()` available for experimentation.
 
@@ -361,6 +362,7 @@ Here's how to get back on track:
 `load_all()` simulates the process of building, installing, and attaching the regexcite package.
 As your package accumulates more functions, some exported, some not, some of which call each other, some of which call functions from packages you depend on, `load_all()` gives you a much more accurate sense of how the package is developing than test driving functions defined in the global environment.
 Also `load_all()` allows much faster iteration than actually building, installing, and attaching the package.
+See @sec-workflow101-load-all for more about `load_all()`.
 
 To review what we've done so far:
 
@@ -431,6 +433,7 @@ Non-standard license specification:
 ```
 
 We'll address that soon, by doing exactly what it says.
+You can learn more about `check()` in @sec-workflow101-r-cmd-check.
 
 ::: callout-tip
 ## RStudio
@@ -578,6 +581,7 @@ You should now be able to preview your help file like so:
 You'll see a message like "Rendering development documentation for 'strsplit1'", which reminds that you are basically previewing draft documentation.
 That is, this documentation is present in your package's source, but is not yet present in an installed package.
 In fact, we haven't installed regexcite yet, but we will soon.
+If `?strplit` doesn't work for you, you may need to call `load_all()` first, then try again.
 
 Note also that your package's documentation won't be properly wired up until it has been formally built and installed.
 This polishes off niceties like the links between help files and the creation of a package index.
@@ -702,7 +706,7 @@ git_commit("Test strsplit1()")
 ```
 
 Run this test interactively, as you will when you write your own.
-Note you'll have to attach testthat via `library(testthat)` in your R session first and you'll probably want to `load_all()`.
+If `test_that()` or `strsplit1()` can't be found, that suggests that you probably need to call `load_all()`.
 
 Going forward, your tests will mostly run *en masse* and at arm's length via `test()`:
 
@@ -757,7 +761,9 @@ git_commit("Import stringr")
 ```
 
 Let's revisit `strsplit1()` to make it more stringr-like.
-Here's a new take on it:
+Here's a new take on it[^whole-game-1]:
+
+[^whole-game-1]: Recall that this example was so inspiring that it's now a real function in the stringr package: \`stringr::str_split_1()\`!
 
 ```{r str-split-one-sneak-peek, eval = FALSE}
 str_split_one <- function(string, pattern, n = Inf) {
@@ -846,7 +852,7 @@ Remember that `document()` does two main jobs:
 1.  Converts our roxygen comments into proper R documentation.
 2.  (Re)generates `NAMESPACE`.
 
-The second point is especially important here, since we will no longer export `strsplit1()` and we will newly export `str_split_one()`.
+The second job is especially important here, since we will no longer export `strsplit1()` and we will newly export `str_split_one()`.
 Don't be dismayed by the warning about `"Objects listed as exports, but not present in namespace: strsplit1"`.
 That always happens when you remove something from the namespace.
 
@@ -1006,6 +1012,7 @@ getwd()
 ## Review
 
 This chapter is meant to give you a sense of the typical package development workflow, which we now summarize with a diagram.
+Everything you see here has been touched on in this chapter, with the exception of GitHub Actions, which you will learn more about in @sec-sw-dev-practices-gha.
 
 ```{r}
 #| echo: false
