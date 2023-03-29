@@ -951,3 +951,35 @@ it easy to select variables:
 
 If the Rmd file contains roxygen (Markdown-style) links to other help topics, then some care is needed.
 See <https://roxygen2.r-lib.org/dev/articles/reuse.html#child-documents> for details.
+
+## Help topic for the package {#sec-man-package-doc}
+
+This chapter focuses on function documentation, but remember you can document other things, as detailed in `vignette("rd-other", package = "roxygen2")`.
+In particular, you can create a help topic for the package itself by documenting the special sentinel `"_PACKAGE"`.
+The resulting `.Rd` file automatically pulls in information parsed from the `DESCRIPTION`, including title, description, list of authors, and useful URLs.
+This help topic appears alongside all your other topics and can also be accessed with `package?pkgname`, e.g. `package?usethis`, or even just `?usethis`.
+
+We recommend calling `usethis::use_package_doc()` to set up this package-level documentation in a dummy file `R/{pkgname}-package.R`, whose contents will look something like this:
+
+```{r, eval = FALSE}
+#' @keywords internal 
+"_PACKAGE"
+```
+
+The `R/{pkgname}-package.R` file is the main reason we wanted to mention `use_package_doc()` and package-level documentation here.
+It turns out there are a few other package-wide housekeeping tasks for which this file is a very natural home.
+For example, it's a sensible, central location for import directives, i.e. for importing individual functions from your dependencies or even entire namespaces.
+In @sec-dependencies-in-imports-r-code, we recommend importing specific functions via `usethis::use_import_from()` and this function is designed to write the associated roxygen tags into the `R/{pkgname}-package.R` file created by `use_package_doc()`.
+So, putting it all together, this is a minimal example of how the `R/{pkgname}-package.R` file might look:
+
+```{r}
+#' @keywords internal 
+"_PACKAGE"
+
+# The following block is used by usethis to automatically manage
+# roxygen namespace tags. Modify with care!
+## usethis namespace: start
+#' @importFrom glue glue_collapse
+## usethis namespace: end
+NULL
+```
