@@ -381,7 +381,7 @@ For example, here's the search path for the code in this book:
 search()
 ```
 
-This has a specific form:
+This has a specific form (see @fig-search-path-baseline):
 
 1.  The global environment.
 2.  The packages that have been attached, e.g. via `library()`, from most-recently attached to least.
@@ -391,7 +391,7 @@ This has a specific form:
 ```{r}
 #| label: fig-search-path-baseline
 #| echo: false
-#| out.width: 100%
+#| out.height: 50%
 #| fig.cap: Typical state of the search path.
 #| fig-alt: >
 #|   A chain of labelled environments. Each environment has an arrow pointing to
@@ -400,17 +400,17 @@ knitr::include_graphics("diagrams/search-path/search-path.png")
 ```
 
 Each element in the search path has the next element as its parent, i.e. this is a chain of environments that is searched in order.
-In the diagram, this relationship is shown as a small pale blue circle with an arrow that points to the parent.
+In the diagram, this relationship is shown as a small blue circle with an arrow that points to the parent.
 The first environment (the global environment) and the last two (`Autoloads` and the base environment) are special and maintain their position.
 
 But the middle section of attached packages is more dynamic.
 When a new package is attached, it is inserted right after and becomes the parent of the global environment.
-When you attach another package with `library()`, it changes the search path:
+When you attach another package with `library()`, it changes the search path, as show in @fig-search-path-insertion:
 
 ```{r}
 #| label: fig-search-path-insertion
 #| echo: false
-#| out.width: 100%
+#| out.width: 50%
 #| fig.cap: A newly attached package is inserted into the search path.
 #| fig-alt: >
 #|   A chain of labelled environments, with a newly attached package being
@@ -446,7 +446,7 @@ Every function in a package is associated with a pair of environments: the packa
     This ensures that every function can find every other function in the package.
     Every binding in the package environment also exists in the namespace environment, but not *vice versa*.
 
-This diagram depicts the `sd()` function as a rectangle with a rounded end.
+@fig-function-environment diagram depicts the `sd()` function as a rectangle with a rounded end.
 The arrows from `package:stats` and `namespace:stats` show that `sd()` is bound in both.
 But the relationship is not symmetric.
 The black circle with an arrow pointing back to `namespace:stats` indicates where `sd()` will look for objects that it needs: in the namespace environment, not the package environment.
@@ -468,7 +468,7 @@ knitr::include_graphics("diagrams/namespace/namespace-bind.png")
 
 > The package environment controls how users find the function; the namespace controls how the function finds its variables.
 
-Every namespace environment has the same set of ancestors:
+Every namespace environment has the same set of ancestors, as depicted in @fig-namespace-environment:
 
 -   Each namespace has an **imports** environment that can contain bindings to functions used by the package that are defined in another package.
     The imports environment is controlled by the package developer with the `NAMESPACE` file.
@@ -496,7 +496,7 @@ Every namespace environment has the same set of ancestors:
 knitr::include_graphics("diagrams/namespace/namespace-env.png")
 ```
 
-Finally, we can put it all together in this last diagram.
+Finally, we can put it all together in this last diagram, @fig-search-path-and-namespace.
 This shows the user's search path, along the bottom, and the internal stats search path, along the top.
 
 ```{r}
@@ -512,7 +512,7 @@ This shows the user's search path, along the bottom, and the internal stats sear
 knitr::include_graphics("diagrams/namespace/namespace.png")
 ```
 
-A user (or some package) is free to define a function named `var()`.
+A user (or some package they are using) is free to define a function named `var()`.
 But when that user calls `sd()`, it will always call `stats::var()` because `sd()` searches in a sequence of environments determined by the stats package, not by the user.
 This is how the namespace system ensures that package code always works the same way, regardless of what's been defined in the global environment or what's been attached.
 
@@ -534,13 +534,15 @@ If a package is installed,
     You can't attach a package without first loading it, so both `library()` (or `require()`) load then attach the package.
     This also runs the `.onAttach()` function.
 
-There are four functions that make a package available.
+There are four functions that make a package available, shown in @tbl-load-vs-attach.
 They differ based on whether they load or attach, and what happens if the package is not found (i.e., throws an error or returns `FALSE`).
 
 |        | Throws error         | Returns `FALSE`                         |
 |--------|----------------------|-----------------------------------------|
 | Load   | `loadNamespace("x")` | `requireNamespace("x", quietly = TRUE)` |
 | Attach | `library(x)`         | `require(x, quietly = TRUE)`            |
+
+: Functions that load or attach a package. {#tbl-load-vs-attach}
 
 Of the four, these two functions are by far the most useful:
 
