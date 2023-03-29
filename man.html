@@ -404,6 +404,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#child-documents" id="toc-child-documents" class="nav-link" data-scroll-target="#child-documents"><span class="toc-section-number">17.6.3</span>  Child documents</a></li>
   </ul>
 </li>
+  <li><a href="#sec-man-package-doc" id="toc-sec-man-package-doc" class="nav-link" data-scroll-target="#sec-man-package-doc"><span class="toc-section-number">17.7</span>  Help topic for the package</a></li>
   </ul><div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/hadley/r-pkgs/edit/main/man.Rmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/hadley/r-pkgs/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
@@ -1117,9 +1118,31 @@ Submitting to CRAN
 <span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If the Rmd file contains roxygen (Markdown-style) links to other help topics, then some care is needed. See <a href="https://roxygen2.r-lib.org/dev/articles/reuse.html#child-documents" class="uri">https://roxygen2.r-lib.org/dev/articles/reuse.html#child-documents</a> for details.</p>
+</section></section><section id="sec-man-package-doc" class="level2" data-number="17.7"><h2 data-number="17.7" class="anchored" data-anchor-id="sec-man-package-doc">
+<span class="header-section-number">17.7</span> Help topic for the package</h2>
+<p>This chapter focuses on function documentation, but remember you can document other things, as detailed in <code><a href="https://roxygen2.r-lib.org/articles/rd-other.html">vignette("rd-other", package = "roxygen2")</a></code>. In particular, you can create a help topic for the package itself by documenting the special sentinel <code>"_PACKAGE"</code>. The resulting <code>.Rd</code> file automatically pulls in information parsed from the <code>DESCRIPTION</code>, including title, description, list of authors, and useful URLs. This help topic appears alongside all your other topics and can also be accessed with <code>package?pkgname</code>, e.g.&nbsp;<code>package?usethis</code>, or even just <code>?usethis</code>.</p>
+<p>We recommend calling <code><a href="https://usethis.r-lib.org/reference/use_package_doc.html">usethis::use_package_doc()</a></code> to set up this package-level documentation in a dummy file <code>R/{pkgname}-package.R</code>, whose contents will look something like this:</p>
+<div class="cell">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @keywords internal </span></span>
+<span><span class="st">"_PACKAGE"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The <code>R/{pkgname}-package.R</code> file is the main reason we wanted to mention <code>use_package_doc()</code> and package-level documentation here. It turns out there are a few other package-wide housekeeping tasks for which this file is a very natural home. For example, it’s a sensible, central location for import directives, i.e.&nbsp;for importing individual functions from your dependencies or even entire namespaces. In <a href="dependencies-in-practice.html#sec-dependencies-in-imports-r-code"><span>Section&nbsp;12.4.1</span></a>, we recommend importing specific functions via <code><a href="https://usethis.r-lib.org/reference/use_import_from.html">usethis::use_import_from()</a></code> and this function is designed to write the associated roxygen tags into the <code>R/{pkgname}-package.R</code> file created by <code>use_package_doc()</code>. So, putting it all together, this is a minimal example of how the <code>R/{pkgname}-package.R</code> file might look:</p>
+<div class="cell">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @keywords internal </span></span>
+<span><span class="st">"_PACKAGE"</span></span>
+<span><span class="co">#&gt; [1] "_PACKAGE"</span></span>
+<span></span>
+<span><span class="co"># The following block is used by usethis to automatically manage</span></span>
+<span><span class="co"># roxygen namespace tags. Modify with care!</span></span>
+<span><span class="co">## usethis namespace: start</span></span>
+<span><span class="co">#' @importFrom glue glue_collapse</span></span>
+<span><span class="co">## usethis namespace: end</span></span>
+<span><span class="cn">NULL</span></span>
+<span><span class="co">#&gt; NULL</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 
 
-</section></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
+</section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><hr>
 <ol>
 <li id="fn1"><p>The name “roxygen” is a nod to the Doxygen documentation generator, which inspired the development of an R package named roxygen. Then that original concept was rebooted as roxygen2, similar to ggplot2.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>The NAMESPACE file is also generated from these roxygen comments. Or, rather, it <em>can</em> be and that is the preferred devtools workflow (<a href="dependencies-in-practice.html#sec-dependencies-NAMESPACE-workflow"><span>Section&nbsp;12.3</span></a>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
