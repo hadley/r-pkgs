@@ -1,0 +1,338 @@
+[[sec-vignettes]]
+= Vignettes
+:description: Learn how to create a package, the fundamental unit of shareable, reusable, and reproducible R code.
+
+A vignette is a long-form guide to your package. Function documentation is great if you know the name of the function you need, but it’s useless otherwise. In contrast, a vignette can be framed around a target problem that your package is designed to solve. The vignette format is perfect for showing a workflow that solves that particular problem, start to finish. Vignettes afford you different opportunities than help topics: you have much more control over the integration of code and prose and it’s a better setting for showing how multiple functions work together.
+
+Many existing packages have vignettes and you can see all the vignettes associated with your installed packages with `+browseVignettes()+`. To limit that to a particular package, you can specify the package’s name like so: `+browseVignettes("tidyr")+`. You can read a specific vignette with the `+vignette()+` function, e.g. `+vignette("rectangle", package = "tidyr")+`. To see vignettes for a package that you haven’t installed, look at the "`Vignettes`" listing on its CRAN page, e.g. https://cran.r-project.org/web/packages/tidyr/index.html.
+
+However, we much prefer to discover and read vignettes from a package’s website, which is the topic of <<sec-website>>footnote:[This obviously depends on the quality of one’s internet connection, so we make an effort to recommend behaviours that are compatible with base R’s tooling around installed vignettes.]. Compare the above to what it feels like to access tidyr’s vignettes from its website: https://tidyr.tidyverse.org/articles/index.html. Note that pkgdown uses the term "`article`", which feels like the right vocabulary for package users. The technical distinction between a vignette (which ships with a package) and an article (which is only available on the website; see <<sec-vignettes-article>>) is something the package developer needs to think about. A pkgdown website presents all of the documentation of a package in a cohesive, interlinked way that makes it more navigable and useful. This chapter is ostensibly about vignettes, but the way we do things is heavily influenced by how those vignettes fit into a pkgdown website.
+
+In this book, we’re going to use R Markdown to write our vignettesfootnote:[Sweave is the original system used for authoring vignettes (Sweave files usually have extension `+.Rnw+`). Similar to our advice about how to author function documentation (<<sec-man>>), we think it makes more sense to use a markdown-based syntax for vignettes than a one-off, LaTeX-associated format. This choice also affects the form of rendered vignettes: Sweave vignettes render to PDF, whereas R Markdown vignettes render to HTML. We recommend converting Sweave vignettes to R Markdown.], just as we did for function documentation in <<sec-man-key-md-features>>. If you’re not already familiar with R Markdown you’ll need to learn the basics elsewhere; a good place to start is https://rmarkdown.rstudio.com/.
+
+In general, we embrace a somewhat circumscribed vignette workflow, i.e. there are many things that base R allows for, that we simply don’t engage in. For example, we treat `+inst/doc/+`{empty}footnote:[The `+inst/doc/+` folder is where vignettes go once they’re built, when `+R CMD build+` makes the package bundle.] in the same way as `+man/+` and `+NAMESPACE+`, i.e. as something semi-opaque that is managed by automated tooling and that we don’t modify by hand. Base R’s vignette system allows for various complicated maneuvers that we just try to avoid. In vignettes, more than anywhere else, the answer to "`But how do I do X?`" is often "`Don’t do X`".
+
+[[sec-vignettes-workflow-writing]]
+== Workflow for writing a vignette
+
+To create your first vignette, run:
+
+[source,r,cell-code]
+----
+usethis::use_vignette("my-vignette")
+----
+
+This does the following:
+
+[arabic]
+. Creates a `+vignettes/+` directory.
+. Adds the necessary dependencies to `+DESCRIPTION+`, i.e. adds knitr to the `+VignetteBuilder+` field and adds both knitr and rmarkdown to `+Suggests+`.
+. Drafts a vignette, `+vignettes/my-vignette.Rmd+`.
+. Adds some patterns to `+.gitignore+` to ensure that files created as a side effect of previewing your vignettes are kept out of source control (we’ll say more about this later).
+
+This draft document has the the key elements of an R Markdown vignette and leaves you in a position to add your content. You also call `+use_vignette()+` to create your second and all subsequent vignettes; it will just skip any setup that’s already been done.
+
+Once you have the draft vignette, the workflow is straightforward:
+
+[arabic]
+. Start adding prose and code chunks to the vignette. Use `+devtools::load_all()+` as needed and use your usual interactive workflow for developing the code chunks.
+. Render the entire vignette periodically.
++
+This requires some intention, because unlike tests, by default, a vignette is rendered using the currently installed version of your package, not with the current source package, thanks to the initial call to `+library(yourpackage)+`.
++
+One option is to properly install your current source package with `+devtools::install()+` or, in RStudio, Ctrl/Cmd + Shift + B. Then use your usual workflow for rendering an `+.Rmd+` file. For example, press Ctrl/Cmd + Shift + K or click image:images/knit.png[images/knit,width=45].
++
+Or you could properly install your package and request that vignettes be built, with `+install(build_vignettes = TRUE)+`, then use `+browseVignettes()+`.
++
+Another option is to use `+devtools::build_rmd("vignettes/my-vignette.Rmd")+` to render the vignette. This builds your vignette against a (temporarily installed) development version of your package.
++
+It’s very easy to overlook this issue and be puzzled when your vignette preview doesn’t seem to reflect recent developments in the package. Double check that you’re building against the current version!
+. Rinse and repeat until the vignette looks the way you want.
+
+If you’re regularly checking your entire package (<<sec-workflow101-r-cmd-check>>), which we strongly recommend, this will help to keep your vignettes in good working order. In particular, this will alert you if a vignette makes use of a package that’s not a formal dependency. We will come back to these package-level workflow issues below in <<sec-vignettes-how-built-checked>>.
+
+== Metadata
+
+The first few lines of the vignette contain important metadata. The default template contains the following information:
+
+....
+---
+title: "Vignette Title"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+....
+
+This metadata is written in https://yaml.org/[YAML], a format designed to be both human and computer readable. YAML frontmatter is a common feature of R Markdown files. The syntax is much like that of the `+DESCRIPTION+` file, where each line consists of a field name, a colon, then the value of the field. The one special YAML feature we’re using here is `+>+`. It indicates that the following lines of text are plain text and shouldn’t use any special YAML features.
+
+The default vignette template uses these fields:
+
+* `+title+`: this is the title that appears in the vignette. If you change it, make sure to make the same change to `+VignetteIndexEntry{}+`. They should be the same, but unfortunately that’s not automatic.
+* `+output+`: this specifies the output format. There are many options that are useful for regular reports (including html, pdf, slideshows, etc.), but `+rmarkdown::html_vignette+` has been specifically designed for this exact purpose. See `+?rmarkdown::html_vignette+` for more details.
+* `+vignette+`: this is a block of special metadata needed by R. Here, you can see the legacy of LaTeX vignettes: the metadata looks like LaTeX comments. The only entry you might need to modify is the `+\VignetteIndexEntry{}+`. This is how the vignette appears in the vignette index and it should match the `+title+`. Leave the other two lines alone. They tell R to use `+knitr+` to process the file and that the file is encoded in UTF-8 (the only encoding you should ever use for a vignette).
+
+We generally don’t use these fields, but you will see them in other packages:
+
+* `+author+`: we don’t use this unless the vignette is written by someone not already credited as a package author.
+* `+date+`: we think this usually does more harm than good, since it’s not clear what the `+date+` is meant to convey. Is it the last time the vignette source was updated? In that case you’ll have to manage it manually and it’s easy to forget to update it. If you manage `+date+` programmatically with `+Sys.date()+`, the date reflects when the vignette was built, i.e. when the package bundle was created, which has nothing to do with when the vignette or package was last modified. We’ve decided it’s best to omit the `+date+`.
+
+The draft vignette also includes two R chunks. The first one configures our preferred way of displaying code output and looks like this:
+
+[source,default]
+----
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+----
+
+The second chunk just attaches the package the vignette belongs to.
+
+[source,default]
+----
+```{r setup}
+library(yourpackage)
+```
+----
+
+You might be tempted to (temporarily) replace this `+library()+` call with `+load_all()+`, but we advise that you don’t. Instead, use the techniques given in <<sec-vignettes-workflow-writing>> to exercise your vignette code with the current source package.
+
+== Advice on writing vignettes
+
+____
+If you’re thinking without writing, you only think you’re thinking. — Leslie Lamport
+____
+
+When writing a vignette, you’re teaching someone how to use your package. You need to put yourself in the reader’s shoes, and adopt a "`beginner’s mind`". This can be difficult because it’s hard to forget all of the knowledge that you’ve already internalized. For this reason, we find in-person teaching to be a really useful way to get feedback. You’re immediately confronted with what you’ve forgotten that only you know.
+
+A useful side effect of this approach is that it helps you improve your code. It forces you to re-see the initial on-boarding process and to appreciate the parts that are hard. Our experience is that explaining how code works often reveals some problems that need fixing.
+
+In fact, a key part of the tidyverse package release process is writing a blog post: we now do that before submitting to CRAN, because of the number of times it’s revealed some subtle problem that requires a fix. It’s also fair to say that the tidyverse and its supporting packages would benefit from more "`how-to`" guides, so that’s an area where we are constantly trying to improve.
+
+Writing a vignette also makes a nice break from coding. Writing seems to use a different part of the brain from programming, so if you’re sick of programming, try writing for a bit.
+
+Here are some resources we’ve found helpful:
+
+* Literally anything written by Kathy Sierra. She is not actively writing at the moment, but her content is mostly timeless and is full of advice about programming, teaching, and how to create valuable tools. See her original blog, https://headrush.typepad.com/[Creating passionate users], or the site that came after, https://seriouspony.com/blog/[Serious Pony].
+* "`Style: Lessons in Clarity and Grace`" by Joseph M. Williams and Joseph Bizup. This book helps you understand the structure of writing so that you’ll be better able to recognise and fix bad writing.
+
+=== Diagrams
+
+[WARNING]
+.Submitting to CRAN
+====
+You’ll need to watch the file size. If you include a lot of graphics,
+it’s easy to create a very large file. Be on the look out for a `NOTE`
+that complains about an overly large directory. You might need to take
+explicit measures, such as lowering the resolution, reducing the number
+of figures, or switching from a vignette to an article
+(<<sec-vignettes-article>>).
+====
+
+=== Links
+
+There is no official way to link to help topics from vignettes or _vice versa_ or from one vignette to another.
+
+This is a concrete example of why we think pkgdown sites are a great way to present package documentation, because pkgdown makes it easy (literally zero effort, in many cases) to get these hyperlinked cross-references. This is documented in `+vignette("linking", package = "pkgdown")+`. If you’re reading this book online, the inline call to `+vignette()+` in the previous sentence should be hyperlinked to the corresponding vignette in pkgdownfootnote:[And, for anyone else, executing this code in the R console will open the vignette, if the host package is installed.], using the same toolchain that will create automatic links in your pkgdown websites! We discussed this syntax previously in <<sec-man-key-md-features>>, in the context of function documentation.
+
+Automatic links are generated for functions in the host package, namespace-qualified functions in another package, vignettes, and more. Here are the two most important examples of automatically linked text:
+
+* `+\'some_function()\'+`: Autolinked to the documentation of `+some_function()+`, within the pkgdown site of its host package. Note the use of backticks and the trailing parentheses.
+* `+\'vignette("fascinating-topic")\'+`: Autolinked to the "`fascinating-topic`" article within the pkgdown site of its host package. Note the use of backticks.
+
+=== Filepaths
+
+Sometimes it is necessary to refer to another file from a vignette. The best way to do this depends on the application:
+
+* A figure created by code evaluated in the vignette: By default, in the `+.Rmd+` workflow that we recommend, this takes care of itself. Such figures are automatically embedded into the `+.html+` using data URIs. You don’t need to do anything. Example: `+vignette("extending-ggplot2", package = "ggplot2")+` generates a few figures in evaluated code chunks.
+* An external file that could be useful to users or elsewhere in the package (not just in vignettes): Put such a file in `+inst/+` (<<sec-misc-inst>>), perhaps in `+inst/extdata/+` (<<sec-data-extdata>>), and refer to it with `+system.file()+` or `+fs::path_package()+` (<<sec-data-system-file>>). Example from `+vignette("sf2", package = "sf")+`:
++
+[source,default]
+----
+
+````{r}
+library(sf)
+fname <- system.file("shape/nc.shp", package="sf")
+fname
+nc <- st_read(fname)
+```
+
+----
+* An external file whose utility is limited to your vignettes: put it alongside the vignette source files in `+vignettes/+` and refer to it with a filepath that is relative to `+vignettes/+`.
++
+Example: The source of `+vignette("tidy-data", package = "tidyr")+` is found at `+vignettes/tidy-data.Rmd+` and it includes a chunk that reads a file located at `+vignettes/weather.csv+` like so:
++
+[source,default]
+----
+
+```{r}
+weather <- as_tibble(read.csv("weather.csv", stringsAsFactors = FALSE))
+weather
+```
+
+----
+* An external graphics file: put it in `+vignettes/+`, refer to it with a filepath that is relative to `+vignettes/+` and use `+knitr::include_graphics()+` inside a code chunk. Example from `+vignette("sheet-geometry", package = "readxl")+`:
++
+[source,default]
+----
+
+```{r out.width = '70%', echo = FALSE}
+knitr::include_graphics("img/geometry.png")
+```
+
+----
+
+=== How many vignettes?
+
+For simpler packages, one vignette is often sufficient. If your package is named "`somepackage`", call this vignette `+somepackage.Rmd+`. This takes advantage of a pkgdown convention, where the vignette that’s named after the package gets an automatic "`Getting Started`" link in the top navigation bar.
+
+More complicated packages probably need more than one vignette. It can be helpful to think of vignettes like chapters of a book – they should be self-contained, but still link together into a cohesive whole.
+
+=== Scientific publication
+
+Vignettes can also be useful if you want to explain the details of your package. For example, if you have implemented a complex statistical algorithm, you might want to describe all the details in a vignette so that users of your package can understand what’s going on under the hood, and be confident that you’ve implemented the algorithm correctly. In this case, you might also consider submitting your vignette to the http://jstatsoft.org/[Journal of Statistical Software] or http://journal.r-project.org/[The R Journal]. Both journals are electronic only and peer-reviewed. Comments from reviewers can be very helpful for improving your package and vignette.
+
+If you just want to provide something very lightweight so folks can easily cite your package, consider the https://joss.theoj.org[Journal of Open Source Software]. This journal has a particularly speedy submission and review process, and is where we published "`https://joss.theoj.org/papers/10.21105/joss.01686[_Welcome to the Tidyverse_]`", a paper we wrote so that folks could have a single paper to cite and all the tidyverse authors would get some academic credit.
+
+[[sec-vignettes-eval-option]]
+== Special considerations for vignette code
+
+A recurring theme is that the R code inside a package needs to be written differently from the code in your analysis scripts and reports. This is true for your functions (<<sec-code-when-executed>>), tests (<<sec-testing-design-principles>>), and examples (<<sec-man-examples>>), and it’s also true for vignettes. In terms of what you can and cannot do, vignettes are fairly similar to examples, although some of the mechanics differ.
+
+Any package used in a vignette must be a formal dependency, i.e. it must be listed in `+Imports+` or `+Suggests+` in `+DESCRIPTION+`. Similar to our stance in tests (<<sec-dependencies-in-suggests-in-tests>>), our policy is to write vignettes under the assumption that suggested packages will be installed in any context where the vignette is being built (<<sec-dependencies-in-suggests-in-examples-and-vignettes>>). We generally use suggested packages unconditionally in vignettes. But, as with tests, if a package is particularly hard to install, we might make an exception and take extra measures to guard its use.
+
+There are many other reasons why it might not be possible to evaluate all of the code in a vignette in certain contexts, such as on CRAN’s machines or in CI/CD. These include all the usual suspects: lack of authentication credentials, long-running code, or code that is vulnerable to intermittent failure.
+
+The main method for controlling evaluation in an `+.Rmd+` document is the `+eval+` code chunk option, which can be `+TRUE+` (the default) or `+FALSE+`. Importantly, the value of `+eval+` can be the result of evaluating an expression. Here are some relevant examples:
+
+* `+eval = requireNamespace("somedependency")+`
+* `+eval = !identical(Sys.getenv("SOME_THING_YOU_NEED"), "")+`
+* `+eval = file.exists("credentials-you-need")+`
+
+The `+eval+` option can be set for an individual chunk, but in a vignette it’s likely that you’ll want to evaluate most or all of the chunks or practically none of them. In the latter case, you’ll want to use `+knitr::opts_chunk$set(eval = FALSE)+` in an early, hidden chunk to make `+eval = FALSE+` the default for the remainder of the vignette. You can still override with `+eval = TRUE+` in individual chunks.
+
+In vignettes, we use the `+eval+` option in a similar way as `+@examplesIf+` in examples (<<sec-man-examples-dependencies-conditional-execution>>). If the code can only be run under specific conditions, you must find a way to to check for those pre-conditions programmatically at runtime and use the result to set the `+eval+` option.
+
+Here are the first few chunks in a vignette from googlesheets4, which wraps the Google Sheets API. The vignette code can only be run if we are able to decrypt a token that allows us to authenticate with the API. That fact is recorded in `+can_decrypt+`, which is then set as the vignette-wide default for `+eval+`.
+
+[source,default]
+----
+```{r setup, include = FALSE}
+can_decrypt <- gargle:::secret_can_decrypt("googlesheets4")
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  error = TRUE,
+  eval = can_decrypt
+)
+```
+
+```{r eval = !can_decrypt, echo = FALSE, comment = NA}
+message("No token available. Code chunks will not be evaluated.")
+```
+
+```{r index-auth, include = FALSE}
+googlesheets4:::gs4_auth_docs()
+```
+
+```{r}
+library(googlesheets4)
+```
+----
+
+Notice the second chunk uses `+eval = !can_decrypt+`, which prints an explanatory message for anyone who builds the vignette without the necessary credentials.
+
+The example above shows a few more handy chunk options. Use `+include = FALSE+` for chunks that should be evaluated but not seen in the rendered vignette. The `+echo+` option controls whether code is printed, in addition to output. Finally, `+error = TRUE+` is what allows you to purposefully execute code that could throw an error. The error will appear in the vignette, just as it would for your user, but it won’t prevent the execution of the rest of your vignette’s code, nor will it cause `+R CMD check+` to fail. This is something that works much better in a vignette than in an example.
+
+Many other options are described at https://yihui.name/knitr/options.
+
+[[sec-vignettes-article]]
+=== Article instead of vignette
+
+There is one last technique, if you don’t want any of your code to execute on CRAN. Instead of a vignette, you can create an article, which is a term used by pkgdown for a vignette-like `+.Rmd+` document that is not shipped with the package, but that appears only in the website. An article will be less accessible than a vignette, for certain users, such as those with limited internet access, because it is not present in the local installation. But that might be an acceptable compromise, for example, for a package that wraps a web API.
+
+You can draft a new article with `+usethis::use_article()+`, which ensures the article will be `+.Rbuildignore+`d. A great reason to use an article instead of a vignette is to show your package working in concert with other packages that you don’t want to depend on formally. Another compelling use case is when an article really demands lots of graphics. This is problematic for a vignette, because the large size of the package causes problems with `+R CMD check+` (and, therefore, CRAN) and is also burdensome for everyone who installs it, especially those with limited internet.
+
+[[sec-vignettes-how-built-checked]]
+== How vignettes are built and checked
+
+We close this chapter by returning to a few workflow issues we didn’t cover in <<sec-vignettes-workflow-writing>>: How do the `+.Rmd+` files get turned into the vignettes consumed by users of an installed package? What does `+R CMD check+` do with vignettes? What are the implications for maintaining your vignettes?
+
+It can be helpful to appreciate the big difference between the workflow for function documentation and vignettes. The source of function documentation is stored in roxygen comments in `+.R+` files below `+R/+`. We use `+devtools::document()+` to generate `+.Rd+` files below `+man/+`. These `+man/*.Rd+` files are part of the source package. The official R machinery cares _only_ about the `+.Rd+` files.
+
+Vignettes are very different because the `+.Rmd+` source is considered part of the source package and the official machinery (`+R CMD build+` and `+check+`) interacts with vignette source and built vignettes in many ways. The result is that the vignette workflow feels more constrained, since the official tooling basically treats vignettes somewhat like tests, instead of documentation.
+
+[[sec-vignettes-how-built]]
+=== `+R CMD build+` and vignettes
+
+First, it’s important to realize that the `+vignettes/*.Rmd+` source files exist only when a package is in source (<<sec-source-package>>) or bundled form (<<sec-bundled-package>>). Vignettes are rendered when a source package is converted to a bundle via `+R CMD build+` or a convenience wrapper such as `+devtools::build()+`. The rendered products (`+.html+`) are placed in `+inst/doc/+`, along with their source (`+.Rmd+`) and extracted R code (`+.R+`; discussed in <<sec-vignettes-how-checked>>). Finally, when a package binary is made (<<sec-structure-binary>>), the `+inst/doc/+` directory is promoted to a top-level `+doc/+` directory, as happens with everything below `+inst/+`.
+
+The key takeaway from the above is that it is awkward to keep rendered vignettes in a source package and this has implications for the vignette development workflow. It is tempting to fight this (and many have tried), but based on years of experience and discussion, the devtools philosophy is to accept this reality.
+
+Assuming that you don’t try to keep built vignettes around persistently in your source package, here are our recommendations for various scenarios:
+
+* Active, iterative work on your vignettes: Use your usual interactive `+.Rmd+` workflow (such as the image:images/knit.png[images/knit,width=45] button) or `+devtools::build_rmd("vignettes/my-vignette.Rmd")+` to render a vignette to `+.html+` in the `+vignettes/+` directory. Regard the `+.html+` as a disposable preview. (If you initiate vignettes with `+use_vignette()+`, this `+.html+` will already be gitignored.)
+* Make the current state of vignettes in a development version available to the world:
+** Offer a pkgdown website, preferably with automated "`build and deploy`", such as using GitHub Actions to deploy to GitHub Pages. Here are tidyr’s vignettes in the development version (note the "`dev`" in the URL): https://tidyr.tidyverse.org/dev/articles/index.html.
+** Be aware that anyone who installs directly from GitHub will need to explicitly request vignettes, e.g. with `+devtools::install_github(dependencies = TRUE, build_vignettes = TRUE)+`.
+* Make the current state of vignettes in a development version available locally:
+** Install your package locally and request that vignettes be built and installed, e.g. with `+devtools::install(dependencies = TRUE, build_vignettes = TRUE)+`.
+* Prepare built vignettes for a CRAN submission: Don’t try to do this by hand or in advance. Allow vignette (re-)building to happen as part of `+devtools::submit_cran()+` or `+devtools::release()+`, both of which build the package.
+
+If you really do want to build vignettes in the official manner on an _ad hoc_ basis, `+devtools::build_vignettes()+` will do this. But we’ve seen this lead to developer frustration, because it leaves the package in a peculiar form that is a mishmash of a source package and an unpacked package bundle. This nonstandard situation can then lead to even more confusion. For example, it’s not clear how these not-actually-installed vignettes are meant to be accessed. Most developers should avoid using `+build_vignettes()+` and, instead, pick one of the approaches outlined above.
+
+[TIP]
+.Pre-built vignettes (or other documentation)
+====
+We highly recommend treating `inst/doc/` as a strictly machine-writable
+directory for vignettes. We recommend that you do not take advantage of
+the fact that you can place arbitrary pre-built documentation in
+`inst/doc/`. This opinion permeates the devtools ecosystem which, by
+default, cleans out `inst/doc/` during various development tasks, to
+combat the problem of stale documentation.
+
+However, we acknowledge that there are exceptions to every rule. In some
+domains, it might be impractical to rebuild vignettes as often our
+recommended workflow implies. Here are a few tips:
+
+* You can prevent the cleaning of `inst/doc/` with
+`pkgbuild::build(clean_doc =)`. You can put
+`Config/build/clean-inst-doc: FALSE` in `DESCRIPTION` to prevent
+pkgbuild and rcmdcheck from cleaning `inst/doc/`.
+* The rOpenSci tech note
+https://ropensci.org/blog/2019/12/08/precompute-vignettes/[How to
+precompute package vignettes or pkgdown articles] describes a clever,
+lightweight technique for keeping a manually-updated vignette in
+`vignettes/`.
+* The https://henrikbengtsson.github.io/R.rsp/index.html[R.rsp] package
+offers explicit support for static vignettes.
+====
+
+[[sec-vignettes-how-checked]]
+=== `+R CMD check+` and vignettes
+
+We conclude with a discussion of how vignettes are treated by `+R CMD check+`. This official checker expects a package bundle created by `+R CMD build+`, as described above. In the devtools workflow, we usually rely on `+devtools::check()+`, which automatically does this build step for us, before checking the package. `+R CMD check+` has various command line options and also consults many environment variables. We’re taking a maximalist approach here, i.e. we describe all the checks that _could_ happen.
+
+`+R CMD check+` does some static analysis of vignette code and scrutinizes the existence, size, and modification times of various vignette-related files. If your vignettes use packages that don’t appear in `+DESCRIPTION+`, that is caught here. If files that should exist don’t exist or _vice versa_, that is caught here. This should not happen if you use the standard vignette workflow outlined in this chapter and is usually the result of some experiment that you’ve done, intentionally or not.
+
+The vignette code is then extracted into a `+.R+` file, using the "`tangle`" feature of the relevant vignette engine (knitr, in our case), and run. The code originating from chunks marked as `+eval = FALSE+` will be commented out in this file and, therefore, is not executed. Then the vignettes are rebuilt from source, using the "`weave`" feature of the vignette engine (knitr, for us). This executes all the vignette code yet again, except for chunks marked `+eval = FALSE+`.
+
+[WARNING]
+.Submitting to CRAN
+====
+CRAN’s incoming and ongoing checks use `R CMD check` which, as described
+above, exercises vignette code up to two times. Therefore, it is
+important to conditionally suppress the execution of code that is doomed
+to fail on CRAN.
+
+However, it’s important to note that the package bundle and binaries
+distributed by CRAN actually use the built vignettes included in your
+submission. Yes, CRAN will attempt to rebuild your vignettes regularly,
+but this is for quality control purposes. CRAN distributes the vignettes
+you built.
+====

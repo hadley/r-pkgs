@@ -1,0 +1,64 @@
+[[intro]]
+= Introduction
+:description: Learn how to create a package, the fundamental unit of shareable, reusable, and reproducible R code.
+
+In R, the fundamental unit of shareable code is the package. A package bundles together code, data, documentation, and tests, and is easy to share with others. As of March 2023, there were over 19,000 packages available on the **C**omprehensive *R* **A**rchive **N**etwork, or CRAN, the public clearing house for R packages. This huge variety of packages is one of the reasons that R is so successful: the chances are that someone has already solved a problem that you’re working on, and you can benefit from their work by downloading their package.
+
+If you’re reading this book, you already know how to work with packages in the following ways:
+
+* You install them from CRAN with `+install.packages("x")+`.
+* You use them in R with `+library("x")+` or `+library(x)+`.
+* You get help on them with `+package?x+` and `+help(package = "x")+`.
+
+The goal of this book is to teach you how to develop packages so that you can write your own, not just use other people’s. Why write a package? One compelling reason is that you have code that you want to share with others. Bundling your code into a package makes it easy for other people to use it, because like you, they already know how to use packages. If your code is in a package, any R user can easily download it, install it and learn how to use it.
+
+But packages are useful even if you never share your code. As Hilary Parker says in her https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/[introduction to packages]: "`Seriously, it doesn’t have to be about sharing your code (although that is an added benefit!). It is about saving yourself time.`" Organising code in a package makes your life easier because packages come with conventions. For example, you put R code in `+R/+`, you put tests in `+tests/+` and you put data in `+data/+`. These conventions are helpful because:
+
+* They save time — you don’t need to think about the best way to organise a project, you can just follow a template.
+* Standardised conventions lead to standardised tools — if you buy into R’s package conventions, you get many tools for free.
+
+It’s even possible to use packages to structure your data analyses (e.g., <<marwick2018-tas>> or <<marwick2018-peerj>>), although we won’t delve deeply into that use case here.
+
+[[sec-intro-phil]]
+== Philosophy
+
+This book espouses our philosophy of package development: anything that can be automated, should be automated. Do as little as possible by hand. Do as much as possible with functions. The goal is to spend your time thinking about what you want your package to do rather than thinking about the minutiae of package structure.
+
+This philosophy is realized primarily through the devtools package, which is the public face for a suite of R functions that automate common development tasks. The release of version 2.0.0 in October 2018 marked its internal restructuring into a set of more focused packages, with devtools becoming more of a meta-package. The usethis package is the sub-package you are most likely to interact with directly; we explain the devtools-usethis relationship in <<sec-setup-usage>>.
+
+As always, the goal of devtools is to make package development as painless as possible. It encapsulates the best practices developed by Hadley Wickham, initially from his years as a prolific solo developer. More recently, he has assembled a team of developers at Posit (formerly known as RStudio), who collectively look after hundreds of open source R packages, including those known as https://www.tidyverse.org[the tidyverse]. The reach of this team allows us to explore the space of all possible mistakes at an extraordinary scale. Fortunately, it also affords us the opportunity to reflect on both the successes and failures, in the company of expert and sympathetic colleagues. We try to develop practices that make life more enjoyable for both the maintainer and users of a package. The devtools meta-package is where these lessons are made concrete.
+
+devtools works hand-in-hand with RStudio, which we believe is the best development environment for most R users. The most popular alternative to RStudio is currently https://code.visualstudio.com/[Visual Studio Code] (VS Code) with the https://marketplace.visualstudio.com/items?itemName=REditorSupport.r[R extension] enabled. This can be a rewarding and powerful environment, however it does require a bit more work to set up and customizefootnote:[Users of https://ess.r-project.org/[Emacs Speaks Statistics] (ESS) will find that many of the workflows described in this book are also available there. For those loyal to vim, we recommend the https://github.com/jalvesaq/Nvim-R[Nvim-R plugin].].
+
+[TIP]
+.RStudio
+====
+Throughout the book, we highlight specific ways that RStudio can
+expedite your package development workflow, in specially formatted
+sections like this.
+====
+
+Together, devtools and RStudio insulate you from the low-level details of how packages are built. As you start to develop more packages, we highly recommend that you learn more about those details. The best resource for the official details of package development is always the official https://cran.r-project.org/doc/manuals/R-exts.html#Creating-R-packages[writing R extensions] manualfootnote:[You might also enjoy the "`quarto-ized`" version at https://rstudio.github.io/r-manuals/r-exts/Function-and-variable-index.html[https://rstudio.github.io/r-manuals/r-exts/].]. However, this manual can be hard to understand if you’re not already familiar with the basics of packages. It’s also exhaustive, covering every possible package component, rather than focusing on the most common and useful components, as this book does. Writing R extensions is a useful resource once you’ve mastered the basics and want to learn what’s going on under the hood.
+
+[[intro-outline]]
+== In this book
+
+The first part of the book is all about giving you all the tools you need to start your package development journey and we highly recommend that you read it in order. We begin in <<sec-whole-game>> with a run through the complete development of a small package. It’s meant to paint the big picture and suggest a workflow, before we descend into the detailed treatment of the key components of an R package. Then in <<sec-setup>> you’ll learn how to prepare your system for package development, and in <<sec-package-structure-state>> you’ll learn the basic structure of a package and how that varies across different states. Next, in <<sec-workflow101>>, we’ll cover the core workflows that come up repeatedly for package developers. The first part of the book ends with another case study (<<sec-package-within>>), this time focusing on how you might convert a script to a package and discussing the challenges you’ll face along the way.
+
+The remainder of the book is designed to be read as needed. Pick and choose between the chapters as the various topics come up in your development process.
+
+First we cover key package components: <<sec-r>> discusses where your code lives and how to organize it, <<sec-data>> shows you how to include data in your package, and <<sec-misc>> covers a few less important files and directories that need to be discussed somewhere.
+
+Next we’ll dive into to the package metadata, starting with `+DESCRIPTION+` in <<sec-description>>. We’ll then go deep into dependencies. In <<sec-dependencies-mindset-background>>, we’ll cover the costs and benefits of taking on dependencies and provide some technical background on package namespaces and the search path. In <<sec-dependencies-in-practice>>, we focus on practical matters, such as how to use different types of dependencies in different parts of your package. This is also where we discuss exporting functions, which is what makes it possible for other packages and projects to depend on your package. We’ll finish off this part with a look at licensing in <<sec-license>>.
+
+To ensure your package works as designed (and continues to work as you make changes), it’s essential to test your code, so the next three chapters cover the art and science of testing. <<sec-testing-basics>> gets you started with the basics of testing with the testthat package. <<sec-testing-design>> teaches you how to design and organise tests in the most effective way. Then we finish off our coverage of testing in <<sec-testing-advanced>> which teaches you advanced skills to tackle challenging situations.
+
+If you want other people (including future-you!) to understand how to use the functions in your package, you’ll need to document them. <<sec-man>> gets you started using roxygen2 to document the functions in your package. Function documentation is only helpful if you know what function to look up, so next in <<sec-vignettes>> we’ll discuss vignettes, which help you document the package as a whole. We’ll finish up documentation with a discussion of other important markdown files like `+README.md+` and `+NEWS.md+` in <<sec-other-markdown>>, and creating a package website with pkgdown in <<sec-website>>.
+
+The book concludes by zooming back out to consider development practices, such as the benefit of using version control and continuous integration (<<sec-sw-dev-practices>>). We wrap things up by discussing the lifecycle (<<sec-lifecycle>>) of a package, including releasing it on CRAN (<<sec-release>>).
+
+This is a lot to learn, but don’t feel overwhelmed. Start with a minimal subset of useful features (e.g. just an `+R/+` directory!) and build up over time. To paraphrase the Zen monk Shunryu Suzuki: "`Each package is perfect the way it is — and it can use a little improvement`".
+
+== What’s not here
+
+There are also specific practices that have little to no treatment here simply because we do not use them enough to have any special insight. Does this mean that we actively discourage those practices? Probably not, as we try to be explicit about practices we think you should avoid. So if something is not covered here, it just means that a couple hundred heavily-used R packages are built without meaningful reliance on that technique. That observation should motivate you to evaluate how likely it is that your development requirements truly don’t overlap with ours. But sometimes the answer is a clear "`yes`", in which case you’ll simply need to consult another resource.

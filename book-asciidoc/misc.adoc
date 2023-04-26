@@ -1,0 +1,142 @@
+[[sec-misc]]
+= Other components
+:description: Learn how to create a package, the fundamental unit of shareable, reusable, and reproducible R code.
+
+The first two chapters in this part of the book cover the two most obvious things that people distribute via an R package: functions (<<sec-r>>) and data (<<sec-data>>). But that’s not all it takes to make an R package. There are other package components that are either required, such as a `+DESCRIPTION+` file, or highly recommended, such as tests and documentation.
+
+The next few parts of the book are organized around important concepts: dependencies, testing, and documentation. But before we dig in to those topics, this chapter demystifies some package parts that are not needed in every package, but that are nice to be aware of.
+
+== Other directories
+
+Here are some top-level directories you might encounter in an R source package, in rough order of importance and frequency of use:
+
+* `+src/+`: source and header files for compiled code, most often C and C++. This is an important technique that is used to make R packages more performant and to unlock the power of external libraries for R users. As of the second edition, the book no longer covers this topic, since a truly useful treatment of compiled code requires more space than we can give it here. The tidyverse generally uses the https://cpp11.r-lib.org[cpp11 package] to connect C++ to R; most other packages use https://www.rcpp.org[Rcpp], the most well-established package for integrating R and C++.
+* `+inst/+`: for arbitrary additional files that you want include in your package. This includes a few special files, like the `+CITATION+`, described below in <<sec-misc-inst>>. Other examples of files that might appear below `+inst/+` include R Markdown templates (see `+usethis::use_rmarkdown_template()+`) or https://docs.posit.co/ide/user/ide/guide/productivity/add-ins.html[RStudio add-ins].
+* `+tools/+`: auxiliary files needed during configuration, usually found in the company of a `+configure+` script. We discuss this more below in <<sec-misc-tools>>.
+* `+demo/+`: for package demos. We regard demos as a legacy phenomenon, whose goals are now better met by vignettes (<<sec-vignettes>>). For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that’s more visible, e.g. in `+README.Rmd+` (<<sec-readme>>) or in vignettes (<<sec-vignettes>>). These other locations offer other advantages, such as making sure that the code is exercised regularly. This is not true of actual demos, leaving them vulnerable to rot.
+* `+exec/+`: for executable scripts. Unlike files placed in other directories, files in `+exec/+` are automatically flagged as executable. Empirically, to the extent that R package are shipping scripts for external interpreters, the `+inst/+` directory seems to be preferred location these days.
+* `+po/+`: translations for messages. This is useful, but beyond the scope of this book. See the https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization[Internationalization] chapter of "`Writing R extensions`" and the https://michaelchirico.github.io/potools/index.html[potools package] for more details.
+
+[[sec-misc-inst]]
+== Installed files
+
+When a package is installed, everything in `+inst/+` is copied into the top-level directory of the installed package. In some sense `+inst/+` is the opposite of `+.Rbuildignore+` - where `+.Rbuildignore+` lets you remove arbitrary files and directories from the built package, `+inst/+` lets you add them.
+
+[WARNING]
+====
+You are free to put anything you like in `inst/` with one caution:
+because `inst/` is copied into the top-level directory, don’t create a
+subdirectory that collides with any of the directories that make up the
+official structure of an R package. We recommend avoiding directories
+with special significance in either the source or installed form of a
+package, such as: `inst/data`, `inst/help`, `inst/html`, `inst/libs`,
+`inst/man`, `inst/Meta`, `inst/R`, `inst/src`, `inst/tests`,
+`inst/tools`, and `inst/vignettes`. In most cases, this prevents you
+from having a malformed package. And even though some of the above
+directories are technically allowed, they can be an unnecessary source
+of confusion.
+====
+
+Here are some of the most common files and folders found in `+inst/+`:
+
+* `+inst/CITATION+`: how to cite the package, see below for details.
+* `+inst/extdata+`: additional external data for examples and vignettes. See section <<sec-data-extdata>> for more detail.
+
+What if you need a path to the file at `+inst/foo+` to use in, e.g., the code below `+R/+` or in your documentation? The default solution is to use `+system.file("foo", package = "yourpackage")+`. But this presents a workflow dilemma: When you’re developing your package, you engage with it in its source form (`+inst/foo+`), but your users engage with its installed form (`+/foo+`). Happily, devtools provides a shim for `+system.file()+` that is activated by `+load_all()+`. Section <<sec-data-system-file>> covers this in more depth and includes an interesting alternative, `+fs::path_package()+` .
+
+[[sec-misc-inst-citation]]
+=== Package citation
+
+The `+CITATION+` file lives in the `+inst+` directory and is intimately connected to the `+citation()+` function which tells you how to cite R and R packages. Calling `+citation()+` without any arguments tells you how to cite base R:
+
+[source,r,cell-code]
+----
+citation()
+#> To cite R in publications use:
+#> 
+#>   R Core Team (2023). _R: A Language and Environment for
+#>   Statistical Computing_. R Foundation for Statistical
+#>   Computing, Vienna, Austria. <https://www.R-project.org/>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Manual{,
+#>     title = {R: A Language and Environment for Statistical Computing},
+#>     author = {{R Core Team}},
+#>     organization = {R Foundation for Statistical Computing},
+#>     address = {Vienna, Austria},
+#>     year = {2023},
+#>     url = {https://www.R-project.org/},
+#>   }
+#> 
+#> We have invested a lot of time and effort in creating R,
+#> please cite it when using it for data analysis. See also
+#> 'citation("pkgname")' for citing R packages.
+----
+
+Calling it with a package name tells you how to cite that package:
+
+[source,r,cell-code]
+----
+citation("tidyverse")
+#> To cite package 'tidyverse' in publications use:
+#> 
+#>   Wickham H, Averick M, Bryan J, Chang W, McGowan LD,
+#>   François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn
+#>   M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J,
+#>   Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D,
+#>   Wilke C, Woo K, Yutani H (2019). "Welcome to the
+#>   tidyverse." _Journal of Open Source Software_, *4*(43),
+#>   1686. doi:10.21105/joss.01686
+#>   <https://doi.org/10.21105/joss.01686>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Article{,
+#>     title = {Welcome to the {tidyverse}},
+#>     author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+#>     year = {2019},
+#>     journal = {Journal of Open Source Software},
+#>     volume = {4},
+#>     number = {43},
+#>     pages = {1686},
+#>     doi = {10.21105/joss.01686},
+#>   }
+----
+
+The associated `+inst/CITATION+` file looks like this:
+
+....
+bibentry(
+  "Article",
+  title = "Welcome to the {tidyverse}",
+  author = "Hadley Wickham, Mara Averick, Jennifer Bryan, Winston Chang, Lucy D'Agostino McGowan, Romain François, Garrett Grolemund, Alex Hayes, Lionel Henry, Jim Hester, Max Kuhn, Thomas Lin Pedersen, Evan Miller, Stephan Milton Bache, Kirill Müller, Jeroen Ooms, David Robinson, Dana Paige Seidel, Vitalie Spinu, Kohske Takahashi, Davis Vaughan, Claus Wilke, Kara Woo, Hiroaki Yutani",
+  year = 2019,
+  journal = "Journal of Open Source Software",
+  volume = 4,
+  number = 43,
+  pages = 1686,
+  doi = "10.21105/joss.01686",
+)
+....
+
+You can call `+usethis::use_citation()+` to initiate this file and fill in your details. Read the `+?bibentry+` help topic for more details.
+
+[[sec-misc-tools]]
+== Configuration tools
+
+If a package has a configuration script (`+configure+` on Unix-alikes, `+configure.win+` on Windows), it is executed as the first step by `+R CMD  INSTALL+`. This is typically associated with a package that has a `+src/+` subdirectory containing C/C++ code and the `+configure+` script is needed at compile time. If that script needs auxiliary files, those should be located in the `+tools/+` directory. The scripts below `+tools/+` can have an effect on the installed package, but the contents of `+tools/+` will not ultimately be present in the installed package. In any case, this is mostly (but not solely) relevant to packages with compiled code, which is beyond the scope of this book.
+
+We bring this up because, in practice, some packages use the `+tools/+` directory for a different but related purpose. Some packages have periodic maintenance tasks for which it is helpful to record detailed instructions. For example, many packages embed some sort of external resource, e.g. code or data:
+
+* Source code and headers for an embedded third party C/C++ library.
+* Web toolkits.
+* R code that’s inlined (as opposed to imported).
+* Specification for a web API.
+* Colour palettes, styles, and themes.
+
+These external assets are also usually evolving over time, so they need to be re-ingested on a regular basis. This makes it particularly rewarding to implement such housekeeping programmatically.
+
+This is the second, unofficial use of the `+tools/+` directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a `+configure+` script and they list `+tools/+` in `+.Rbuildignore+`, meaning that these scripts are not included in the package bundle. These scripts are maintained in the source package for developer convenience, but are never shipped with the package.
+
+This practice is closely related to our recommendation to store the instructions for the creation of package data in `+data-raw/+` (section <<sec-data-data-raw>>) and to record the method of construction for any test fixtures (section <<sec-testing-advanced-concrete-fixture>>).
