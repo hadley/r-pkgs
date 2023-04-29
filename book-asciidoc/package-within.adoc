@@ -75,7 +75,7 @@ Finally, this cleaned (cleaner?) data is written back out to a CSV file. They li
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2023-April-29_15-06-02_swim_clean.csv"
+#> [1] "2023-April-29_20-21-55_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ----
 
@@ -451,7 +451,7 @@ outfile_path <- function(infile) {
 
 The fact that we capture `+now <- Sys.time()+` outside of the definition of `+outfile_path()+` has probably been vexing some readers for a while. `+now+` reflects the instant in time when we execute `+now <- Sys.time()+`. In the initial approach, `+now+` was assigned when we `+source()+`d `+cleaning-helpers.R+`. That’s not ideal, but it was probably a pretty harmless mistake, because the helper file would be `+source()+`d shortly before we wrote the output file.
 
-But this approach is quite devastating in the context of a package. `+now <- Sys.time()+` is executed *when the package is built*footnote:[Here we’re referring to when the package code is compiled, which could be either when the binary is made (for macOS or Windows; <<sec-structure-binary>>) or when the package is installed from source (@sec-installed-package).]. And never again. It is very easy to assume your package code is re-evaluated when the package is attached or used. But it is not. Yes, the code _inside your functions_ is absolutely run whenever they are called. But your functions – and any other objects created in top-level code below `+R/+` – are defined exactly once, at build time.
+But this approach is quite devastating in the context of a package. `+now <- Sys.time()+` is executed *when the package is built*footnote:[Here we’re referring to when the package code is compiled, which could be either when the binary is made (for macOS or Windows; <<sec-structure-binary>>) or when the package is installed from source (<<sec-installed-package>>).]. And never again. It is very easy to assume your package code is re-evaluated when the package is attached or used. But it is not. Yes, the code _inside your functions_ is absolutely run whenever they are called. But your functions – and any other objects created in top-level code below `+R/+` – are defined exactly once, at build time.
 
 By defining `+now+` with top-level code below `+R/+`, we’ve doomed our package to timestamp all of its output files with the same (wrong) time. The fix is to make sure the `+Sys.time()+` call happens at run time.
 
@@ -503,7 +503,7 @@ The timestamps now reflect the current time, but the group raises a new concern.
 [source,r,cell-code]
 ----
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2023-April-29_15-06-02"
+#> [1] "2023-April-29_20-21-55"
 ----
 
 This formats `+Sys.time()+` in such a way that it includes the month _name_ (not number) and the local timefootnote:[It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.].
@@ -545,7 +545,7 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ----
 
 ....
-#> [1] "2023-abril-29_12-06-03"
+#> [1] "2023-abril-29_17-21-56"
 ....
 
 After:
@@ -553,10 +553,10 @@ After:
 [source,r,cell-code]
 ----
 outfile_path("INFILE.csv")
-#> [1] "2023-April-29_15-06-02_INFILE_clean.csv"
+#> [1] "2023-April-29_20-21-55_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2023-April-29_15-06-03"
+#> [1] "2023-April-29_20-21-56"
 ----
 
 Notice that her month name switched from Portuguese to English and the time is clearly being reported in a different time zone. The calls to `+Sys.setlocale()+` and `+Sys.setenv()+` inside `+timestamp()+` have made persistent (and very surprising) changes to her R session. This sort of side effect is very undesirable and is extremely difficult to track down and debug, especially in more complicated settings.
