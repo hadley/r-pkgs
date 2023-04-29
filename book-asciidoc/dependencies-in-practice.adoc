@@ -115,7 +115,7 @@ Specifically, we recommend that you default to _not_ importing anything from aaa
 
 Of course there are reasons to make exceptions to this rule and to import something from another package into yours:
 
-* An operator: You can’t call an operator from another package via `+::+`, so you must import it. Example: the null-coalescing operator `+%||%+` from rlang or the original pipe `+%>%+` from magrittr.
+* An operator: You can’t call an operator from another package via `+::+`, so you must import it. Examples: the null-coalescing operator `+%||%+` from rlang or the original pipe `+%>%+` from magrittr.
 * A function that you use _a lot_: If importing a function makes your code much more readable, that’s a good enough reason to import it. This literally reduces the number of characters required to call the external function. This can be especially handy when generating user-facing messages, because it makes it more likely that lines in the source correspond to lines in the output.
 * A function that you call in a tight loop: There is a minor performance penalty associated with `+::+`. It’s on the order of 100ns, so it will only matter if you call the function millions of times.
 
@@ -146,7 +146,6 @@ Where should this roxygen tag go? There are two reasonable locations:
 #' @importFrom glue glue_collapse
 ## usethis namespace: end
 NULL
-#> NULL
 ----
 
 Recall that `+devtools::document()+` processes your roxygen comments (<<sec-dependencies-NAMESPACE-workflow>>), which writes help topics to `+man/*.Rd+` and, relevant to our current goal, generates the `+NAMESPACE+` file. If you use `+use_import_from()+`, it does this for you and also calls `+load_all()+`, making the newly imported function available in your current session.
@@ -210,7 +209,7 @@ ignore_unused_imports <- function() {
 
 You don’t need to call `+ignore_unused_imports()+` anywhere. You shouldn’t export it. You don’t have to actually exercise `+aaapkg::aaa_fun()+`. What’s important is to access something in aaapkg’s namespace with `+::+`.
 
-An alternative approach you might be tempted to use is to import `+aaapkg::aaa_fun()+` into your package’s namespace, probably with the roxygen tag `+@importFrom aaapkg aaa_fun+`. This does suppress the `+NOTE+`, but it also does more. This causes aaapkg to be loaded whenever your package is loaded. In contrast, if you use the approach we recommend, the aaapkg will only be loaded if your user does something actually requires it. This rarely matters in practice, but it’s always nice to minimize or delay the loading of additional packages.
+An alternative approach you might be tempted to use is to import `+aaapkg::aaa_fun()+` into your package’s namespace, probably with the roxygen tag `+@importFrom aaapkg aaa_fun+`. This does suppress the `+NOTE+`, but it also does more. This causes aaapkg to be loaded whenever your package is loaded. In contrast, if you use the approach we recommend, the aaapkg will only be loaded if your user does something that actually requires it. This rarely matters in practice, but it’s always nice to minimize or delay the loading of additional packages.
 
 [[sec-dependencies-in-imports-in-tests]]
 === In test code
@@ -519,7 +518,7 @@ And this explains how `+library(devtools)+` makes `+session_info()+` available i
 
 R has multiple object-oriented programming (OOP) systems:
 
-* S3 is currently the most important for us and is the one we that is addressed in various parts of this book. The https://adv-r.hadley.nz/s3.html[S3 chapter of Advanced R] is a good place to learn more about S3 conceptually and the https://vctrs.r-lib.org[vctrs package] is worth studying for practical knowledge.
+* S3 is currently the most important for us and is what’s addressed in this book. The https://adv-r.hadley.nz/s3.html[S3 chapter of Advanced R] is a good place to learn more about S3 conceptually and the https://vctrs.r-lib.org[vctrs package] is worth studying for practical knowledge.
 * S4 is very important within certain R communities, most notably within the Bioconductor project. We only use S4 when it’s necessary for compatibility with other packages. If you want to learn more, the https://adv-r.hadley.nz/s4.html[S4 chapter of Advanced R] is a good starting point and has recommendations for additional resources.
 * R6 is used in many tidyverse packages (broadly defined), but is out of scope for this book. Good places to learn more include the https://r6.r-lib.org[R6 package website], the https://adv-r.hadley.nz/r6.html[R6 chapter of Advanced R], and the https://roxygen2.r-lib.org/articles/rd-other.html#r6[roxygen2 documentation related to R6].
 
@@ -536,7 +535,13 @@ count <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
 }
 
 #' @export
-count.data.frame <- function(x, ..., wt = NULL, sort = FALSE, name = NULL, .drop = group_by_drop_default(x)) { ... }
+count.data.frame <- function(
+  x,
+  ...,
+  wt = NULL,
+  sort = FALSE,
+  name = NULL,
+  .drop = group_by_drop_default(x)) { ... }
 ----
 
 The corresponding lines in dplyr’s `+NAMESPACE+` file look like this:
