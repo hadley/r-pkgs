@@ -94,18 +94,20 @@ We are indebted to our colleagues at Posit, especially the tidyverse team, for b
 The book has been greatly improved by the suggestions from our fantastic team of technical reviewers: Malcolm Barrett, Laura DeCicco, Zhian Kamvar, Tom Mock and Maëlle Salmon.
 
 ```{r, results = "asis", echo = FALSE, eval = TRUE}
-# git --no-pager shortlog -ns > contribs.txt
-contribs <- read.delim("data/contribs.txt", header = FALSE, 
-  stringsAsFactors = FALSE)[-1, ]
-names(contribs) <- c("n", "name")
+library(tidyverse)  
 
-contribs <- contribs[order(contribs$name), ]
-contribs$uname <- ifelse(!grepl(" ", contribs$name), 
-  paste0("`@", contribs$name,"`"), contribs$name)
+dat <- read_csv("data/contribs.csv", na = "NA", trim_ws = FALSE) |> 
+  mutate(link = str_glue("[&#x0040;{user}](https://github.com/{user}){maybe_name}"))
 
-cat("Thanks go to all contributors who submitted improvements via github (in alphabetical order): ")
-cat(paste0(contribs$uname, collapse = ", "))
-cat(".\n")
+contrib_string <- dat |> 
+  pull(link) |> 
+  str_flatten_comma()
+
+str_glue('
+  Thanks to all contributors the the first and second editions (in \\
+  alphabetical order by GitHub username): 
+  
+  {contrib_string}.')
 ```
 
 ## Conventions
