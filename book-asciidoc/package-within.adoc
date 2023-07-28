@@ -75,7 +75,7 @@ Finally, this cleaned (cleaner?) data is written back out to a CSV file. They li
 now <- Sys.time()
 timestamp <- format(now, "%Y-%B-%d_%H-%M-%S")
 (outfile <- paste0(timestamp, "_", sub("(.*)([.]csv$)", "\\1_clean\\2", infile)))
-#> [1] "2023-July-28_07-15-42_swim_clean.csv"
+#> [1] "2023-July-28_22-59-01_swim_clean.csv"
 write.csv(dat, file = outfile, quote = FALSE, row.names = FALSE)
 ----
 
@@ -503,7 +503,7 @@ The timestamps now reflect the current time, but the group raises a new concern.
 [source,r,cell-code]
 ----
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2023-July-28_07-15-42"
+#> [1] "2023-July-28_22-59-02"
 ----
 
 This formats `+Sys.time()+` in such a way that it includes the month _name_ (not number) and the local timefootnote:[It would clearly be better to format according to ISO 8601, which encodes the month by number, but please humor me for the sake of making this example more obvious.].
@@ -545,7 +545,7 @@ format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
 ----
 
 ....
-#> [1] "2023-julho-28_04-15-43"
+#> [1] "2023-julho-28_19-59-02"
 ....
 
 After:
@@ -553,10 +553,10 @@ After:
 [source,r,cell-code]
 ----
 outfile_path("INFILE.csv")
-#> [1] "2023-July-28_07-15-42_INFILE_clean.csv"
+#> [1] "2023-July-28_22-59-02_INFILE_clean.csv"
 
 format(Sys.time(), "%Y-%B-%d_%H-%M-%S")
-#> [1] "2023-July-28_07-15-43"
+#> [1] "2023-July-28_22-59-02"
 ----
 
 Notice that her month name switched from Portuguese to English and the time is clearly being reported in a different time zone. The calls to `+Sys.setlocale()+` and `+Sys.setenv()+` inside `+timestamp()+` have made persistent (and very surprising) changes to her R session. This sort of side effect is very undesirable and is extremely difficult to track down and debug, especially in more complicated settings.
@@ -587,15 +587,15 @@ timestamp <- function(time = Sys.time()) {
 }
 ----
 
-These show various methods to limit the scope of our changes to LC_TIME and the timezone. A good rule of thumb is to make the scope of such changes as narrow as is possible and practical. The `+tz+` argument of `+format()+` is the most surgical way to deal with the timezone, but nothing similar exists for LC_TIME. We make the temporary locale modification using the withr package, which provides a very flexible toolkit for temporary state changes. This (and `+base::on.exit()+`) are discussed further in <<sec-code-r-landscape>>. Note that if you use withr as we do above, you would need to list it in `+DESCRIPTION+` in `+Imports+` (<<sec-dependencies-in-practice>>, <<sec-dependencies-tidyverse>>).
+These show various methods to limit the scope of our changes to LC_TIME and the timezone. A good rule of thumb is to make the scope of such changes as narrow as possible and practical. The `+tz+` argument of `+format()+` is the most surgical way to deal with the timezone, but nothing similar exists for LC_TIME. We make the temporary locale modification using the withr package, which provides a very flexible toolkit for temporary state changes. This (and `+base::on.exit()+`) are discussed further in <<sec-code-r-landscape>>. Note that if you use withr as we do above, you would need to list it in `+DESCRIPTION+` in `+Imports+` (<<sec-dependencies-in-practice>>, <<sec-dependencies-tidyverse>>).
 
 This underscores a point from the previous section: you need to adopt a different mindset when defining functions inside a package. Try to avoid making any changes to the user’s overall state. If such changes are unavoidable, make sure to reverse them (if possible) or to document them explicitly (if related to the function’s primary purpose).
 
 == Concluding thoughts
 
-Finally, after several iterations, we have successfully extracted the repetitive data cleaning code for the swimming survey into an R package. This example concludes the first part of book and marks the transition into more detailed reference material on specific package components. Before we move on, let’s review the lessons learned in this chapter.
+Finally, after several iterations, we have successfully extracted the repetitive data cleaning code for the swimming survey into an R package. This example concludes the first part of the book and marks the transition into more detailed reference material on specific package components. Before we move on, let’s review the lessons learned in this chapter.
 
-=== Script vs.package
+=== Script vs. package
 
 When you first hear that expert R users often put their code into packages, you might wonder exactly what that means. Specifically, what happens to your existing R scripts, R Markdown reports, and Shiny apps? Does all of that code somehow get put into a package? The answer is "`no`", in most contexts.
 
@@ -611,7 +611,7 @@ Each time you revisit a similar analysis, you might try to elevate your game a b
 
 Writing package code is a bit different from writing R scripts and it’s natural to feel some discomfort when making this adjustment. Here are the most common gotchas that trip many of us up at first:
 
-* Package code requires new ways of working with functions in other packages. The `+DESCRIPTION+` file is the principle way to declare dependencies; we don’t do this via `+library(somepackage)+`.
+* Package code requires new ways of working with functions in other packages. The `+DESCRIPTION+` file is the principal way to declare dependencies; we don’t do this via `+library(somepackage)+`.
 * If you want data or files to be persistently available, there are package-specific methods of storage and retrieval. You can’t just put files in the package and hope for the best.
 * It’s necessary to be explicit about which functions are user-facing and which are internal helpers. By default, functions are not exported for use by others.
 * A new level of discipline is required to ensure that code runs at the intended time (build time vs. run time) and that there are no unintended side effects.
