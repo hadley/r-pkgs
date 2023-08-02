@@ -4,17 +4,17 @@
 
 The first two chapters in this part of the book cover the two most obvious things that people distribute via an R package: functions (<<sec-r>>) and data (<<sec-data>>). But that’s not all it takes to make an R package. There are other package components that are either required, such as a `+DESCRIPTION+` file, or highly recommended, such as tests and documentation.
 
-The next few parts of the book are organized around important concepts: dependencies, testing, and documentation. But before we dig in to those topics, this chapter demystifies some package parts that are not needed in every package, but that are nice to be aware of.
+The next few parts of the book are organized around important concepts: dependencies, testing, and documentation. But before we dig into those topics, this chapter demystifies some package parts that are not needed in every package, but that are nice to be aware of.
 
 == Other directories
 
 Here are some top-level directories you might encounter in an R source package, in rough order of importance and frequency of use:
 
 * `+src/+`: source and header files for compiled code, most often C and C++. This is an important technique that is used to make R packages more performant and to unlock the power of external libraries for R users. As of the second edition, the book no longer covers this topic, since a truly useful treatment of compiled code requires more space than we can give it here. The tidyverse generally uses the https://cpp11.r-lib.org[cpp11 package] to connect C++ to R; most other packages use https://www.rcpp.org[Rcpp], the most well-established package for integrating R and C++.
-* `+inst/+`: for arbitrary additional files that you want include in your package. This includes a few special files, like the `+CITATION+`, described below in <<sec-misc-inst>>. Other examples of files that might appear below `+inst/+` include R Markdown templates (see `+usethis::use_rmarkdown_template()+`) or https://docs.posit.co/ide/user/ide/guide/productivity/add-ins.html[RStudio add-ins].
+* `+inst/+`: for arbitrary additional files that you want to include in your package. This includes a few special files, like the `+CITATION+`, described below in <<sec-misc-inst>>. Other examples of files that might appear below `+inst/+` include R Markdown templates (see `+usethis::use_rmarkdown_template()+`) or https://docs.posit.co/ide/user/ide/guide/productivity/add-ins.html[RStudio add-ins].
 * `+tools/+`: auxiliary files needed during configuration, usually found in the company of a `+configure+` script. We discuss this more below in <<sec-misc-tools>>.
 * `+demo/+`: for package demos. We regard demos as a legacy phenomenon, whose goals are now better met by vignettes (<<sec-vignettes>>). For actively maintained packages, it probably makes sense to repurpose the content in any existing demos somewhere that’s more visible, e.g. in `+README.Rmd+` (<<sec-readme>>) or in vignettes (<<sec-vignettes>>). These other locations offer other advantages, such as making sure that the code is exercised regularly. This is not true of actual demos, leaving them vulnerable to rot.
-* `+exec/+`: for executable scripts. Unlike files placed in other directories, files in `+exec/+` are automatically flagged as executable. Empirically, to the extent that R packages are shipping scripts for external interpreters, the `+inst/+` directory seems to be preferred location these days.
+* `+exec/+`: for executable scripts. Unlike files placed in other directories, files in `+exec/+` are automatically flagged as executable. Empirically, to the extent that R packages are shipping scripts for external interpreters, the `+inst/+` directory seems to be the preferred location these days.
 * `+po/+`: translations for messages. This is useful, but beyond the scope of this book. See the https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Internationalization[Internationalization] chapter of "`Writing R extensions`" and the https://michaelchirico.github.io/potools/index.html[potools package] for more details.
 
 [[sec-misc-inst]]
@@ -125,11 +125,11 @@ You can call `+usethis::use_citation()+` to initiate this file and fill in your 
 [[sec-misc-tools]]
 == Configuration tools
 
-If a package has a configuration script (`+configure+` on Unix-alikes, `+configure.win+` on Windows), it is executed as the first step by `+R CMD  INSTALL+`. This is typically associated with a package that has a `+src/+` subdirectory containing C/C++ code and the `+configure+` script is needed at compile time. If that script needs auxiliary files, those should be located in the `+tools/+` directory. The scripts below `+tools/+` can have an effect on the installed package, but the contents of `+tools/+` will not ultimately be present in the installed package. In any case, this is mostly (but not solely) relevant to packages with compiled code, which is beyond the scope of this book.
+If a package has a configuration script (`+configure+` on Unix-alikes, `+configure.win+` on Windows), it is executed as the first step by `+R CMD INSTALL+`. This is typically associated with a package that has a `+src/+` subdirectory containing C/C++ code and the `+configure+` script is needed at compile time. If that script needs auxiliary files, those should be located in the `+tools/+` directory. The scripts below `+tools/+` can have an effect on the installed package, but the contents of `+tools/+` will not ultimately be present in the installed package. In any case, this is mostly (but not solely) relevant to packages with compiled code, which is beyond the scope of this book.
 
 We bring this up because, in practice, some packages use the `+tools/+` directory for a different but related purpose. Some packages have periodic maintenance tasks for which it is helpful to record detailed instructions. For example, many packages embed some sort of external resource, e.g. code or data:
 
-* Source code and headers for an embedded third party C/C++ library.
+* Source code and headers for an embedded third-party C/C++ library.
 * Web toolkits.
 * R code that’s inlined (as opposed to imported).
 * Specification for a web API.
@@ -137,6 +137,6 @@ We bring this up because, in practice, some packages use the `+tools/+` director
 
 These external assets are also usually evolving over time, so they need to be re-ingested on a regular basis. This makes it particularly rewarding to implement such housekeeping programmatically.
 
-This is the second, unofficial use of the `+tools/+` directory, characterized by two big differences with its official purpose: The packages that do this generally do not have a `+configure+` script and they list `+tools/+` in `+.Rbuildignore+`, meaning that these scripts are not included in the package bundle. These scripts are maintained in the source package for developer convenience, but are never shipped with the package.
+This is the second, unofficial use of the `+tools/+` directory, characterized by two big differences from its official purpose: The packages that do this generally do not have a `+configure+` script and they list `+tools/+` in `+.Rbuildignore+`, meaning that these scripts are not included in the package bundle. These scripts are maintained in the source package for developer convenience but are never shipped with the package.
 
 This practice is closely related to our recommendation to store the instructions for the creation of package data in `+data-raw/+` (section <<sec-data-data-raw>>) and to record the method of construction for any test fixtures (section <<sec-testing-advanced-concrete-fixture>>).
