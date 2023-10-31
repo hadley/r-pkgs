@@ -48,14 +48,14 @@ If the `+DESCRIPTION+` contains `+LazyData: true+`, then datasets will be lazily
 [source,r,cell-code]
 ----
 lobstr::mem_used()
-#> 60.37 MB
+#> 60.40 MB
 library(nycflights13)
 lobstr::mem_used()
-#> 62.27 MB
+#> 62.29 MB
 
 invisible(flights)
 lobstr::mem_used()
-#> 102.97 MB
+#> 103.00 MB
 ----
 
 We recommend that you include `+LazyData: true+` in your `+DESCRIPTION+` if you are shipping `+.rda+` files below `+data/+`. If you use `+use_data()+` to create such datasets, it will automatically make this modification to `+DESCRIPTION+` for you.
@@ -221,7 +221,7 @@ transmit this `NOTE`. But you can surface it with
 [[sec-data-sysdata]]
 == Internal data
 
-Sometimes your package functions need access to pre-computed data. If you put these objects in `+data/+`, they’ll also be available to package users, which is not appropriate. Sometimes the objects you need are small and simple enough that you can define them with `+c()+` or `+data.frame()+` in the code below `+R/+`, perhaps in `+R/data.R+`. Larger or more complicated objects should be stored in your package’s internal data in `+R/sysdata.rda+`.
+Sometimes your package functions need access to pre-computed data. If you put these objects in `+data/+`, they’ll also be available to package users, which is not appropriate. Sometimes the objects you need are small and simple enough that you can define them with `+c()+` or `+data.frame()+` in the code below `+R/+`, perhaps in `+R/data.R+`. Larger or more complicated objects should be stored in your package’s internal data in `+R/sysdata.rda+`, so they are lazy-loaded on demand.
 
 Here are some examples of internal package data:
 
@@ -251,7 +251,7 @@ Much of the advice given for external data holds for internal data as well:
 There are also key distinctions, where the handling of internal and external data differs:
 
 * Objects in `+R/sysdata.rda+` are not exported (they shouldn’t be), so they don’t need to be documented.
-* Usage of `+R/sysdata.rda+` has no impact on DESCRIPTION, i.e. the need to specify the `+LazyData+` field is strictly about the exported data below `+data/+`.
+* The `+LazyData+` field in the package `+DESCRIPTION+` has no impact on `+R/sysdata.rda+` but is strictly about the exported data below `+data/+`. Internal data is always lazy-loaded.
 
 [[sec-data-extdata]]
 == Raw data file
@@ -319,8 +319,8 @@ The https://fs.r-lib.org[fs package] offers `+fs::path_package()+`. This is esse
 fs::path_package("extdata", package = "idonotexist")
 #> Error: Can't find package `idonotexist` in library locations:
 #>   - '/home/runner/work/_temp/Library'
-#>   - '/opt/R/4.3.1/lib/R/site-library'
-#>   - '/opt/R/4.3.1/lib/R/library'
+#>   - '/opt/R/4.3.2/lib/R/site-library'
+#>   - '/opt/R/4.3.2/lib/R/library'
 
 fs::path_package("extdata", "I_do_not_exist.csv", package = "readr")
 #> Error: File(s) '/home/runner/work/_temp/Library/readr/extdata/I_do_not_exist.csv' do not exist

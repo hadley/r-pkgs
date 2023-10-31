@@ -452,14 +452,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>If the <code>DESCRIPTION</code> contains <code>LazyData: true</code>, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change significantly until you inspect the <code>flights</code> dataset stored inside the package.</p>
 <div class="cell">
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 60.43 MB</span></span>
+<span><span class="co">#&gt; 60.46 MB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/nycflights13">nycflights13</a></span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 62.32 MB</span></span>
+<span><span class="co">#&gt; 62.35 MB</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html">invisible</a></span><span class="op">(</span><span class="va">flights</span><span class="op">)</span></span>
 <span><span class="fu">lobstr</span><span class="fu">::</span><span class="fu"><a href="https://lobstr.r-lib.org/reference/mem_used.html">mem_used</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 103.03 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span><span class="co">#&gt; 103.06 MB</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We recommend that you include <code>LazyData: true</code> in your <code>DESCRIPTION</code> if you are shipping <code>.rda</code> files below <code>data/</code>. If you use <code>use_data()</code> to create such datasets, it will automatically make this modification to <code>DESCRIPTION</code> for you.</p>
 <div class="callout callout-style-default callout-warning callout-titled">
@@ -581,7 +581,7 @@ Submitting to CRAN
 <!-- https://github.com/wch/r-source/blob/f6737799b169710006b040f72f9abc5e09180229/src/library/tools/R/QC.R#L4672 -->
 </section></section><section id="sec-data-sysdata" class="level2" data-number="7.2"><h2 data-number="7.2" class="anchored" data-anchor-id="sec-data-sysdata">
 <span class="header-section-number">7.2</span> Internal data</h2>
-<p>Sometimes your package functions need access to pre-computed data. If you put these objects in <code>data/</code>, they’ll also be available to package users, which is not appropriate. Sometimes the objects you need are small and simple enough that you can define them with <code><a href="https://rdrr.io/r/base/c.html">c()</a></code> or <code><a href="https://rdrr.io/r/base/data.frame.html">data.frame()</a></code> in the code below <code>R/</code>, perhaps in <code>R/data.R</code>. Larger or more complicated objects should be stored in your package’s internal data in <code>R/sysdata.rda</code>.</p>
+<p>Sometimes your package functions need access to pre-computed data. If you put these objects in <code>data/</code>, they’ll also be available to package users, which is not appropriate. Sometimes the objects you need are small and simple enough that you can define them with <code><a href="https://rdrr.io/r/base/c.html">c()</a></code> or <code><a href="https://rdrr.io/r/base/data.frame.html">data.frame()</a></code> in the code below <code>R/</code>, perhaps in <code>R/data.R</code>. Larger or more complicated objects should be stored in your package’s internal data in <code>R/sysdata.rda</code>, so they are lazy-loaded on demand.</p>
 <p>Here are some examples of internal package data:</p>
 <ul>
 <li>Two colour-related packages, <a href="https://github.com/cwickham/munsell">munsell</a> and <a href="https://cran.r-project.org/web/packages/dichromat/index.html">dichromat</a>, use <code>R/sysdata.rda</code> to store large tables of colour data.</li>
@@ -607,7 +607,7 @@ Submitting to CRAN
 <p>There are also key distinctions, where the handling of internal and external data differs:</p>
 <ul>
 <li>Objects in <code>R/sysdata.rda</code> are not exported (they shouldn’t be), so they don’t need to be documented.</li>
-<li>Usage of <code>R/sysdata.rda</code> has no impact on DESCRIPTION, i.e.&nbsp;the need to specify the <code>LazyData</code> field is strictly about the exported data below <code>data/</code>.</li>
+<li>The <code>LazyData</code> field in the package <code>DESCRIPTION</code> has no impact on <code>R/sysdata.rda</code> but is strictly about the exported data below <code>data/</code>. Internal data is always lazy-loaded.</li>
 </ul></section><section id="sec-data-extdata" class="level2" data-number="7.3"><h2 data-number="7.3" class="anchored" data-anchor-id="sec-data-extdata">
 <span class="header-section-number">7.3</span> Raw data file</h2>
 <p>If you want to show examples of loading/parsing raw data, put the original files in <code>inst/extdata/</code>. When the package is installed, all files (and folders) in <code>inst/</code> are moved up one level to the top-level directory, which is why they can’t have names that conflict with standard parts of an R package, like <code>R/</code> or <code>DESCRIPTION</code> . The files below <code>inst/extdata/</code> in the source package will be located below <code>extdata/</code> in the corresponding installed package. You may want to revisit <a href="structure.html#fig-package-files">Figure&nbsp;<span>3.1</span></a> to review the file structure for different package states.</p>
@@ -660,8 +660,8 @@ Submitting to CRAN
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path_package.html">path_package</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"idonotexist"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Error: Can't find package `idonotexist` in library locations:</span></span>
 <span><span class="co">#&gt;   - '/home/runner/work/_temp/Library'</span></span>
-<span><span class="co">#&gt;   - '/opt/R/4.3.1/lib/R/site-library'</span></span>
-<span><span class="co">#&gt;   - '/opt/R/4.3.1/lib/R/library'</span></span>
+<span><span class="co">#&gt;   - '/opt/R/4.3.2/lib/R/site-library'</span></span>
+<span><span class="co">#&gt;   - '/opt/R/4.3.2/lib/R/library'</span></span>
 <span></span>
 <span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path_package.html">path_package</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"I_do_not_exist.csv"</span>, package <span class="op">=</span> <span class="st">"readr"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Error: File(s) '/home/runner/work/_temp/Library/readr/extdata/I_do_not_exist.csv' do not exist</span></span>
