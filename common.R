@@ -106,3 +106,5 @@ status <- function(type) {
     ":::\n"
   ))
 }
+
+options(repos = "http://cran.us.r-project.org ")
