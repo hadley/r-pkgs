@@ -46,6 +46,6 @@ The other callout that appears multiple times is:
 ```         
 ::: callout-warning
 ## Submitting to CRAN
-Here's something to super careful about.
+Here's something to be super careful about.
 :::
 ```
