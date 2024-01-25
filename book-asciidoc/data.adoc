@@ -48,53 +48,35 @@ If the `+DESCRIPTION+` contains `+LazyData: true+`, then datasets will be lazily
 [source,r,cell-code]
 ----
 lobstr::mem_used()
-#> 57.30 MB
+#> 57.37 MB
 library(nycflights13)
 lobstr::mem_used()
-#> 59.22 MB
+#> 59.29 MB
 
 invisible(flights)
 lobstr::mem_used()
-#> 99.93 MB
+#> 100.00 MB
 ----
 
 We recommend that you include `+LazyData: true+` in your `+DESCRIPTION+` if you are shipping `+.rda+` files below `+data/+`. If you use `+use_data()+` to create such datasets, it will automatically make this modification to `+DESCRIPTION+` for you.
 
 [WARNING]
 ====
-It is important to note that lazily-loaded datasets do *not* need to be
-pre-loaded with `utils::data()` and, in fact, it’s usually best to avoid
-doing so. Above, once we did `library(nycflights13)`, we could
-immediately access `flights`. There is no call to `data(flights)`,
-because it is not necessary.
+It is important to note that lazily-loaded datasets do *not* need to be pre-loaded with `+utils::data()+` and, in fact, it’s usually best to avoid doing so. Above, once we did `+library(nycflights13)+`, we could immediately access `+flights+`. There is no call to `+data(flights)+`, because it is not necessary.
 
-There are specific downsides to `data(some_pkg_data)` calls that support
-a policy of only using `data()` when it is actually necessary, i.e. for
-datasets that would not be available otherwise:
+There are specific downsides to `+data(some_pkg_data)+` calls that support a policy of only using `+data()+` when it is actually necessary, i.e. for datasets that would not be available otherwise:
 
-* By default, `data(some_pkg_data)`, creates one or more objects in the
-user’s global workspace. There is the potential to silently overwrite
-pre-existing objects with new values.
-* There is also no guarantee that `data(foo)` will create exactly one
-object named ``foo''. It could create more than one object and/or
-objects with totally different names.
+* By default, `+data(some_pkg_data)+`, creates one or more objects in the user’s global workspace. There is the potential to silently overwrite pre-existing objects with new values.
+* There is also no guarantee that `+data(foo)+` will create exactly one object named "`foo`". It could create more than one object and/or objects with totally different names.
 
-One argument in favor of calls like
-`data(some_pkg_data, package = "pkg")` that are not strictly necessary
-is that it clarifies which package provides `some_pkg_data`. We prefer
-alternatives that don’t modify the global workspace, such as a code
-comment or access via `pkg::some_pkg_data`.
+One argument in favor of calls like `+data(some_pkg_data, package = "pkg")+` that are not strictly necessary is that it clarifies which package provides `+some_pkg_data+`. We prefer alternatives that don’t modify the global workspace, such as a code comment or access via `+pkg::some_pkg_data+`.
 
-This excerpt from the documentation of `data()` conveys that it is
-largely of historical importance:
+This excerpt from the documentation of `+data()+` conveys that it is largely of historical importance:
 
 ____
-`data()` was originally intended to allow users to load datasets from
-packages for use in their examples, and as such it loaded the datasets
-into the workspace `.GlobalEnv`. This avoided having large datasets in
-memory when not in use: that need has been almost entirely superseded by
-lazy-loading of datasets.
+`+data()+` was originally intended to allow users to load datasets from packages for use in their examples, and as such it loaded the datasets into the workspace `+.GlobalEnv+`. This avoided having large datasets in memory when not in use: that need has been almost entirely superseded by lazy-loading of datasets.
 ____
+
 ====
 
 [[sec-data-data-raw]]
@@ -122,36 +104,18 @@ These data packages all use the approach recommended here for `+data-raw/+`:
 [TIP]
 .ggplot2: A cautionary tale
 ====
-We have a confession to make: the origins of many of ggplot2’s example
-datasets have been lost in the sands of time. In the grand scheme of
-things, this is not a huge problem, but maintenance is certainly more
-pleasant when a package’s assets can be reconstructed _de novo_ and
-easily updated as necessary.
+We have a confession to make: the origins of many of ggplot2’s example datasets have been lost in the sands of time. In the grand scheme of things, this is not a huge problem, but maintenance is certainly more pleasant when a package’s assets can be reconstructed _de novo_ and easily updated as necessary.
 ====
 
 [WARNING]
 .Submitting to CRAN
 ====
-Generally, package data should be smaller than a megabyte - if it’s
-larger you’ll need to argue for an exemption. This is usually easier to
-do if the data is in its own package and won’t be updated frequently,
-i.e. if you approach this as a dedicated ``data package''. For
-reference, the babynames and nycflights packages have had a release once
-every one to two years, since they first appeared on CRAN.
+Generally, package data should be smaller than a megabyte - if it’s larger you’ll need to argue for an exemption. This is usually easier to do if the data is in its own package and won’t be updated frequently, i.e. if you approach this as a dedicated "`data package`". For reference, the babynames and nycflights packages have had a release once every one to two years, since they first appeared on CRAN.
 
-If you are bumping up against size issues, you should be intentional
-with regards to the method of data compression. The default for
-`usethis::use_data(compress =)` is ``bzip2'', whereas the default for
-`save(compress =)` is (effectively) ``gzip'', and ``xz'' is yet another
-valid option.
+If you are bumping up against size issues, you should be intentional with regards to the method of data compression. The default for `+usethis::use_data(compress =)+` is "`bzip2`", whereas the default for `+save(compress =)+` is (effectively) "`gzip`", and "`xz`" is yet another valid option.
 
-You’ll have to experiment with different compression methods and make
-this decision empirically. `tools::resaveRdaFiles("data/")` automates
-this process, but doesn’t inform you of which compression method was
-chosen. You can learn this after the fact with `tools::checkRdaFiles()`.
-Assuming you are keeping track of the code to generate your data, it
-would be wise to update the corresponding `use_data(compress =)` call
-below `data-raw/` and re-generate the `.rda` cleanly.
+You’ll have to experiment with different compression methods and make this decision empirically. `+tools::resaveRdaFiles("data/")+` automates this process, but doesn’t inform you of which compression method was chosen. You can learn this after the fact with `+tools::checkRdaFiles()+`. Assuming you are keeping track of the code to generate your data, it would be wise to update the corresponding `+use_data(compress =)+` call below `+data-raw/+` and re-generate the `+.rda+` cleanly.
+
 ====
 
 [[sec-documenting-data]]
@@ -197,25 +161,17 @@ Making sure that the strings embedded in your package data have the intended enc
 [WARNING]
 .Submitting to CRAN
 ====
-If you have UTF-8-encoded strings in your package data, you may see this
-from `R CMD check`:
+If you have UTF-8-encoded strings in your package data, you may see this from `+R CMD check+`:
 
 ....
 -   checking data for non-ASCII characters ... NOTE
     Note: found 352 marked UTF-8 strings
 ....
 
-This `NOTE` is truly informational. It requires no action from you. As
-long as you actually intend to have UTF-8 strings in your package data,
-all is well.
+This `+NOTE+` is truly informational. It requires no action from you. As long as you actually intend to have UTF-8 strings in your package data, all is well.
 
-Ironically, this `NOTE` is actually suppressed by
-`R CMD check --as-cran`, despite the fact that this note does appear in
-the check results once a package is on CRAN (which implies that CRAN
-does not necessarily check with `--as-cran`). By default,
-`devtools::check()` sets the `--as-cran` flag and therefore does not
-transmit this `NOTE`. But you can surface it with
-`check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_" = "false"))`.
+Ironically, this `+NOTE+` is actually suppressed by `+R CMD check --as-cran+`, despite the fact that this note does appear in the check results once a package is on CRAN (which implies that CRAN does not necessarily check with `+--as-cran+`). By default, `+devtools::check()+` sets the `+--as-cran+` flag and therefore does not transmit this `+NOTE+`. But you can surface it with `+check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_" = "false"))+`.
+
 ====
 
 [[sec-data-sysdata]]
@@ -462,21 +418,14 @@ This problem is hardly unique to R. Many applications need to leave notes to the
 [WARNING]
 .Submitting to CRAN
 ====
-You can’t just write persistent data into the user’s home directory.
-Here’s a relevant excerpt from the CRAN policy at the time of writing:
+You can’t just write persistent data into the user’s home directory. Here’s a relevant excerpt from the CRAN policy at the time of writing:
 
 ____
-Packages should not write in the user’s home filespace (including
-clipboards), nor anywhere else on the file system apart from the R
-session’s temporary directory ….
+Packages should not write in the user’s home filespace (including clipboards), nor anywhere else on the file system apart from the R session’s temporary directory ….
 
-For R version 4.0 or later (hence a version dependency is required or
-only conditional use is possible), packages may store user-specific
-data, configuration and cache files in their respective user directories
-obtained from `tools::R_user_dir()`, provided that by [sic] default
-sizes are kept as small as possible and the contents are actively
-managed (including removing outdated material).
+For R version 4.0 or later (hence a version dependency is required or only conditional use is possible), packages may store user-specific data, configuration and cache files in their respective user directories obtained from `+tools::R_user_dir()+`, provided that by [sic] default sizes are kept as small as possible and the contents are actively managed (including removing outdated material).
 ____
+
 ====
 
 The primary function you should use to derive acceptable locations for user data is `+tools::R_user_dir()+`{empty}footnote:[Note that `+tools::R_user_dir()+` first appeared in R 4.0. If you need to support older versions of R, then you should use the https://rappdirs.r-lib.org[rappdirs package], which is a port of the Python appdirs module, and which follows the https://www.tidyverse.org/blog/2019/04/r-version-support/[tidyverse policy regarding R version support], meaning the minimum supported R version is advancing and will eventually slide past R 4.0. rappdirs produces different filepaths than `+tools::R_user_dir()+`. However, both tools implement something that is consistent with the XDG spec, just with different opinions about how to create filepaths beyond what the spec dictates.]. Here are some examples of the generated filepaths:

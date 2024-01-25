@@ -135,9 +135,7 @@ tools::package_dependencies(c("rlang", "cli", "glue", "withr", "lifecycle"))
 [WARNING]
 .Submitting to CRAN
 ====
-Under certain configurations, including those used for incoming CRAN
-submissions, `R CMD check` issues a `NOTE` if there are 20 or more
-``non-default'' packages in `Imports`:
+Under certain configurations, including those used for incoming CRAN submissions, `+R CMD check+` issues a `+NOTE+` if there are 20 or more "`non-default`" packages in `+Imports+`:
 
 ....
 N  checking package dependencies (1.5s)
@@ -147,11 +145,8 @@ N  checking package dependencies (1.5s)
    use conditionally.
 ....
 
-Our best advice is to try hard to comply, as it should be rather rare to
-need so many dependencies and it’s best to eliminate any `NOTE` that you
-can. Of course, there are exceptions to every rule, and perhaps your
-package is one of them. In that case, you may need to argue your case.
-It is certainly true that many CRAN packages violate this threshold.
+Our best advice is to try hard to comply, as it should be rather rare to need so many dependencies and it’s best to eliminate any `+NOTE+` that you can. Of course, there are exceptions to every rule, and perhaps your package is one of them. In that case, you may need to argue your case. It is certainly true that many CRAN packages violate this threshold.
+
 ====
 
 [[sec-dependencies-imports-vs-suggests]]
@@ -210,7 +205,7 @@ sd
 #> function (x, na.rm = FALSE) 
 #> sqrt(var(if (is.vector(x) || is.factor(x)) x else as.double(x), 
 #>     na.rm = na.rm))
-#> <bytecode: 0x55fdcc953b88>
+#> <bytecode: 0x55fa9d633f90>
 #> <environment: namespace:stats>
 ----
 
@@ -296,17 +291,17 @@ This has a specific form (see <<fig-search-path-baseline>>):
 . `+Autoloads+`, a special environment that uses delayed bindings to save memory by only loading package objects (like big datasets) when needed.
 . The base environment, by which we mean the package environment of the base package.
 
-[[fig-search-path-baseline]]
-.Typical state of the search path. 
-image::diagrams/search-path/search-path.png["A chain of labelled environments. Each environment has an arrow pointing to its parent environment."]
+.Typical state of the search path.
+[#fig-search-path-baseline]
+image::diagrams/search-path/search-path.png[diagrams/search-path/search-path,scaledwidth=50.0%]
 
 Each element in the search path has the next element as its parent, i.e. this is a chain of environments that is searched in order. In the diagram, this relationship is shown as a small blue circle with an arrow that points to the parent. The first environment (the global environment) and the last two (`+Autoloads+` and the base environment) are special and maintain their position.
 
 But the middle section of attached packages is more dynamic. When a new package is attached, it is inserted right after and becomes the parent of the global environment. When you attach another package with `+library()+`, it changes the search path, as shown in <<fig-search-path-insertion>>:
 
-[[fig-search-path-insertion]]
-.A newly attached package is inserted into the search path. 
-image::diagrams/search-path/search-path-insertion.png["A chain of labelled environments, with a newly attached package being inserted as the parent of the global environment."]
+.A newly attached package is inserted into the search path.
+[#fig-search-path-insertion]
+image::diagrams/search-path/search-path-insertion.png[diagrams/search-path/search-path-insertion,scaledwidth=50.0%]
 
 The main gotcha around how the user’s search path works is the scenario we explored in <<sec-dependencies-namespace-motivation>>, where two packages (lubridate and here) offer competing functions by the same name (`+here()+`). It should be very clear now why a user’s call to `+here()+` can produce a different result, depending on the order in which they attached the two packages.
 
@@ -325,9 +320,9 @@ Every function in a package is associated with a pair of environments: the packa
 
 <<fig-function-environment>> depicts the `+sd()+` function as a rectangle with a rounded end. The arrows from `+package:stats+` and `+namespace:stats+` show that `+sd()+` is bound in both. But the relationship is not symmetric. The black circle with an arrow pointing back to `+namespace:stats+` indicates where `+sd()+` will look for objects that it needs: in the namespace environment, not the package environment.
 
-[[fig-function-environment]]
-.An exported function is bound in the package environment and in the namespace, but only binds the namespace. 
-image::diagrams/namespace/namespace-bind.png["A function that is bound to the name `sd()` by two environments, the package environment and the namespace environment, indicated by two arrows. But the function itself only binds the namespace environment, indicated a single arrow."]
+.An exported function is bound in the package environment and in the namespace, but only binds the namespace.
+[#fig-function-environment]
+image::diagrams/namespace/namespace-bind.png[diagrams/namespace/namespace-bind,scaledwidth=60.0%]
 
 ____
 The package environment controls how users find the function; the namespace controls how the function finds its variables.
@@ -339,15 +334,15 @@ Every namespace environment has the same set of ancestors, as depicted in <<fig-
 * Explicitly importing every base function would be tiresome, so the parent of the imports environment is the base *namespace*. The base namespace contains the same bindings as the base environment, but it has a different parent.
 * The parent of the base namespace is the global environment. This means that if a binding isn’t defined in the imports environment the package will look for it in the usual way. This is usually a bad idea (because it makes code depend on other loaded packages), so `+R CMD check+` automatically warns about such code. It is needed primarily for historical reasons, particularly due to how S3 method dispatch works.
 
-[[fig-namespace-environment]]
-.The namespace environment has the imports environment as parent, which inherits from the namespace environment of the base package and, ultimately, the global environment. 
-image::diagrams/namespace/namespace-env.png["A chain of labelled environments. Each environment has an arrow pointing to its parent environment."]
+.The namespace environment has the imports environment as parent, which inherits from the namespace environment of the base package and, ultimately, the global environment.
+[#fig-namespace-environment]
+image::diagrams/namespace/namespace-env.png[diagrams/namespace/namespace-env,scaledwidth=100.0%]
 
 Finally, we can put it all together in this last diagram, <<fig-search-path-and-namespace>>. This shows the user’s search path, along the bottom, and the internal stats search path, along the top.
 
-[[fig-search-path-and-namespace]]
-.For user code, objects are found using the search path, whereas package code uses the namespace. 
-image::diagrams/namespace/namespace.png["Two chains of labelled environments, one is the user's search path and the other is the package namespace (and its parents)."]
+.For user code, objects are found using the search path, whereas package code uses the namespace.
+[#fig-search-path-and-namespace]
+image::diagrams/namespace/namespace.png[diagrams/namespace/namespace,scaledwidth=100.0%]
 
 A user (or some package they are using) is free to define a function named `+var()+`. But when that user calls `+sd()+`, it will always call `+stats::var()+` because `+sd()+` searches in a sequence of environments determined by the stats package, not by the user. This is how the namespace system ensures that package code always works the same way, regardless of what’s been defined in the global environment or what’s been attached.
 
