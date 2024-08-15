@@ -676,37 +676,27 @@ export(count)
 ...
 ```
 
-Now imagine that your package implements a method for `count()` for a class you "own" (not `data.frame`).
-A good example is the dbplyr package, which implements `count()` for the `tbl_lazy` class.
-An add-on package that implements an S3 generic for a new class should list the generic-providing package in `Imports`, import the generic into its namespace, and export its S3 method.
-Here's part of dbplyr's `DESCRIPTION` file:
+Now imagine that your package implements a method for `count()` for a class you "own" (not `data.frame`) but a generic that you "don't own".
+A good example is the dbplyr package, which implements dplyr's `count()` generic for dbplyr's `tbl_lazy` class.
 
-```         
-Imports: 
-    ...,
-    dplyr,
-    ...
-```
-
-In `dbplyr/R/verb-count.R`, we have:
+In this case, `@export` will not work because it assumes the `count()` generic is included or imported in the dbplyr NAMESPACE, so instead we need to use `@exportS3Method`, providing the precise generic that we're providing a method for.
 
 ```{r}
 #| eval: false
-#' @importFrom dplyr count
-#' @export
+#' @exportS3Method dplyr::count
 count.tbl_lazy <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) { ... }
 ```
 
 In `NAMESPACE`, we have:
 
 ```         
-S3method(count,tbl_lazy)
-...
-importFrom(dplyr,count)
+S3method(dplyr::count,tbl_lazy)
 ```
 
-Dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()`.
-In this case, there is no need to import those generics, but it's still necessary to export the methods.
+This also works for generics for packages that are suggested dependencies, e.g. where the glue package implements a method for testthat's `compare()` generic: glue lists testthat as only a suggested dependency, so (as of R 3.6.0) R will conditionally register the method `compare.glue()` when both the testthat and the glue packages are loaded.
+
+dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()` - in this case, we can still use `@export` since the generics are available in the package NAMESPACE.
+
 In `dbplyr/R/tbl_lazy.R`, we have:
 
 ```{r}
@@ -729,60 +719,3 @@ S3method(dim,tbl_lazy)
 ...
 S3method(names,tbl_lazy)
 ```
-
-The last and trickiest case is when your package offers a method for a generic "owned" by a package you've listed in `Suggests`.
-The basic idea is that you want to register the availability of your S3 method conditionally, when your package is being loaded.
-If the suggested package is present, your S3 method should be registered, but otherwise it should not.
-
-We'll illustrate this with an example.
-Within the tidyverse, the glue package is managed as a low-level package that should have minimal dependencies (@sec-dependencies-tidyverse).
-Glue functions generally return a character vector that also has the `"glue"` S3 class.
-
-```{r}
-library(glue)
-name <- "Betty"
-(ret <- glue('My name is {name}.'))
-class(ret)
-```
-
-The motivation for this is that it allows glue to offer special methods for `print()`, the `+` operator, and subsetting via `[` and `[[`.
-One downside, though, is that this class attribute complicates string comparisons:
-
-```{r}
-identical(ret, "My name is Betty.")
-all.equal(ret, "My name is Betty.")
-```
-
-Therefore, for testing, it is helpful if glue offers a method for `testthat::compare()`, which explains why this expectation succeeds:
-
-```{r}
-testthat::expect_equal(ret, "My name is Betty.")
-```
-
-But glue can't list testthat in `Imports`!
-It must go in `Suggests`.
-The solution is to register the method conditionally when glue is loaded.
-Here is a redacted version of glue's `.onLoad()` function, where you'll see that it conditionally registers some other methods as well:
-
-```{r}
-#| eval: false
-.onLoad <- function(...) {
-  s3_register("testthat::compare", "glue")
-  s3_register("waldo::compare_proxy", "glue")
-  s3_register("vctrs::vec_ptype2", "glue.glue")
-  ...
-  invisible()
-}
-```
-
-The `s3_register()` function comes from the vctrs package.
-If you don't have an organic need to depend on vctrs, it is common (and encouraged) to simply inline [the `s3_register()` source](https://github.com/r-lib/vctrs/blob/main/R/register-s3.R) into your own package.
-One way to do this is with `usethis::use_standalone()`:
-
-```r
-usethis::use_standalone("r-lib/rlang", "s3-register")
-```
-
-You can't always copy code from other people's packages and paste it into yours, but you can in this case.
-This usage is specifically allowed by the license of the source code of `s3_register()`.
-This provides a great segue into @sec-license, which is all about licensing.
