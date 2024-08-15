@@ -679,8 +679,8 @@ export(count)
 Now imagine that your package implements a method for `count()` for a class you "own" (not `data.frame`).
 A good example is the dbplyr package, which implements `count()` for the `tbl_lazy` class.
 
-In this case, `@export` will not work because it assumes the `count()` generic is included or imported in the dbplyr NAMESPACE, so instead we need to use @exportS3Method.
-This will use "delayed" method registration, which means the method will only be registered when the dplyr package is loaded.
+In this case, `@export` will not work because it assumes the `count()` generic is included or imported in the dbplyr NAMESPACE, so instead we need to use `@exportS3Method`.
+This will use "conditional" method registration, which means the method will only be registered when the dplyr package is loaded.
 
 ```{r}
 #| eval: false
@@ -694,7 +694,7 @@ In `NAMESPACE`, we have:
 S3method(count,tbl_lazy)
 ```
 
-dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()` - in this case, we can use `@export` or `@exportS3Method base::dim`.
+dbplyr also provides methods for various generics provided by the base package, such as `dim()` and `names()` - in this case, we can use `@export` or `@exportS3Method base::names`
 
 In `dbplyr/R/tbl_lazy.R`, we have:
 
@@ -705,7 +705,7 @@ dim.tbl_lazy <- function(x) {
   c(NA, length(op_vars(x$lazy_query)))
 }
 
-#' @export
+#' @exportS3Method base::names
 names.tbl_lazy <- function(x) {
   colnames(x)
 }
@@ -716,5 +716,5 @@ In `NAMESPACE`, this produces:
 ```         
 S3method(dim,tbl_lazy)
 ...
-S3method(names,tbl_lazy)
+S3method(base::names,tbl_lazy)
 ```
