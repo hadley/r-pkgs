@@ -866,16 +866,16 @@ S3method(count,data.frame)
 ...
 export(count)
 ...</code></pre>
-<p>Now imagine that your package implements a method for <code>count()</code> for a class you “own” (not <code>data.frame</code>) but a generic that you “don’t own”. A good example is the dbplyr package, which implements dplyr’s <code>count()</code> generic for dbplyr’s <code>tbl_lazy</code> class.</p>
-<p>In this case, <code>@export</code> will not work because it assumes the <code>count()</code> generic is included or imported in the dbplyr NAMESPACE, so instead we need to use <code>@exportS3Method</code>, providing the precise generic that we’re providing a method for.</p>
+<p>Now imagine that your package implements a method for <code>count()</code> for a class you “own” (not <code>data.frame</code>). A good example is the dbplyr package, which implements dplyr’s <code>count()</code> generic for dbplyr’s <code>tbl_lazy</code> class.</p>
+<p>In this case, <code>@export</code> will not work because it assumes the <code>count()</code> generic is included or imported in the dbplyr <code>NAMESPACE</code>, so instead we need to use <code>@exportS3Method</code>, providing the precise generic that we’re providing a method for.</p>
 <div class="cell">
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @exportS3Method dplyr::count</span></span>
 <span><span class="va">count.tbl_lazy</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, <span class="va">wt</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">sort</span> <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">name</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span> <span class="va">...</span> <span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>In <code>NAMESPACE</code>, we have:</p>
 <pre><code>S3method(dplyr::count,tbl_lazy)</code></pre>
-<p>This also works for generics for packages that are suggested dependencies, e.g.&nbsp;where the glue package implements a method for testthat’s <code>compare()</code> generic: glue lists testthat as only a suggested dependency, so (as of R 3.6.0) R will conditionally register the method <code>compare.glue()</code> when both the testthat and the glue packages are loaded.</p>
-<p>dbplyr also provides methods for various generics provided by the base package, such as <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> and <code><a href="https://rdrr.io/r/base/names.html">names()</a></code> - in this case, we can still use <code>@export</code> since the generics are available in the package NAMESPACE.</p>
+<p>This also works for generics from packages that are suggested dependencies, e.g.&nbsp;where the glue package implements a method for testthat’s <code>compare()</code> generic: glue lists testthat as only a suggested dependency, so (as of R 3.6.0) R will conditionally register the method <code>compare.glue()</code> when both the testthat and the glue packages are loaded.</p>
+<p>dbplyr also provides methods for various generics provided by the base package, such as <code><a href="https://rdrr.io/r/base/dim.html">dim()</a></code> and <code><a href="https://rdrr.io/r/base/names.html">names()</a></code> - in this case, we can still use <code>@export</code> since the generics are available in the package <code>NAMESPACE</code>.</p>
 <p>In <code>dbplyr/R/tbl_lazy.R</code>, we have:</p>
 <div class="cell">
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co">#' @export</span></span>
