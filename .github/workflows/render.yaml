@@ -7,7 +7,7 @@ on:
     branches: [main, master]
   schedule:
     # run every day at 11:05 PM Pacific
-    - cron: '5 7 * * *'
+    - cron: "5 7 * * *"
   workflow_dispatch:
 
 name: render
@@ -37,7 +37,7 @@ jobs:
           git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - uses: actions/checkout@v3
-      
+
       - uses: quarto-dev/quarto-actions/setup@v2
 
       - uses: r-lib/actions/setup-r@v2
@@ -45,7 +45,7 @@ jobs:
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
-           
+
       - name: Render book
         run: quarto render
 
@@ -55,21 +55,20 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: _book 
-          
-      - name: Copy redirects file
-        run: cp _redirects _book/
+          folder: _book
+
+      - name: Copy redirects files
+        run: cp _redirects/* _book/
 
       - name: Deploy to Netlify
         if: contains(env.isExtPR, 'false')
         id: netlify-deploy
         uses: nwtgck/actions-netlify@v2.0
         with:
-          publish-dir: './_book'
+          publish-dir: "./_book"
           production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message:
-            'Deploy from GHA: ${{ github.event.pull_request.title || github.event.head_commit.message }} (${{ github.sha }})'
+          deploy-message: "Deploy from GHA: ${{ github.event.pull_request.title || github.event.head_commit.message }} (${{ github.sha }})"
           # these all default to 'true'
           enable-pull-request-comment: false
           enable-commit-comment: false
