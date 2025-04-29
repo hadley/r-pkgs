@@ -1,6 +1,8 @@
 # The Whole Game {#sec-whole-game}
 
-```{r, include = FALSE, R.options = list(tidyverse.quiet = TRUE)}
+```{r}
+#| include: false
+#| R-options: !expr list(tidyverse.quiet = TRUE)
 source("common.R")
 library(glue)
 library(fs)
@@ -109,14 +111,18 @@ Don't try to do devtools' job for it!
 
 Once you've selected where to create this package, substitute your chosen path into a `create_package()` call like this:
 
-```{r create-package-fake, eval = FALSE}
+```{r}
+#| label: create-package-fake
+#| eval: false
 create_package("~/path/to/regexcite")
 ```
 
 For the creation of this book we have to work in a temporary directory, because the book is built non-interactively in the cloud.
 Behind the scenes, we're executing our own `create_package()` command, but don't be surprised if our output differs a bit from yours.
 
-```{r configure, include = FALSE}
+```{r}
+#| label: configure
+#| include: false
 where <- match.arg(
   as.character(where),
   choices = c(NA, "tmp_user", "tmp_session")
@@ -144,14 +150,20 @@ if (!is.null(where)) {
 }
 ```
 
-```{r create-package, eval = create, echo = debug}
+```{r}
+#| label: create-package
+#| eval: !expr create
+#| echo: !expr debug
 withr::with_options(
   list(usethis.description = NULL),
   create_package(pkgpath, open = FALSE, rstudio = TRUE)
 )
 ```
 
-```{r set-proj-and-wd, include = debug, eval = create}
+```{r}
+#| label: set-proj-and-wd
+#| include: !expr debug
+#| eval: !expr create
 (owd <- getwd())
 local_project(pkgpath, setwd = TRUE)
 getwd()
@@ -160,7 +172,10 @@ getwd()
 knitr::opts_knit$set(root.dir = pkgpath)
 ```
 
-```{r sitrep, include = debug, eval = create}
+```{r}
+#| label: sitrep
+#| include: !expr debug
+#| eval: !expr create
 # can't be in chunk above, because knitr
 proj_sitrep()
 ```
@@ -171,14 +186,18 @@ RStudio has special handling for packages and you should now see a *Build* tab i
 
 You probably need to call `library(devtools)` again, because `create_package()` has probably dropped you into a fresh R session, in your new package.
 
-```{r eval = FALSE}
+```{r}
+#| eval: false
 library(devtools)
 ```
 
 What's in this new directory that is also an R package and, probably, an RStudio Project?
 Here's a listing (locally, you can consult your *Files* pane):
 
-```{r init-show-files, echo = FALSE, eval = create}
+```{r}
+#| label: init-show-files
+#| echo: false
+#| eval: !expr create
 dir_info(all = TRUE) %>% 
   select(path, type) %>%
   knitr::kable()
@@ -205,14 +224,19 @@ The regexcite directory is an R source package and an RStudio Project.
 Now we make it also a Git repository, with `use_git()`.
 (By the way, `use_git()` works in any project, regardless of whether it's an R package.)
 
-```{r use-git, eval = create}
+```{r}
+#| label: use-git
+#| eval: !expr create
 use_git()
 ```
 
 In an interactive session, you will be asked if you want to commit some files here and you should accept the offer.
 Behind the scenes, we'll also commit those same files.
 
-```{r gert-begin, eval = create, include = debug}
+```{r}
+#| label: gert-begin
+#| eval: !expr create
+#| include: !expr debug
 suppressPackageStartupMessages(library(gert))
 git_add(".")
 git_commit("Initial commit")
@@ -222,7 +246,10 @@ So what has changed in the package?
 Only the creation of a `.git` directory, which is hidden in most contexts, including the RStudio file browser.
 Its existence is evidence that we have indeed initialized a Git repo here.
 
-```{r post-git-file-list, echo = FALSE, eval = create}
+```{r}
+#| label: post-git-file-list
+#| echo: false
+#| eval: !expr create
 dir_info(all = TRUE, regexp = "^[.]git$") %>% 
   select(path, type) %>%
   knitr::kable()
@@ -236,7 +263,10 @@ Now, in addition to package development support, you have access to a basic Git 
 
 Click on History (the clock icon in the Git pane) and, if you consented, you will see an initial commit made via `use_git()`:
 
-```{r inspect-first-commit, echo = FALSE, eval = create}
+```{r}
+#| label: inspect-first-commit
+#| echo: false
+#| eval: !expr create
 git_log(max = 1) %>% 
   select(commit, author, message) %>%
   mutate(commit = paste0(substr(commit, 1, 10), "...")) %>%
@@ -283,7 +313,10 @@ strsplit(x, split = ",")[[1]]
 
 The second, safer solution is the basis for the inaugural function of regexcite: `strsplit1()`.
 
-```{cat strsplit1-write, eval = create, class.source = "r"}
+```{cat}
+#| label: strsplit1-write
+#| eval: !expr create
+#| class-source: r
 #| engine.opts = list(file = path("R", "strsplit1.R"))
 strsplit1 <- function(x, split) {
   strsplit(x, split = split)[[1]]
@@ -313,7 +346,9 @@ The helper `use_r()` creates and/or opens a script below `R/`.
 It really shines in a more mature package, when navigating between `.R` files and the associated test file.
 But, even here, it's useful to keep yourself from getting too carried away while working in `Untitled4`.
 
-```{r init-strsplit1, eval = create}
+```{r}
+#| label: init-strsplit1
+#| eval: !expr create
 use_r("strsplit1")
 ```
 
@@ -332,20 +367,24 @@ For package development, however, devtools offers a more robust approach.
 
 Call `load_all()` to make `strsplit1()` available for experimentation.
 
-```{r load-all, eval = create}
+```{r}
+#| label: load-all
+#| eval: !expr create
 load_all()
 ```
 
 Now call `strsplit1(x)` to see how it works.
 
-```{r, eval = create}
+```{r}
+#| eval: !expr create
 (x <- "alfa,bravo,charlie,delta")
 strsplit1(x, split = ",")
 ```
 
 Note that `load_all()` has made the `strsplit1()` function available, although it does not exist in the global environment.
 
-```{r, eval = create}
+```{r}
+#| eval: !expr create
 exists("strsplit1", where = globalenv(), inherits = FALSE)
 ```
 
@@ -378,7 +417,10 @@ RStudio exposes `load_all()` in the *Build* menu, in the *Build* pane via *More 
 If you're using Git, use your preferred method to commit the new `R/strsplit1.R` file.
 We do so behind the scenes here and here's the associated diff.
 
-```{r strsplit1-commit, eval = create, include = debug}
+```{r}
+#| label: strsplit1-commit
+#| eval: !expr create
+#| include: !expr debug
 git_add(path("R", "strsplit1.R"))
 git_commit("Add strsplit1()")
 ## tags might be useful for making stable links to the package at specific
@@ -390,7 +432,11 @@ git_commit("Add strsplit1()")
 #sha <- (commits(repo)[[1]])@sha
 ```
 
-```{r add-strsplit1-diff, echo = FALSE, eval = create, comment = ""}
+```{r}
+#| label: add-strsplit1-diff
+#| echo: false
+#| eval: !expr create
+#| comment: ''
 cat(git_diff_patch(ref = "HEAD"))
 ```
 
@@ -410,11 +456,18 @@ Note that `check()` produces rather voluminous output, optimized for interactive
 We intercept that here and just reveal a summary.
 Your local `check()` output will be different.
 
-```{r first-check-fake, eval = FALSE}
+```{r}
+#| label: first-check-fake
+#| eval: false
 check()
 ```
 
-```{r first-check, eval = create, warning = TRUE, echo = FALSE, comment = ""}
+```{r}
+#| label: first-check
+#| eval: !expr create
+#| warning: true
+#| echo: false
+#| comment: ''
 shhh_check(error_on = "never")
 ```
 
@@ -462,7 +515,10 @@ When you're done, `DESCRIPTION` should look similar to this:
 
 <!-- I'm trying to avoid any syntax highlighting here, while also not trying to do things in a way that's acceptable to O'Reilly who wants "text". -->
 
-```{cat DESCRIPTION-write, eval = create, class.source = "text"}
+```{cat}
+#| label: DESCRIPTION-write
+#| eval: !expr create
+#| class-source: text
 #| engine.opts = list(file = "DESCRIPTION")
 Package: regexcite
 Title: Make Regular Expressions More Exciting
@@ -478,7 +534,10 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 ```
 
-```{r commit-description, eval = create, include = debug}
+```{r}
+#| label: commit-description
+#| eval: !expr create
+#| include: !expr debug
 git_add("DESCRIPTION")
 git_commit("Edit DESCRIPTION")
 ```
@@ -496,14 +555,20 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
 
 To configure a valid license for the package, call `use_mit_license()`.
 
-```{r use-mit-license, eval = create}
+```{r}
+#| label: use-mit-license
+#| eval: !expr create
 use_mit_license()
 ```
 
 This configures the `License` field correctly for the MIT license, which promises to name the copyright holders and year in a `LICENSE` file.
 Open the newly created `LICENSE` file and confirm it looks something like this:
 
-```{r reveal-LICENSE, eval = create, echo = FALSE, comment = ""}
+```{r}
+#| label: reveal-LICENSE
+#| eval: !expr create
+#| echo: false
+#| comment: ''
 writeLines(readLines("LICENSE"))
 ```
 
@@ -511,7 +576,10 @@ Like other license helpers, `use_mit_license()` also puts a copy of the full lic
 It's considered a best practice to include a full license in your package's source, such as on GitHub, but CRAN disallows the inclusion of this file in a package tarball.
 You can learn more about licensing in @sec-license.
 
-```{r commit-license, eval = create, include = debug}
+```{r}
+#| label: commit-license
+#| eval: !expr create
+#| include: !expr debug
 git_add(c(".Rbuildignore", "DESCRIPTION", "LICENSE", "LICENSE.md"))
 git_commit("Use MIT license")
 ```
@@ -533,7 +601,10 @@ RStudio only inserts a barebones template, so you will need to edit it to look s
 If you don't use RStudio, create the comment yourself.
 Regardless, you should modify it to look something like this:
 
-```{cat strsplit1-with-roxygen-write, eval = create, class.source = "r"}
+```{cat}
+#| label: strsplit1-with-roxygen-write
+#| eval: !expr create
+#| class-source: r
 #| engine.opts = list(file = path("R", "strsplit1.R"))
 #' Split a string
 #'
@@ -553,7 +624,10 @@ strsplit1 <- function(x, split) {
 
 <!-- TODO: mention how RStudio helps you execute examples here? -->
 
-```{r commit-strsplit1-roxygen-header, eval = create, include = debug}
+```{r}
+#| label: commit-strsplit1-roxygen-header
+#| eval: !expr create
+#| include: !expr debug
 git_add(path("R", "strsplit1.R"))
 git_commit("Add roxygen header to document strsplit1()")
 ```
@@ -561,7 +635,9 @@ git_commit("Add roxygen header to document strsplit1()")
 But we're not done yet!
 We still need to trigger the conversion of this new roxygen comment into `man/strsplit1.Rd` with `document()`:
 
-```{r document-strsplit1, eval = create}
+```{r}
+#| label: document-strsplit1
+#| eval: !expr create
 document()
 ```
 
@@ -573,7 +649,8 @@ RStudio exposes `document()` in the *Build* menu, in the *Build* pane via *More 
 
 You should now be able to preview your help file like so:
 
-```{r eval = FALSE}
+```{r}
+#| eval: false
 ?strsplit1
 ```
 
@@ -593,7 +670,11 @@ The contents should be:
 
 <!-- OK to use this approach here because I actively do not want a copy button. NAMESPACE should be managed by roxygen and I don't want to tempt anyone to edit it by hand. -->
 
-```{r asis = TRUE, echo = FALSE, comment = "", eval = create}
+```{r}
+#| asis: true
+#| echo: false
+#| comment: ''
+#| eval: !expr create
 cat(readLines("NAMESPACE"), sep = "\n")
 ```
 
@@ -601,7 +682,10 @@ The export directive in `NAMESPACE` is what makes `strsplit1()` available to a u
 Just as it is entirely possible to author `.Rd` files "by hand", you can manage `NAMESPACE` explicitly yourself.
 But we choose to delegate this to devtools (and roxygen2).
 
-```{r commit-namespace, eval = create, include = debug}
+```{r}
+#| label: commit-namespace
+#| eval: !expr create
+#| include: !expr debug
 git_add(c("NAMESPACE", path("man", "strsplit1.Rd")))
 git_commit("Run document()")
 ```
@@ -610,11 +694,18 @@ git_commit("Run document()")
 
 regexcite should pass `R CMD check` cleanly now and forever more: 0 errors, 0 warnings, 0 notes.
 
-```{r first-clean-check-fake, eval = FALSE}
+```{r}
+#| label: first-clean-check-fake
+#| eval: false
 check()
 ```
 
-```{r first-clean-check, eval = create, warning = TRUE, echo = FALSE, comment = ""}
+```{r}
+#| label: first-clean-check
+#| eval: !expr create
+#| warning: true
+#| echo: false
+#| comment: ''
 shhh_check(error_on = "never")
 ```
 
@@ -622,11 +713,17 @@ shhh_check(error_on = "never")
 
 Now that we know we have a minimum viable product, let's install the regexcite package into your library via `install()`:
 
-```{r first-install-fake, eval = FALSE}
+```{r}
+#| label: first-install-fake
+#| eval: false
 install()
 ```
 
-```{r first-install, eval = create, echo = FALSE, comment = ""}
+```{r}
+#| label: first-install
+#| eval: !expr create
+#| echo: false
+#| comment: ''
 cat(pretty_install(), sep = "\n")
 ```
 
@@ -640,7 +737,8 @@ After installation is complete, we can attach and use regexcite like any other p
 Let's revisit our small example from the top.
 This is also a good time to restart your R session and ensure you have a clean workspace.
 
-```{r, eval = create}
+```{r}
+#| eval: !expr create
 library(regexcite)
 
 x <- "alfa,bravo,charlie,delta"
@@ -657,7 +755,9 @@ This means we express a concrete expectation about the correct `strsplit1()` res
 
 First, we declare our intent to write unit tests and to use the testthat package for this, via `use_testthat()`:
 
-```{r use-testthat, eval = create}
+```{r}
+#| label: use-testthat
+#| eval: !expr create
 use_testthat()
 ```
 
@@ -666,7 +766,10 @@ It adds `Suggests: testthat` to `DESCRIPTION`, creates the directory `tests/test
 You'll notice that testthat is probably added with a minimum version of 3.0.0 and a second DESCRIPTION field, `Config/testthat/edition: 3`.
 We'll talk more about those details in @sec-testing-basics.
 
-```{r commit-testthat-init, eval = create, include = debug}
+```{r}
+#| label: commit-testthat-init
+#| eval: !expr create
+#| include: !expr debug
 git_add(c("DESCRIPTION", path("tests", "testthat.R")))
 git_commit("Add testing infrastructure")
 ```
@@ -678,7 +781,9 @@ You can provide the file's basename or, if you are editing the relevant source f
 For many of you, if `R/strsplit1.R` is the active file in RStudio, you can just call `use_test()`.
 However, since this book is built non-interactively, we must provide the basename explicitly:
 
-```{r test-strsplit1, eval = create}
+```{r}
+#| label: test-strsplit1
+#| eval: !expr create
 use_test("strsplit1")
 ```
 
@@ -686,11 +791,16 @@ This creates the file `tests/testthat/test-strsplit1.R`.
 If it had already existed, `use_test()` would have just opened it.
 You will notice that there is an example test in the newly created file - delete that code and replace it with this content:
 
-```{r include = debug, eval = create}
+```{r}
+#| include: !expr debug
+#| eval: !expr create
 test_path <- path("tests", "testthat", "test-strsplit1.R")
 ```
 
-```{cat strsplit1-test-write, eval = create, class.source = "r"}
+```{cat}
+#| label: strsplit1-test-write
+#| eval: !expr create
+#| class-source: r
 #| engine.opts = list(file = test_path)
 test_that("strsplit1() splits a string", {
   expect_equal(strsplit1("a,b,c", split = ","), c("a", "b", "c"))
@@ -699,7 +809,10 @@ test_that("strsplit1() splits a string", {
 
 This tests that `strsplit1()` gives the expected result when splitting a string.
 
-```{r commit-strsplit1-test, eval = create, include = debug}
+```{r}
+#| label: commit-strsplit1-test
+#| eval: !expr create
+#| include: !expr debug
 git_add(test_path)
 git_commit("Test strsplit1()")
 ```
@@ -711,11 +824,14 @@ Going forward, your tests will mostly run *en masse* and at arm's length via `te
 
 <!-- TODO: I have no idea why I have to disable crayon here, but if I don't, I guess raw ANSI escapes. Other chunks seem to work fine with downlig. It would also be nice to not see evidence of progress reporting, but the previous approach to turning that off keeps this chunk from showing any output at all :( The previous approach was `R.options = list(testthat.default_reporter = testthat::ProgressReporter$new(update_interval = Inf))`. -->
 
-```{r, include = FALSE}
+```{r}
+#| include: false
 library(testthat) # suppress package loading messages
 ```
 
-```{r eval = create, R.options = list(crayon.enabled = FALSE)}
+```{r}
+#| eval: !expr create
+#| R-options: !expr list(crayon.enabled = FALSE)
 test()
 ```
 
@@ -747,14 +863,19 @@ Let's imagine you decide you'd rather build regexcite based on stringr (and stri
 
 First, declare your general intent to use some functions from the stringr namespace with `use_package()`:
 
-```{r use-stringr, eval = create}
+```{r}
+#| label: use-stringr
+#| eval: !expr create
 use_package("stringr")
 ```
 
 This adds the stringr package to the `Imports` field of `DESCRIPTION`.
 And that is all it does.
 
-```{r commit-stringr-imports, eval = create, include = debug}
+```{r}
+#| label: commit-stringr-imports
+#| eval: !expr create
+#| include: !expr debug
 git_add("DESCRIPTION")
 git_commit("Import stringr")
 ```
@@ -764,7 +885,9 @@ Here's a new take on it[^whole-game-1]:
 
 [^whole-game-1]: Recall that this example was so inspiring that it's now a real function in the stringr package: `stringr::str_split_1()`!
 
-```{r str-split-one-sneak-peek, eval = FALSE}
+```{r}
+#| label: str-split-one-sneak-peek
+#| eval: false
 str_split_one <- function(string, pattern, n = Inf) {
   stopifnot(is.character(string), length(string) <= 1)
   if (length(string) == 1) {
@@ -796,7 +919,10 @@ We still need to update the contents of these files!
 Here are the updated contents of `R/str_split_one.R`.
 In addition to changing the function definition, we've also updated the roxygen header to reflect the new arguments and to include examples that show off the stringr features.
 
-```{cat str-split-one-write, eval = create, class.source = "r"}
+```{cat}
+#| label: str-split-one-write
+#| eval: !expr create
+#| class-source: r
 #| engine.opts = list(file = path("R", "str_split_one.R"))
 #' Split a string
 #'
@@ -828,7 +954,10 @@ Don't forget to also update the test file!
 Here are the updated contents of `tests/testthat/test-str_split_one.R`.
 In addition to the change in the function's name and arguments, we've added a couple more tests.
 
-```{cat str-split-one-test-write, eval = create, class.source = "r"}
+```{cat}
+#| label: str-split-one-test-write
+#| eval: !expr create
+#| class-source: r
 #| engine.opts = list(file = path("tests", "testthat", "test-str_split_one.R"))
 test_that("str_split_one() splits a string", {
   expect_equal(str_split_one("a,b,c", ","), c("a", "b", "c"))
@@ -855,18 +984,25 @@ The second job is especially important here, since we will no longer export `str
 Don't be dismayed by the warning about `"Objects listed as exports, but not present in namespace: strsplit1"`.
 That always happens when you remove something from the namespace.
 
-```{r document-str-split-one, eval = create}
+```{r}
+#| label: document-str-split-one
+#| eval: !expr create
 document()
 ```
 
 Try out the new `str_split_one()` function by simulating package installation via `load_all()`:
 
-```{r str-split-one-test-drive, eval = create}
+```{r}
+#| label: str-split-one-test-drive
+#| eval: !expr create
 load_all()
 str_split_one("a, b, c", pattern = ", ")
 ```
 
-```{r commit-str-split-one, eval = create, include = debug}
+```{r}
+#| label: commit-str-split-one
+#| eval: !expr create
+#| include: !expr debug
 git_add(c(
   "NAMESPACE",
   path("man", c("str_split_one.Rd", "strsplit1.Rd")),
@@ -900,7 +1036,9 @@ It is the package's home page and welcome mat, at least until you decide to give
 
 The `use_readme_rmd()` function initializes a basic, executable `README.Rmd` ready for you to edit:
 
-```{r use-readme-rmd, eval = create}
+```{r}
+#| label: use-readme-rmd
+#| eval: !expr create
 use_readme_rmd()
 ```
 
@@ -925,7 +1063,10 @@ Make sure it shows some usage of `str_split_one()`.
 
 The `README.Rmd` we use is here: [README.Rmd](https://github.com/jennybc/regexcite/blob/main/README.Rmd) and here's what it contains:
 
-```{r copy-readme-rmd, include = debug, eval = create}
+```{r}
+#| label: copy-readme-rmd
+#| include: !expr debug
+#| eval: !expr create
 file_copy(
   path(owd, "fixtures", "regexcite-README.Rmd"),
   "README.Rmd",
@@ -933,7 +1074,11 @@ file_copy(
 )
 ```
 
-```{r reveal-README, eval = create, echo = FALSE, comment = ""}
+```{r}
+#| label: reveal-README
+#| eval: !expr create
+#| echo: false
+#| comment: ''
 writeLines(readLines("README.Rmd"))
 ```
 
@@ -942,7 +1087,9 @@ The pre-commit hook should remind you if you try to commit `README.Rmd`, but not
 
 The very best way to render `README.Rmd` is with `build_readme()`, because it takes care to render with the most current version of your package, i.e. it installs a temporary copy from the current source.
 
-```{r readme-render, eval = create}
+```{r}
+#| label: readme-render
+#| eval: !expr create
 build_readme()
 ```
 
@@ -951,12 +1098,18 @@ You can see the rendered `README.md` simply by [visiting regexcite on GitHub](ht
 Finally, don't forget to do one last commit.
 And push, if you're using GitHub.
 
-```{r commit-rendered-readme, eval = create, include = debug}
+```{r}
+#| label: commit-rendered-readme
+#| eval: !expr create
+#| include: !expr debug
 git_add(c(".Rbuildignore", "README.Rmd", "README.md"))
 git_commit("Write README.Rmd and render")
 ```
 
-```{r final-push, include = FALSE, eval = FALSE}
+```{r}
+#| label: final-push
+#| include: false
+#| eval: false
 # execute manually if you want to update the regexcite repo on github
 # pre-requisite:
 #   render of this with no existing cache and `where <- "tmp_user"`
@@ -969,11 +1122,18 @@ git_push(force = TRUE)
 
 Let's run `check()` again to make sure all is still well.
 
-```{r final-check-fake, eval = FALSE}
+```{r}
+#| label: final-check-fake
+#| eval: false
 check()
 ```
 
-```{r final-check, eval = create, warning = TRUE, echo = FALSE, comment = ""}
+```{r}
+#| label: final-check
+#| eval: !expr create
+#| warning: true
+#| echo: false
+#| comment: ''
 shhh_check(error_on = "never")
 ```
 
@@ -981,11 +1141,17 @@ regexcite should have no errors, warnings or notes.
 This would be a good time to re-build and install it properly.
 And celebrate!
 
-```{r final-install-fake, eval = FALSE}
+```{r}
+#| label: final-install-fake
+#| eval: false
 install()
 ```
 
-```{r final-install, eval = create, echo = FALSE, comment = ""}
+```{r}
+#| label: final-install
+#| eval: !expr create
+#| echo: false
+#| comment: ''
 cat(pretty_install(reload = FALSE, upgrade = FALSE), sep = "\n")
 ```
 
@@ -993,7 +1159,10 @@ Feel free to visit the [regexcite package](https://github.com/jennybc/regexcite)
 The commit history reflects each individual step, so use the diffs to see the addition and modification of files, as the package evolved.
 The rest of this book goes in greater detail for each step you've seen here and much more.
 
-```{r cleanup, include = debug, eval = create}
+```{r}
+#| label: cleanup
+#| include: !expr debug
+#| eval: !expr create
 pkgload::unload("regexcite")
 remove.packages("regexcite")
 
@@ -1005,7 +1174,10 @@ if (is.null(getOption("knitr.in.progress"))) {
 knitr::opts_knit$set(root.dir = owd)
 ```
 
-```{r cleanup-confirm, include = debug, eval = create}
+```{r}
+#| label: cleanup-confirm
+#| include: !expr debug
+#| eval: !expr create
 getwd()
 ```
 
