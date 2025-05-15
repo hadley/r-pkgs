@@ -29,12 +29,12 @@ As mentioned in <<sec-intro-phil>>, devtools is a '`meta-package`', encompassing
 
 What’s our recommended approach to using devtools and its constituent packages? It varies, depending on your intention:
 
-* If you are using the functions interactively to help you develop your package, you should think of devtools as the provider of your favorite functions for package development. In this case you should attach devtools with `+library(devtools)+` and call the functions without qualification (e.g., `+load_all()+`).
+* If you are using the functions interactively to help you develop your package, you should think of devtools as the provider of your favorite functions for package development. In this case you should attach devtools with `library(devtools)` and call the functions without qualification (e.g., `load++_++all()`).
 * If you are using functions from devtools and friends within the package code you are writing, you should NOT depend on devtools, but should instead access functions via the package that is their primary home.
-** devtools should rarely appear in the role of `+pkg+` in a qualified call of the form `+pkg::fcn()+`. Instead, `+pkg+` should be the package where `+fcn()+` is defined. For example, if you are creating a function in your package in which you need to query the state of the user’s R session, use `+sessioninfo::session_info()+` in your package instead of `+devtools::session_info()+`.
-* If you find bugs, try to report them on the package that is a function’s primary home. The help for `+devtools::fcn()+` usually states when devtools is re-exporting a function from another package.
+** devtools should rarely appear in the role of `pkg` in a qualified call of the form `pkg::fcn()`. Instead, `pkg` should be the package where `fcn()` is defined. For example, if you are creating a function in your package in which you need to query the state of the user’s R session, use `sessioninfo::session++_++info()` in your package instead of `devtools::session++_++info()`.
+* If you find bugs, try to report them on the package that is a function’s primary home. The help for `devtools::fcn()` usually states when devtools is re-exporting a function from another package.
 
-The usethis package is the one constituent package that more people may be aware of and that they may use directly. It holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package. devtools makes it easy to access usethis functions interactively, as when you call `+library(devtools)+`, usethis is also attached. Then you can use any function in usethis without qualification, e.g., just call `+use_testthat()+`. If you choose to specify the namespace, such as when working in a more programmatic style, then make sure you qualify the call with usethis, e.g., `+usethis::use_testthat()+`.
+The usethis package is the one constituent package that more people may be aware of and that they may use directly. It holds the functions that act on the files and folders in an R project, most especially for any project that is also an R package. devtools makes it easy to access usethis functions interactively, as when you call `library(devtools)`, usethis is also attached. Then you can use any function in usethis without qualification, e.g., just call `use++_++testthat()`. If you choose to specify the namespace, such as when working in a more programmatic style, then make sure you qualify the call with usethis, e.g., `usethis::use++_++testthat()`.
 
 === Personal startup configuration
 
@@ -45,7 +45,7 @@ You can attach devtools like so:
 library(devtools)
 ----
 
-But it soon grows aggravating to repeatedly attach devtools in every R session. Therefore, we strongly recommend attachingfootnote:[This is one of the few cases where we recommend using `+require()+` over `+library().+` `+library()+` will fail with an error if it is unable to attach the package, and thus abort the execution of your `+.Rprofile+`. If `+require()+` fails to attach the package it will emit a warning but will allow the remainder of your `+.Rprofile+` to execute. This is discussed further in <<sec-dependencies-attach-vs-load>>.] devtools in your `+.Rprofile+` startup file, like so:
+But it soon grows aggravating to repeatedly attach devtools in every R session. Therefore, we strongly recommend attachingfootnote:[This is one of the few cases where we recommend using `require()` over `library().` `library()` will fail with an error if it is unable to attach the package, and thus abort the execution of your `.Rprofile`. If `require()` fails to attach the package it will emit a warning but will allow the remainder of your `.Rprofile` to execute. This is discussed further in <<sec-dependencies-attach-vs-load>>.] devtools in your `.Rprofile` startup file, like so:
 
 [source,r,cell-code]
 ----
@@ -54,14 +54,14 @@ if (interactive()) {
 }
 ----
 
-For convenience, the function `+use_devtools()+` creates `+.Rprofile+`, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen.
+For convenience, the function `use++_++devtools()` creates `.Rprofile`, if needed, opens it for editing, and puts the necessary lines of code on the clipboard and the screen.
 
 [WARNING]
 ====
-In general, it’s a bad idea to attach packages in `+.Rprofile+`, as it invites you to create R scripts that don’t reflect all of their dependencies via explicit calls to `+library(foo)+`. But devtools is a workflow package that smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts. Note how we still take care to only attach in interactive sessions.
+In general, it’s a bad idea to attach packages in `.Rprofile`, as it invites you to create R scripts that don’t reflect all of their dependencies via explicit calls to `library(foo)`. But devtools is a workflow package that smooths the process of package development and is, therefore, unlikely to get baked into any analysis scripts. Note how we still take care to only attach in interactive sessions.
 ====
 
-usethis consults certain options when, for example, creating R packages _de novo_. This allows you to specify personal defaults for yourself as a package maintainer or for your preferred license. Here’s an example of a code snippet that could go in `+.Rprofile+`:
+usethis consults certain options when, for example, creating R packages _de novo_. This allows you to specify personal defaults for yourself as a package maintainer or for your preferred license. Here’s an example of a code snippet that could go in `.Rprofile`:
 
 [source,r,cell-code]
 ----
@@ -93,17 +93,17 @@ pak::pak("r-lib/usethis")
 [[setup-tools]]
 == R build toolchain
 
-To be fully capable of building R packages from source, you’ll also need a compiler and a few other command line tools. This may not be strictly necessary until you want to build packages containing C or C++ code. Especially if you are using RStudio, you can set this aside for now. The IDE will alert you and provide support once you try to do something that requires you to setup your development environment. Read on for advice on doing this yourself.
+To be fully capable of building R packages from source, you’ll also need a compiler and a few other command line tools. This may not be strictly necessary until you want to build packages containing C or C{plus}{plus} code. Especially if you are using RStudio, you can set this aside for now. The IDE will alert you and provide support once you try to do something that requires you to setup your development environment. Read on for advice on doing this yourself.
 
 === Windows
 
 On Windows the collection of tools needed for building packages from source is called Rtools.
 
-Rtools is NOT an R package. It is NOT installed with `+install.packages()+`. Instead, download it from https://cran.r-project.org/bin/windows/Rtools/ and run the installer.
+Rtools is NOT an R package. It is NOT installed with `install.packages()`. Instead, download it from https://cran.r-project.org/bin/windows/Rtools/ and run the installer.
 
 During the Rtools installation you may see a window asking you to "`Select Additional Tasks`".
 
-* Do _not_ select the box for "`Edit the system PATH`". devtools and RStudio should put Rtools on the `+PATH+` automatically when it is needed.
+* Do _not_ select the box for "`Edit the system PATH`". devtools and RStudio should put Rtools on the `PATH` automatically when it is needed.
 * Do select the box for "`Save version information to registry`". It should be selected by default.
 
 === macOS
@@ -121,17 +121,17 @@ Alternatively, you can install the current release of full https://itunes.apple.
 
 === Linux
 
-Make sure you’ve installed not only R, but also the R development tools. For example, on Ubuntu (and Debian) you need to install the `+r-base-dev+` package with:
+Make sure you’ve installed not only R, but also the R development tools. For example, on Ubuntu (and Debian) you need to install the `r-base-dev` package with:
 
 ....
 sudo apt install r-base-dev
 ....
 
-On Fedora and RedHat, the development tools (called `+R-core-devel+`) will be installed automatically when you install with R with `+sudo dnf install R+`.
+On Fedora and RedHat, the development tools (called `R-core-devel`) will be installed automatically when you install with R with `sudo dnf install R`.
 
 == Verify system prep
 
-You can request a "`(package) development situation report`" with `+devtools::dev_sitrep()+`:
+You can request a "`(package) development situation report`" with `devtools::dev++_++sitrep()`:
 
 [source,r,cell-code]
 ----

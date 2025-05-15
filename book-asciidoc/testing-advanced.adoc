@@ -4,7 +4,7 @@
 
 [IMPORTANT]
 ====
-Your test files should not include these `+library()+` calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
+Your test files should not include these `library()` calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
 
 [source,r,cell-code]
 ----
@@ -25,13 +25,13 @@ ____
 The main idea is that we need to make it as easy and obvious as possible to arrange the world into a state that is conducive for testing. We describe several specific solutions to this problem:
 
 * Put repeated code in a constructor-type helper function. Memoise it, if construction is demonstrably slow.
-* If the repeated code has side effects, write a custom `+local_*()+` function to do what’s needed and clean up afterwards.
+* If the repeated code has side effects, write a custom `local++_*++()` function to do what’s needed and clean up afterwards.
 * If the above approaches are too slow or awkward and the thing you need is fairly stable, save it as a static file and load it.
 
 [[sec-testing-advanced-fixture-helper]]
-=== Create `+useful_thing+`s with a helper function
+=== Create `useful++_++thing`s with a helper function
 
-Is it fiddly to create a `+useful_thing+`? Does it take several lines of code, but not much time or memory? In that case, write a helper function to create a `+useful_thing+` on-demand:
+Is it fiddly to create a `useful++_++thing`? Does it take several lines of code, but not much time or memory? In that case, write a helper function to create a `useful++_++thing` on-demand:
 
 [source,r,cell-code]
 ----
@@ -55,13 +55,13 @@ test_that("foofy() does that", {
 })
 ----
 
-Where should the `+new_useful_thing()+` helper be defined? This comes back to what we outlined in <<sec-tests-files-overview>>. Test helpers can be defined below `+R/+`, just like any other internal utility in your package. Another popular location is in a test helper file, e.g. `+tests/testthat/helper.R+`. A key feature of both options is that the helpers are made available to you during interactive maintenance via `+devtools::load_all()+`.
+Where should the `new++_++useful++_++thing()` helper be defined? This comes back to what we outlined in <<sec-tests-files-overview>>. Test helpers can be defined below `R/`, just like any other internal utility in your package. Another popular location is in a test helper file, e.g. `tests/testthat/helper.R`. A key feature of both options is that the helpers are made available to you during interactive maintenance via `devtools::load++_++all()`.
 
-If it’s fiddly AND costly to create a `+useful_thing+`, your helper function could even use memoisation to avoid unnecessary re-computation. Once you have a helper like `+new_useful_thing()+`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette. Sometimes you even realize you should just define it below `+R/+` and export and document it, so you can use it freely in documentation and tests.
+If it’s fiddly AND costly to create a `useful++_++thing`, your helper function could even use memoisation to avoid unnecessary re-computation. Once you have a helper like `new++_++useful++_++thing()`, you often discover that it has uses beyond testing, e.g. behind-the-scenes in a vignette. Sometimes you even realize you should just define it below `R/` and export and document it, so you can use it freely in documentation and tests.
 
-=== Create (and destroy) a "`local`" `+useful_thing+`
+=== Create (and destroy) a "`local`" `useful++_++thing`
 
-So far, our example of a `+useful_thing+` was a regular R object, which is cleaned-up automatically at the end of each test. What if the creation of a `+useful_thing+` has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like? Then your helper function should create a `+useful_thing+` *and clean up afterwards*. Instead of a simple `+new_useful_thing()+` constructor, you’ll write a customized function in the style of withr’s `+local_*()+` functions:
+So far, our example of a `useful++_++thing` was a regular R object, which is cleaned-up automatically at the end of each test. What if the creation of a `useful++_++thing` has a side effect on the local file system, on a remote resource, R session options, environment variables, or the like? Then your helper function should create a `useful++_++thing` *and clean up afterwards*. Instead of a simple `new++_++useful++_++thing()` constructor, you’ll write a customized function in the style of withr’s `local++_*++()` functions:
 
 [source,r,cell-code]
 ----
@@ -89,14 +89,14 @@ test_that("foofy() does that", {
 })
 ----
 
-Where should the `+local_useful_thing()+` helper be defined? All the advice given above for `+new_useful_thing()+` applies: define it below `+R/+` or in a test helper file.
+Where should the `local++_++useful++_++thing()` helper be defined? All the advice given above for `new++_++useful++_++thing()` applies: define it below `R/` or in a test helper file.
 
-To learn more about writing custom helpers like `+local_useful_thing()+`, see the https://testthat.r-lib.org/articles/test-fixtures.html[testthat vignette on test fixtures].
+To learn more about writing custom helpers like `local++_++useful++_++thing()`, see the https://testthat.r-lib.org/articles/test-fixtures.html[testthat vignette on test fixtures].
 
 [[sec-testing-advanced-concrete-fixture]]
-=== Store a concrete `+useful_thing+` persistently
+=== Store a concrete `useful++_++thing` persistently
 
-If a `+useful_thing+` is costly to create, in terms of time or memory, maybe you don’t actually need to re-create it for each test run. You could make the `+useful_thing+` once, store it as a static test fixture, and load it in the tests that need it. Here’s a sketch of how this could look:
+If a `useful++_++thing` is costly to create, in terms of time or memory, maybe you don’t actually need to re-create it for each test run. You could make the `useful++_++thing` once, store it as a static test fixture, and load it in the tests that need it. Here’s a sketch of how this could look:
 
 [source,r,cell-code]
 ----
@@ -128,15 +128,15 @@ Now we can revisit a file listing from earlier, which addressed exactly this sce
     └── testthat.R
 ....
 
-This shows static test files stored in `+tests/testthat/fixtures/+`, but also notice the companion R script, `+make-useful-things.R+`. From data analysis, we all know there is no such thing as a script that is run only once. Refinement and iteration is inevitable. This also holds true for test objects like `+useful_thing1.rds+`. We highly recommend saving the R code used to create your test objects, so that they can be re-created as needed.
+This shows static test files stored in `tests/testthat/fixtures/`, but also notice the companion R script, `make-useful-things.R`. From data analysis, we all know there is no such thing as a script that is run only once. Refinement and iteration is inevitable. This also holds true for test objects like `useful++_++thing1.rds`. We highly recommend saving the R code used to create your test objects, so that they can be re-created as needed.
 
 == Building your own testing tools
 
-Let’s return to the topic of duplication in your test code. We’ve encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious. But there’s still a limit to how much repetition to tolerate. We’ve covered techniques such as loading static objects with `+test_path()+`, writing a constructor like `+new_useful_thing()+`, or implementing a test fixture like `+local_useful_thing()+`. There are even more types of test helpers that can be useful in certain situations.
+Let’s return to the topic of duplication in your test code. We’ve encouraged you to have a higher tolerance for repetition in test code, in the name of making your tests obvious. But there’s still a limit to how much repetition to tolerate. We’ve covered techniques such as loading static objects with `test++_++path()`, writing a constructor like `new++_++useful++_++thing()`, or implementing a test fixture like `local++_++useful++_++thing()`. There are even more types of test helpers that can be useful in certain situations.
 
 === Helper defined inside a test
 
-Consider this test for the `+str_trunc()+` function in stringr:
+Consider this test for the `str++_++trunc()` function in stringr:
 
 [source,r,cell-code]
 ----
@@ -176,9 +176,9 @@ test_that("truncations work for all sides", {
 })
 ----
 
-A hyper-local helper like `+trunc()+` is particularly useful when it allows you to fit all the important business for each expectation on one line. Then your expectations can be read almost like a table of actual vs. expected, for a set of related use cases. Above, it’s very easy to watch the result change as we truncate the input from the right, left, and in the center.
+A hyper-local helper like `trunc()` is particularly useful when it allows you to fit all the important business for each expectation on one line. Then your expectations can be read almost like a table of actual vs. expected, for a set of related use cases. Above, it’s very easy to watch the result change as we truncate the input from the right, left, and in the center.
 
-Note that this technique should be used in extreme moderation. A helper like `+trunc()+` is yet another place where you can introduce a bug, so it’s best to keep such helpers extremely short and simple.
+Note that this technique should be used in extreme moderation. A helper like `trunc()` is yet another place where you can introduce a bug, so it’s best to keep such helpers extremely short and simple.
 
 === Custom expectations
 
@@ -197,13 +197,13 @@ expect_proj_file <- function(...) {
 }
 ----
 
-`+expect_usethis_error()+` checks that an error has the `+"usethis_error"+` class. `+expect_proj_file()+` is a simple wrapper around `+file_exists()+` that searches for the file in the current project. These are very simple functions, but the sheer amount of repetition and the expressiveness of their names makes them feel justified.
+`expect++_++usethis++_++error()` checks that an error has the `"usethis++_++error"` class. `expect++_++proj++_++file()` is a simple wrapper around `file++_++exists()` that searches for the file in the current project. These are very simple functions, but the sheer amount of repetition and the expressiveness of their names makes them feel justified.
 
 It is somewhat involved to make a proper custom expectation, i.e. one that behaves like the expectations built into testthat. We refer you to the https://testthat.r-lib.org/articles/custom-expectation.html[Custom expectations] vignette if you wish to learn more about that.
 
 Finally, it can be handy to know that testthat makes specific information available when it’s running:
 
-* The environment variable `+TESTTHAT+` is set to `+"true"+`. `+testthat::is_testing()+` is a shortcut:
+* The environment variable `TESTTHAT` is set to `"true"`. `testthat::is++_++testing()` is a shortcut:
 +
 [source,r,cell-code]
 ----
@@ -211,7 +211,7 @@ is_testing <- function() {
   Sys.getenv("TESTTHAT")
 }
 ----
-* The package-under-test is available as the environment variable `+TESTTHAT_PKG+` and `+testthat::testing_package()+` is a shortcut:
+* The package-under-test is available as the environment variable `TESTTHAT++_++PKG` and `testthat::testing++_++package()` is a shortcut:
 +
 [source,r,cell-code]
 ----
@@ -235,9 +235,9 @@ Despite all the techniques we’ve covered so far, there remain situations where
 
 Sometimes it’s impossible to perform a test - you may not have an internet connection or you may not have access to the necessary credentials. Unfortunately, another likely reason follows from this simple rule: the more platforms you use to test your code, the more likely it is that you won’t be able to run all of your tests, all of the time. In short, there are times when, instead of getting a failure, you just want to skip a test.
 
-==== `+testthat::skip()+`
+==== `testthat::skip()`
 
-Here we use `+testthat::skip()+` to write a hypothetical custom skipper, `+skip_if_no_api()+`:
+Here we use `testthat::skip()` to write a hypothetical custom skipper, `skip++_++if++_++no++_++api()`:
 
 [source,r,cell-code]
 ----
@@ -253,9 +253,9 @@ test_that("foo api returns bar when given baz", {
 })
 ----
 
-`+skip_if_no_api()+` is a yet another example of a test helper and the advice already given about where to define it applies here too.
+`skip++_++if++_++no++_++api()` is a yet another example of a test helper and the advice already given about where to define it applies here too.
 
-`+skip()+`s and the associated reasons are reported inline as tests are executed and are also indicated clearly in the summary:
+`skip()`s and the associated reasons are reported inline as tests are executed and are also indicated clearly in the summary:
 
 [source,r,cell-code]
 ----
@@ -279,7 +279,7 @@ devtools::test()
 #> 🥳
 ----
 
-Something like `+skip_if_no_api()+` is likely to appear many times in your test suite. This is another occasion where it is tempting to DRY things out, by hoisting the `+skip()+` to the top-level of the file. However, we still lean towards calling `+skip_if_no_api()+` in each test where it’s needed.
+Something like `skip++_++if++_++no++_++api()` is likely to appear many times in your test suite. This is another occasion where it is tempting to DRY things out, by hoisting the `skip()` to the top-level of the file. However, we still lean towards calling `skip++_++if++_++no++_++api()` in each test where it’s needed.
 
 [source,r,cell-code]
 ----
@@ -302,11 +302,11 @@ test_that("foo api returns bar when given baz", {...})
 test_that("foo api returns an errors when given qux", {...})
 ----
 
-Within the realm of top-level code in test files, having a `+skip()+` at the very beginning of a test file is one of the more benign situations. But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the `+skip()+` and individual tests.
+Within the realm of top-level code in test files, having a `skip()` at the very beginning of a test file is one of the more benign situations. But once a test file does not fit entirely on your screen, it creates an implicit yet easy-to-miss connection between the `skip()` and individual tests.
 
-==== Built-in `+skip()+` functions
+==== Built-in `skip()` functions
 
-Similar to testthat’s built-in expectations, there is a family of `+skip()+` functions that anticipate some common situations. These functions often relieve you of the need to write a custom skipper. Here are some examples of the most useful `+skip()+` functions:
+Similar to testthat’s built-in expectations, there is a family of `skip()` functions that anticipate some common situations. These functions often relieve you of the need to write a custom skipper. Here are some examples of the most useful `skip()` functions:
 
 [source,r,cell-code]
 ----
@@ -331,7 +331,7 @@ skip_on_os("windows")
 
 One challenge with skips is that they are currently completely invisible in CI — if you automatically skip too many tests, it’s easy to fool yourself that all your tests are passing when in fact they’re just being skipped! In an ideal world, your CI/CD would make it easy to see how many tests are being skipped and how that changes over time.
 
-It’s a good practice to regularly dig into the `+R CMD check+` results, especially on CI, and make sure the skips are as you expect. But this tends to be something you have to learn through experience.
+It’s a good practice to regularly dig into the `R CMD check` results, especially on CI, and make sure the skips are as you expect. But this tends to be something you have to learn through experience.
 
 === Mocking
 
@@ -349,7 +349,7 @@ Since most R packages do not need full-fledged mocking, we do not cover it here.
 * httptest2: https://enpiar.com/httptest2/
 * webfakes: https://webfakes.r-lib.org
 
-Note also that, at the time of writing, it seems likely that the testthat package will re-introduce some mocking capabilities (after previously getting out of the mocking business once already). Version v3.1.7 has two new experimental functions, `+testthat::with_mocked_bindings()+` and `+testthat::local_mocked_bindings()+`.
+Note also that, at the time of writing, it seems likely that the testthat package will re-introduce some mocking capabilities (after previously getting out of the mocking business once already). Version v3.1.7 has two new experimental functions, `testthat::with++_++mocked++_++bindings()` and `testthat::local++_++mocked++_++bindings()`.
 
 === Secrets
 
@@ -361,14 +361,14 @@ Of course, you will still want to be able to test your package against the actua
 
 == Special considerations for CRAN packages
 
-CRAN runs `+R CMD check+` on all contributed packages, both upon submission and on a regular basis after acceptance. This check includes, but is not limited to, your testthat tests. We discuss the general challenge of preparing your package to face all of CRAN’s check "`flavors`" in <<sec-cran-flavors-services>>. Here we focus on CRAN-specific considerations for your test suite.
+CRAN runs `R CMD check` on all contributed packages, both upon submission and on a regular basis after acceptance. This check includes, but is not limited to, your testthat tests. We discuss the general challenge of preparing your package to face all of CRAN’s check "`flavors`" in <<sec-cran-flavors-services>>. Here we focus on CRAN-specific considerations for your test suite.
 
 When a package runs afoul of the CRAN Repository Policy (https://cran.r-project.org/web/packages/policies.html), the test suite is very often the culprit (although not always). If your package is destined for CRAN, this should influence how you write your tests and how (or whether) they will be run on CRAN.
 
 [[sec-testing-advanced-skip-on-cran]]
 === Skip a test
 
-If a specific test simply isn’t appropriate to be run by CRAN, include `+skip_on_cran()+` at the very start.
+If a specific test simply isn’t appropriate to be run by CRAN, include `skip++_++on++_++cran()` at the very start.
 
 [source,r,cell-code]
 ----
@@ -378,26 +378,26 @@ test_that("some long-running thing works", {
 })
 ----
 
-Under the hood, `+skip_on_cran()+` consults the `+NOT_CRAN+` environment variable. Such a test will only run when `+NOT_CRAN+` has been explicitly defined as `+"true"+`. This variable is set by devtools and testthat, allowing those tests to run in environments where you expect success (and where you can tolerate and troubleshoot occasional failure).
+Under the hood, `skip++_++on++_++cran()` consults the `NOT++_++CRAN` environment variable. Such a test will only run when `NOT++_++CRAN` has been explicitly defined as `"true"`. This variable is set by devtools and testthat, allowing those tests to run in environments where you expect success (and where you can tolerate and troubleshoot occasional failure).
 
-In particular, the GitHub Actions workflows that we recommend in <<sec-sw-dev-practices-gha>> *will* run tests with `+NOT_CRAN = "true"+`. For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GitHub Actions or an equivalent continuous integration service, are your best method of quality assurance.
+In particular, the GitHub Actions workflows that we recommend in <<sec-sw-dev-practices-gha>> *will* run tests with `NOT++_++CRAN = "true"`. For certain types of functionality, there is no practical way to test it on CRAN and your own checks, on GitHub Actions or an equivalent continuous integration service, are your best method of quality assurance.
 
 There are even rare cases where it makes sense to maintain tests outside of your package altogether. The tidymodels team uses this strategy for integration-type tests of their whole ecosystem that would be impossible to host inside an individual CRAN package.
 
 === Speed
 
-Your tests need to run relatively quickly - ideally, less than a minute, in total. Use `+skip_on_cran()+` in a test that is unavoidably long-running.
+Your tests need to run relatively quickly - ideally, less than a minute, in total. Use `skip++_++on++_++cran()` in a test that is unavoidably long-running.
 
 === Reproducibility
 
-Be careful about testing things that are likely to be variable on CRAN machines. It’s risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available). Numerical precision can also vary across platforms, so use `+expect_equal()+` unless you have a specific reason for using `+expect_identical()+`.
+Be careful about testing things that are likely to be variable on CRAN machines. It’s risky to test how long something takes (because CRAN machines are often heavily loaded) or to test parallel code (because CRAN runs multiple package tests in parallel, multiple cores will not always be available). Numerical precision can also vary across platforms, so use `expect++_++equal()` unless you have a specific reason for using `expect++_++identical()`.
 
 [[sec-testing-advanced-flaky-tests]]
 === Flaky tests
 
 Due to the scale at which CRAN checks packages, there is basically no latitude for a test that’s "`just flaky`", i.e. sometimes fails for incidental reasons. CRAN does not process your package’s test results the way you do, where you can inspect each failure and exercise some human judgment about how concerning it is.
 
-It’s probably a good idea to eliminate flaky tests, just for your own sake! But if you have valuable, well-written tests that are prone to occasional nuisance failure, definitely put `+skip_on_cran()+` at the start.
+It’s probably a good idea to eliminate flaky tests, just for your own sake! But if you have valuable, well-written tests that are prone to occasional nuisance failure, definitely put `skip++_++on++_++cran()` at the start.
 
 The classic example is any test that accesses a website or web API. Given that any web resource in the world will experience occasional downtime, it’s best to not let such tests run on CRAN. The CRAN Repository Policy says:
 
@@ -407,9 +407,9 @@ ____
 
 Often making such a failure "`graceful`" would run counter to the behaviour you actually want in practice, i.e. you would want your user to get an error if their request fails. This is why it is usually more practical to test such functionality elsewhere.
 
-Recall that snapshot tests (<<sec-testing-basics>>), by default, are also skipped on CRAN. You typically use such tests to monitor, e.g., how various informational messages look. Slight changes in message formatting are something you want to be alerted to, but do not indicate a major defect in your package. This is the motivation for the default `+skip_on_cran()+` behaviour of snapshot tests.
+Recall that snapshot tests (<<sec-testing-basics>>), by default, are also skipped on CRAN. You typically use such tests to monitor, e.g., how various informational messages look. Slight changes in message formatting are something you want to be alerted to, but do not indicate a major defect in your package. This is the motivation for the default `skip++_++on++_++cran()` behaviour of snapshot tests.
 
-Finally, flaky tests cause problems for the maintainers of your dependencies. When the packages you depend on are updated, CRAN runs `+R CMD check+` on all reverse dependencies, including your package. If your package has flaky tests, your package can be the reason another package does not clear CRAN’s incoming checks and can delay its release.
+Finally, flaky tests cause problems for the maintainers of your dependencies. When the packages you depend on are updated, CRAN runs `R CMD check` on all reverse dependencies, including your package. If your package has flaky tests, your package can be the reason another package does not clear CRAN’s incoming checks and can delay its release.
 
 === Process and file system hygiene
 

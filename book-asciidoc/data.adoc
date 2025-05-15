@@ -4,8 +4,8 @@
 
 It’s often useful to include data in a package. If the primary purpose of a package is to distribute useful functions, example datasets make it easier to write excellent documentation. These datasets can be hand-crafted to provide compelling use cases for the functions in the package. Here are some examples of this type of package data:
 
-* https://tidyr.tidyverse.org/reference/index.html#data[tidyr]: `+billboard+` (song rankings), `+who+` (tuberculosis data from the World Health Organization)
-* https://dplyr.tidyverse.org/reference/index.html#data[dplyr]: `+starwars+` (Star Wars characters), `+storms+` (storm tracks)
+* https://tidyr.tidyverse.org/reference/index.html#data[tidyr]: `billboard` (song rankings), `who` (tuberculosis data from the World Health Organization)
+* https://dplyr.tidyverse.org/reference/index.html#data[dplyr]: `starwars` (Star Wars characters), `storms` (storm tracks)
 
 At the other extreme, some packages exist solely for the purpose of distributing data, along with its documentation. These are sometimes called "`data packages`". A data package can be a nice way to share example data across multiple packages. It is also a useful technique for getting relatively large, static files out of a more function-oriented package, which might require more frequent updates. Here are some examples of data packages:
 
@@ -16,16 +16,16 @@ Finally, many packages benefit from having internal data that is used for intern
 
 In this chapter we describe useful mechanisms for including data in your package. The practical details differ depending on who needs access to the data, how often it changes, and what they will do with it:
 
-* If you want to store R objects and make them available to the user, put them in `+data/+`. This is the best place to put example datasets. All the concrete examples above for data in a package and data as a package use this mechanism. See <<sec-data-data>>.
-* If you want to store R objects for your own use as a developer, put them in `+R/sysdata.rda+`. This is the best place to put internal data that your functions need. See <<sec-data-sysdata>>.
-* If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `+inst/extdata/+`. For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively. See <<sec-data-extdata>>.
+* If you want to store R objects and make them available to the user, put them in `data/`. This is the best place to put example datasets. All the concrete examples above for data in a package and data as a package use this mechanism. See <<sec-data-data>>.
+* If you want to store R objects for your own use as a developer, put them in `R/sysdata.rda`. This is the best place to put internal data that your functions need. See <<sec-data-sysdata>>.
+* If you want to store data in some raw, non-R-specific form and make it available to the user, put it in `inst/extdata/`. For example, readr and readxl each use this mechanism to provide a collection of delimited files and Excel workbooks, respectively. See <<sec-data-extdata>>.
 * If you want to store dynamic data that reflects the internal state of your package within a single R session, use an environment. This technique is not as common or well-known as those above, but can be very useful in specific situations. See <<sec-data-state>>.
 * If you want to store data persistently across R sessions, such as configuration or user-specific data, use one of the officially sanctioned locations. See <<sec-data-persistent>>.
 
 [[sec-data-data]]
 == Exported data
 
-The most common location for package data is (surprise!) `+data/+`. We recommend that each file in this directory be an `+.rda+` file created by `+save()+` containing a single R object, with the same name as the file. The easiest way to achieve this is to use `+usethis::use_data()+`.
+The most common location for package data is (surprise!) `data/`. We recommend that each file in this directory be an `.rda` file created by `save()` containing a single R object, with the same name as the file. The easiest way to achieve this is to use `usethis::use++_++data()`.
 
 [source,r,cell-code]
 ----
@@ -33,17 +33,17 @@ my_pkg_data <- sample(1000)
 usethis::use_data(my_pkg_data)
 ----
 
-Let’s imagine we are working on a package named "`pkg`". The snippet above creates `+data/my_pkg_data.rda+` inside the source of the pkg package and adds `+LazyData: true+` in your `+DESCRIPTION+`. This makes the `+my_pkg_data+` R object available to users of pkg via `+pkg::my_pkg_data+` or, after attaching pkg with `+library(pkg)+`, as `+my_pkg_data+`.
+Let’s imagine we are working on a package named "`pkg`". The snippet above creates `data/my++_++pkg++_++data.rda` inside the source of the pkg package and adds `LazyData: true` in your `DESCRIPTION`. This makes the `my++_++pkg++_++data` R object available to users of pkg via `pkg::my++_++pkg++_++data` or, after attaching pkg with `library(pkg)`, as `my++_++pkg++_++data`.
 
-The snippet above is something the maintainer executes once (or every time they need to update `+my_pkg_data+`). This is workflow code and should *not* appear in the `+R/+` directory of the source package. (We’ll talk about a suitable place to keep this code below.) For larger datasets, you may want to experiment with the compression setting, which is under the control of the `+compress+` argument. The default is "`bzip2`", but sometimes "`gzip`" or "`xz`" can create smaller files.
+The snippet above is something the maintainer executes once (or every time they need to update `my++_++pkg++_++data`). This is workflow code and should *not* appear in the `R/` directory of the source package. (We’ll talk about a suitable place to keep this code below.) For larger datasets, you may want to experiment with the compression setting, which is under the control of the `compress` argument. The default is "`bzip2`", but sometimes "`gzip`" or "`xz`" can create smaller files.
 
-It’s possible to use other types of files below `+data/+`, but we don’t recommend it because `+.rda+` files are already fast, small, and explicit. The other possibilities are described in the documentation for `+utils::data()+` and in the https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages[Data in packages] section of Writing R Extensions. In terms of advice to package authors, the help topic for `+data()+` seems to implicitly make the same recommendations as we do above:
+It’s possible to use other types of files below `data/`, but we don’t recommend it because `.rda` files are already fast, small, and explicit. The other possibilities are described in the documentation for `utils::data()` and in the https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages[Data in packages] section of Writing R Extensions. In terms of advice to package authors, the help topic for `data()` seems to implicitly make the same recommendations as we do above:
 
-* Store one R object in each `+data/*.rda+` file
-* Use the same name for that object and its `+.rda+` file
+* Store one R object in each `data/++*++.rda` file
+* Use the same name for that object and its `.rda` file
 * Use lazy-loading, by default
 
-If the `+DESCRIPTION+` contains `+LazyData: true+`, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change significantly until you inspect the `+flights+` dataset stored inside the package.
+If the `DESCRIPTION` contains `LazyData: true`, then datasets will be lazily loaded. This means that they won’t occupy any memory until you use them. The following example shows memory usage before and after loading the nycflights13 package. You can see that memory usage doesn’t change significantly until you inspect the `flights` dataset stored inside the package.
 
 [source,r,cell-code]
 ----
@@ -58,23 +58,23 @@ lobstr::mem_used()
 #> 101.14 MB
 ----
 
-We recommend that you include `+LazyData: true+` in your `+DESCRIPTION+` if you are shipping `+.rda+` files below `+data/+`. If you use `+use_data()+` to create such datasets, it will automatically make this modification to `+DESCRIPTION+` for you.
+We recommend that you include `LazyData: true` in your `DESCRIPTION` if you are shipping `.rda` files below `data/`. If you use `use++_++data()` to create such datasets, it will automatically make this modification to `DESCRIPTION` for you.
 
 [WARNING]
 ====
-It is important to note that lazily-loaded datasets do *not* need to be pre-loaded with `+utils::data()+` and, in fact, it’s usually best to avoid doing so. Above, once we did `+library(nycflights13)+`, we could immediately access `+flights+`. There is no call to `+data(flights)+`, because it is not necessary.
+It is important to note that lazily-loaded datasets do *not* need to be pre-loaded with `utils::data()` and, in fact, it’s usually best to avoid doing so. Above, once we did `library(nycflights13)`, we could immediately access `flights`. There is no call to `data(flights)`, because it is not necessary.
 
-There are specific downsides to `+data(some_pkg_data)+` calls that support a policy of only using `+data()+` when it is actually necessary, i.e. for datasets that would not be available otherwise:
+There are specific downsides to `data(some++_++pkg++_++data)` calls that support a policy of only using `data()` when it is actually necessary, i.e. for datasets that would not be available otherwise:
 
-* By default, `+data(some_pkg_data)+`, creates one or more objects in the user’s global workspace. There is the potential to silently overwrite pre-existing objects with new values.
-* There is also no guarantee that `+data(foo)+` will create exactly one object named "`foo`". It could create more than one object and/or objects with totally different names.
+* By default, `data(some++_++pkg++_++data)`, creates one or more objects in the user’s global workspace. There is the potential to silently overwrite pre-existing objects with new values.
+* There is also no guarantee that `data(foo)` will create exactly one object named "`foo`". It could create more than one object and/or objects with totally different names.
 
-One argument in favor of calls like `+data(some_pkg_data, package = "pkg")+` that are not strictly necessary is that it clarifies which package provides `+some_pkg_data+`. We prefer alternatives that don’t modify the global workspace, such as a code comment or access via `+pkg::some_pkg_data+`.
+One argument in favor of calls like `data(some++_++pkg++_++data, package = "pkg")` that are not strictly necessary is that it clarifies which package provides `some++_++pkg++_++data`. We prefer alternatives that don’t modify the global workspace, such as a code comment or access via `pkg::some++_++pkg++_++data`.
 
-This excerpt from the documentation of `+data()+` conveys that it is largely of historical importance:
+This excerpt from the documentation of `data()` conveys that it is largely of historical importance:
 
 ____
-`+data()+` was originally intended to allow users to load datasets from packages for use in their examples, and as such it loaded the datasets into the workspace `+.GlobalEnv+`. This avoided having large datasets in memory when not in use: that need has been almost entirely superseded by lazy-loading of datasets.
+`data()` was originally intended to allow users to load datasets from packages for use in their examples, and as such it loaded the datasets into the workspace `.GlobalEnv`. This avoided having large datasets in memory when not in use: that need has been almost entirely superseded by lazy-loading of datasets.
 ____
 
 ====
@@ -82,9 +82,9 @@ ____
 [[sec-data-data-raw]]
 === Preserve the origin story of package data
 
-Often, the data you include in `+data/+` is a cleaned up version of raw data you’ve gathered from elsewhere. We highly recommend taking the time to include the code used to do this in the source version of your package. This makes it easy for you to update or reproduce your version of the data. This data-creating script is also a natural place to leave comments about important properties of the data, i.e. which features are important for downstream usage in package documentation.
+Often, the data you include in `data/` is a cleaned up version of raw data you’ve gathered from elsewhere. We highly recommend taking the time to include the code used to do this in the source version of your package. This makes it easy for you to update or reproduce your version of the data. This data-creating script is also a natural place to leave comments about important properties of the data, i.e. which features are important for downstream usage in package documentation.
 
-We suggest that you keep this code in one or more `+.R+` files below `+data-raw/+`. You don’t want it in the bundled version of your package, so this folder should be listed in `+.Rbuildignore+`. usethis has a convenience function that can be called when you first adopt the `+data-raw/+` practice or when you add an additional `+.R+` file to the folder:
+We suggest that you keep this code in one or more `.R` files below `data-raw/`. You don’t want it in the bundled version of your package, so this folder should be listed in `.Rbuildignore`. usethis has a convenience function that can be called when you first adopt the `data-raw/` practice or when you add an additional `.R` file to the folder:
 
 [source,r,cell-code]
 ----
@@ -93,9 +93,9 @@ usethis::use_data_raw()
 usethis::use_data_raw("my_pkg_data")
 ----
 
-`+use_data_raw()+` creates the `+data-raw/+` folder and lists it in `+.Rbuildignore+`. A typical script in `+data-raw/+` includes code to prepare a dataset and ends with a call to `+use_data()+`.
+`use++_++data++_++raw()` creates the `data-raw/` folder and lists it in `.Rbuildignore`. A typical script in `data-raw/` includes code to prepare a dataset and ends with a call to `use++_++data()`.
 
-These data packages all use the approach recommended here for `+data-raw/+`:
+These data packages all use the approach recommended here for `data-raw/`:
 
 * https://github.com/hadley/babynames[babynames]
 * https://github.com/hadley/nycflights13[nycflights13]
@@ -112,16 +112,16 @@ We have a confession to make: the origins of many of ggplot2’s example dataset
 ====
 Generally, package data should be smaller than a megabyte - if it’s larger you’ll need to argue for an exemption. This is usually easier to do if the data is in its own package and won’t be updated frequently, i.e. if you approach this as a dedicated "`data package`". For reference, the babynames and nycflights packages have had a release once every one to two years, since they first appeared on CRAN.
 
-If you are bumping up against size issues, you should be intentional with regards to the method of data compression. The default for `+usethis::use_data(compress =)+` is "`bzip2`", whereas the default for `+save(compress =)+` is (effectively) "`gzip`", and "`xz`" is yet another valid option.
+If you are bumping up against size issues, you should be intentional with regards to the method of data compression. The default for `usethis::use++_++data(compress =)` is "`bzip2`", whereas the default for `save(compress =)` is (effectively) "`gzip`", and "`xz`" is yet another valid option.
 
-You’ll have to experiment with different compression methods and make this decision empirically. `+tools::resaveRdaFiles("data/")+` automates this process, but doesn’t inform you of which compression method was chosen. You can learn this after the fact with `+tools::checkRdaFiles()+`. Assuming you are keeping track of the code to generate your data, it would be wise to update the corresponding `+use_data(compress =)+` call below `+data-raw/+` and re-generate the `+.rda+` cleanly.
+You’ll have to experiment with different compression methods and make this decision empirically. `tools::resaveRdaFiles("data/")` automates this process, but doesn’t inform you of which compression method was chosen. You can learn this after the fact with `tools::checkRdaFiles()`. Assuming you are keeping track of the code to generate your data, it would be wise to update the corresponding `use++_++data(compress =)` call below `data-raw/` and re-generate the `.rda` cleanly.
 
 ====
 
 [[sec-documenting-data]]
 === Documenting datasets
 
-Objects in `+data/+` are always effectively exported (they use a slightly different mechanism than `+NAMESPACE+` but the details are not important). This means that they must be documented. Documenting data is like documenting a function with a few minor differences. Instead of documenting the data directly, you document the name of the dataset and save it in `+R/+`. For example, the roxygen2 block used to document the `+who+` data in tidyr is saved in `+R/data.R+` and looks something like this:
+Objects in `data/` are always effectively exported (they use a slightly different mechanism than `NAMESPACE` but the details are not important). This means that they must be documented. Documenting data is like documenting a function with a few minor differences. Instead of documenting the data directly, you document the name of the dataset and save it in `R/`. For example, the roxygen2 block used to document the `who` data in tidyr is saved in `R/data.R` and looks something like this:
 
 [source,r,cell-code]
 ----
@@ -144,47 +144,47 @@ Objects in `+data/+` are always effectively exported (they use a slightly differ
 
 There are two roxygen tags that are especially important for documenting datasets:
 
-* `+@format+` gives an overview of the dataset. For data frames, you should include a definition list that describes each variable. It’s usually a good idea to describe variables’ units here.
-* `+@source+` provides details of where you got the data, often a URL.
+* `@format` gives an overview of the dataset. For data frames, you should include a definition list that describes each variable. It’s usually a good idea to describe variables’ units here.
+* `@source` provides details of where you got the data, often a URL.
 
-Never `+@export+` a data set.
+Never `@export` a data set.
 
 [[sec-data-non-ascii]]
 === Non-ASCII characters in data
 
-The R objects you store in `+data/*.rda+` often contain strings, with the most common example being character columns in a data frame. If you can constrain these strings to only use ASCII characters, it certainly makes things simpler. But of course, there are plenty of legitimate reasons why package data might include non-ASCII characters.
+The R objects you store in `data/++*++.rda` often contain strings, with the most common example being character columns in a data frame. If you can constrain these strings to only use ASCII characters, it certainly makes things simpler. But of course, there are plenty of legitimate reasons why package data might include non-ASCII characters.
 
-In that case, we recommend that you embrace the http://utf8everywhere.org[UTF-8 Everywhere manifesto] and use the UTF-8 encoding. The `+DESCRIPTION+` file placed by `+usethis::create_package()+` always includes `+Encoding: UTF-8+`, so by default a devtools-produced package already advertises that it will use UTF-8.
+In that case, we recommend that you embrace the http://utf8everywhere.org[UTF-8 Everywhere manifesto] and use the UTF-8 encoding. The `DESCRIPTION` file placed by `usethis::create++_++package()` always includes `Encoding: UTF-8`, so by default a devtools-produced package already advertises that it will use UTF-8.
 
-Making sure that the strings embedded in your package data have the intended encoding is something you accomplish in your data preparation code, i.e. in the R scripts below `+data-raw/+`. You can use `+Encoding()+` to learn the current encoding of the elements in a character vector and functions such as `+enc2utf8()+` or `+iconv()+` to convert between encodings.
+Making sure that the strings embedded in your package data have the intended encoding is something you accomplish in your data preparation code, i.e. in the R scripts below `data-raw/`. You can use `Encoding()` to learn the current encoding of the elements in a character vector and functions such as `enc2utf8()` or `iconv()` to convert between encodings.
 
 [WARNING]
 .Submitting to CRAN
 ====
-If you have UTF-8-encoded strings in your package data, you may see this from `+R CMD check+`:
+If you have UTF-8-encoded strings in your package data, you may see this from `R CMD check`:
 
 ....
 -   checking data for non-ASCII characters ... NOTE
     Note: found 352 marked UTF-8 strings
 ....
 
-This `+NOTE+` is truly informational. It requires no action from you. As long as you actually intend to have UTF-8 strings in your package data, all is well.
+This `NOTE` is truly informational. It requires no action from you. As long as you actually intend to have UTF-8 strings in your package data, all is well.
 
-Ironically, this `+NOTE+` is actually suppressed by `+R CMD check --as-cran+`, despite the fact that this note does appear in the check results once a package is on CRAN (which implies that CRAN does not necessarily check with `+--as-cran+`). By default, `+devtools::check()+` sets the `+--as-cran+` flag and therefore does not transmit this `+NOTE+`. But you can surface it with `+check(cran = FALSE, env_vars = c("_R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_" = "false"))+`.
+Ironically, this `NOTE` is actually suppressed by `R CMD check --as-cran`, despite the fact that this note does appear in the check results once a package is on CRAN (which implies that CRAN does not necessarily check with `--as-cran`). By default, `devtools::check()` sets the `--as-cran` flag and therefore does not transmit this `NOTE`. But you can surface it with `check(cran = FALSE, env++_++vars = c("++_++R++_++CHECK++_++PACKAGE++_++DATASETS++_++SUPPRESS++_++NOTES++_++" = "false"))`.
 
 ====
 
 [[sec-data-sysdata]]
 == Internal data
 
-Sometimes your package functions need access to pre-computed data. If you put these objects in `+data/+`, they’ll also be available to package users, which is not appropriate. Sometimes the objects you need are small and simple enough that you can define them with `+c()+` or `+data.frame()+` in the code below `+R/+`, perhaps in `+R/data.R+`. Larger or more complicated objects should be stored in your package’s internal data in `+R/sysdata.rda+`, so they are lazy-loaded on demand.
+Sometimes your package functions need access to pre-computed data. If you put these objects in `data/`, they’ll also be available to package users, which is not appropriate. Sometimes the objects you need are small and simple enough that you can define them with `c()` or `data.frame()` in the code below `R/`, perhaps in `R/data.R`. Larger or more complicated objects should be stored in your package’s internal data in `R/sysdata.rda`, so they are lazy-loaded on demand.
 
 Here are some examples of internal package data:
 
-* Two colour-related packages, https://github.com/cwickham/munsell[munsell] and https://cran.r-project.org/web/packages/dichromat/index.html[dichromat], use `+R/sysdata.rda+` to store large tables of colour data.
-* https://github.com/tidyverse/googledrive[googledrive] and https://github.com/tidyverse/googlesheets4[googlesheets4] wrap the Google Drive and Google Sheets APIs, respectively. Both use `+R/sysdata.rda+` to store data derived from a so-called https://developers.google.com/discovery/v1/reference/apis[Discovery Document] which "`describes the surface of the API, how to access the API and how API requests and responses are structured`".
+* Two colour-related packages, https://github.com/cwickham/munsell[munsell] and https://cran.r-project.org/web/packages/dichromat/index.html[dichromat], use `R/sysdata.rda` to store large tables of colour data.
+* https://github.com/tidyverse/googledrive[googledrive] and https://github.com/tidyverse/googlesheets4[googlesheets4] wrap the Google Drive and Google Sheets APIs, respectively. Both use `R/sysdata.rda` to store data derived from a so-called https://developers.google.com/discovery/v1/reference/apis[Discovery Document] which "`describes the surface of the API, how to access the API and how API requests and responses are structured`".
 
-The easiest way to create `+R/sysdata.rda+` is to use `+usethis::use_data(internal = TRUE)+`:
+The easiest way to create `R/sysdata.rda` is to use `usethis::use++_++data(internal = TRUE)`:
 
 [source,r,cell-code]
 ----
@@ -194,25 +194,25 @@ internal_that <- ...
 usethis::use_data(internal_this, internal_that, internal = TRUE)
 ----
 
-Unlike `+data/+`, where you use one `+.rda+` file per exported data object, you store all of your internal data objects together in the single file `+R/sysdata.rda+`.
+Unlike `data/`, where you use one `.rda` file per exported data object, you store all of your internal data objects together in the single file `R/sysdata.rda`.
 
-Let’s imagine we are working on a package named "`pkg`". The snippet above creates `+R/sysdata.rda+` inside the source of the pkg package. This makes the objects `+internal_this+` and `+internal_that+` available for use inside of the functions defined below `+R/+` and in the tests. During interactive development, `+internal_this+` and `+internal_that+` are available after a call to `+devtools::load_all()+`, just like an internal function.
+Let’s imagine we are working on a package named "`pkg`". The snippet above creates `R/sysdata.rda` inside the source of the pkg package. This makes the objects `internal++_++this` and `internal++_++that` available for use inside of the functions defined below `R/` and in the tests. During interactive development, `internal++_++this` and `internal++_++that` are available after a call to `devtools::load++_++all()`, just like an internal function.
 
 Much of the advice given for external data holds for internal data as well:
 
-* It’s a good idea to store the code that generates your individual internal data objects, as well as the `+use_data()+` call that writes all of them into `+R/sysdata.rda+`. This is workflow code that belongs below `+data-raw/+`, not below `+R/+`.
-* `+usethis::use_data_raw()+` can be used to initiate the use of `+data-raw/+` or to initiate a new `+.R+` script there.
-* If your package is uncomfortably large, experiment with different values of `+compress+` in `+use_data(internal = TRUE)+`.
+* It’s a good idea to store the code that generates your individual internal data objects, as well as the `use++_++data()` call that writes all of them into `R/sysdata.rda`. This is workflow code that belongs below `data-raw/`, not below `R/`.
+* `usethis::use++_++data++_++raw()` can be used to initiate the use of `data-raw/` or to initiate a new `.R` script there.
+* If your package is uncomfortably large, experiment with different values of `compress` in `use++_++data(internal = TRUE)`.
 
 There are also key distinctions, where the handling of internal and external data differs:
 
-* Objects in `+R/sysdata.rda+` are not exported (they shouldn’t be), so they don’t need to be documented.
-* The `+LazyData+` field in the package `+DESCRIPTION+` has no impact on `+R/sysdata.rda+` but is strictly about the exported data below `+data/+`. Internal data is always lazy-loaded.
+* Objects in `R/sysdata.rda` are not exported (they shouldn’t be), so they don’t need to be documented.
+* The `LazyData` field in the package `DESCRIPTION` has no impact on `R/sysdata.rda` but is strictly about the exported data below `data/`. Internal data is always lazy-loaded.
 
 [[sec-data-extdata]]
 == Raw data file
 
-If you want to show examples of loading/parsing raw data, put the original files in `+inst/extdata/+`. When the package is installed, all files (and folders) in `+inst/+` are moved up one level to the top-level directory, which is why they can’t have names that conflict with standard parts of an R package, like `+R/+` or `+DESCRIPTION+` . The files below `+inst/extdata/+` in the source package will be located below `+extdata/+` in the corresponding installed package. You may want to revisit <<fig-package-files>> to review the file structure for different package states.
+If you want to show examples of loading/parsing raw data, put the original files in `inst/extdata/`. When the package is installed, all files (and folders) in `inst/` are moved up one level to the top-level directory, which is why they can’t have names that conflict with standard parts of an R package, like `R/` or `DESCRIPTION` . The files below `inst/extdata/` in the source package will be located below `extdata/` in the corresponding installed package. You may want to revisit <<fig-package-files>> to review the file structure for different package states.
 
 The main reason to include such files is when a key part of a package’s functionality is to act on an external file. Examples of such packages include:
 
@@ -221,19 +221,19 @@ The main reason to include such files is when a key part of a package’s functi
 * xml2, which can read XML and HTML from file
 * archive, which can read archive files, such as tar or ZIP
 
-All of these packages have one or more example files below `+inst/extdata/+`, which are useful for writing documentation and tests.
+All of these packages have one or more example files below `inst/extdata/`, which are useful for writing documentation and tests.
 
 It is also common for data packages to provide, e.g., a csv version of the package data that is also provided as an R object. Examples of such packages include:
 
-* palmerpenguins: `+penguins+` and `+penguins_raw+` are also represented as `+extdata/penguins.csv+` and `+extdata/penguins_raw.csv+`
-* gapminder: `+gapminder+`, `+continent_colors+`, and `+country_colors+` are also represented as `+extdata/gapminder.tsv+`, `+extdata/continent-colors.tsv+`, and `+extdata/country-colors.tsv+`
+* palmerpenguins: `penguins` and `penguins++_++raw` are also represented as `extdata/penguins.csv` and `extdata/penguins++_++raw.csv`
+* gapminder: `gapminder`, `continent++_++colors`, and `country++_++colors` are also represented as `extdata/gapminder.tsv`, `extdata/continent-colors.tsv`, and `extdata/country-colors.tsv`
 
-This has two payoffs: First, it gives teachers and other expositors more to work with once they decide to use a specific dataset. If you’ve started teaching R with `+palmerpenguins::penguins+` or `+gapminder::gapminder+` and you want to introduce data import, it can be helpful to students if their first use of a new command, like `+readr::read_csv()+` or `+read.csv()+`, is applied to a familiar dataset. They have pre-existing intuition about the expected result. Finally, if package data evolves over time, having a csv or other plain text representation in the source package can make it easier to see what’s changed.
+This has two payoffs: First, it gives teachers and other expositors more to work with once they decide to use a specific dataset. If you’ve started teaching R with `palmerpenguins::penguins` or `gapminder::gapminder` and you want to introduce data import, it can be helpful to students if their first use of a new command, like `readr::read++_++csv()` or `read.csv()`, is applied to a familiar dataset. They have pre-existing intuition about the expected result. Finally, if package data evolves over time, having a csv or other plain text representation in the source package can make it easier to see what’s changed.
 
 [[sec-data-system-file]]
 === Filepaths
 
-The path to a package file found below `+extdata/+` clearly depends on the local environment, i.e. it depends on where installed packages live on that machine. The base function `+system.file()+` can report the full path to files distributed with an R package. It can also be useful to _list_ the files distributed with an R package.
+The path to a package file found below `extdata/` clearly depends on the local environment, i.e. it depends on where installed packages live on that machine. The base function `system.file()` can report the full path to files distributed with an R package. It can also be useful to _list_ the files distributed with an R package.
 
 [source,r,cell-code]
 ----
@@ -246,9 +246,9 @@ system.file("extdata", "clippy.xlsx", package = "readxl")
 #> [1] "/home/runner/work/_temp/Library/readxl/extdata/clippy.xlsx"
 ----
 
-These filepaths present yet another workflow dilemma: When you’re developing your package, you engage with it in its source form, but your users engage with it as an installed package. Happily, devtools provides a shim for `+base::system.file()+` that is activated by `+load_all()+`. This makes interactive calls to `+system.file()+` from the global environment and calls from within the package namespace "`just work`".
+These filepaths present yet another workflow dilemma: When you’re developing your package, you engage with it in its source form, but your users engage with it as an installed package. Happily, devtools provides a shim for `base::system.file()` that is activated by `load++_++all()`. This makes interactive calls to `system.file()` from the global environment and calls from within the package namespace "`just work`".
 
-Be aware that, by default, `+system.file()+` returns the empty string, not an error, for a file that does not exist.
+Be aware that, by default, `system.file()` returns the empty string, not an error, for a file that does not exist.
 
 [source,r,cell-code]
 ----
@@ -256,7 +256,7 @@ system.file("extdata", "I_do_not_exist.csv", package = "readr")
 #> [1] ""
 ----
 
-If you want to force a failure in this case, specify `+mustWork = TRUE+`:
+If you want to force a failure in this case, specify `mustWork = TRUE`:
 
 [source,r,cell-code]
 ----
@@ -264,7 +264,7 @@ system.file("extdata", "I_do_not_exist.csv", package = "readr", mustWork = TRUE)
 #> Error in system.file("extdata", "I_do_not_exist.csv", package = "readr", : no file found
 ----
 
-The https://fs.r-lib.org[fs package] offers `+fs::path_package()+`. This is essentially `+base::system.file()+` with a few added features that we find advantageous, whenever it’s reasonable to take a dependency on fs:
+The https://fs.r-lib.org[fs package] offers `fs::path++_++package()`. This is essentially `base::system.file()` with a few added features that we find advantageous, whenever it’s reasonable to take a dependency on fs:
 
 * It errors if the filepath does not exist.
 * It throws distinct errors when the package does not exist vs. when the file does not exist within the package.
@@ -286,9 +286,9 @@ fs::path_package("extdata", "chickens.csv", package = "readr")
 ----
 
 [[sec-data-example-path-helper]]
-=== `+pkg_example()+` path helpers
+=== `pkg++_++example()` path helpers
 
-We like to offer convenience functions that make example files easy to access. These are just user-friendly wrappers around `+system.file()+` or `+fs::path_package()+`, but can have added features, such as the ability to list the example files. Here’s the definition and some usage of `+readxl::readxl_example()+`:
+We like to offer convenience functions that make example files easy to access. These are just user-friendly wrappers around `system.file()` or `fs::path++_++package()`, but can have added features, such as the ability to list the example files. Here’s the definition and some usage of `readxl::readxl++_++example()`:
 
 [source,r,cell-code]
 ----
@@ -322,7 +322,7 @@ Sometimes there’s information that multiple functions from your package need t
 
 A great way to manage such data is to use an _environment_.footnote:[If you don’t know much about R environments and what makes them special, a great resource is the https://adv-r.hadley.nz/environments.html[Environments chapter] of Advanced R.] This environment must be created at build time, but you can populate it with values after the package has been loaded and update those values over the course of an R session. This works because environments have reference semantics (whereas more pedestrian R objects, such as atomic vectors, lists, or data frames have value semantics).
 
-Consider a package that can store the user’s favorite letters or numbers. You might start out with code like this in a file below `+R/+`:
+Consider a package that can store the user’s favorite letters or numbers. You might start out with code like this in a file below `R/`:
 
 [source,r,cell-code]
 ----
@@ -343,7 +343,7 @@ set_mfl <- function(l = letters[24:26]) {
 }
 ----
 
-`+favorite_letters+` is initialized to ("`a`", "`b`", "`c`") when the package is built. The user can then inspect `+favorite_letters+` with `+mfl()+`, at which point they’ll probably want to register _their_ favorite letters with `+set_mfl()+`. Note that we’ve used the super assignment operator `+<<-+` in `+set_mfl()+` in the hope that this will reach up into the package environment and modify the internal data object `+favorite_letters+`. But a call to `+set_mfl()+` fails like so:footnote:[This example will execute without error if you define `+favorite_letters+`, `+mfl()+`, and `+set_mfl()+` in the global workspace and call `+set_mfl()+` in the console. But this code will fail once `+favorite_letters+`, `+mfl()+`, and `+set_mfl()+` are defined _inside a package_.]
+`favorite++_++letters` is initialized to ("`a`", "`b`", "`c`") when the package is built. The user can then inspect `favorite++_++letters` with `mfl()`, at which point they’ll probably want to register _their_ favorite letters with `set++_++mfl()`. Note that we’ve used the super assignment operator `++<<++-` in `set++_++mfl()` in the hope that this will reach up into the package environment and modify the internal data object `favorite++_++letters`. But a call to `set++_++mfl()` fails like so:footnote:[This example will execute without error if you define `favorite++_++letters`, `mfl()`, and `set++_++mfl()` in the global workspace and call `set++_++mfl()` in the console. But this code will fail once `favorite++_++letters`, `mfl()`, and `set++_++mfl()` are defined _inside a package_.]
 
 [source,r,cell-code]
 ----
@@ -355,7 +355,7 @@ set_mfl(c("j", "f", "b"))
 #>   cannot change value of locked binding for 'favorite_letters'
 ----
 
-Because `+favorite_letters+` is a regular character vector, modification requires making a copy and rebinding the name `+favorite_letters+` to this new value. And that is what’s disallowed: you can’t change the binding for objects in the package namespace (well, at least not without trying harder than this). Defining `+favorite_letters+` this way only works if you will never need to modify it.
+Because `favorite++_++letters` is a regular character vector, modification requires making a copy and rebinding the name `favorite++_++letters` to this new value. And that is what’s disallowed: you can’t change the binding for objects in the package namespace (well, at least not without trying harder than this). Defining `favorite++_++letters` this way only works if you will never need to modify it.
 
 However, if we maintain state within an internal package environment, we *can* modify objects contained in the environment (and even add completely new objects). Here’s an alternative implementation that uses an internal environment named "`the`".
 
@@ -392,13 +392,13 @@ mfl2()
 #> [1] "j" "f" "b"
 ----
 
-Note that this new value for `+the$favorite_letters+` persists only for the remainder of the current R session (or until the user calls `+set_mfl2()+` again). More precisely, the altered state persists only until the next time the package is loaded (including via `+load_all()+`). At load time, the environment `+the+` is reset to an environment containing exactly one object, named `+favorite_letters+`, with value ("`a`", "`b`", "`c`"). It’s like the movie Groundhog Day. (We’ll discuss more persistent package- and user-specific data in the next section.)
+Note that this new value for `the$favorite++_++letters` persists only for the remainder of the current R session (or until the user calls `set++_++mfl2()` again). More precisely, the altered state persists only until the next time the package is loaded (including via `load++_++all()`). At load time, the environment `the` is reset to an environment containing exactly one object, named `favorite++_++letters`, with value ("`a`", "`b`", "`c`"). It’s like the movie Groundhog Day. (We’ll discuss more persistent package- and user-specific data in the next section.)
 
-Jim Hester introduced our group to the nifty idea of using "`the`" as the name of an internal package environment. This lets you refer to the objects inside in a very natural way, such as `+the$token+`, meaning "`__the__ token`". It is also important to specify `+parent = emptyenv()+` when defining an internal environment, as you generally don’t want the environment to inherit from any other (nonempty) environment.
+Jim Hester introduced our group to the nifty idea of using "`the`" as the name of an internal package environment. This lets you refer to the objects inside in a very natural way, such as `the$token`, meaning "`_the_ token`". It is also important to specify `parent = emptyenv()` when defining an internal environment, as you generally don’t want the environment to inherit from any other (nonempty) environment.
 
-As seen in the example above, the definition of the environment should happen as a top-level assignment in a file below `+R/+`. (In particular, this is a legitimate reason to define a non-function at the top-level of a package; see <<sec-code-when-executed>> for why this should be rare.) As for where to place this definition, there are two considerations:
+As seen in the example above, the definition of the environment should happen as a top-level assignment in a file below `R/`. (In particular, this is a legitimate reason to define a non-function at the top-level of a package; see <<sec-code-when-executed>> for why this should be rare.) As for where to place this definition, there are two considerations:
 
-* Define it before you use it. If other top-level calls refer to the environment, the definition must come first when the package code is being executed at build time. This is why `+R/aaa.R+` is a common and safe choice.
+* Define it before you use it. If other top-level calls refer to the environment, the definition must come first when the package code is being executed at build time. This is why `R/aaa.R` is a common and safe choice.
 * Make it easy to find later when you’re working on related functionality. If an environment is only used by one family of functions, define it there. If environment usage is sprinkled around the package, define it in a file with package-wide connotations.
 
 Here are some examples of how packages use an internal environment:
@@ -423,12 +423,12 @@ You can’t just write persistent data into the user’s home directory. Here’
 ____
 Packages should not write in the user’s home filespace (including clipboards), nor anywhere else on the file system apart from the R session’s temporary directory ….
 
-For R version 4.0 or later (hence a version dependency is required or only conditional use is possible), packages may store user-specific data, configuration and cache files in their respective user directories obtained from `+tools::R_user_dir()+`, provided that by [sic] default sizes are kept as small as possible and the contents are actively managed (including removing outdated material).
+For R version 4.0 or later (hence a version dependency is required or only conditional use is possible), packages may store user-specific data, configuration and cache files in their respective user directories obtained from `tools::R++_++user++_++dir()`, provided that by ++[++sic++]++ default sizes are kept as small as possible and the contents are actively managed (including removing outdated material).
 ____
 
 ====
 
-The primary function you should use to derive acceptable locations for user data is `+tools::R_user_dir()+`{empty}footnote:[Note that `+tools::R_user_dir()+` first appeared in R 4.0. If you need to support older versions of R, then you should use the https://rappdirs.r-lib.org[rappdirs package], which is a port of the Python appdirs module, and which follows the https://www.tidyverse.org/blog/2019/04/r-version-support/[tidyverse policy regarding R version support], meaning the minimum supported R version is advancing and will eventually slide past R 4.0. rappdirs produces different filepaths than `+tools::R_user_dir()+`. However, both tools implement something that is consistent with the XDG spec, just with different opinions about how to create filepaths beyond what the spec dictates.]. Here are some examples of the generated filepaths:
+The primary function you should use to derive acceptable locations for user data is `tools::R++_++user++_++dir()`{empty}footnote:[Note that `tools::R++_++user++_++dir()` first appeared in R 4.0. If you need to support older versions of R, then you should use the https://rappdirs.r-lib.org[rappdirs package], which is a port of the Python appdirs module, and which follows the https://www.tidyverse.org/blog/2019/04/r-version-support/[tidyverse policy regarding R version support], meaning the minimum supported R version is advancing and will eventually slide past R 4.0. rappdirs produces different filepaths than `tools::R++_++user++_++dir()`. However, both tools implement something that is consistent with the XDG spec, just with different opinions about how to create filepaths beyond what the spec dictates.]. Here are some examples of the generated filepaths:
 
 [source,r,cell-code]
 ----

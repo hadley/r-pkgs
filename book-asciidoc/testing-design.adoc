@@ -4,7 +4,7 @@
 
 [IMPORTANT]
 ====
-Your test files should not include these `+library()+` calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
+Your test files should not include these `library()` calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
 
 [source,r,cell-code]
 ----
@@ -36,8 +36,8 @@ In some technical sense, 100% test coverage is the goal, however, this is rarely
 
 We use covr regularly, in two different ways:
 
-* Local, interactive use. We mostly use `+devtools::test_coverage_active_file()+` and `+devtools::test_coverage()+`, for exploring the coverage of an individual file or the whole package, respectively.
-* Automatic, remote use via GitHub Actions (GHA). We cover continuous integration and GHA more thoroughly in <<sec-sw-dev-practices>>, but we will at least mention here that `+usethis::use_github_action("test-coverage")+` configures a GHA workflow that constantly monitors your test coverage. Test coverage can be an especially helpful metric when evaluating a pull request (either your own or from an external contributor). A proposed change that is well-covered by tests is less risky to merge.
+* Local, interactive use. We mostly use `devtools::test++_++coverage++_++active++_++file()` and `devtools::test++_++coverage()`, for exploring the coverage of an individual file or the whole package, respectively.
+* Automatic, remote use via GitHub Actions (GHA). We cover continuous integration and GHA more thoroughly in <<sec-sw-dev-practices>>, but we will at least mention here that `usethis::use++_++github++_++action("test-coverage")` configures a GHA workflow that constantly monitors your test coverage. Test coverage can be an especially helpful metric when evaluating a pull request (either your own or from an external contributor). A proposed change that is well-covered by tests is less risky to merge.
 
 [[sec-testing-design-principles]]
 == High-level principles for testing
@@ -49,7 +49,7 @@ In later sections, we offer concrete strategies for how to handle common testing
 * It’s more important that test code be obvious than, e.g., as DRY as possible.
 * However, the interactive workflow shouldn’t "`leak`" into and undermine the test suite.
 
-Writing good tests for a code base often feels more challenging than writing the code in the first place. This can come as a bit of a shock when you’re new to package development and you might be concerned that you’re doing it wrong. Don’t worry, you’re not! Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "`main code`", i.e. the stuff below `+R/+`. As a result, it requires more deliberate effort to develop your skills and taste around testing.
+Writing good tests for a code base often feels more challenging than writing the code in the first place. This can come as a bit of a shock when you’re new to package development and you might be concerned that you’re doing it wrong. Don’t worry, you’re not! Testing presents many unique challenges and maneuvers, which tend to get much less air time in programming communities than strategies for writing the "`main code`", i.e. the stuff below `R/`. As a result, it requires more deliberate effort to develop your skills and taste around testing.
 
 Many of the packages maintained by our team violate some of the advice you’ll find here. There are (at least) two reasons for that:
 
@@ -66,25 +66,25 @@ All tests should strive to be hermetic: a test should contain all of the informa
 From the book Software Engineering at Google, https://abseil.io/resources/swe-book/html/ch11.html[Chapter 11]
 ____
 
-Recall this advice found in <<sec-code-r-landscape>>, which covers your package’s "`main code`", i.e. everything below `+R/+`:
+Recall this advice found in <<sec-code-r-landscape>>, which covers your package’s "`main code`", i.e. everything below `R/`:
 
 ____
-The `+.R+` files below `+R/+` should consist almost entirely of function definitions. Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
+The `.R` files below `R/` should consist almost entirely of function definitions. Any other top-level code is suspicious and should be carefully reviewed for possible conversion into a function.
 ____
 
 We have analogous advice for your test files:
 
 ____
-The `+test-*.R+` files below `+tests/testthat/+` should consist almost entirely of calls to `+test_that()+`. Any other top-level code is suspicious and should be carefully considered for relocation into calls to `+test_that()+` or to other files that get special treatment inside an R package or from testthat.
+The `test-++*++.R` files below `tests/testthat/` should consist almost entirely of calls to `test++_++that()`. Any other top-level code is suspicious and should be carefully considered for relocation into calls to `test++_++that()` or to other files that get special treatment inside an R package or from testthat.
 ____
 
-Eliminating (or at least minimizing) top-level code outside of `+test_that()+` will have the beneficial effect of making your tests more hermetic. This is basically the testing analogue of the general programming advice that it’s wise to avoid unstructured sharing of state.
+Eliminating (or at least minimizing) top-level code outside of `test++_++that()` will have the beneficial effect of making your tests more hermetic. This is basically the testing analogue of the general programming advice that it’s wise to avoid unstructured sharing of state.
 
-Logic at the top-level of a test file has an awkward scope: Objects or functions defined here have what you might call "`test file scope`", if the definitions appear before the first call to `+test_that()+`. If top-level code is interleaved between `+test_that()+` calls, you can even create "`partial test file scope`".
+Logic at the top-level of a test file has an awkward scope: Objects or functions defined here have what you might call "`test file scope`", if the definitions appear before the first call to `test++_++that()`. If top-level code is interleaved between `test++_++that()` calls, you can even create "`partial test file scope`".
 
 While writing tests, it can feel convenient to rely on these file-scoped objects, especially early in the life of a test suite, e.g. when each test file fits on one screen. But we find that implicitly relying on objects in a test’s parent environment tends to make a test suite harder to understand and maintain over time.
 
-Consider a test file with top-level code sprinkled around it, outside of `+test_that()+`:
+Consider a test file with top-level code sprinkled around it, outside of `test++_++that()`:
 
 [source,r,cell-code]
 ----
@@ -105,7 +105,7 @@ test_that("foofy2() does that", {
 })
 ----
 
-We recommend relocating file-scoped logic to either a narrower scope or to a broader scope. Here’s what it would look like to use a narrow scope, i.e. to inline everything inside `+test_that()+` calls:
+We recommend relocating file-scoped logic to either a narrower scope or to a broader scope. Here’s what it would look like to use a narrow scope, i.e. to inline everything inside `test++_++that()` calls:
 
 [source,r,cell-code]
 ----
@@ -133,7 +133,7 @@ Below we will discuss techniques for moving file-scoped logic to a broader scope
 [[sec-testing-design-self-contained]]
 === Self-contained tests
 
-Each `+test_that()+` test has its own execution environment, which makes it somewhat self-contained. For example, an R object you create inside a test does not exist after the test exits:
+Each `test++_++that()` test has its own execution environment, which makes it somewhat self-contained. For example, an R object you create inside a test does not exist after the test exits:
 
 [source,r,cell-code]
 ----
@@ -144,19 +144,19 @@ test_that("thingy exists", {
   thingy <- "thingy"
   expect_true(exists(thingy))
 })
-#> Test passed 😀
+#> Test passed 😸
 
 exists("thingy")
 #> [1] FALSE
 ----
 
-The `+thingy+` object lives and dies entirely within the confines of `+test_that()+`. However, testthat doesn’t know how to cleanup after actions that affect other aspects of the R landscape:
+The `thingy` object lives and dies entirely within the confines of `test++_++that()`. However, testthat doesn’t know how to cleanup after actions that affect other aspects of the R landscape:
 
 * The filesystem: creating and deleting files, changing the working directory, etc.
-* The search path: `+library()+`, `+attach()+`.
-* Global options, like `+options()+` and `+par()+`, and environment variables.
+* The search path: `library()`, `attach()`.
+* Global options, like `options()` and `par()`, and environment variables.
 
-Watch how calls like `+library()+`, `+options()+`, and `+Sys.setenv()+` have a persistent effect _after_ a test, even when they are executed inside `+test_that()+`:
+Watch how calls like `library()`, `options()`, and `Sys.setenv()` have a persistent effect _after_ a test, even when they are executed inside `test++_++that()`:
 
 [source,r,cell-code]
 ----
@@ -176,7 +176,7 @@ test_that("landscape changes leak outside the test", {
   expect_equal(getOption("opt_whatever"), "whatever")
   expect_equal(Sys.getenv("envvar_whatever"), "whatever")
 })
-#> Test passed 🥇
+#> Test passed 🎉
 
 grep("jsonlite", search(), value = TRUE)
 #> [1] "package:jsonlite"
@@ -202,16 +202,16 @@ test_that("side-by-side diffs work", {
 })
 ----
 
-This test requires the display width to be set at 20 columns, which is considerably less than the default width. `+withr::local_options(width = 20)+` sets the `+width+` option to 20 and, at the end of the test, restores the option to its original value. withr is also pleasant to use during interactive development: deferred actions are still captured on the global environment and can be executed explicitly via `+withr::deferred_run()+` or implicitly by restarting R.
+This test requires the display width to be set at 20 columns, which is considerably less than the default width. `withr::local++_++options(width = 20)` sets the `width` option to 20 and, at the end of the test, restores the option to its original value. withr is also pleasant to use during interactive development: deferred actions are still captured on the global environment and can be executed explicitly via `withr::deferred++_++run()` or implicitly by restarting R.
 
-We recommend including withr in `+Suggests+`, if you’re only going to use it in your tests, or in `+Imports+`, if you also use it below `+R/+`. Call withr functions as we do above, e.g. like `+withr::local_whatever()+`, in either case. See <<sec-dependencies-imports-vs-depends>> and <<sec-dependencies-in-suggests-in-tests>> for more.
+We recommend including withr in `Suggests`, if you’re only going to use it in your tests, or in `Imports`, if you also use it below `R/`. Call withr functions as we do above, e.g. like `withr::local++_++whatever()`, in either case. See <<sec-dependencies-imports-vs-depends>> and <<sec-dependencies-in-suggests-in-tests>> for more.
 
 [TIP]
 ====
-The easiest way to add a package to DESCRIPTION is with, e.g., `+usethis::use_package("withr", type = "Suggests")+`. For tidyverse packages, withr is considered a "`free dependency`", i.e. the tidyverse uses withr so extensively that we don’t hesitate to use it whenever it would be useful.
+The easiest way to add a package to DESCRIPTION is with, e.g., `usethis::use++_++package("withr", type = "Suggests")`. For tidyverse packages, withr is considered a "`free dependency`", i.e. the tidyverse uses withr so extensively that we don’t hesitate to use it whenever it would be useful.
 ====
 
-withr has a large set of pre-implemented `+local_*()+` / `+with_*()+` functions that should handle most of your testing needs, so check there before you write your own. If nothing exists that meets your need, `+withr::defer()+` is the general way to schedule some action at the end of a test.footnote:[Base R’s `+on.exit()+` is another alternative, but it requires more from you. You need to capture the original state and write the restoration code yourself. Also remember to do `+on.exit(..., add = TRUE)+` if there’s _any_ chance a second `+on.exit()+` call could be added in the test. You probably also want to default to `+after = FALSE+`.]
+withr has a large set of pre-implemented `local++_*++()` / `with++_*++()` functions that should handle most of your testing needs, so check there before you write your own. If nothing exists that meets your need, `withr::defer()` is the general way to schedule some action at the end of a test.footnote:[Base R’s `on.exit()` is another alternative, but it requires more from you. You need to capture the original state and write the restoration code yourself. Also remember to do `on.exit(..., add = TRUE)` if there’s _any_ chance a second `on.exit()` call could be added in the test. You probably also want to default to `after = FALSE`.]
 
 Here’s how we would fix the problems in the previous example using withr: _Behind the scenes, we reversed the landscape changes, so we can try this again._
 
@@ -243,7 +243,7 @@ Sys.getenv("envvar_whatever")
 #> [1] ""
 ----
 
-testthat leans heavily on withr to make test execution environments as reproducible and self-contained as possible. In testthat 3e, `+testthat::local_reproducible_output()+` is implicitly part of each `+test_that()+` test.
+testthat leans heavily on withr to make test execution environments as reproducible and self-contained as possible. In testthat 3e, `testthat::local++_++reproducible++_++output()` is implicitly part of each `test++_++that()` test.
 
 [source,r,cell-code]
 ----
@@ -255,7 +255,7 @@ test_that("something specific happens", {
 })
 ----
 
-`+local_reproducible_output()+` temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses colored output, turns off fancy quotes, sets the console width, and sets `+LC_COLLATE = "C"+`. Usually, you can just passively enjoy the benefits of `+local_reproducible_output()+`. But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.
+`local++_++reproducible++_++output()` temporarily sets various options and environment variables to values favorable for testing, e.g. it suppresses colored output, turns off fancy quotes, sets the console width, and sets `LC++_++COLLATE = "C"`. Usually, you can just passively enjoy the benefits of `local++_++reproducible++_++output()`. But you may want to call it explicitly when replicating test results interactively or if you want to override the default settings in a specific test.
 
 === Plan for test failure
 
@@ -273,7 +273,7 @@ Most of us don’t work on a code base the size of Google. But even in a team of
 
 When we do reverse dependency checks, often involving hundreds or thousands of CRAN packages, we have to inspect test failures to determine if changes in our packages are to blame. As a result, we regularly engage with failing tests in other people’s packages, which leaves us with lots of opinions about practices that create unnecessary testing pain.
 
-Test troubleshooting nirvana looks like this: In a fresh R session, you can do `+devtools::load_all()+` and immediately run an individual test or walk through it line-by-line. There is no need to hunt around for setup code that has to be run manually first, that is found elsewhere in the test file or perhaps in a different file altogether. Test-related code that lives in an unconventional location causes extra self-inflicted pain when you least need it.
+Test troubleshooting nirvana looks like this: In a fresh R session, you can do `devtools::load++_++all()` and immediately run an individual test or walk through it line-by-line. There is no need to hunt around for setup code that has to be run manually first, that is found elsewhere in the test file or perhaps in a different file altogether. Test-related code that lives in an unconventional location causes extra self-inflicted pain when you least need it.
 
 Consider this extreme and abstract example of a test that is difficult to troubleshoot due to implicit dependencies on free-range code:
 
@@ -288,7 +288,7 @@ test_that("f() works", {
 })
 ----
 
-This test is much easier to drop in on if dependencies are invoked in the normal way, i.e. via `+::+`, and test objects are created inline:
+This test is much easier to drop in on if dependencies are invoked in the normal way, i.e. via `::`, and test objects are created inline:
 
 [source,r,cell-code]
 ----
@@ -302,7 +302,7 @@ test_that("f() works", {
 })
 ----
 
-This test is self-sufficient. The code inside `+{ ... }+` explicitly creates any necessary objects or conditions and makes explicit calls to any helper functions. This test doesn’t rely on objects or dependencies that happen to be ambiently available.
+This test is self-sufficient. The code inside `++{++ ... }` explicitly creates any necessary objects or conditions and makes explicit calls to any helper functions. This test doesn’t rely on objects or dependencies that happen to be ambiently available.
 
 Self-sufficient, self-contained tests are a win-win: It is literally safer to design tests this way and it also makes tests much easier for humans to troubleshoot later.
 
@@ -324,16 +324,16 @@ test_that("multiplication works", {
   useful_thing <- 3
   expect_equal(2 * useful_thing, 6)
 })
-#> Test passed 🎉
+#> Test passed 🥇
 
 test_that("subtraction works", {
   useful_thing <- 3
   expect_equal(5 - useful_thing, 2)
 })
-#> Test passed 🎉
+#> Test passed 🌈
 ----
 
-In real life, `+useful_thing+` is usually a more complicated object that somehow feels burdensome to instantiate. Notice how `+useful_thing <- 3+` appears in more than one place. Conventional wisdom says we should DRY this code out. It’s tempting to just move `+useful_thing+`’s definition outside of the tests:
+In real life, `useful++_++thing` is usually a more complicated object that somehow feels burdensome to instantiate. Notice how `useful++_++thing ++<++- 3` appears in more than one place. Conventional wisdom says we should DRY this code out. It’s tempting to just move `useful++_++thing`’s definition outside of the tests:
 
 [source,r,cell-code]
 ----
@@ -342,12 +342,12 @@ useful_thing <- 3
 test_that("multiplication works", {
   expect_equal(2 * useful_thing, 6)
 })
-#> Test passed 🌈
+#> Test passed 🎊
 
 test_that("subtraction works", {
   expect_equal(5 - useful_thing, 2)
 })
-#> Test passed 😀
+#> Test passed 🥇
 ----
 
 But we really do think the first form, with the repetition, is often the better choice.
@@ -364,36 +364,36 @@ Your test code will be executed in two different settings:
 ** Modifying tests to adapt to change
 ** Debugging test failure
 * Automated test runs, which is accomplished with functions such as:
-** Single file: `+devtools::test_active_file()+`, `+testthat::test_file()+`
-** Whole package: `+devtools::test()+`, `+devtools::check()+`
+** Single file: `devtools::test++_++active++_++file()`, `testthat::test++_++file()`
+** Whole package: `devtools::test()`, `devtools::check()`
 
 Automated testing of your whole package is what takes priority. This is ultimately the whole point of your tests. However, the interactive experience is clearly important for the humans doing this work. Therefore it’s important to find a pleasant workflow, but also to ensure that you don’t rig anything for interactive convenience that actually compromises the health of the test suite.
 
-These two modes of test-running should not be in conflict with each other. If you perceive tension between these two modes, this can indicate that you’re not taking full advantage of some of testthat’s features and the way it’s designed to work with `+devtools::load_all()+`.
+These two modes of test-running should not be in conflict with each other. If you perceive tension between these two modes, this can indicate that you’re not taking full advantage of some of testthat’s features and the way it’s designed to work with `devtools::load++_++all()`.
 
-When working on your tests, use `+load_all()+`, just like you do when working below `+R/+`. By default, `+load_all()+` does all of these things:
+When working on your tests, use `load++_++all()`, just like you do when working below `R/`. By default, `load++_++all()` does all of these things:
 
 * Simulates re-building, re-installing, and re-loading your package.
 * Makes everything in your package’s namespace available, including unexported functions and objects and anything you’ve imported from another package.
-* Attaches testthat, i.e. does `+library(testthat)+`.
-* Runs test helper files, i.e. executes `+test/testthat/helper.R+` (more on that below).
+* Attaches testthat, i.e. does `library(testthat)`.
+* Runs test helper files, i.e. executes `test/testthat/helper.R` (more on that below).
 
-This eliminates the need for any `+library()+` calls below `+tests/testthat/+`, for the vast majority of R packages. Any instance of `+library(testthat)+` is clearly no longer necessary. Likewise, any instance of attaching one of your dependencies via `+library(somePkg)+` is unnecessary. In your tests, if you need to call functions from somePkg, do it just as you do below `+R/+`. If you have imported the function into your namespace, use `+fun()+`. If you have not, use `+somePkg::fun()+`. It’s fair to say that `+library(somePkg)+` in the tests should be about as rare as taking a dependency via `+Depends+`, i.e. there is almost always a better alternative.
+This eliminates the need for any `library()` calls below `tests/testthat/`, for the vast majority of R packages. Any instance of `library(testthat)` is clearly no longer necessary. Likewise, any instance of attaching one of your dependencies via `library(somePkg)` is unnecessary. In your tests, if you need to call functions from somePkg, do it just as you do below `R/`. If you have imported the function into your namespace, use `fun()`. If you have not, use `somePkg::fun()`. It’s fair to say that `library(somePkg)` in the tests should be about as rare as taking a dependency via `Depends`, i.e. there is almost always a better alternative.
 
-Unnecessary calls to `+library(somePkg)+` in test files have a real downside, because they actually change the R landscape. `+library()+` alters the search path. This means the circumstances under which you are testing may not necessarily reflect the circumstances under which your package will be used. This makes it easier to create subtle test bugs, which you will have to unravel in the future.
+Unnecessary calls to `library(somePkg)` in test files have a real downside, because they actually change the R landscape. `library()` alters the search path. This means the circumstances under which you are testing may not necessarily reflect the circumstances under which your package will be used. This makes it easier to create subtle test bugs, which you will have to unravel in the future.
 
-One other function that should almost never appear below `+tests/testhat/+` is `+source()+`. There are several special files with an official role in testthat workflows (see below), not to mention the entire R package machinery, that provide better ways to make functions, objects, and other logic available in your tests.
+One other function that should almost never appear below `tests/testhat/` is `source()`. There are several special files with an official role in testthat workflows (see below), not to mention the entire R package machinery, that provide better ways to make functions, objects, and other logic available in your tests.
 
 [[sec-tests-files-overview]]
 == Files relevant to testing
 
 Here we review which package files are especially relevant to testing and, more generally, best practices for interacting with the file system from your tests.
 
-=== Hiding in plain sight: files below `+R/+`
+=== Hiding in plain sight: files below `R/`
 
-The most important functions you’ll need to access from your tests are clearly those in your package! Here we’re talking about everything that’s defined below `+R/+`. The functions and other objects defined by your package are always available when testing, regardless of whether they are exported or not. For interactive work, `+devtools::load_all()+` takes care of this. During automated testing, this is taken care of internally by testthat.
+The most important functions you’ll need to access from your tests are clearly those in your package! Here we’re talking about everything that’s defined below `R/`. The functions and other objects defined by your package are always available when testing, regardless of whether they are exported or not. For interactive work, `devtools::load++_++all()` takes care of this. During automated testing, this is taken care of internally by testthat.
 
-This implies that test helpers can absolutely be defined below `+R/+` and used freely in your tests. It might make sense to gather such helpers in a clearly marked file, such as one of these:
+This implies that test helpers can absolutely be defined below `R/` and used freely in your tests. It might make sense to gather such helpers in a clearly marked file, such as one of these:
 
 ....
 .                              
@@ -407,7 +407,7 @@ This implies that test helpers can absolutely be defined below `+R/+` and used f
     └── ...
 ....
 
-For example, the dbplyr package uses https://github.com/tidyverse/dbplyr/blob/e8bfa760a465cd7d8fa45cc53d4435ee1fbd2361/R/testthat.R[`+R/testthat.R+`] to define a couple of helpers to facilitate comparisons and expectations involving `+tbl+` objects, which is used to represent database tables.
+For example, the dbplyr package uses https://github.com/tidyverse/dbplyr/blob/e8bfa760a465cd7d8fa45cc53d4435ee1fbd2361/R/testthat.R[`R/testthat.R`] to define a couple of helpers to facilitate comparisons and expectations involving `tbl` objects, which is used to represent database tables.
 
 [source,r,cell-code]
 ----
@@ -435,9 +435,9 @@ expect_equal_tbls <- function(results, ref = NULL, ...) {
 }
 ----
 
-=== `+tests/testthat.R+`
+=== `tests/testthat.R`
 
-Recall the initial testthat setup described in <<sec-tests-mechanics-workflow>>: The standard `+tests/testthat.R+` file looks like this:
+Recall the initial testthat setup described in <<sec-tests-mechanics-workflow>>: The standard `tests/testthat.R` file looks like this:
 
 [source,r,cell-code]
 ----
@@ -447,13 +447,13 @@ library(pkg)
 test_check("pkg")
 ----
 
-We repeat the advice to not edit `+tests/testthat.R+`. It is run during `+R CMD check+` (and, therefore, `+devtools::check()+`), but is not used in most other test-running scenarios (such as `+devtools::test()+` or `+devtools::test_active_file()+` or during interactive development). Do not attach your dependencies here with `+library()+`. Call them in your tests in the same manner as you do below `+R/+` (<<sec-dependencies-in-imports-in-tests>>, <<sec-dependencies-in-suggests-in-tests>>).
+We repeat the advice to not edit `tests/testthat.R`. It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in most other test-running scenarios (such as `devtools::test()` or `devtools::test++_++active++_++file()` or during interactive development). Do not attach your dependencies here with `library()`. Call them in your tests in the same manner as you do below `R/` (<<sec-dependencies-in-imports-in-tests>>, <<sec-dependencies-in-suggests-in-tests>>).
 
 === Testthat helper files
 
-Another type of file that is always executed by `+load_all()+` and at the beginning of automated testing is a helper file, defined as any file below `+tests/testthat/+` that begins with `+helper+`. Helper files are a mighty weapon in the battle to eliminate code floating around at the top-level of test files. Helper files are a prime example of what we mean when we recommend moving such code into a broader scope. Objects or functions defined in a helper file are available to all of your tests.
+Another type of file that is always executed by `load++_++all()` and at the beginning of automated testing is a helper file, defined as any file below `tests/testthat/` that begins with `helper`. Helper files are a mighty weapon in the battle to eliminate code floating around at the top-level of test files. Helper files are a prime example of what we mean when we recommend moving such code into a broader scope. Objects or functions defined in a helper file are available to all of your tests.
 
-If you have just one such file, you should probably name it `+helper.R+`. If you organize your helpers into multiple files, you could include a suffix with additional info. Here are examples of how such files might look:
+If you have just one such file, you should probably name it `helper.R`. If you organize your helpers into multiple files, you could include a suffix with additional info. Here are examples of how such files might look:
 
 ....
 .                              
@@ -468,7 +468,7 @@ If you have just one such file, you should probably name it `+helper.R+`. If you
     └── testthat.R
 ....
 
-Many developers use helper files to define custom test helper functions, which we describe in detail in <<sec-testing-advanced>>. Compared to defining helpers below `+R/+`, some people find that `+tests/testthat/helper.R+` makes it more clear that these utilities are specifically for testing the package. This location also feels more natural if your helpers rely on testthat functions. For example, https://github.com/r-lib/usethis/blob/main/tests/testthat/helper.R[usethis] and https://github.com/tidyverse/vroom/blob/main/tests/testthat/helper.R[vroom] both have fairly extensive `+tests/testthat/helper.R+` files that define many custom test helpers. Here are two very simple usethis helpers that check that the currently active project (usually an ephemeral test project) has a specific file or folder:
+Many developers use helper files to define custom test helper functions, which we describe in detail in <<sec-testing-advanced>>. Compared to defining helpers below `R/`, some people find that `tests/testthat/helper.R` makes it more clear that these utilities are specifically for testing the package. This location also feels more natural if your helpers rely on testthat functions. For example, https://github.com/r-lib/usethis/blob/main/tests/testthat/helper.R[usethis] and https://github.com/tidyverse/vroom/blob/main/tests/testthat/helper.R[vroom] both have fairly extensive `tests/testthat/helper.R` files that define many custom test helpers. Here are two very simple usethis helpers that check that the currently active project (usually an ephemeral test project) has a specific file or folder:
 
 [source,r,cell-code]
 ----
@@ -476,11 +476,11 @@ expect_proj_file <- function(...) expect_true(file_exists(proj_path(...)))
 expect_proj_dir <- function(...) expect_true(dir_exists(proj_path(...)))
 ----
 
-A helper file is also a good location for setup code that is needed for its side effects. This is a case where `+tests/testthat/helper.R+` is clearly more appropriate than a file below `+R/+`. For example, in an API-wrapping package, `+helper.R+` is a good place to (attempt to) authenticate with the testing credentialsfootnote:[googledrive does this in https://github.com/tidyverse/googledrive/blob/906680f84b2cec2e4553978c9711be8d42ba33f7/tests/testthat/helper.R#L1-L10.].
+A helper file is also a good location for setup code that is needed for its side effects. This is a case where `tests/testthat/helper.R` is clearly more appropriate than a file below `R/`. For example, in an API-wrapping package, `helper.R` is a good place to (attempt to) authenticate with the testing credentialsfootnote:[googledrive does this in https://github.com/tidyverse/googledrive/blob/906680f84b2cec2e4553978c9711be8d42ba33f7/tests/testthat/helper.R#L1-L10.].
 
 === Testthat setup files
 
-Testthat has one more special file type: setup files, defined as any file below `+test/testthat/+` that begins with `+setup+`. Here’s an example of how that might look:
+Testthat has one more special file type: setup files, defined as any file below `test/testthat/` that begins with `setup`. Here’s an example of how that might look:
 
 ....
 .                              
@@ -496,14 +496,14 @@ Testthat has one more special file type: setup files, defined as any file below 
 
 A setup file is handled almost exactly like a helper file, but with two big differences:
 
-* Setup files are not executed by `+devtools::load_all()+`.
+* Setup files are not executed by `devtools::load++_++all()`.
 * Setup files often contain the corresponding teardown code.
 
 Setup files are good for global test setup that is tailored for test execution in non-interactive or remote environments. For example, you might turn off behaviour that’s aimed at an interactive user, such as messaging or writing to the clipboard.
 
-If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `+setup.R+`{empty}footnote:[A legacy approach (which still works, but is no longer recommended) is to put teardown code in `+tests/testthat/teardown.R+`.]. We recommend maintaining teardown code alongside the setup code, in `+setup.R+`, because this makes it easier to ensure they stay in sync. The artificial environment `+teardown_env()+` exists as a magical handle to use in `+withr::defer()+` and `+withr::local_*()+` / `+withr::with_*()+`.
+If any of your setup should be reversed after test execution, you should also include the necessary teardown code in `setup.R`{empty}footnote:[A legacy approach (which still works, but is no longer recommended) is to put teardown code in `tests/testthat/teardown.R`.]. We recommend maintaining teardown code alongside the setup code, in `setup.R`, because this makes it easier to ensure they stay in sync. The artificial environment `teardown++_++env()` exists as a magical handle to use in `withr::defer()` and `withr::local++_*++()` / `withr::with++_*++()`.
 
-Here’s a `+setup.R+` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
+Here’s a `setup.R` example from the reprex package, where we turn off clipboard and HTML preview functionality during testing:
 
 [source,r,cell-code]
 ----
@@ -512,7 +512,7 @@ op <- options(reprex.clipboard = FALSE, reprex.html_preview = FALSE)
 withr::defer(options(op), teardown_env())
 ----
 
-Since we are just modifying options here, we can be even more concise and use the pre-built function `+withr::local_options()+` and pass `+teardown_env()+` as the `+.local_envir+`:
+Since we are just modifying options here, we can be even more concise and use the pre-built function `withr::local++_++options()` and pass `teardown++_++env()` as the `.local++_++envir`:
 
 [source,r,cell-code]
 ----
@@ -526,17 +526,17 @@ withr::local_options(
 
 testthat only automatically executes files where these are both true:
 
-* File is a direct child of `+tests/testthat/+`
+* File is a direct child of `tests/testthat/`
 * File name starts with one of the specific strings:
-** `+helper+`
-** `+setup+`
-** `+test+`
+** `helper`
+** `setup`
+** `test`
 
-It is fine to have other files or directories in `+tests/testthat/+`, but testthat won’t automatically do anything with them (other than the `+_snaps+` directory, which holds snapshots).
+It is fine to have other files or directories in `tests/testthat/`, but testthat won’t automatically do anything with them (other than the `++_++snaps` directory, which holds snapshots).
 
 === Storing test data
 
-Many packages contain files that hold test data. Where should these be stored? The best location is somewhere below `+tests/testthat/+`, often in a subdirectory, to keep things neat. Below is an example, where `+useful_thing1.rds+` and `+useful_thing2.rds+` hold objects used in the test files.
+Many packages contain files that hold test data. Where should these be stored? The best location is somewhere below `tests/testthat/`, often in a subdirectory, to keep things neat. Below is an example, where `useful++_++thing1.rds` and `useful++_++thing2.rds` hold objects used in the test files.
 
 ....
 .
@@ -553,7 +553,7 @@ Many packages contain files that hold test data. Where should these be stored? T
     └── testthat.R
 ....
 
-Then, in your tests, use `+testthat::test_path()+` to build a robust filepath to such files.
+Then, in your tests, use `testthat::test++_++path()` to build a robust filepath to such files.
 
 [source,r,cell-code]
 ----
@@ -563,17 +563,17 @@ test_that("foofy() does this", {
 })
 ----
 
-`+testthat::test_path()+` is extremely handy, because it produces the correct path in the two important modes of test execution:
+`testthat::test++_++path()` is extremely handy, because it produces the correct path in the two important modes of test execution:
 
 * Interactive test development and maintenance, where working directory is presumably set to the top-level of the package.
-* Automated testing, where working directory is usually set to something below `+tests/+`.
+* Automated testing, where working directory is usually set to something below `tests/`.
 
 [[sec-tests-files-where-write]]
 === Where to write files during testing
 
 If it’s easy to avoid writing files from your tests, that is definitely the best plan. But there are many times when you really must write files.
 
-*You should only write files inside the session temp directory.* Do not write into your package’s `+tests/+` directory. Do not write into the current working directory. Do not write into the user’s home directory. Even though you are writing into the session temp directory, you should still clean up after yourself, i.e. delete any files you’ve written.
+*You should only write files inside the session temp directory.* Do not write into your package’s `tests/` directory. Do not write into the current working directory. Do not write into the user’s home directory. Even though you are writing into the session temp directory, you should still clean up after yourself, i.e. delete any files you’ve written.
 
 Most package developers don’t want to hear this, because it sounds like a hassle. But it’s not that burdensome once you get familiar with a few techniques and build some new habits. A high level of file system discipline also eliminates various testing bugs and will absolutely make your CRAN life run more smoothly.
 
@@ -590,6 +590,6 @@ test_that("can read from file name with utf-8 path", {
 })
 ----
 
-`+withr::local_tempfile()+` creates a file within the session temp directory whose lifetime is tied to the "`local`" environment – in this case, the execution environment of an individual test. It is a wrapper around `+base::tempfile()+` and passes, e.g., the `+pattern+` argument through, so you have some control over the file name. You can optionally provide `+lines+` to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps. Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.
+`withr::local++_++tempfile()` creates a file within the session temp directory whose lifetime is tied to the "`local`" environment – in this case, the execution environment of an individual test. It is a wrapper around `base::tempfile()` and passes, e.g., the `pattern` argument through, so you have some control over the file name. You can optionally provide `lines` to populate the file with at creation time or you can write to the file in all the usual ways in subsequent steps. Finally, with no special effort on your part, the temporary file will automatically be deleted at the end of the test.
 
-Sometimes you need even more control over the file name. In that case, you can use `+withr::local_tempdir()+` to create a self-deleting temporary directory and write intentionally-named files inside this directory.
+Sometimes you need even more control over the file name. In that case, you can use `withr::local++_++tempdir()` to create a self-deleting temporary directory and write intentionally-named files inside this directory.

@@ -8,7 +8,7 @@ The first stage of your testing journey is to become convinced that testing has 
 
 Once you’ve decided to embrace automated testing, it’s time to learn some mechanics and figure out where testing fits into your development workflow.
 
-As you and your R packages evolve, you’ll start to encounter testing situations where it’s fruitful to use techniques that are somewhat specific to testing and differ from what we do below `+R/+`.
+As you and your R packages evolve, you’ll start to encounter testing situations where it’s fruitful to use techniques that are somewhat specific to testing and differ from what we do below `R/`.
 
 == Why is formal testing worth the trouble?
 
@@ -16,7 +16,7 @@ Up until now, your workflow probably looks like this:
 
 [arabic]
 . Write a function.
-. Load it with `+devtools::load_all()+`, maybe via Ctrl/Cmd + Shift + L.
+. Load it with `devtools::load++_++all()`, maybe via Ctrl/Cmd {plus} Shift {plus} L.
 . Experiment with it in the console to see if it works.
 . Rinse and repeat.
 
@@ -41,7 +41,7 @@ This chapter describes how to test your R package using the testthat package: ht
 
 If you’re familiar with frameworks for unit testing in other languages, you should note that there are some fundamental differences with testthat. This is because R is, at heart, more a functional programming language than an object-oriented programming language. For instance, because R’s main object-oriented systems (S3 and S4) are based on generic functions (i.e., a method implements a generic function for a specific class), testing approaches built around objects and methods don’t make much sense.
 
-testthat 3.0.0 (released 2020-10-31) introduced the idea of an *edition* of testthat, specifically the third edition of testthat, which we refer to as testthat 3e. An edition is a bundle of behaviors that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes. This is particularly important for testthat since it has a very large number of packages that use it (almost 5,000 at last count). To use testthat 3e, you must have a version of testthat >= 3.0.0 *and* explicitly opt-in to the third edition behaviors. This allows testthat to continue to evolve and improve without breaking historical packages that are in a rather passive maintenance phase. You can learn more in the https://testthat.r-lib.org/articles/third-edition.html[testthat 3e article] and the blog post https://www.tidyverse.org/blog/2022/02/upkeep-testthat-3/[Upgrading to testthat edition 3].
+testthat 3.0.0 (released 2020-10-31) introduced the idea of an *edition* of testthat, specifically the third edition of testthat, which we refer to as testthat 3e. An edition is a bundle of behaviors that you have to explicitly choose to use, allowing us to make otherwise backward incompatible changes. This is particularly important for testthat since it has a very large number of packages that use it (almost 5,000 at last count). To use testthat 3e, you must have a version of testthat ++>++= 3.0.0 *and* explicitly opt-in to the third edition behaviors. This allows testthat to continue to evolve and improve without breaking historical packages that are in a rather passive maintenance phase. You can learn more in the https://testthat.r-lib.org/articles/third-edition.html[testthat 3e article] and the blog post https://www.tidyverse.org/blog/2022/02/upkeep-testthat-3/[Upgrading to testthat edition 3].
 
 We recommend testthat 3e for all new packages and we recommend updating existing, actively maintained packages to use testthat 3e. Unless we say otherwise, this chapter describes testthat 3e.
 
@@ -60,14 +60,14 @@ usethis::use_testthat(3)
 This will:
 
 [arabic]
-. Create a `+tests/testthat/+` directory.
-. Add testthat to the `+Suggests+` field in the `+DESCRIPTION+` and specify testthat 3e in the `+Config/testthat/edition+` field. The affected `+DESCRIPTION+` fields might look like:
+. Create a `tests/testthat/` directory.
+. Add testthat to the `Suggests` field in the `DESCRIPTION` and specify testthat 3e in the `Config/testthat/edition` field. The affected `DESCRIPTION` fields might look like:
 +
 ....
 Suggests: testthat (>= 3.0.0)
 Config/testthat/edition: 3
 ....
-. Create a file `+tests/testthat.R+` that runs all your tests when `+R CMD check+` runs (<<sec-workflow101-r-cmd-check>>). For a package named "`pkg`", the contents of this file will be something like:
+. Create a file `tests/testthat.R` that runs all your tests when `R CMD check` runs (<<sec-workflow101-r-cmd-check>>). For a package named "`pkg`", the contents of this file will be something like:
 +
 [source,r,cell-code]
 ----
@@ -77,13 +77,13 @@ library(pkg)
 test_check("pkg")
 ----
 
-This initial setup is usually something you do once per package. However, even in a package that already uses testthat, it is safe to run `+use_testthat(3)+`, when you’re ready to opt-in to testthat 3e.
+This initial setup is usually something you do once per package. However, even in a package that already uses testthat, it is safe to run `use++_++testthat(3)`, when you’re ready to opt-in to testthat 3e.
 
-Do not edit `+tests/testthat.R+`! It is run during `+R CMD check+` (and, therefore, `+devtools::check()+`), but is not used in most other test-running scenarios (such as `+devtools::test()+` or `+devtools::test_active_file()+`). If you want to do something that affects all of your tests, there is almost always a better way than modifying the boilerplate `+tests/testthat.R+` script. This chapter details many different ways to make objects and logic available during testing.
+Do not edit `tests/testthat.R`! It is run during `R CMD check` (and, therefore, `devtools::check()`), but is not used in most other test-running scenarios (such as `devtools::test()` or `devtools::test++_++active++_++file()`). If you want to do something that affects all of your tests, there is almost always a better way than modifying the boilerplate `tests/testthat.R` script. This chapter details many different ways to make objects and logic available during testing.
 
 === Create a test
 
-As you define functions in your package, in the files below `+R/+`, you add the corresponding tests to `+.R+` files in `+tests/testthat/+`. We strongly recommend that the organisation of test files match the organisation of `+R/+` files, discussed in <<sec-code-organising>>: The `+foofy()+` function (and its friends and helpers) should be defined in `+R/foofy.R+` and their tests should live in `+tests/testthat/test-foofy.R+`.
+As you define functions in your package, in the files below `R/`, you add the corresponding tests to `.R` files in `tests/testthat/`. We strongly recommend that the organisation of test files match the organisation of `R/` files, discussed in <<sec-code-organising>>: The `foofy()` function (and its friends and helpers) should be defined in `R/foofy.R` and their tests should live in `tests/testthat/test-foofy.R`.
 
 ....
 R                                     tests/testthat
@@ -92,12 +92,12 @@ R                                     tests/testthat
                                           test_that("foofy does that", {...})
 ....
 
-Even if you have different conventions for file organisation and naming, note that testthat tests *must* live in files below `+tests/testthat/+` and these file names *must* begin with `+test+`. The test file name is displayed in testthat output, which provides helpful contextfootnote:[The legacy function `+testthat::context()+` is superseded now and its use in new or actively maintained code is discouraged. In testthat 3e, `+context()+` is formally deprecated; you should just remove it. Once you adopt an intentional, synchronized approach to the organisation of files below `+R/+` and `+tests/testthat/+`, the necessary contextual information is right there in the file name, rendering the legacy `+context()+` superfluous.].
+Even if you have different conventions for file organisation and naming, note that testthat tests *must* live in files below `tests/testthat/` and these file names *must* begin with `test`. The test file name is displayed in testthat output, which provides helpful contextfootnote:[The legacy function `testthat::context()` is superseded now and its use in new or actively maintained code is discouraged. In testthat 3e, `context()` is formally deprecated; you should just remove it. Once you adopt an intentional, synchronized approach to the organisation of files below `R/` and `tests/testthat/`, the necessary contextual information is right there in the file name, rendering the legacy `context()` superfluous.].
 
 usethis offers a helpful pair of functions for creating or toggling between files:
 
-* `+usethis::use_r()+`
-* `+usethis::use_test()+`
+* `usethis::use++_++r()`
+* `usethis::use++_++test()`
 
 Either one can be called with a file (base) name, in order to create a file _de novo_ and open it for editing:
 
@@ -107,22 +107,22 @@ use_r("foofy")    # creates and opens R/foofy.R
 use_test("blarg") # creates and opens tests/testthat/test-blarg.R
 ----
 
-The `+use_r()+` / `+use_test()+` duo has some convenience features that make them "`just work`" in many common situations:
+The `use++_++r()` / `use++_++test()` duo has some convenience features that make them "`just work`" in many common situations:
 
-* When determining the target file, they can deal with the presence or absence of the `+.R+` extension and the `+test-+` prefix.
-** Equivalent: `+use_r("foofy.R")+`, `+use_r("foofy")+`
-** Equivalent: `+use_test("test-blarg.R")+`, `+use_test("blarg.R")+`, `+use_test("blarg")+`
+* When determining the target file, they can deal with the presence or absence of the `.R` extension and the `test-` prefix.
+** Equivalent: `use++_++r("foofy.R")`, `use++_++r("foofy")`
+** Equivalent: `use++_++test("test-blarg.R")`, `use++_++test("blarg.R")`, `use++_++test("blarg")`
 * If the target file already exists, it is opened for editing. Otherwise, the target is created and then opened for editing.
 
 [TIP]
 .RStudio
 ====
-If `+R/foofy.R+` is the active file in your source editor, you can even call `+use_test()+` with no arguments! The target test file can be inferred: if you’re editing `+R/foofy.R+`, you probably want to work on the companion test file, `+tests/testthat/test-foofy.R+`. If it doesn’t exist yet, it is created and, either way, the test file is opened for editing. This all works the other way around also. If you’re editing `+tests/testthat/test-foofy.R+`, a call to `+use_r()+` (optionally, creates and) opens `+R/foofy.R+`.
+If `R/foofy.R` is the active file in your source editor, you can even call `use++_++test()` with no arguments! The target test file can be inferred: if you’re editing `R/foofy.R`, you probably want to work on the companion test file, `tests/testthat/test-foofy.R`. If it doesn’t exist yet, it is created and, either way, the test file is opened for editing. This all works the other way around also. If you’re editing `tests/testthat/test-foofy.R`, a call to `use++_++r()` (optionally, creates and) opens `R/foofy.R`.
 ====
 
-Bottom line: `+use_r()+` / `+use_test()+` are handy for initially creating these file pairs and, later, for shifting your attention from one to the other.
+Bottom line: `use++_++r()` / `use++_++test()` are handy for initially creating these file pairs and, later, for shifting your attention from one to the other.
 
-When `+use_test()+` creates a new test file, it inserts an example test:
+When `use++_++test()` creates a new test file, it inserts an example test:
 
 [source,r,cell-code]
 ----
@@ -133,9 +133,9 @@ test_that("multiplication works", {
 
 You will replace this with your own description and logic, but it’s a nice reminder of the basic form:
 
-* A test file holds one or more `+test_that()+` tests.
+* A test file holds one or more `test++_++that()` tests.
 * Each test describes what it’s testing: e.g. "`multiplication works`".
-* Each test has one or more expectations: e.g. `+expect_equal(2 * 2, 4)+`.
+* Each test has one or more expectations: e.g. `expect++_++equal(2 ++*++ 2, 4)`.
 
 Below we go into much more detail about how to test your own functions.
 
@@ -143,7 +143,7 @@ Below we go into much more detail about how to test your own functions.
 
 Depending on where you are in the development cycle, you’ll run your tests at various scales. When you are rapidly iterating on a function, you might work at the level of individual tests. As the code settles down, you’ll run entire test files and eventually the entire test suite.
 
-*Micro-iteration*: This is the interactive phase where you initiate and refine a function and its tests in tandem. Here you will run `+devtools::load_all()+` often, and then execute individual expectations or whole tests interactively in the console. Note that `+load_all()+` attaches testthat, so it puts you in the perfect position to test drive your functions and to execute individual tests and expectations.
+*Micro-iteration*: This is the interactive phase where you initiate and refine a function and its tests in tandem. Here you will run `devtools::load++_++all()` often, and then execute individual expectations or whole tests interactively in the console. Note that `load++_++all()` attaches testthat, so it puts you in the perfect position to test drive your functions and to execute individual tests and expectations.
 
 [source,r,cell-code]
 ----
@@ -156,7 +156,7 @@ expect_equal(foofy(...), EXPECTED_FOOFY_OUTPUT)
 test_that("foofy does good things", {...})
 ----
 
-*Mezzo-iteration*: As one file’s-worth of functions and their associated tests start to shape up, you will want to execute the entire file of associated tests, perhaps with `+testthat::test_file()+`:
+*Mezzo-iteration*: As one file’s-worth of functions and their associated tests start to shape up, you will want to execute the entire file of associated tests, perhaps with `testthat::test++_++file()`:
 
 [source,r,cell-code]
 ----
@@ -170,20 +170,20 @@ In RStudio, you have a couple shortcuts for running a single test file.
 
 If the target test file is the active file, you can use the "`Run Tests`" button in the upper right corner of the source editor.
 
-There is also a useful function, `+devtools::test_active_file()+`. It infers the target test file from the active file and, similar to how `+use_r()+` and `+use_test()+` work, it works regardless of whether the active file is a test file or a companion `+R/*.R+` file. You can invoke this via "`Run a test file`" in the Addins menu. However, for heavy users (like us!), we recommend https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE[binding this to a keyboard shortcut]; we use Ctrl/Cmd + T.
+There is also a useful function, `devtools::test++_++active++_++file()`. It infers the target test file from the active file and, similar to how `use++_++r()` and `use++_++test()` work, it works regardless of whether the active file is a test file or a companion `R/++*++.R` file. You can invoke this via "`Run a test file`" in the Addins menu. However, for heavy users (like us!), we recommend https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE[binding this to a keyboard shortcut]; we use Ctrl/Cmd {plus} T.
 
 ====
 
 *Macro-iteration*: As you near the completion of a new feature or bug fix, you will want to run the entire test suite.
 
-Most frequently, you’ll do this with `+devtools::test()+`:
+Most frequently, you’ll do this with `devtools::test()`:
 
 [source,r,cell-code]
 ----
 devtools::test()
 ----
 
-Then eventually, as part of `+R CMD check+` with `+devtools::check()+`:
+Then eventually, as part of `R CMD check` with `devtools::check()`:
 
 [source,r,cell-code]
 ----
@@ -193,10 +193,10 @@ devtools::check()
 [TIP]
 .RStudio
 ====
-`+devtools::test()+` is mapped to Ctrl/Cmd + Shift + T. `+devtools::check()+` is mapped to Ctrl/Cmd + Shift + E.
+`devtools::test()` is mapped to Ctrl/Cmd {plus} Shift {plus} T. `devtools::check()` is mapped to Ctrl/Cmd {plus} Shift {plus} E.
 ====
 
-The output of `+devtools::test()+` looks like this:
+The output of `devtools::test()` looks like this:
 
 ....
 devtools::test()
@@ -229,22 +229,22 @@ res$Version (`actual`) not equal to "0.0.0.9000" (`expected`).
 `expected`: "0.0.0.9000"
 ....
 
-Each failure gives a description of the test (e.g., "`get_release_data() works if no file found`"), its location (e.g., "`test-release.R:108:3`"), and the reason for the failure (e.g., "`res$Version (`+actual+`) not equal to`"0.0.0.9000” (`+expected+`)“).
+Each failure gives a description of the test (e.g., "`get++_++release++_++data() works if no file found`"), its location (e.g., "`test-release.R:108:3`"), and the reason for the failure (e.g., "`res$Version (`actual`) not equal to`"0.0.0.9000” (`expected`)“).
 
-The idea is that you’ll modify your code (either the functions defined below `+R/+` or the tests in `+tests/testthat/+`) until all tests are passing.
+The idea is that you’ll modify your code (either the functions defined below `R/` or the tests in `tests/testthat/`) until all tests are passing.
 
 == Test organisation
 
-A test file lives in `+tests/testthat/+`. Its name must start with `+test+`. We will inspect and execute a test file from the stringr package.
+A test file lives in `tests/testthat/`. Its name must start with `test`. We will inspect and execute a test file from the stringr package.
 
 But first, for the purposes of rendering this book, we must attach stringr and testthat. Note that in real-life test-running situations, this is taken care of by your package development tooling:
 
-* During interactive development, `+devtools::load_all()+` makes testthat and the package-under-development available (both its exported and unexported functions).
-* During arms-length test execution, this is taken care of by `+devtools::test_active_file()+`, `+devtools::test()+`, and `+tests/testthat.R+`.
+* During interactive development, `devtools::load++_++all()` makes testthat and the package-under-development available (both its exported and unexported functions).
+* During arms-length test execution, this is taken care of by `devtools::test++_++active++_++file()`, `devtools::test()`, and `tests/testthat.R`.
 
 [IMPORTANT]
 ====
-Your test files should not include these `+library()+` calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
+Your test files should not include these `library()` calls. We also explicitly request testthat edition 3, but in a real package this will be declared in DESCRIPTION.
 
 [source,r,cell-code]
 ----
@@ -255,7 +255,7 @@ local_edition(3)
 
 ====
 
-Here are the contents of `+tests/testthat/test-dup.r+` from stringr:
+Here are the contents of `tests/testthat/test-dup.r` from stringr:
 
 [source,r,cell-code]
 ----
@@ -265,33 +265,33 @@ test_that("basic duplication works", {
   expect_equal(str_dup(c("a", "b"), 2), c("aa", "bb"))
   expect_equal(str_dup(c("a", "b"), c(2, 3)), c("aa", "bbb"))
 })
-#> Test passed 🎊
+#> Test passed 🥇
 
 test_that("0 duplicates equals empty string", {
   expect_equal(str_dup("a", 0), "")
   expect_equal(str_dup(c("a", "b"), 0), rep("", 2))
 })
-#> Test passed 🥳
+#> Test passed 🥇
 
 test_that("uses tidyverse recycling rules", {
   expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 })
-#> Test passed 🌈
+#> Test passed 🎊
 ----
 
 This file shows a typical mix of tests:
 
-* "`basic duplication works`" tests typical usage of `+str_dup()+`.
+* "`basic duplication works`" tests typical usage of `str++_++dup()`.
 * "`0 duplicates equals empty string`" probes a specific edge case.
 * "`uses tidyverse recycling rules`" checks that malformed input results in a specific kind of error.
 
 Tests are organised hierarchically: *expectations* are grouped into *tests* which are organised in *files*:
 
-* A *file* holds multiple related tests. In this example, the file `+tests/testthat/test-dup.r+` has all of the tests for the code in `+R/dup.r+`.
-* A *test* groups together multiple expectations to test the output from a simple function, a range of possibilities for a single parameter from a more complicated function, or tightly related functionality from across multiple functions. This is why they are sometimes called *unit* tests. Each test should cover a single unit of functionality. A test is created with `+test_that(desc, code)+`.
+* A *file* holds multiple related tests. In this example, the file `tests/testthat/test-dup.r` has all of the tests for the code in `R/dup.r`.
+* A *test* groups together multiple expectations to test the output from a simple function, a range of possibilities for a single parameter from a more complicated function, or tightly related functionality from across multiple functions. This is why they are sometimes called *unit* tests. Each test should cover a single unit of functionality. A test is created with `test++_++that(desc, code)`.
 +
-It’s common to write the description (`+desc+`) to create something that reads naturally, e.g. `+test_that("basic duplication works", { ... })+`. A test failure report includes this description, which is why you want a concise statement of the test’s purpose, e.g. a specific behaviour.
-* An *expectation* is the atom of testing. It describes the expected result of a computation: Does it have the right value and right class? Does it produce an error when it should? An expectation automates visual checking of results in the console. Expectations are functions that start with `+expect_+`.
+It’s common to write the description (`desc`) to create something that reads naturally, e.g. `test++_++that("basic duplication works", ++{++ ... })`. A test failure report includes this description, which is why you want a concise statement of the test’s purpose, e.g. a specific behaviour.
+* An *expectation* is the atom of testing. It describes the expected result of a computation: Does it have the right value and right class? Does it produce an error when it should? An expectation automates visual checking of results in the console. Expectations are functions that start with `expect++_++`.
 
 You want to arrange things such that, when a test fails, you’ll know what’s wrong and where in your code to look for the problem. This motivates all our recommendations regarding file organisation, file naming, and the test description. Finally, try to avoid putting too many expectations in one test - it’s better to have more smaller tests than fewer larger tests.
 
@@ -301,7 +301,7 @@ An expectation is the finest level of testing. It makes a binary assertion about
 
 All expectations have a similar structure:
 
-* They start with `+expect_+`.
+* They start with `expect++_++`.
 * They have two main arguments: the first is the actual result, the second is what you expect.
 * If the actual and expected results don’t agree, testthat throws an error.
 * Some expectations have additional arguments that control the finer points of comparing an actual and expected result.
@@ -310,7 +310,7 @@ While you’ll normally put expectations inside tests inside files, you can also
 
 === Testing for equality
 
-`+expect_equal()+` checks for equality, with some reasonable amount of numeric tolerance:
+`expect++_++equal()` checks for equality, with some reasonable amount of numeric tolerance:
 
 [source,r,cell-code]
 ----
@@ -324,7 +324,7 @@ expect_equal(10, 11)
 #> `expected`: 11.0
 ----
 
-If you want to test for exact equivalence, use `+expect_identical()+`.
+If you want to test for exact equivalence, use `expect++_++identical()`.
 
 [source,r,cell-code]
 ----
@@ -345,7 +345,7 @@ expect_identical(2, 2L)
 
 === Testing errors
 
-Use `+expect_error()+` to check whether an expression throws an error. It’s the most important expectation in a trio that also includes `+expect_warning()+` and `+expect_message()+`. We’re going to emphasize errors here, but most of this also applies to warnings and messages.
+Use `expect++_++error()` to check whether an expression throws an error. It’s the most important expectation in a trio that also includes `expect++_++warning()` and `expect++_++message()`. We’re going to emphasize errors here, but most of this also applies to warnings and messages.
 
 Usually you care about two things when testing an error:
 
@@ -373,7 +373,7 @@ This is a bit dangerous, though, especially when testing an error. There are lot
 expect_error(str_duq(1:2, 1:3))
 ----
 
-This expectation is intended to test the recycling behaviour of `+str_dup()+`. But, due to a typo, it tests behaviour of a non-existent function, `+str_duq()+`. The code throws an error and, therefore, the test above passes, but for the _wrong reason_. Due to the typo, the actual error thrown is about not being able to find the `+str_duq()+` function:
+This expectation is intended to test the recycling behaviour of `str++_++dup()`. But, due to a typo, it tests behaviour of a non-existent function, `str++_++duq()`. The code throws an error and, therefore, the test above passes, but for the _wrong reason_. Due to the typo, the actual error thrown is about not being able to find the `str++_++duq()` function:
 
 [source,r,cell-code]
 ----
@@ -381,7 +381,7 @@ str_duq(1:2, 1:3)
 #> Error in str_duq(1:2, 1:3): could not find function "str_duq"
 ----
 
-Historically, the best defense against this was to assert that the condition message matches a certain regular expression, via the second argument, `+regexp+`.
+Historically, the best defense against this was to assert that the condition message matches a certain regular expression, via the second argument, `regexp`.
 
 [source,r,cell-code]
 ----
@@ -397,7 +397,7 @@ expect_error(str_duq(1:2, 1:3), "recycle")
 #> Error in str_duq(1:2, 1:3): could not find function "str_duq"
 ----
 
-Recent developments in both base R and rlang make it increasingly likely that conditions are signaled with a _class_, which provides a better basis for creating precise expectations. That is exactly what you’ve already seen in this stringr example. This is what the `+class+` argument is for:
+Recent developments in both base R and rlang make it increasingly likely that conditions are signaled with a _class_, which provides a better basis for creating precise expectations. That is exactly what you’ve already seen in this stringr example. This is what the `class` argument is for:
 
 [source,r,cell-code]
 ----
@@ -411,14 +411,14 @@ expect_error(str_dup(1:2, 1:3), class = "vctrs_error_incompatible_size")
 
 If you have the choice, express your expectation in terms of the condition’s class, instead of its message. Often this is under your control, i.e. if your package signals the condition. If the condition originates from base R or another package, proceed with caution. This is often a good reminder to re-consider the wisdom of testing a condition that is not fully under your control in the first place.
 
-To check for the _absence_ of an error, warning, or message, use `+expect_no_error()+`:
+To check for the _absence_ of an error, warning, or message, use `expect++_++no++_++error()`:
 
 [source,r,cell-code]
 ----
 expect_no_error(1 / 2)
 ----
 
-Of course, this is functionally equivalent to simply executing `+1 / 2+` inside a test, but some developers find the explicit expectation expressive.
+Of course, this is functionally equivalent to simply executing `1 / 2` inside a test, but some developers find the explicit expectation expressive.
 
 If you genuinely care about the condition’s message, testthat 3e’s snapshot tests are the best approach, which we describe next.
 
@@ -427,7 +427,7 @@ If you genuinely care about the condition’s message, testthat 3e’s snapshot 
 
 Sometimes it’s difficult or awkward to describe an expected result with code. Snapshot tests are a great solution to this problem and this is one of the main innovations in testthat 3e. The basic idea is that you record the expected result in a separate, human-readable file. Going forward, testthat alerts you when a newly computed result differs from the previously recorded snapshot. Snapshot tests are particularly suited to monitoring your package’s user interface, such as its informational messages and errors. Other use cases include testing images or other complicated objects.
 
-We’ll illustrate snapshot tests using the waldo package. Under the hood, testthat 3e uses waldo to do the heavy lifting of "`actual vs. expected`" comparisons, so it’s good for you to know a bit about waldo anyway. One of waldo’s main design goals is to present differences in a clear and actionable manner, as opposed to a frustrating declaration that "`this differs from that and I know exactly how, but I won’t tell you`". Therefore, the formatting of output from `+waldo::compare()+` is very intentional and is well-suited to a snapshot test. The binary outcome of `+TRUE+` (actual == expected) vs. `+FALSE+` (actual != expected) is fairly easy to check and could get its own test. Here we’re concerned with writing a test to ensure that differences are reported to the user in the intended way.
+We’ll illustrate snapshot tests using the waldo package. Under the hood, testthat 3e uses waldo to do the heavy lifting of "`actual vs. expected`" comparisons, so it’s good for you to know a bit about waldo anyway. One of waldo’s main design goals is to present differences in a clear and actionable manner, as opposed to a frustrating declaration that "`this differs from that and I know exactly how, but I won’t tell you`". Therefore, the formatting of output from `waldo::compare()` is very intentional and is well-suited to a snapshot test. The binary outcome of `TRUE` (actual == expected) vs. `FALSE` (actual != expected) is fairly easy to check and could get its own test. Here we’re concerned with writing a test to ensure that differences are reported to the user in the intended way.
 
 waldo uses a few different layouts for showing diffs, depending on various conditions. Here we deliberately constrain the width, in order to trigger a side-by-side layout.footnote:[The actual waldo test that inspires this example targets an unexported helper function that produces the desired layout. But this example uses an exported waldo function for simplicity.] (We’ll talk more about the withr package below.)
 
@@ -464,7 +464,7 @@ test_that("side-by-side diffs work", {
 })
 ----
 
-If you execute `+expect_snapshot()+` or a test containing `+expect_snapshot()+` interactively, you’ll see this:
+If you execute `expect++_++snapshot()` or a test containing `expect++_++snapshot()` interactively, you’ll see this:
 
 ....
 Can't compare snapshot to reference when testing interactively
@@ -475,7 +475,7 @@ followed by a preview of the snapshot output.
 
 This reminds you that snapshot tests only function when executed non-interactively, i.e. while running an entire test file or the entire test suite. This applies both to recording snapshots and to checking them.
 
-The first time this test is executed via `+devtools::test()+` or similar, you’ll see something like this (assume the test is in `+tests/testthat/test-diff.R+`):
+The first time this test is executed via `devtools::test()` or similar, you’ll see something like this (assume the test is in `tests/testthat/test-diff.R`):
 
 ....
 ── Warning (test-diff.R:63:3): side-by-side diffs work ─────────────────────
@@ -498,7 +498,7 @@ Output
            - "X" [27]
 ....
 
-There is always a warning upon initial snapshot creation. The snapshot is added to `+tests/testthat/_snaps/diff.md+`, under the heading "`side-by-side diffs work`", which comes from the test’s description. The snapshot looks exactly like what a user sees interactively in the console, which is the experience we want to check for. The snapshot file is _also_ very readable, which is pleasant for the package developer. This readability extends to snapshot changes, i.e. when examining Git diffs and reviewing pull requests on GitHub, which helps you keep tabs on your user interface. Going forward, as long as your package continues to re-capitulate the expected snapshot, this test will pass.
+There is always a warning upon initial snapshot creation. The snapshot is added to `tests/testthat/++_++snaps/diff.md`, under the heading "`side-by-side diffs work`", which comes from the test’s description. The snapshot looks exactly like what a user sees interactively in the console, which is the experience we want to check for. The snapshot file is _also_ very readable, which is pleasant for the package developer. This readability extends to snapshot changes, i.e. when examining Git diffs and reviewing pull requests on GitHub, which helps you keep tabs on your user interface. Going forward, as long as your package continues to re-capitulate the expected snapshot, this test will pass.
 
 If you’ve written a lot of conventional unit tests, you can appreciate how well-suited snapshot tests are for this use case. If we were forced to inline the expected output in the test file, there would be a great deal of quoting, escaping, and newline management. Ironically, with conventional expectations, the output you expect your user to see tends to get obscured by a heavy layer of syntactical noise.
 
@@ -526,14 +526,14 @@ and 3 more ...
 * Run `snapshot_review('diff')` to interactively review the change
 ....
 
-This diff is presented more effectively in most real-world usage, e.g. in the console, by a Git client, or via a Shiny app (see below). But even this plain text version highlights the changes quite clearly. Each of the two loci of change is indicated with a pair of lines marked with `+-+` and `+++`, showing how the snapshot has changed.
+This diff is presented more effectively in most real-world usage, e.g. in the console, by a Git client, or via a Shiny app (see below). But even this plain text version highlights the changes quite clearly. Each of the two loci of change is indicated with a pair of lines marked with `-` and `{plus}`, showing how the snapshot has changed.
 
-You can call `+testthat::snapshot_review('diff')+` to review changes locally in a Shiny app, which lets you skip or accept individual snapshots. Or, if all changes are intentional and expected, you can go straight to `+testthat::snapshot_accept('diff')+`. Once you’ve re-synchronized your actual output and the snapshots on file, your tests will pass once again. In real life, snapshot tests are a great way to stay informed about changes to your package’s user interface, due to your own internal changes or due to changes in your dependencies or even R itself.
+You can call `testthat::snapshot++_++review('diff')` to review changes locally in a Shiny app, which lets you skip or accept individual snapshots. Or, if all changes are intentional and expected, you can go straight to `testthat::snapshot++_++accept('diff')`. Once you’ve re-synchronized your actual output and the snapshots on file, your tests will pass once again. In real life, snapshot tests are a great way to stay informed about changes to your package’s user interface, due to your own internal changes or due to changes in your dependencies or even R itself.
 
-`+expect_snapshot()+` has a few arguments worth knowing about:
+`expect++_++snapshot()` has a few arguments worth knowing about:
 
-* `+cran = FALSE+`: By default, snapshot tests are skipped if it looks like the tests are running on CRAN’s servers. This reflects the typical intent of snapshot tests, which is to proactively monitor user interface, but not to check for correctness, which presumably is the job of other unit tests which are not skipped. In typical usage, a snapshot change is something the developer will want to know about, but it does not signal an actual defect.
-* `+error = FALSE+`: By default, snapshot code is _not_ allowed to throw an error. See `+expect_error()+`, described above, for one approach to testing errors. But sometimes you want to assess "`Does this error message make sense to a human?`" and having it laid out in context in a snapshot is a great way to see it with fresh eyes. Specify `+error = TRUE+` in this case:
+* `cran = FALSE`: By default, snapshot tests are skipped if it looks like the tests are running on CRAN’s servers. This reflects the typical intent of snapshot tests, which is to proactively monitor user interface, but not to check for correctness, which presumably is the job of other unit tests which are not skipped. In typical usage, a snapshot change is something the developer will want to know about, but it does not signal an actual defect.
+* `error = FALSE`: By default, snapshot code is _not_ allowed to throw an error. See `expect++_++error()`, described above, for one approach to testing errors. But sometimes you want to assess "`Does this error message make sense to a human?`" and having it laid out in context in a snapshot is a great way to see it with fresh eyes. Specify `error = TRUE` in this case:
 +
 [source,r,cell-code]
 ----
@@ -541,10 +541,10 @@ expect_snapshot(error = TRUE,
   str_dup(1:2, 1:3)
 )
 ----
-* `+transform+`: Sometimes a snapshot contains volatile, insignificant elements, such as a temporary filepath or a timestamp. The `+transform+` argument accepts a function, presumably written by you, to remove or replace such changeable text. Another use of `+transform+` is to scrub sensitive information from the snapshot.
-* `+variant+`: Sometimes snapshots reflect the ambient conditions, such as the operating system or the version of R or one of your dependencies, and you need a different snapshot for each variant. This is an experimental and somewhat advanced feature, so if you can arrange things to use a single snapshot, you probably should.
+* `transform`: Sometimes a snapshot contains volatile, insignificant elements, such as a temporary filepath or a timestamp. The `transform` argument accepts a function, presumably written by you, to remove or replace such changeable text. Another use of `transform` is to scrub sensitive information from the snapshot.
+* `variant`: Sometimes snapshots reflect the ambient conditions, such as the operating system or the version of R or one of your dependencies, and you need a different snapshot for each variant. This is an experimental and somewhat advanced feature, so if you can arrange things to use a single snapshot, you probably should.
 
-In typical usage, testthat will take care of managing the snapshot files below `+tests/testthat/_snaps/+`. This happens in the normal course of you running your tests and, perhaps, calling `+testthat::snapshot_accept()+`.
+In typical usage, testthat will take care of managing the snapshot files below `tests/testthat/++_++snaps/`. This happens in the normal course of you running your tests and, perhaps, calling `testthat::snapshot++_++accept()`.
 
 === Shortcuts for other common patterns
 
@@ -552,7 +552,7 @@ We conclude this section with a few more expectations that come up frequently. B
 
 Several expectations can be described as "`shortcuts`", i.e. they streamline a pattern that comes up often enough to deserve its own wrapper.
 
-* `+expect_match(object, regexp, ...)+` is a shortcut that wraps `+grepl(pattern = regexp, x = object, ...)+`. It matches a character vector input against a regular expression `+regexp+`. The optional `+all+` argument controls whether all elements or just one element needs to match. Read the `+expect_match()+` documentation to see how additional arguments, like `+ignore.case = FALSE+` or `+fixed = TRUE+`, can be passed down to `+grepl()+`.
+* `expect++_++match(object, regexp, ...)` is a shortcut that wraps `grepl(pattern = regexp, x = object, ...)`. It matches a character vector input against a regular expression `regexp`. The optional `all` argument controls whether all elements or just one element needs to match. Read the `expect++_++match()` documentation to see how additional arguments, like `ignore.case = FALSE` or `fixed = TRUE`, can be passed down to `grepl()`.
 +
 [source,r,cell-code]
 ----
@@ -568,9 +568,9 @@ expect_match(string, "testing")
 # Passes because additional arguments are passed to grepl():
 expect_match(string, "testing", ignore.case = TRUE)
 ----
-* `+expect_length(object, n)+` is a shortcut for `+expect_equal(length(object), n)+`.
-* `+expect_setequal(x, y)+` tests that every element of `+x+` occurs in `+y+`, and that every element of `+y+` occurs in `+x+`. But it won’t fail if `+x+` and `+y+` happen to have their elements in a different order.
-* `+expect_s3_class()+` and `+expect_s4_class()+` check that an object `+inherit()+`s from a specified class. `+expect_type()+`checks the `+typeof()+` an object.
+* `expect++_++length(object, n)` is a shortcut for `expect++_++equal(length(object), n)`.
+* `expect++_++setequal(x, y)` tests that every element of `x` occurs in `y`, and that every element of `y` occurs in `x`. But it won’t fail if `x` and `y` happen to have their elements in a different order.
+* `expect++_++s3++_++class()` and `expect++_++s4++_++class()` check that an object `inherit()`s from a specified class. `expect++_++type()`checks the `typeof()` an object.
 +
 [source,r,cell-code]
 ----
@@ -580,4 +580,4 @@ expect_s3_class(model, "glm")
 #> Error: `model` inherits from 'lm' not 'glm'.
 ----
 
-`+expect_true()+` and `+expect_false()+` are useful catchalls if none of the other expectations does what you need.
+`expect++_++true()` and `expect++_++false()` are useful catchalls if none of the other expectations does what you need.
