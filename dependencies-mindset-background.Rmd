@@ -253,31 +253,38 @@ They provide a context for looking up the value of an object associated with a n
 Without knowing it, you've probably already used namespaces.
 Have you ever used the `::` operator?
 It disambiguates functions with the same name.
-For example, both the lubridate and here packages provide a `here()` function.
-If you attach lubridate, then here, `here()` will refer to the here version, because the last package attached wins.
-But if you attach the packages in the opposite order, `here()` will refer to the lubridate version.
+For example,  `filter()` function is provided in both `stats` package 
+(one of the default packages that is always loaded)
+where it has to deal with some time series capabilites, and in `dplyr` package where it subsets data.
+If you attach `dplyr`, then `filter()` will refer to the dplyr version, because the last package attached wins.
 
 ```{r}
 #| eval: FALSE
-library(lubridate)    |  library(here)
-library(here)         |  library(lubridate)
+# library(dplyr)           |  # freshly started R with default packages only
 
-here() # here::here() |  here() # lubridate::here()
+filter() # dplyr::filter() |  filter() # stats::filter()
 ```
 
 This can be confusing.
-Instead, you can qualify the function call with a specific namespace: `lubridate::here()` and `here::here()`.
-Then the order in which the packages are attached won't matter[^dependencies-mindset-background-4].
+Instead, you can qualify the function call with a specific namespace: `stats::filter()` and `dplyr::filter()`.
+
+There can be other situations in which different packages might provide functions with identical names.
+In those situations, the resolved function name will be from the most recently loaded 
+package (although you can modify that behavior; we will talk about it shortly 
+in @sec-dependencies-search.)
+Again, with the `::` operator,
+the order in which the packages are attached won't matter[^dependencies-mindset-background-4].
 
 [^dependencies-mindset-background-4]: We're going to stay focused on packages in this book, but there are other ways than using `::` to address conflicts in end-user code: the [conflicted package](https://conflicted.r-lib.org) and the [`"conflicts.policy"` option](https://developer.r-project.org/Blog/public/2019/03/19/managing-search-path-conflicts/) introduced in base R v3.6.0.
 
 ```{r}
 #| eval: FALSE
-lubridate::here() # always gets lubridate::here()
-here::here()      # always gets here::here()
+stats::filter() # always gets stats::filter()
+dplyr::filter() # always gets dplyr::filter()
 ```
 
-As you will see in @sec-dependencies-in-imports, the `package::function()` calling style is also our default recommendation for how to use your dependencies in the code below `R/`, because it eliminates all ambiguity.
+As you will see in @sec-dependencies-in-imports, the `package::function()` calling style is also 
+our default recommendation for how to use your dependencies in the code below `R/`, because it eliminates all ambiguity.
 
 But, in the context of package code, the use of `::` is not really our main line of defense against the confusion seen in the example above.
 In packages, we rely on namespaces to ensure that every package works the same way regardless of what packages are attached by the user.
